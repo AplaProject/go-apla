@@ -20,6 +20,7 @@ func RunAllDaemons(ctx context.Context) error {
 		logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
 
 		daemons.InitialLoad(logEntry)
+
 		err := syspar.SysUpdate(nil)
 		if err != nil {
 			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
@@ -29,6 +30,13 @@ func RunAllDaemons(ctx context.Context) error {
 		if data, ok := block.GetDataFromFirstBlock(); ok {
 			syspar.SetFirstBlockData(data)
 		}
+	} else {
+		err := syspar.SysUpdate(nil)
+		if err != nil {
+			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
+			return err
+		}
+
 	}
 
 	log.Info("load contracts")

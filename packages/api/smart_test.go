@@ -63,7 +63,7 @@ func TestUpperName(t *testing.T) {
 		conditions {
 		}
 		action {
-		   DBInsert("testTable` + rnd + `", "num, text", "fgdgf", "124234") 
+		   DBInsert("testTable` + rnd + `", {num: "fgdgf", text: "124234"}) 
 		}
 	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	if err := postTx(`NewContract`, &form); err != nil {
@@ -136,6 +136,26 @@ func TestMoneyTransfer(t *testing.T) {
 	}
 }
 
+func TestRoleAccess(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`page`)
+	menu := `government`
+	value := `P(test,test paragraph)`
+
+	form := url.Values{"Name": {name}, "Value": {value}, "Menu": {menu}, "ApplicationId": {`1`},
+		"Conditions": {`RoleAccess(10,1)`}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+
+	var ret listResult
+	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
+	id := ret.Count
+	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess(2)`}}
+	assert.NoError(t, postTx(`EditPage`, &form))
+	form = url.Values{"Id": {id}, "Value": {"Div(){Update}"}}
+	assert.EqualError(t, postTx(`EditPage`, &form), `{"type":"panic","error":"Access denied"}`)
+}
+
 func TestPage(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -171,7 +191,7 @@ func TestPage(t *testing.T) {
 
 	name = randName(`page`)
 	form = url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
-		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	err = postTx(`NewPage`, &form)
@@ -183,7 +203,7 @@ func TestPage(t *testing.T) {
 	}
 	form = url.Values{"Name": {`app` + name}, "Value": {value}, "ValidateCount": {"2"},
 		"ValidateMode": {"1"}, "ApplicationId": {`1`},
-		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx(`NewPage`, &form)
 	if err != nil {
 		t.Error(err)
@@ -250,22 +270,22 @@ func TestPage(t *testing.T) {
 	}
 
 	form = url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewBlock`, &form))
 
 	err = postTx(`NewBlock`, &form)
 	assert.EqualError(t, err, fmt.Sprintf(`{"type":"warning","error":"Block %s already exists"}`, name))
 
 	form = url.Values{"Id": {`1`}, "Name": {name}, "Value": {value},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`EditBlock`, &form))
 
 	form = url.Values{"Id": {`1`}, "Value": {value + `Span(Test)`},
-		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`EditPage`, &form))
 
 	form = url.Values{"Id": {`1112`}, "Value": {value + `Span(Test)`},
-		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {menu}, "Conditions": {`ContractConditions("MainCondition")`}}
 	err = postTx(`EditPage`, &form)
 	assert.Equal(t, `{"type":"panic","error":"Item 1112 has not been found"}`, cutErr(err))
 
@@ -304,8 +324,8 @@ func TestNewTable(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract sub` + name + ` {
 		action {
-			DBInsert("1_` + name + `", "name", "ok")
-			DBUpdate("1_` + name + `", 1, "name", "test value" )
+			DBInsert("1_` + name + `", {"name": "ok"})
+			DBUpdate("1_` + name + `", 1, {"name": "test value"} )
 			$result = DBFind("1_` + name + `").Columns("name").WhereId(1).One("name")
 		}
 	}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
@@ -457,6 +477,7 @@ func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoError(t, postTx(`UpdateSysParam`, form))
 }
 
+/*
 func TestHelper_InsertNodeKey(t *testing.T) {
 	require.NoErrorf(t, keyLogin(1), "on login")
 
@@ -468,7 +489,7 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 			}
 			conditions {}
 			action {
-				DBInsert("keys", "id,pub,amount", $KeyID, $PubKey, "100000000000000000000")
+				DBInsert("keys", {id: $KeyID, pub: $PubKey,amount: "100000000000000000000"})
 			}
 		}`},
 		`ApplicationId`: {`1`},
@@ -489,7 +510,7 @@ func TestHelper_InsertNodeKey(t *testing.T) {
 		return
 	}
 }
-
+*/
 func TestValidateConditions(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -563,7 +584,7 @@ func TestPartitialEdit(t *testing.T) {
 
 	name := randName(`part`)
 	form := url.Values{"Name": {name}, "Value": {"Span(Original text)"},
-		"Menu": {"original_menu"}, "ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {"original_menu"}, "ApplicationId": {"1"}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	var retList listResult
@@ -594,7 +615,7 @@ func TestPartitialEdit(t *testing.T) {
 	assert.Equal(t, menu, ret.Value["menu"])
 
 	form = url.Values{"Name": {name}, "Value": {`MenuItem(One)`}, "Title": {`My Menu`},
-		"ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {"1"}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewMenu`, &form))
 	assert.NoError(t, sendGet(`list/menu`, nil, &retList))
 	idItem = retList.Count
@@ -606,7 +627,7 @@ func TestPartitialEdit(t *testing.T) {
 	assert.Equal(t, conditions, ret.Value["conditions"])
 
 	form = url.Values{"Name": {name}, "Value": {`Span(Block)`},
-		"ApplicationId": {"1"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {"1"}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewBlock`, &form))
 	assert.NoError(t, sendGet(`list/blocks`, nil, &retList))
 	idItem = retList.Count
@@ -629,7 +650,7 @@ func TestContractEdit(t *testing.T) {
 				$result = "before"
 			}
 		}`}, "ApplicationId": {"1"},
-		"Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Conditions": {`ContractConditions("MainCondition")`}}
 	err := postTx(`NewContract`, &form)
 	if err != nil {
 		t.Error(err)
@@ -881,7 +902,7 @@ func TestPageHistory(t *testing.T) {
 	value := `P(test,test paragraph)`
 
 	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
-		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {"default_menu"}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	var ret listResult
@@ -891,7 +912,7 @@ func TestPageHistory(t *testing.T) {
 	assert.NoError(t, postTx(`EditPage`, &url.Values{"Id": {id}, "Conditions": {"true"}}))
 
 	form = url.Values{"Name": {randName(`menu`)}, "Value": {`MenuItem(First)MenuItem(Second)`},
-		"ApplicationId": {`1`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {`1`}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewMenu`, &form))
 
 	assert.NoError(t, sendGet(`list/menu`, nil, &ret))
@@ -902,7 +923,7 @@ func TestPageHistory(t *testing.T) {
 		"Value": {"MenuItem(Third)"}, "Conditions": {"false"}}))
 
 	form = url.Values{"Value": {`contract C` + name + `{ action {}}`},
-		"ApplicationId": {`1`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"ApplicationId": {`1`}, "Conditions": {`ContractConditions("MainCondition")`}}
 	_, idCont, err := postTxResult(`NewContract`, &form)
 	assert.NoError(t, err)
 	assert.NoError(t, postTx(`EditContract`, &url.Values{"Id": {idCont},
@@ -949,7 +970,7 @@ func TestPageHistory(t *testing.T) {
 	assert.Equal(t, `231`, msg)
 
 	form = url.Values{"Name": {name + `1`}, "Value": {value}, "ApplicationId": {`1`},
-		"Menu": {"default_menu"}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {"default_menu"}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	assert.NoError(t, postTx(`Get`+name, &url.Values{"IdPage": {converter.Int64ToStr(

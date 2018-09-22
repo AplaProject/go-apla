@@ -1,7 +1,7 @@
 package tx
 
 import (
-	"crypto/md5"
+	"bytes"
 	"encoding/hex"
 	"io"
 	"io/ioutil"
@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
@@ -40,13 +41,18 @@ func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHe
 	}
 	defer file.Close()
 
-	hash := md5.New()
-	if _, err = io.Copy(file, io.TeeReader(reader, hash)); err != nil {
+	var buf bytes.Buffer
+	if _, err := io.Copy(file, io.TeeReader(reader, &buf)); err != nil {
+		return nil, err
+	}
+
+	hash, err := crypto.Hash(buf.Bytes())
+	if err != nil {
 		return nil, err
 	}
 
 	fileHeader := FileHeader{
-		Hash:     hex.EncodeToString(hash.Sum(nil)),
+		Hash:     hex.EncodeToString(hash),
 		MimeType: mimeType,
 	}
 

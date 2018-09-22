@@ -52,6 +52,7 @@ var (
 	errExp            = errors.New(`wrong expression`)
 	errDiv            = errors.New(`dividing by zero`)
 	errPrecIsNegative = errors.New(`precision is negative`)
+	errWhere          = errors.New(`Where has wrong format`)
 )
 
 func parsing(input string, itype int) (*[]token, error) {

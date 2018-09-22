@@ -19,6 +19,7 @@ package script
 import (
 	log "github.com/sirupsen/logrus"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 )
@@ -63,7 +64,7 @@ func (vm *VM) EvalIf(input string, state uint32, vars *map[string]interface{}) (
 			return false, err
 		}
 	}
-	rt := vm.RunInit(CostDefault)
+	rt := vm.RunInit(syspar.GetMaxCost())
 	ret, err := rt.Run(evals[crc].Code.Children[0], nil, vars)
 	if err == nil {
 		if len(ret) == 0 {

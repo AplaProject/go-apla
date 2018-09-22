@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -47,7 +48,7 @@ type Composite struct {
 var (
 	funcs = make(map[string]tplFunc)
 	tails = make(map[string]forTails)
-	modes = [][]rune{{'(', ')'}, {'{', '}'}}
+	modes = [][]rune{{'(', ')'}, {'{', '}'}, {'[', ']'}}
 )
 
 func init() {
@@ -68,8 +69,8 @@ func init() {
 	funcs[`Hint`] = tplFunc{defaultTag, defaultTag, `hint`, `Icon,Title,Text`}
 	funcs[`ImageInput`] = tplFunc{defaultTag, defaultTag, `imageinput`, `Name,Width,Ratio,Format`}
 	funcs[`InputErr`] = tplFunc{defaultTag, defaultTag, `inputerr`, `*`}
-	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data`}
-	funcs[`ArrayToSource`] = tplFunc{arraytosourceTag, defaultTag, `arraytosource`, `Source,Data`}
+	funcs[`JsonToSource`] = tplFunc{jsontosourceTag, defaultTag, `jsontosource`, `Source,Data,Prefix`}
+	funcs[`ArrayToSource`] = tplFunc{arraytosourceTag, defaultTag, `arraytosource`, `Source,Data,Prefix`}
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
@@ -105,6 +106,7 @@ func init() {
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
+	funcs[`TransactionInfo`] = tplFunc{txinfoTag, defaultTag, `txinfo`, `Hash`}
 
 	tails[`addtoolbutton`] = forTails{map[string]tailInfo{
 		`Popup`: {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
@@ -277,8 +279,18 @@ func forlistTag(par parFunc) (ret string) {
 				}
 			}
 		}
-		body := macroReplace((*par.Pars)[`Data`], &vals)
-		process(body, &root, par.Workspace)
+		for key, item := range vals {
+			(*par.Workspace.Vars)[key] = item
+		}
+		process((*par.Pars)[`Data`], &root, par.Workspace)
+		for _, item := range root.Children {
+			if item.Tag == `text` {
+				item.Text = macroReplace(item.Text, par.Workspace.Vars)
+			}
+		}
+		for key := range vals {
+			delete(*par.Workspace.Vars, key)
+		}
 	}
 	par.Node.Children = root.Children
 	par.Owner.Children = append(par.Owner.Children, par.Node)
@@ -342,9 +354,7 @@ func ecosysparTag(par parFunc) string {
 		return ``
 	}
 	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-	if par.Workspace.SmartContract.VDE {
-		prefix += `_vde`
-	}
+
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(prefix)
 	parameterName := macro((*par.Pars)[`Name`], par.Workspace.Vars)
@@ -436,6 +446,18 @@ func defaultTailFull(par parFunc) string {
 	return ``
 }
 
+func txinfoTag(par parFunc) (out string) {
+	setAllAttr(par)
+	if par.Node.Attr[`hash`] != nil {
+		var err error
+		out, err = smart.TransactionInfo(par.Node.Attr[`hash`].(string))
+		if err != nil {
+			out = err.Error()
+		}
+	}
+	return
+}
+
 func dataTag(par parFunc) string {
 	setAllAttr(par)
 	defaultTail(par, `data`)
@@ -517,11 +539,12 @@ func dataTag(par parFunc) string {
 
 func dbfindTag(par parFunc) string {
 	var (
-		fields string
-		state  int64
-		err    error
-		perm   map[string]string
-		offset string
+		inColumns interface{}
+		columns   []string
+		state     int64
+		err       error
+		perm      map[string]string
+		offset    string
 
 		cutoffColumns   = make(map[string]bool)
 		extendedColumns = make(map[string]string)
@@ -537,21 +560,44 @@ func dbfindTag(par parFunc) string {
 	limit := 25
 
 	if par.Node.Attr[`columns`] != nil {
-		fields = converter.Escape(par.Node.Attr[`columns`].(string))
+		fields := par.Node.Attr[`columns`].(string)
+		if strings.HasPrefix(fields, `[`) {
+			inColumns, _ = parseObject([]rune(fields))
+		} else {
+			inColumns = fields
+		}
 	}
-	if len(fields) == 0 {
-		fields = `*`
+	columns, err = smart.GetColumns(inColumns)
+	if err != nil {
+		return err.Error()
 	}
-	fields = strings.ToLower(fields)
 	if par.Node.Attr[`where`] != nil {
-		where = smart.PrepareWhere(` where ` +
-			converter.Escape(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
+		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(where, `{`) {
+			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
+			where, err = smart.GetWhere(inWhere.(map[string]interface{}))
+			if err != nil {
+				return err.Error()
+			}
+		} else if len(where) > 0 {
+			return errWhere.Error()
+		}
 	}
 	if par.Node.Attr[`whereid`] != nil {
-		where = fmt.Sprintf(` where id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
+		where = fmt.Sprintf(` id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
 	if par.Node.Attr[`order`] != nil {
-		order = ` order by ` + converter.EscapeName(macro(par.Node.Attr[`order`].(string), par.Workspace.Vars))
+		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
+			inColumns, _ = parseObject([]rune(order))
+		} else {
+			inColumns = order
+		}
+		order, err = smart.GetOrder(inColumns)
+		if err != nil {
+			return err.Error()
+		}
+		order = ` order by ` + order
 	}
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
@@ -591,25 +637,23 @@ func dbfindTag(par parFunc) string {
 	}
 	columnNames := make([]string, 0)
 
-	fieldsList := strings.Split(fields, ",")
 	perm, err = sc.AccessTablePerm(tblname, `read`)
-	if err != nil || sc.AccessColumns(tblname, &fieldsList, false) != nil {
+	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
 		return `Access denied`
 	}
-	fields = strings.Join(fieldsList, `,`)
 
-	if fields != "*" {
-		if !strings.Contains(fields, "id") {
-			fields += ",id"
-		}
-		columnNames = strings.Split(fields, ",")
-		fields = smart.PrepareColumns(fields)
-		queryColumns = strings.Split(fields, ",")
-	} else {
+	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
 			queryColumns = append(queryColumns, col["column_name"])
 			columnNames = append(columnNames, col["column_name"])
 		}
+	} else {
+		if !utils.StringInSlice(columns, `id`) {
+			columns = append(columns, `id`)
+		}
+		columnNames = make([]string, len(columns))
+		copy(columnNames, columns)
+		queryColumns = strings.Split(smart.PrepareColumns(columns), ",")
 	}
 
 	for i, col := range queryColumns {
@@ -631,7 +675,6 @@ func dbfindTag(par parFunc) string {
 			queryColumns[i] = `"` + field + `"`
 		}
 	}
-	fields = strings.Join(queryColumns, `, `)
 	for i, key := range columnNames {
 		if strings.Contains(key, `->`) {
 			columnNames[i] = strings.Replace(key, `->`, `.`, -1)
@@ -640,7 +683,7 @@ func dbfindTag(par parFunc) string {
 	}
 	if par.Node.Attr[`countvar`] != nil {
 		var count int64
-		err = model.GetDB(nil).Table(tblname).Where(strings.Replace(where, `where`, ``, 1)).Count(&count).Error
+		err = model.GetDB(nil).Table(tblname).Where(where).Count(&count).Error
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table in DBFind")
 		}
@@ -649,7 +692,11 @@ func dbfindTag(par parFunc) string {
 		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
 		delete(par.Node.Attr, `countvar`)
 	}
-	list, err := model.GetAll(`select `+fields+` from "`+tblname+`"`+where+order+offset, limit)
+	if len(where) > 0 {
+		where = ` where ` + where
+	}
+	list, err := model.GetAll(`select `+strings.Join(queryColumns, `, `)+` from "`+tblname+`"`+
+		where+order+offset, limit)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all from db")
 		return err.Error()
@@ -1018,6 +1065,7 @@ func dateTimeTag(par parFunc) string {
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
+	value := datetime
 	defTime := `1970-01-01T00:00:00`
 	lenTime := len(datetime)
 	if lenTime < len(defTime) {
@@ -1025,7 +1073,12 @@ func dateTimeTag(par parFunc) string {
 	}
 	itime, err := time.Parse(`2006-01-02T15:04:05`, strings.Replace(datetime[:19], ` `, `T`, -1))
 	if err != nil {
-		return err.Error()
+		unix := converter.StrToInt64(value)
+		if unix > 0 {
+			itime = time.Unix(unix, 0)
+		} else {
+			return err.Error()
+		}
 	}
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
@@ -1083,9 +1136,12 @@ func (s byFirst) Less(i, j int) bool {
 
 func jsontosourceTag(par parFunc) string {
 	setAllAttr(par)
-
+	var prefix string
+	if par.Node.Attr[`prefix`] != nil {
+		prefix = par.Node.Attr[`prefix`].(string) + `_`
+	}
 	data := make([][]string, 0, 16)
-	cols := []string{`key`, `value`}
+	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
 	var out map[string]interface{}
 	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
@@ -1095,7 +1151,22 @@ func jsontosourceTag(par parFunc) string {
 		if item == nil {
 			item = ``
 		}
-		data = append(data, []string{key, fmt.Sprint(item)})
+		var value string
+		switch v := item.(type) {
+		case map[string]interface{}:
+			var keys, values []string
+			for k := range v {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			for _, k := range keys {
+				values = append(values, fmt.Sprintf(`%q:%q`, k, v[k]))
+			}
+			value = `{` + strings.Join(values, ",\r\n") + `}`
+		default:
+			value = fmt.Sprint(item)
+		}
+		data = append(data, []string{key, value})
 	}
 	sort.Sort(byFirst(data))
 	setAllAttr(par)
@@ -1110,8 +1181,13 @@ func jsontosourceTag(par parFunc) string {
 func arraytosourceTag(par parFunc) string {
 	setAllAttr(par)
 
+	var prefix string
+	if par.Node.Attr[`prefix`] != nil {
+		prefix = par.Node.Attr[`prefix`].(string) + `_`
+	}
+
 	data := make([][]string, 0, 16)
-	cols := []string{`key`, `value`}
+	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
 	var out []json.RawMessage
 	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {

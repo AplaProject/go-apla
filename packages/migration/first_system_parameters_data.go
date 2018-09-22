@@ -2,32 +2,7 @@ package migration
 
 var firstSystemParametersDataSQL = `
 INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES 
-	('1','default_ecosystem_page', 'Div(content-wrapper){
-		Div(panel panel-primary){
-			Div(list-group-item text-center){
-				P(Class: h3 m0 text-bold, Body: Congratulations! You created your own ecosystem.)
-			}
-			Div(list-group-item){
-				Span(Class: h3, Body: "You as Founder hold a complete set of rights for controlling the ecosystem – creating and editing applications, modifying ecosystem parameters, etc. ")
-				Span(Class: h3, Body: "To get started, you can download the finished applications from the")
-				Span(Class: h3 text-primary, Body: " https://github.com/GenesisKernel/apps ")
-				Span(Class: h3, Body: "and install them using the Import service. ")
-				Span(Class: h3, Body: "The Strong(basic.json) contains applications for managing roles, creating notifications and votings. ")
-				Span(Class: h3, Body: "Or you can create your own apps using the tools in the Admin tab. ")
-				Span(Class: h3, Body: "Documentation ")
-				Span(Class: h3 text-primary, Body: "https://genesiskernel.readthedocs.io")
-			}
-			Div(panel-footer text-right clearfix){
-				Div(pull-left){
-					Button(Body: Ecosystem parameters, Class: btn btn-default, Page: params_list)
-				}.Style(margin-right: 20px;)
-				Div(pull-left){
-					Button(Body: Dashboard, Class: btn btn-default, Page: admin_dashboard)          
-				}
-				Button(Body: Import, Class: btn btn-primary, Page: import_upload)
-			}
-		}
-	}', 'true'),
+	('1','default_ecosystem_page', '', 'true'),
 	('2','default_ecosystem_menu', '', 'true'),
 	('3','default_ecosystem_contract', '', 'true'),
 	('4','gap_between_blocks', '2', 'true'),
@@ -48,8 +23,8 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('20','max_columns', '50', 'true'),
 	('21','max_indexes', '5', 'true'),
 	('22','max_block_user_tx', '100', 'true'),
-	('23','max_fuel_tx', '20000', 'true'),
-	('24','max_fuel_block', '100000', 'true'),
+	('23','max_fuel_tx', '20000000', 'true'),
+	('24','max_fuel_block', '200000000', 'true'),
 	('25','commission_size', '3', 'true'),
 	('26','commission_wallet', '', 'true'),
 	('27','fuel_rate', '[["1","1000000000000000"]]', 'true'),

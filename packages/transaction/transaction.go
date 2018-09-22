@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -14,7 +13,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
-	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
@@ -193,105 +191,12 @@ func (t *Transaction) parseFromStruct() error {
 	return nil
 }
 
-func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}, forsign []string) error {
-	if len(params) != len(fieldInfos) {
-		return fmt.Errorf("Invalid number of parameters")
+func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) error {
+	var err error
+	t.TxData, err = smart.FillTxData(fieldInfos, params)
+	if err != nil {
+		return err
 	}
-
-	for _, fitem := range fieldInfos {
-		var err error
-		var v interface{}
-		var ok bool
-		var forv string
-		var isforv bool
-
-		index := fitem.Name
-		switch fitem.Type.String() {
-		case `bool`:
-			if v, ok = params[index].(bool); !ok {
-				return fmt.Errorf("Incorrect type bool")
-			}
-		case `uint64`:
-			if v, ok = params[index].(uint64); !ok {
-				return fmt.Errorf("Incorrect type uint64")
-			}
-		case `float64`:
-			if v, ok = params[index].(float64); !ok {
-				return fmt.Errorf("Incorrect type float64")
-			}
-		case `int64`:
-			if v, ok = params[index].(int64); !ok {
-				return fmt.Errorf("Incorrect type int64")
-			}
-		case script.Decimal:
-			var s string
-			if s, ok = params[index].(string); !ok {
-				return fmt.Errorf("Incorrect type money")
-			}
-			v, err = decimal.NewFromString(s)
-			if err != nil {
-				return err
-			}
-		case `string`:
-			if v, ok = params[index].(string); !ok {
-				return fmt.Errorf("Incorrect type string")
-			}
-		case `[]uint8`:
-			var val []byte
-			if val, ok = params[index].([]byte); !ok {
-				return fmt.Errorf("Incorrect type []uint8")
-			}
-
-			if forv, err = crypto.HashHex(val); err != nil {
-				return err
-			}
-
-			isforv = true
-			v = val
-		case `[]interface {}`:
-			var val []interface{}
-			if val, ok = params[index].([]interface{}); !ok {
-				return fmt.Errorf("Incorrect type []interface {}")
-			}
-
-			list := make([]string, len(val)+1)
-			list[0] = converter.IntToStr(len(val))
-			for i, _ := range val {
-				list[i+1] = fmt.Sprintf("%v", val[i])
-			}
-
-			v = val
-			isforv = true
-			forv = strings.Join(list, ",")
-		case script.File:
-			var val map[interface{}]interface{}
-			if val, ok = params[index].(map[interface{}]interface{}); !ok {
-				return fmt.Errorf("Incorrect type file")
-			}
-
-			file := types.File{
-				"Name":     val["Name"].(string),
-				"MimeType": val["MimeType"].(string),
-				"Body":     val["Body"].([]byte),
-			}
-
-			v = file
-			isforv = true
-			forv = "file"
-		}
-
-		if _, ok = t.TxData[fitem.Name]; !ok {
-			t.TxData[fitem.Name] = v
-		}
-		if err != nil {
-			return err
-		}
-		if isforv {
-			v = forv
-		}
-		forsign = append(forsign, fmt.Sprintf("%v", v))
-	}
-	t.TxData[`forsign`] = strings.Join(forsign, ",")
 	return nil
 }
 
@@ -311,7 +216,6 @@ func (t *Transaction) parseFromContract() error {
 		log.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
 		return fmt.Errorf(`unknown contract %d`, smartTx.Type)
 	}
-	forsign := []string{smartTx.ForSign()}
 
 	t.TxContract = contract
 	t.TxHeader = &smartTx.Header
@@ -320,11 +224,9 @@ func (t *Transaction) parseFromContract() error {
 	txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 
 	if txInfo != nil {
-		if err := t.fillTxData(*txInfo, smartTx.Params, forsign); err != nil {
+		if err := t.fillTxData(*txInfo, smartTx.Params); err != nil {
 			return err
 		}
-	} else {
-		t.TxData[`forsign`] = strings.Join(forsign, ",")
 	}
 
 	return nil
@@ -376,18 +278,18 @@ func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 	return nil
 }
 
-func (t *Transaction) Play() (string, error) {
+func (t *Transaction) Play() (string, []smart.FlushInfo, error) {
 	// smart-contract
 	if t.TxContract != nil {
 		// check that there are enough money in CallContract
-		return t.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
+		return t.CallContract()
 	}
 
 	if t.tx == nil {
-		return "", utils.ErrInfo(fmt.Errorf("can't find parser for %d", t.TxType))
+		return "", nil, utils.ErrInfo(fmt.Errorf("can't find parser for %d", t.TxType))
 	}
 
-	return "", t.tx.Action()
+	return "", nil, t.tx.Action()
 }
 
 // AccessRights checks the access right by executing the condition value
@@ -422,7 +324,7 @@ func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (t *Transaction) CallContract(flags int) (resultContract string, err error) {
+func (t *Transaction) CallContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
 	sc := smart.SmartContract{
 		VDE:           false,
 		Rollback:      true,
@@ -440,8 +342,13 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
 	}
-	resultContract, err = sc.CallContract(flags)
+	resultContract, err = sc.CallContract()
+	t.TxFuel = sc.TxFuel
 	t.SysUpdate = sc.SysUpdate
+	if sc.FlushRollback != nil {
+		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
+		copy(flushRollback, sc.FlushRollback)
+	}
 	return
 }
 

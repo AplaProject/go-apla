@@ -19,7 +19,6 @@ package smart
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -31,9 +30,21 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	errUpdNotExistRecord = errors.New(`Update for not existing record`)
-)
+func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) error {
+	rollbackTx := &model.RollbackTx{
+		BlockID:   sc.BlockData.BlockID,
+		TxHash:    sc.TxHash,
+		NameTable: table,
+		TableID:   tableID,
+		Data:      rollbackInfoStr,
+	}
+
+	err := rollbackTx.Create(sc.DbTransaction)
+	if err != nil {
+		return logErrorDB(err, "creating rollback tx")
+	}
+	return nil
+}
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
@@ -286,17 +297,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	if generalRollback {
-		rollbackTx := &model.RollbackTx{
-			BlockID:   sc.BlockData.BlockID,
-			TxHash:    sc.TxHash,
-			NameTable: table,
-			TableID:   tableID,
-			Data:      rollbackInfoStr,
-		}
-
-		err = rollbackTx.Create(sc.DbTransaction)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating rollback tx")
+		if err = addRollback(sc, table, tableID, rollbackInfoStr); err != nil {
 			return 0, tableID, err
 		}
 	}
@@ -305,4 +306,15 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 func escapeSingleQuotes(val string) string {
 	return strings.Replace(val, `'`, `''`, -1)
+}
+
+func (sc *SmartContract) insert(fields []string, ivalues []interface{},
+	table string) (int64, string, error) {
+	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, nil, !sc.VDE && sc.Rollback, false)
+}
+
+func (sc *SmartContract) update(fields []string, values []interface{},
+	table string, whereField string, whereValue interface{}) (int64, string, error) {
+	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
+		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
 }

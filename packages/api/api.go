@@ -291,9 +291,7 @@ func checkEcosystem(w http.ResponseWriter, data *apiData, logger *log.Entry) (in
 		}
 	}
 	prefix := converter.Int64ToStr(ecosystemID)
-	// if data.vde {
-	// 	prefix += `_vde`
-	// }
+
 	return ecosystemID, prefix, nil
 }
 

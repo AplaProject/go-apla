@@ -182,7 +182,7 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 		}
 	}
 
-	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
+	if ret, err = sc.CallContract(); err == nil {
 		result.Result = ret
 	} else {
 		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {
