@@ -338,6 +338,7 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		BlockData:     t.BlockData,
 		TxHash:        t.TxHash,
 		TxSignature:   t.TxSignature,
+		TxSize:        int64(len(t.TxBinaryData)),
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,

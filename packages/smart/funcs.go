@@ -112,6 +112,7 @@ type SmartContract struct {
 	Loop          map[string]bool
 	TxHash        []byte
 	TxSignature   []byte
+	TxSize        int64
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand

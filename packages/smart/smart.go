@@ -1048,7 +1048,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 				return retError(errNegPrice)
 			}
 		}
-		sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
+		sizeFuel = syspar.GetSizeFuel() * sc.TxSize / 1024
 		priceCost := decimal.New(price, 0)
 		if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
 			logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")

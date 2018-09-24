@@ -74,9 +74,9 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	if sc.TxContract == nil {
 		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.Type)
 	}
-	forsign := sc.TxSmart.ForSign()
+	forsign := ""
 
-	input := sc.TxSmart.Data
+	input := data[:]
 	sc.TxData = make(map[string]interface{})
 
 	if sc.TxContract.Block.Info.(*script.ContractInfo).Tx != nil {
