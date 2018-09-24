@@ -91,6 +91,27 @@ func (_m *MockTransaction) Get(key string) (string, error) {
 	return r0, r1
 }
 
+// Len provides a mock function with given fields: name
+func (_m *MockTransaction) Len(name string) (int, error) {
+	ret := _m.Called(name)
+
+	var r0 int
+	if rf, ok := ret.Get(0).(func(string) int); ok {
+		r0 = rf(name)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemoveIndex provides a mock function with given fields: name
 func (_m *MockTransaction) RemoveIndex(name string) error {
 	ret := _m.Called(name)

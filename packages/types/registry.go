@@ -17,6 +17,10 @@ type Registry struct {
 	Type      RegistryType
 }
 
+type Pricer interface {
+	Price() int64
+}
+
 type MetadataRegistryReader interface {
 	Get(registry *Registry, pkValue string, out interface{}) error
 	Walk(registry *Registry, field string, fn func(jsonRow string) bool) error
@@ -37,6 +41,7 @@ type MetadataRegistryWriter interface {
 type MetadataRegistryReaderWriter interface {
 	MetadataRegistryReader
 	MetadataRegistryWriter
+	Pricer
 }
 
 // MetadataRegistryStorage provides a read or read-write transactions for metadata registry

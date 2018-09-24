@@ -11,10 +11,10 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/GenesisKernel/memdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tidwall/gjson"
-	"github.com/yddmat/memdb"
 )
 
 type testModel struct {
@@ -82,11 +82,29 @@ func TestMetadataTx_RW(t *testing.T) {
 		require.Nil(t, err)
 
 		reg, err := NewMetadataStorage(db, []types.Index{
-			{Field: "name", Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary}},
-		}, false)
+			{
+				Registry: &types.Registry{Name: "key"},
+				Field:    "amount",
+				SortFn: func(a, b string) bool {
+					return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
+				},
+			},
+			{
+				Field:    "name",
+				Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
+				SortFn: func(a, b string) bool {
+					return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
+				},
+			},
+		}, false, true)
 		require.Nil(t, err)
 
 		metadataTx := reg.Begin()
+		require.Nil(t, err, c.testname)
+
+		err = metadataTx.Insert(nil, &types.Registry{Name: "ecosystem"}, "abc", model.Ecosystem{
+			Name: "abc",
+		})
 		require.Nil(t, err, c.testname)
 
 		err = metadataTx.Insert(nil, &c.registry, c.pkValue, c.value)
@@ -128,7 +146,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
 			},
 		},
-	}, rollbacks)
+	}, rollbacks, true)
 	require.Nil(b, err)
 
 	metadataTx := storage.Begin()
@@ -160,7 +178,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 			model.KeySchema{
 				ID:        id,
 				PublicKey: make([]byte, 64),
-				Amount:    rand.Int63(),
+				Amount:    strconv.FormatInt(rand.Int63(), 10),
 			},
 		)
 
@@ -182,22 +200,11 @@ func BenchmarkMetadataTx(b *testing.B) {
 			strconv.FormatInt(id, 10),
 			model.KeySchema{
 				ID:     id,
-				Amount: 0,
+				Amount: "0",
 			},
 		)
 	}
 
 	metadataTx.Commit()
 	fmt.Println("Updated", count, "keys:", time.Since(updStart))
-
-	//require.Nil(b, metadataTx.Walk(&types.Registry{
-	//	Name:      "key",
-	//	Ecosystem: &types.Ecosystem{Name: "e"},
-	//}, "amount", func(jsonRow string) bool {
-	//	k := model.KeySchema{}
-	//	require.Nil(b, json.Unmarshal([]byte(jsonRow), &k))
-	//	return true
-	//}))
-
-	os.Exit(1)
 }

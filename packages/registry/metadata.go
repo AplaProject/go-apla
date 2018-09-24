@@ -24,6 +24,8 @@ type metadataTx struct {
 	db kv.Database
 	tx kv.Transaction
 
+	price priceCounter
+
 	rollback *metadataRollback
 	indexer  *indexer
 }
@@ -44,8 +46,11 @@ func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registr
 	}
 
 	if registry.Name == "ecosystem" {
-		err := m.indexer.AddPrimaryValue(m.tx, pkValue)
-		if err != nil {
+		if err := m.indexer.addPrimaryValue(m.tx, pkValue); err != nil {
+			return err
+		}
+	} else {
+		if err := m.price.Add(Set, registry); err != nil {
 			return err
 		}
 	}
@@ -75,6 +80,12 @@ func (m *metadataTx) Update(ctx types.BlockchainContext, registry *types.Registr
 		return errors.Wrapf(err, "inserting value %s to %s registry", pkValue, registry.Name)
 	}
 
+	if registry.Name != "ecosystem" {
+		if err := m.price.Add(Update, registry); err != nil {
+			return err
+		}
+	}
+
 	if m.rollback != nil {
 		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, old)
 		if err != nil {
@@ -93,7 +104,7 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 
 	value, err := m.tx.Get(key)
 	if err != nil {
-		return errors.Wrapf(err, "retrieving %s from databse", key)
+		return errors.Wrapf(err, "retrieving %s from database", key)
 	}
 
 	err = json.Unmarshal([]byte(value), out)
@@ -101,13 +112,25 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 		return errors.Wrapf(err, "unmarshalling value %s to struct", value)
 	}
 
+	if err := m.price.Add(Get, registry); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
-	return m.tx.Ascend(m.indexer.formatIndexName(registry, field), func(key, value string) bool {
+	if err := m.tx.Ascend(m.indexer.formatIndexName(registry, field), func(key, value string) bool {
 		return fn(value)
-	})
+	}); err != nil {
+		return err
+	}
+
+	if err := m.price.AddWalk(registry, field); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (m *metadataTx) Rollback() error {
@@ -128,6 +151,10 @@ func (m *metadataTx) Commit() error {
 
 	m.closeTx()
 	return nil
+}
+
+func (m *metadataTx) Price() int64 {
+	return m.price.GetCurrentPrice()
 }
 
 func (m *metadataTx) closeTx() {
@@ -165,13 +192,15 @@ type metadataStorage struct {
 	indexer *indexer
 
 	rollback bool
+	pricing  bool
 }
 
-func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool) (types.MetadataRegistryStorage, error) {
+func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool, pricing bool) (types.MetadataRegistryStorage, error) {
 	ms := &metadataStorage{
 		db:       db,
 		indexer:  newIndexer(indexes),
 		rollback: rollback,
+		pricing:  pricing,
 	}
 
 	kvTx := db.Begin(true)
@@ -192,6 +221,10 @@ func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 
 	if m.rollback {
 		tx.rollback = &metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
+	}
+
+	if m.pricing {
+		tx.price = priceCounter{tx: databaseTx, indexer: m.indexer}
 	}
 
 	return tx

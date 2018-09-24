@@ -55,7 +55,7 @@ func TestMetadataIndex(t *testing.T) {
 		},
 	}
 
-	msrw, err := NewMetadataStorage(db, idxs, false)
+	msrw, err := NewMetadataStorage(db, idxs, false, true)
 	require.Nil(t, err)
 
 	mtx := msrw.Begin()

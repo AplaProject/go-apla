@@ -9,6 +9,12 @@
 			"revisionTime": "2018-07-10T02:10:38Z"
 		},
 		{
+			"checksumSHA1": "b/4Gb+j82k/coZHzmFSjOhlemIU=",
+			"path": "github.com/GenesisKernel/memdb",
+			"revision": "b2fb0d15d0d1f4f16079d0c1efffeabb7a6957eb",
+			"revisionTime": "2018-09-19T18:12:02Z"
+		},
+		{
 			"checksumSHA1": "zgHK1vxUJDZTXAPCw+Bls7St0Ks=",
 			"path": "github.com/astaxie/beego/config",
 			"revision": "c5118e9535f237996bae7c7baebe4ed4247cb2c6",

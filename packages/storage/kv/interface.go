@@ -23,6 +23,7 @@ type Transaction interface {
 
 	AddIndex(indexes ...Index) error
 	RemoveIndex(name string) error
+	Len(name string) (int, error)
 
 	Ascend(index string, iterator func(key, value string) bool) error
 

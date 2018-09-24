@@ -1,19 +1,16 @@
 package registry
 
 import (
-	"testing"
-
 	"encoding/json"
-
 	"fmt"
-
 	"strconv"
+	"testing"
 
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/GenesisKernel/memdb"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
-	"github.com/yddmat/memdb"
 )
 
 type teststruct struct {

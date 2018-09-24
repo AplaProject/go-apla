@@ -158,6 +158,15 @@ func (tx *Transaction) RemoveIndex(name string) error {
 	return tx.newIndexes.RemoveIndex(name)
 }
 
+func (tx *Transaction) Len(name string) (int, error) {
+	i := tx.newIndexes.GetIndex(name)
+	if i == nil {
+		return 0, ErrUnknownIndex
+	}
+
+	return i.tree.Len(), nil
+}
+
 func (tx *Transaction) Ascend(index string, iterator func(key, value string) bool) error {
 	tx.mu.RLock()
 	defer tx.mu.RUnlock()

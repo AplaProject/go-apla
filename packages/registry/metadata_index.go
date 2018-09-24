@@ -1,3 +1,5 @@
+//go:generate sh -c "mockery -inpkg -name registryIndexer -print > file.tmp && mv file.tmp indexer_mock.go"
+
 package registry
 
 import (
@@ -13,32 +15,50 @@ import (
 var ErrPrimaryRegistryNotFound = errors.New("primary registry not found")
 var ErrCreateIndexes = errors.New("cant create indexes")
 
+type registryIndexer interface {
+	init(tx kv.Transaction) error
+	getIndexes(reg *types.Registry) []types.Index
+
+	formatIndexName(reg *types.Registry, field string) string
+
+	addPrimaryValue(tx kv.Transaction, value string) error
+	removePrimaryValue(tx kv.Transaction, value string) error
+}
+
 type indexer struct {
-	indexes      []types.Index
+	indexes      map[string][]types.Index
 	primaryIndex string
 }
 
 func newIndexer(indexes []types.Index) *indexer {
-	return &indexer{indexes: indexes}
+	indexer := &indexer{indexes: make(map[string][]types.Index)}
+	for _, idx := range indexes {
+		current := indexer.indexes[idx.Registry.Name]
+		indexer.indexes[idx.Registry.Name] = append(current, idx)
+	}
+
+	return indexer
 }
 
 func (i *indexer) init(tx kv.Transaction) error {
 	var found bool
-	for _, index := range i.indexes {
-		if index.Registry == nil {
-			return ErrWrongRegistry
-		}
-
-		if index.Registry.Type == types.RegistryTypePrimary {
-			i.primaryIndex = i.formatIndexName(index.Registry, index.Field)
-
-			err := i.writeIndex(tx, index)
-			if err != nil {
-				return errors.New("cant init primary index")
+	for _, indexes := range i.indexes {
+		for _, index := range indexes {
+			if index.Registry == nil {
+				return ErrWrongRegistry
 			}
 
-			found = true
-			break
+			if index.Registry.Type == types.RegistryTypePrimary {
+				i.primaryIndex = i.formatIndexName(index.Registry, index.Field)
+
+				err := i.writeIndex(tx, index)
+				if err != nil {
+					return errors.New("cant init primary index")
+				}
+
+				found = true
+				break
+			}
 		}
 	}
 
@@ -75,34 +95,37 @@ func (i *indexer) init(tx kv.Transaction) error {
 
 func (i *indexer) makeIndexesForValues(primaryValues ...string) ([]types.Index, error) {
 	prepeared := make([]types.Index, 0)
-	for _, index := range i.indexes {
-		if index.Registry == nil {
-			return nil, ErrWrongRegistry
-		}
+	for _, indexes := range i.indexes {
+		for _, index := range indexes {
 
-		if index.Registry.Type != types.RegistryTypeDefault {
-			continue
-		}
-
-		for _, value := range primaryValues {
-			if index.Field == "" {
-				return nil, errors.New("unknown field")
+			if index.Registry == nil {
+				return nil, ErrWrongRegistry
 			}
 
-			r := *index.Registry
-			r.Ecosystem = &types.Ecosystem{Name: value}
-			prepeared = append(prepeared, types.Index{
-				Registry: &r,
-				Field:    index.Field,
-				SortFn:   index.SortFn,
-			})
+			if index.Registry.Type != types.RegistryTypeDefault {
+				continue
+			}
+
+			for _, value := range primaryValues {
+				if index.Field == "" {
+					return nil, errors.New("unknown field")
+				}
+
+				r := *index.Registry
+				r.Ecosystem = &types.Ecosystem{Name: value}
+				prepeared = append(prepeared, types.Index{
+					Registry: &r,
+					Field:    index.Field,
+					SortFn:   index.SortFn,
+				})
+			}
 		}
 	}
 
 	return prepeared, nil
 }
 
-func (i *indexer) AddPrimaryValue(tx kv.Transaction, value string) error {
+func (i *indexer) addPrimaryValue(tx kv.Transaction, value string) error {
 	newIndexes, err := i.makeIndexesForValues(value)
 	if err != nil {
 		return err
@@ -115,7 +138,7 @@ func (i *indexer) AddPrimaryValue(tx kv.Transaction, value string) error {
 	return nil
 }
 
-func (i *indexer) RemovePrimaryValue(tx kv.Transaction, value string) error {
+func (i *indexer) removePrimaryValue(tx kv.Transaction, value string) error {
 	indexes, err := i.makeIndexesForValues(value)
 	if err != nil {
 		return err
@@ -141,6 +164,10 @@ func (i *indexer) writeIndex(tx kv.Transaction, indexes ...types.Index) error {
 	}
 
 	return tx.AddIndex(kvIndexes...)
+}
+
+func (i indexer) getIndexes(reg *types.Registry) []types.Index {
+	return i.indexes[reg.Name]
 }
 
 func (i indexer) formatIndexPattern(reg *types.Registry) string {

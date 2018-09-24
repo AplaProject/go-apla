@@ -1,7 +1,7 @@
 package kv
 
 import (
-	"github.com/yddmat/memdb"
+	"github.com/GenesisKernel/memdb"
 )
 
 type DatabaseAdapter struct {

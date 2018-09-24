@@ -1,7 +1,6 @@
 package migration
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 )
 
@@ -21,6 +20,6 @@ var firstEcosystemData = []Row{
 	{
 		Registry:   &types.Registry{Name: "ecosystems", Ecosystem: &types.Ecosystem{Name: "1"}, Type: types.RegistryTypePrimary},
 		PrimaryKey: "1",
-		Data:       model.Ecosystem{ID: 1, Name: "platform ecosystem"},
+		//Data:       model.Ecosystem{ID: 1, Name: "platform ecosystem"},
 	},
 }
