@@ -18,7 +18,7 @@ INSERT INTO "1_roles" ("id", "default_page", "role_name", "deleted", "role_type"
 
 var firstEcosystemData = []Row{
 	{
-		Registry:   &types.Registry{Name: "ecosystems", Ecosystem: &types.Ecosystem{Name: "1"}, Type: types.RegistryTypePrimary},
+		Registry:   &types.Registry{Name: "ecosystem", Ecosystem: &types.Ecosystem{Name: "1"}, Type: types.RegistryTypePrimary},
 		PrimaryKey: "1",
 		//Data:       model.Ecosystem{ID: 1, Name: "platform ecosystem"},
 	},

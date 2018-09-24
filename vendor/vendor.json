@@ -505,12 +505,6 @@
 			"revisionTime": "2016-09-08T23:10:31Z"
 		},
 		{
-			"checksumSHA1": "Y2UnijYbqYEP2V8cm4CHLA8kz1c=",
-			"path": "github.com/yddmat/memdb",
-			"revision": "dd1e258413ad1523cd69cd9bcc25581cd85ecfcc",
-			"revisionTime": "2018-09-11T03:58:25Z"
-		},
-		{
 			"checksumSHA1": "iNE2KX9BQzCptlQC2DdQEVmn4R4=",
 			"path": "golang.org/x/crypto/sha3",
 			"revision": "9f005a07e0d31d45e6656d241bb5c0f2efd4bc94",

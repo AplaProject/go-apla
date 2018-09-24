@@ -45,9 +45,9 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/registry"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
+	"github.com/GenesisKernel/memdb"
 	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
-	"github.com/yddmat/memdb"
 )
 
 func initStatsd() {
@@ -231,7 +231,7 @@ func Start() {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
 		Exit(1)
 	}
-	model.MetadataRegistry, err = registry.NewMetadataStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), false)
+	model.MetadataRegistry, err = registry.NewMetadataStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), false, true)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("adding indexes")
 		Exit(1)

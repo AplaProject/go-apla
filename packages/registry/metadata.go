@@ -27,7 +27,7 @@ type metadataTx struct {
 	price priceCounter
 
 	rollback *metadataRollback
-	indexer  *indexer
+	indexer  registryIndexer
 }
 
 func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registry, pkValue string, value interface{}) error {
@@ -189,7 +189,7 @@ func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
 
 type metadataStorage struct {
 	db      kv.Database
-	indexer *indexer
+	indexer registryIndexer
 
 	rollback bool
 	pricing  bool

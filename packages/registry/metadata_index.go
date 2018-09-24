@@ -1,4 +1,4 @@
-//go:generate sh -c "mockery -inpkg -name registryIndexer -print > file.tmp && mv file.tmp indexer_mock.go"
+//go:generate sh -c "mockery -inpkg -name registryIndexer -print > file.tmp && mv file.tmp metadata_indexer_mock.go"
 
 package registry
 

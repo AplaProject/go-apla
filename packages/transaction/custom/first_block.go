@@ -41,7 +41,7 @@ const firstEcosystemID = 1
 type FirstBlockTransaction struct {
 	Logger        *log.Entry
 	DbTransaction *model.DbTransaction
-	MetaDb        types.MetadataRegistryWriter
+	MetaDb        types.MetadataRegistryReaderWriter
 	Data          interface{}
 }
 
@@ -63,7 +63,7 @@ func (t *FirstBlockTransaction) Action() error {
 	logger := t.Logger
 	data := t.Data.(*consts.FirstBlock)
 	keyID := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID)
+	err := model.ExecSchemaEcosystem(nil, t.MetaDb, firstEcosystemID, keyID, ``, keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return utils.ErrInfo(err)

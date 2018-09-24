@@ -479,7 +479,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 	if err := sc.MetaDb.Insert(
 		nil, // TODO
-		&types.Registry{Name: "ecosystems", Type: types.RegistryTypePrimary},
+		&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
 		strconv.FormatInt(id, 10),
 		model.Ecosystem{
 			ID:   id,
@@ -506,14 +506,14 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 	_, err := DBUpdate(sc, "@1_ecosystems", sysID, map[string]interface{}{"name": newName})
 	if err := sc.MetaDb.Update(
 		nil, // TODO
-		&types.Registry{Name: "ecosystems", Type: types.RegistryTypePrimary},
+		&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
 		strconv.FormatInt(sysID, 10),
 		model.Ecosystem{
-			ID:   id,
-			Name: name,
+			ID:   sysID,
+			Name: newName,
 		},
 	); err != nil {
-		return 0, logErrorDB(err, "insert new ecosystem to metadb")
+		return logErrorDB(err, "insert new ecosystem to metadb")
 	}
 
 	return err
