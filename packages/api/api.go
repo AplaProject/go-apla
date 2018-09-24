@@ -35,6 +35,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -316,4 +317,21 @@ func fillTokenData(data *apiData, claims *JWTClaims, logger *log.Entry) error {
 		data.ecosystemName = ecosystem.Name
 	}
 	return nil
+}
+
+func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	var reason string
+
+	switch service.NodePauseType() {
+	case service.NoPause:
+		return nil
+	case service.PauseTypeUpdatingBlockchain:
+		reason = "E_UPDATING"
+		break
+	case service.PauseTypeStopingNetwork:
+		reason = "E_STOPPING"
+		break
+	}
+
+	return errorAPI(w, reason, http.StatusServiceUnavailable)
 }

@@ -557,7 +557,6 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`block_time`:        blockTime,
 		`original_contract`: ``,
 		`this_contract`:     ``,
-		`role_id`:           head.RoleID,
 		`guest_key`:         vde.GuestKey,
 	}
 
@@ -922,6 +921,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	logger := sc.GetLogger()
 	payWallet := &model.Key{}
 	sc.TxContract.Extend = sc.getExtend()
+	sc.TxSmart.TokenEcosystem = consts.TokenEcosystem
 
 	retError := func(err error) (string, error) {
 		eText := err.Error()
@@ -984,9 +984,6 @@ func (sc *SmartContract) CallContract() (string, error) {
 		return retError(errIncorrectSign)
 	}
 	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
-		if sc.TxSmart.TokenEcosystem == 0 {
-			sc.TxSmart.TokenEcosystem = 1
-		}
 		fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")

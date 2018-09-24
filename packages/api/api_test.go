@@ -281,7 +281,7 @@ func postTxResult(name string, form *url.Values) (id int64, msg string, err erro
 		return 0, "", err
 	}
 
-	ret := map[string]interface{}{}
+	ret := &sendTxResult{}
 	err = sendMultipart("sendTx", map[string][]byte{
 		"data": data,
 	}, &ret)
@@ -289,17 +289,10 @@ func postTxResult(name string, form *url.Values) (id int64, msg string, err erro
 		return
 	}
 
-	if len(form.Get("vde")) > 0 {
-		if ret[`result`] != nil {
-			msg = fmt.Sprint(ret[`result`])
-			id = converter.StrToInt64(msg)
-		}
-		return
-	}
 	if len(form.Get("nowait")) > 0 {
 		return
 	}
-	id, err = waitTx(ret[`hash`].(string))
+	id, err = waitTx(ret.Hashes["data"])
 	if id != 0 && err != nil {
 		msg = err.Error()
 		err = nil

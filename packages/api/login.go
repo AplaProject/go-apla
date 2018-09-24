@@ -108,7 +108,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		if account.Deleted == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
-	} else {
+	} else if !conf.Config.IsSupportingVDE() {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
@@ -137,42 +137,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			},
 		}
 
-		if conf.Config.IsSupportingVDE() {
-			// signPrms := []string{sc.ForSign()}
-			// signPrms = append(signPrms, hexPubKey)
-			// signData := strings.Join(signPrms, ",")
-			// signature, err := crypto.SignString(NodePrivateKey, signData)
-			// if err != nil {
-			// 	log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
-			// 	return err
-			// }
-
-			// sc.BinSignatures = converter.EncodeLengthPlusData(signature)
-
-			// if sc.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
-			// 	log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
-			// 	return err
-			// }
-
-			// serializedContract, err := msgpack.Marshal(sc)
-			// if err != nil {
-			// 	logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-			// 	return errorAPI(w, err, http.StatusInternalServerError)
-			// }
-			// ret, err := VDEContract(serializedContract, data)
-			// if err != nil {
-			// 	return errorAPI(w, err, http.StatusInternalServerError)
-			// }
-			// data.result = ret
+		txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
 		} else {
-			txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
+			err = tx.CreateTransaction(txData, txHash, sc.KeyID)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
-			} else {
-				err = tx.CreateTransaction(txData, txHash, sc.KeyID)
-				if err != nil {
-					log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
-				}
+				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 			}
 		}
 	}
