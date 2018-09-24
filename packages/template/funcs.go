@@ -657,6 +657,7 @@ func dbfindTag(par parFunc) string {
 	}
 
 	for i, col := range queryColumns {
+		col = strings.Trim(col, `"`)
 		switch columnTypes[col] {
 		case "bytea":
 			extendedColumns[col] = columnTypeBlob
