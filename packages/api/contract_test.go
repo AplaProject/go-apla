@@ -118,9 +118,14 @@ var contracts = []smartContract{
 	{`FmtMoney`, `contract FmtMoney {
 		action {
 			Test("result", FormatMoney("123456789", 0))
+			$num2 = "5500000"
+			Test("t1", FormatMoney($num1, -1))  //123456723720
+			Test("t2", FormatMoney($num1, 0)   //12345672372
+			Test("t3", FormatMoney($num1, 1)   //1234567237,2
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`result`: `0.000000000123456789`}},
+		{nil, map[string]string{`result`: `0.000000000123456789`,
+			`t1`: `123456723720`, `t2`: `12345672372`, `t3`: `1234567237.2`}},
 	}},
 
 	{`StrNil`, `contract StrNil {

@@ -2355,7 +2355,7 @@ func FormatMoney(sc *SmartContract, exp string, digit int64) (string, error) {
 	if strings.IndexByte(exp, '.') >= 0 {
 		return ``, errInvalidValue
 	}
-	if digit > 0 {
+	if digit != 0 {
 		cents = digit
 	} else {
 		sp := &model.StateParameter{}
