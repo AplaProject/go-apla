@@ -54,7 +54,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
-	"github.com/yddmat/memdb"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -260,9 +259,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"CreateContract":               CreateContract,
 		"UpdateContract":               UpdateContract,
 		"TableConditions":              TableConditions,
-		"CreateKey":                    CreateKey,
-		"UpdateKey":                    UpdateKey,
-		"GetKey":                       GetKey,
 		"CreateLanguage":               CreateLanguage,
 		"EditLanguage":                 EditLanguage,
 		"Activate":                     Activate,
@@ -1835,61 +1831,6 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 		if err != nil {
 			return logErrorDB(err, "updating full nodes")
 		}
-	}
-
-	return nil
-}
-
-func GetKey(sc *SmartContract, id int64) (interface{}, error) {
-	key := &model.KeySchema{}
-
-	if err := sc.MetaDb.Get(
-		&types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
-		strconv.FormatInt(id, 10),
-		key,
-	); err != nil {
-		if err == memdb.ErrNotFound {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	return key, nil
-}
-
-func CreateKey(sc *SmartContract, id int64, amount, pubkey string) error {
-	//fmt.Println("CreatKey!")
-	//if err := validateAccess(`CreateKey`, sc, nNewUser); err != nil {
-	//	return err
-	//}
-
-	// TODO remove old version, Ecosystem name to id
-	// TODO ctx
-	if err := sc.MetaDb.Insert(nil, &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
-		strconv.FormatInt(id, 10),
-		model.KeySchema{ID: id, Amount: amount, PublicKey: []byte(pubkey)},
-	); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError}).Error("Writing to metadb")
-		return err
-	}
-
-	return nil
-}
-
-// TODO pubkey string, deleted, blocked bool
-func UpdateKey(sc *SmartContract, id int64, amount string) error {
-	//if err := validateAccess(`CreateKey`, sc); err != nil {
-	//	return err
-	//}
-
-	// TODO ctx
-	if err := sc.MetaDb.Update(nil, &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
-		strconv.FormatInt(id, 10),
-		model.KeySchema{ID: id, Amount: amount}, // PublicKey: []byte(pubkey), Deleted: deleted, Blocked: blocked
-	); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError}).Error("Updating in metadb")
-		return err
 	}
 
 	return nil
