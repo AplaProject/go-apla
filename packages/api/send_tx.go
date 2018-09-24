@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -43,8 +44,13 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	defer file.Close()
 	var txData []byte
 	if txData, err = ioutil.ReadAll(file); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading multipart file")
+		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading multipart file")
 		return err
+	}
+
+	if int64(len(txData)) > syspar.GetMaxTxSize() {
+		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
+		return errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
 	}
 
 	rtx := &transaction.RawTransaction{}
@@ -53,7 +59,7 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	}
 
 	if err = model.SendTx(rtx, data.keyId); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 

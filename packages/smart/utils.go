@@ -22,8 +22,6 @@ import (
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/shopspring/decimal"
@@ -83,8 +81,6 @@ func validateAccess(funcName string, sc *SmartContract, contracts ...string) err
 }
 
 func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (map[string]interface{}, error) {
-	// TODO: remove forsign
-
 	if len(params) != len(fieldInfos) {
 		return nil, fmt.Errorf("Invalid number of parameters")
 	}
@@ -92,95 +88,76 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 	txData := make(map[string]interface{})
 
 	for _, fitem := range fieldInfos {
-		var err error
-		var v interface{}
-		var ok bool
-		var forv string
-		var isforv bool
-
+		var (
+			v   interface{}
+			ok  bool
+			err error
+		)
 		index := fitem.Name
 		switch fitem.Type.String() {
 		case `bool`:
 			if v, ok = params[index].(bool); !ok {
-				return nil, fmt.Errorf("Incorrect type bool")
-			}
-		case `uint64`:
-			if v, ok = params[index].(uint64); !ok {
-				return nil, fmt.Errorf("Incorrect type uint64")
+				err = fmt.Errorf("Invalid bool type")
+				break
 			}
 		case `float64`:
 			if v, ok = params[index].(float64); !ok {
-				return nil, fmt.Errorf("Incorrect type float64")
+				err = fmt.Errorf("Invalid float type")
+				break
 			}
 		case `int64`:
-			if v, ok = params[index].(int64); !ok {
-				return nil, fmt.Errorf("Incorrect type int64")
+			switch t := params[index].(type) {
+			case int64:
+				v = t
+			case uint64:
+				v = int64(t)
+			default:
+				err = fmt.Errorf("Invalid int type")
 			}
 		case script.Decimal:
+			// TODO digits for ecosystem
 			var s string
 			if s, ok = params[index].(string); !ok {
-				return nil, fmt.Errorf("Incorrect type money")
+				err = fmt.Errorf("Invalid money type")
+				break
 			}
 			v, err = decimal.NewFromString(s)
 			if err != nil {
-				return nil, err
+				break
 			}
 		case `string`:
 			if v, ok = params[index].(string); !ok {
-				return nil, fmt.Errorf("Incorrect type string")
+				err = fmt.Errorf("Invalid string type")
+				break
 			}
 		case `[]uint8`:
-			var val []byte
-			if val, ok = params[index].([]byte); !ok {
-				return nil, fmt.Errorf("Incorrect type []uint8")
+			if v, ok = params[index].([]byte); !ok {
+				err = fmt.Errorf("Invalid bytes type")
+				break
 			}
-
-			if forv, err = crypto.HashHex(val); err != nil {
-				return nil, err
-			}
-
-			isforv = true
-			v = val
 		case `[]interface {}`:
-			var val []interface{}
-			if val, ok = params[index].([]interface{}); !ok {
-				return nil, fmt.Errorf("Incorrect type []interface {}")
+			if v, ok = params[index].([]interface{}); !ok {
+				err = fmt.Errorf("Invalid array type")
+				break
 			}
-
-			list := make([]string, len(val)+1)
-			list[0] = converter.IntToStr(len(val))
-			for i, _ := range val {
-				list[i+1] = fmt.Sprintf("%v", val[i])
-			}
-
-			v = val
-			isforv = true
-			forv = strings.Join(list, ",")
 		case script.File:
 			var val map[interface{}]interface{}
 			if val, ok = params[index].(map[interface{}]interface{}); !ok {
-				return nil, fmt.Errorf("Incorrect type file")
+				err = fmt.Errorf("Invalid file type")
+				break
 			}
 
-			file := types.File{
-				"Name":     val["Name"].(string),
-				"MimeType": val["MimeType"].(string),
-				"Body":     val["Body"].([]byte),
+			if v, ok = types.NewFileFromMap(val); !ok {
+				err = fmt.Errorf("Invalid attrs of file")
+				break
 			}
-
-			v = file
-			isforv = true
-			forv = "file"
+		}
+		if err != nil {
+			return nil, fmt.Errorf("Invalid param '%s': %s", index, err)
 		}
 
 		if _, ok = txData[fitem.Name]; !ok {
 			txData[fitem.Name] = v
-		}
-		if err != nil {
-			return nil, err
-		}
-		if isforv {
-			v = forv
 		}
 	}
 

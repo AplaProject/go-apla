@@ -27,6 +27,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -36,6 +37,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
 const apiAddress = "http://localhost:7079"
@@ -223,32 +226,77 @@ func randName(prefix string) string {
 	return fmt.Sprintf(`%s%d`, prefix, time.Now().Unix())
 }
 
-func postTxResult(txname string, form *url.Values) (id int64, msg string, err error) {
-	ret := make(map[string]interface{})
-	err = sendPost(`prepare/`+txname, form, &ret)
+func postTxResult(name string, form *url.Values) (id int64, msg string, err error) {
+	var contract getContractResult
+	if err = sendGet("contract/"+name, nil, &contract); err != nil {
+		return
+	}
+
+	params := make(map[string]interface{})
+	for _, field := range contract.Fields {
+		name := field.Name
+		value := form.Get(name)
+
+		if len(value) == 0 && strings.Contains(field.Tags, script.TagOptional) {
+			params[name] = setDefaultValue(field.Type)
+			continue
+		}
+
+		switch field.Type {
+		case "bool":
+			params[name], err = strconv.ParseBool(value)
+		case "int64":
+			params[name], err = strconv.ParseInt(value, 10, 64)
+		case "float64":
+			params[name], err = strconv.ParseFloat(value, 64)
+		case "string", "decimal.Decimal":
+			params[name] = value
+		}
+
+		if err != nil {
+			err = fmt.Errorf("Parse param '%s': %s", name, err)
+			return
+		}
+	}
+
+	var privateKey, publicKey []byte
+	if privateKey, err = hex.DecodeString(gPrivate); err != nil {
+		return
+	}
+	if publicKey, err = crypto.PrivateToPublic(privateKey); err != nil {
+		return
+	}
+
+	data, _, err := tx.NewTransaction(tx.SmartContract{
+		Header: tx.Header{
+			Type:        int(contract.ID),
+			Time:        time.Now().Unix(),
+			EcosystemID: 1,
+			KeyID:       crypto.Address(publicKey),
+			NetworkID:   consts.NETWORK_ID,
+		},
+		Params: params,
+	}, privateKey)
+	if err != nil {
+		return 0, "", err
+	}
+
+	ret := map[string]interface{}{}
+	err = sendMultipart("sendTx", map[string][]byte{
+		"data": data,
+	}, &ret)
 	if err != nil {
 		return
 	}
 
-	form = &url.Values{}
-	if err = appendSign(ret, form); err != nil {
-		return
-	}
-	requestID := ret["request_id"].(string)
-
-	ret = map[string]interface{}{}
-	err = sendPost(`contract/`+requestID, form, &ret)
-	if err != nil {
-		return
-	}
-	if len((*form)[`vde`]) > 0 {
+	if len(form.Get("vde")) > 0 {
 		if ret[`result`] != nil {
 			msg = fmt.Sprint(ret[`result`])
 			id = converter.StrToInt64(msg)
 		}
 		return
 	}
-	if len((*form)[`nowait`]) > 0 {
+	if len(form.Get("nowait")) > 0 {
 		return
 	}
 	id, err = waitTx(ret[`hash`].(string))
@@ -256,7 +304,25 @@ func postTxResult(txname string, form *url.Values) (id int64, msg string, err er
 		msg = err.Error()
 		err = nil
 	}
+
 	return
+}
+
+func setDefaultValue(fieldType string) interface{} {
+	switch fieldType {
+	case "bool":
+		return false
+	case "int64":
+		return 0
+	case "float64":
+		return 0.0
+	case "string":
+		return ""
+	case "decimal.Decimal":
+		return "0"
+	}
+
+	return nil
 }
 
 func RawToString(input json.RawMessage) string {
@@ -300,7 +366,7 @@ func TestGetAvatar(t *testing.T) {
 	assert.Equal(t, expectedMime, mime, "content type must be a '%s' but returns '%s'", expectedMime, mime)
 }
 
-func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {
+/* func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {
 	ret := make(map[string]interface{})
 	if err = sendMultipart("/prepare/"+txname, params, files, &ret); err != nil {
 		return
@@ -325,9 +391,9 @@ func postTxMultipart(txname string, params map[string]string, files map[string][
 	}
 
 	return
-}
+}*/
 
-func sendMultipart(url string, params map[string]string, files map[string][]byte, v interface{}) error {
+func sendMultipart(url string, files map[string][]byte, v interface{}) error {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
@@ -337,12 +403,6 @@ func sendMultipart(url string, params map[string]string, files map[string][]byte
 			return err
 		}
 		if _, err := part.Write(data); err != nil {
-			return err
-		}
-	}
-
-	for key, value := range params {
-		if err := writer.WriteField(key, value); err != nil {
 			return err
 		}
 	}

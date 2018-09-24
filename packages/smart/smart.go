@@ -51,6 +51,10 @@ type Contract struct {
 	Block         *script.Block
 }
 
+func (c *Contract) Info() *script.ContractInfo {
+	return c.Block.Info.(*script.ContractInfo)
+}
+
 const (
 	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000

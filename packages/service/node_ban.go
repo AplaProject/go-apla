@@ -134,12 +134,6 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		return errors.New("cant find current node in full nodes list")
 	}
 
-	// params := make([]byte, 0)
-	// for _, p := range []int64{producer.KeyID, currentNode.KeyID, blockId, blockTime} {
-	// 	converter.EncodeLenInt64(&params, p)
-	// }
-	// params = append(append(params, converter.EncodeLength(int64(len(reason)))...), []byte(reason)...)
-
 	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
 	info := contract.Block.Info.(*script.ContractInfo)
@@ -151,7 +145,6 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 			EcosystemID: 1,
 			KeyID:       conf.Config.KeyID,
 		},
-		// SignedBy: smart.PubToID(NodePublicKey),
 		Params: map[string]interface{}{
 			"ProducerNodeID": producer.KeyID,
 			"ConsumerNodeID": currentNode.KeyID,
@@ -160,13 +153,13 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 			"Reason":         reason,
 		},
 	}
-	err = tx.BuildTransaction(sc, nodePrivateKey)
+
+	txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return err
 	}
 
-	return nil
+	return tx.CreateTransaction(txData, txHash, conf.Config.KeyID)
 }
 
 func (nbs *NodesBanService) FilterBannedHosts(hosts []string) ([]string, error) {

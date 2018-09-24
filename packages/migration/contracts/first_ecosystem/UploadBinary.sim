@@ -4,8 +4,7 @@ contract UploadBinary {
     data {
         ApplicationId int
         Name string
-        Data bytes "file"
-        DataMimeType string "optional"
+        Data file
     }
 
     conditions {
@@ -20,17 +19,17 @@ contract UploadBinary {
     }
     action {
         var hash string
-        hash = Hash($Data)
+        hash = Hash($Data["Body"])
 
-        if $DataMimeType == "" {
-            $DataMimeType = "application/octet-stream"
+        if $Data["MimeType"] == "" {
+            $Data["MimeType"] = "application/octet-stream"
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
+            DBUpdate("binaries", $Id, {"data": $Data["Body"],"hash": hash,"mime_type": $Data["MimeType"]})
         } else {
             $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
-               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
+               "name": $Name,"data": $Data["Body"],"hash": hash, "mime_type": $Data["MimeType"]})
         }
 
         $result = $Id

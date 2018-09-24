@@ -165,9 +165,14 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			// }
 			// data.result = ret
 		} else {
-			err = tx.BuildTransaction(sc, nodePrivateKey)
+			txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
+			} else {
+				err = tx.CreateTransaction(txData, txHash, sc.KeyID)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+				}
 			}
 		}
 	}
