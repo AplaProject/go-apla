@@ -173,6 +173,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			}
 			data.result = ret
 		} else if len(pubkey) > 0 {
+			logger.WithFields(log.Fields{"type": "NewUser", "pkey": NodePrivateKey,
+				"pubkey": NodePublicKey, "hex": hexPubKey}).Error("new user info")
 			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
