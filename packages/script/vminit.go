@@ -243,7 +243,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return ``, fmt.Errorf(eUndefinedParam, tx.Name)
 				}
@@ -499,7 +499,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			val, ok := params[tx.Name]
 			if !ok {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return nil, fmt.Errorf(eUndefinedParam, tx.Name)
 				}
