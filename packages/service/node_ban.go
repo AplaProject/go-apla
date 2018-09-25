@@ -140,7 +140,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 
 	sc := tx.SmartContract{
 		Header: tx.Header{
-			Type:        int(info.ID),
+			ID:          int(info.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: 1,
 			KeyID:       conf.Config.KeyID,

@@ -211,10 +211,10 @@ func (t *Transaction) parseFromContract() error {
 	t.TxTime = smartTx.Time
 	t.TxKeyID = smartTx.KeyID
 
-	contract := smart.GetContractByID(int32(smartTx.Type))
+	contract := smart.GetContractByID(int32(smartTx.ID))
 	if contract == nil {
-		log.WithFields(log.Fields{"contract_type": smartTx.Type, "type": consts.NotFound}).Error("unknown contract")
-		return fmt.Errorf(`unknown contract %d`, smartTx.Type)
+		log.WithFields(log.Fields{"contract_id": smartTx.ID, "type": consts.NotFound}).Error("unknown contract")
+		return fmt.Errorf(`unknown contract %d`, smartTx.ID)
 	}
 
 	t.TxContract = contract

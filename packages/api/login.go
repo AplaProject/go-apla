@@ -126,7 +126,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		contract := smart.GetContract("NewUser", 1)
 		sc := tx.SmartContract{
 			Header: tx.Header{
-				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
+				ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,

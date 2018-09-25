@@ -46,7 +46,7 @@ func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
 
 	smartTx := tx.SmartContract{
 		Header: tx.Header{
-			Type:        int(info.ID),
+			ID:          int(info.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: firstEcosystemID,
 			KeyID:       keyID,

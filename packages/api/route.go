@@ -66,7 +66,6 @@ func Route(route *hr.Router) {
 	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
 	post(`content/hash/:name`, ``, getPageHash)
 	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
-	post(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
 	post(`sendTx`, ``, authWallet, sendTx)
 	post(`refresh`, `token:string,?expire:int64`, refresh)
 	post(`test/:name`, ``, getTest)

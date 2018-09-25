@@ -35,8 +35,8 @@ const DEFAULT_TCP_PORT = 7078
 // FounderAmount is the starting amount of founder
 const FounderAmount = 50000
 
-// EGS_DIGIT money_digit for EGS 1000000000000000000
-const EGS_DIGIT = 18
+// MoneyDigits is numbers of digits for tokens 1000000000000000000
+const MoneyDigits = 18
 
 // WAIT_CONFIRMED_NODES is used in confirmations
 const WAIT_CONFIRMED_NODES = 10

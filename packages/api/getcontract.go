@@ -18,7 +18,6 @@ package api
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -29,10 +28,9 @@ import (
 )
 
 type contractField struct {
-	Name string `json:"name"`
-	HTML string `json:"htmltype"`
-	Type string `json:"txtype"`
-	Tags string `json:"tags"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Optional bool   `json:"optional"`
 }
 
 type getContractResult struct {
@@ -68,30 +66,31 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
-			field := contractField{Name: fitem.Name, Type: fitem.Type.String(), Tags: fitem.Tags}
-
-			if strings.Contains(fitem.Tags, `hidden`) || strings.Contains(fitem.Tags, `signature`) {
-				field.HTML = `hidden`
-			} else {
-				for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
-					if strings.Contains(fitem.Tags, tag) {
-						field.HTML = tag
-						break
-					}
-				}
-				if len(field.HTML) == 0 {
-					if fitem.Type.String() == script.Decimal {
-						field.HTML = `money`
-					} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` {
-						field.HTML = `textinput`
-					}
-				}
-			}
-			fields = append(fields, field)
+			fields = append(fields, contractField{
+				Name:     fitem.Name,
+				Type:     getFieldTypeAlias(fitem.Type.String()),
+				Optional: fitem.ContainsTag(script.TagOptional),
+			})
 		}
 	}
 	result.Fields = fields
 
 	data.result = result
 	return nil
+}
+
+var fieldTypeAliases = map[string]string{
+	"int64":           "int",
+	"float64":         "float",
+	"decimal.Decimal": "money",
+	"[]uint8":         "bytes",
+	"[]interface {}":  "array",
+	"types.File":      "file",
+}
+
+func getFieldTypeAlias(t string) string {
+	if v, ok := fieldTypeAliases[t]; ok {
+		return v
+	}
+	return t
 }

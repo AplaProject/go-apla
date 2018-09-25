@@ -38,8 +38,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
 const (
@@ -136,30 +134,6 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 func getPrefix(data *apiData) (prefix string) {
 	prefix = converter.Int64ToStr(data.ecosystemId)
 	return
-}
-
-func getSignHeader(txName string, data *apiData) tx.Header {
-	return tx.Header{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId, NetworkID: consts.NETWORK_ID}
-}
-
-func getHeader(txName string, data *apiData) (tx.Header, error) {
-	publicKey := []byte("null")
-	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
-		publicKey = data.params[`pubkey`].([]byte)
-		lenpub := len(publicKey)
-		if lenpub > 64 {
-			publicKey = publicKey[lenpub-64:]
-		}
-	}
-	signature := data.params[`signature`].([]byte)
-	if len(signature) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
-		return tx.Header{}, fmt.Errorf("signature is empty")
-	}
-	return tx.Header{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
-		BinSignatures: converter.EncodeLengthPlusData(signature), NetworkID: consts.NETWORK_ID}, nil
 }
 
 // DefaultHandler is a common handle function for api requests

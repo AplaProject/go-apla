@@ -793,7 +793,7 @@ func checkSum(val []byte) int {
 
 // EGSMoney converts qEGS to EGS. For example, 123455000000000000000 => 123.455
 func EGSMoney(money string) string {
-	digit := consts.EGS_DIGIT
+	digit := consts.MoneyDigits
 	if len(money) < digit+1 {
 		money = strings.Repeat(`0`, digit+1-len(money)) + money
 	}

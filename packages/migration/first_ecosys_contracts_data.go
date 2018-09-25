@@ -1008,8 +1008,7 @@ VALUES
     data {
         ApplicationId int
         Name string
-        Data bytes "file"
-        DataMimeType string "optional"
+        Data file
     }
 
     conditions {
@@ -1023,18 +1022,22 @@ VALUES
         }
     }
     action {
-        var hash string
-        hash = Hash($Data)
+        var hash, mimeType string
+        var body bytes
 
-        if $DataMimeType == "" {
-            $DataMimeType = "application/octet-stream"
+        body = $Data["Body"]
+        hash = Hash(data)
+        mimeType = $Data["MimeType"]
+
+        if mimeType == "" {
+            mimeType = "application/octet-stream"
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
+            DBUpdate("binaries", $Id, {"data": body,"hash": hash,"mime_type": mimeType})
         } else {
             $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
-               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
+               "name": $Name,"data": body,"hash": hash,"mime_type": mimeType})
         }
 
         $result = $Id

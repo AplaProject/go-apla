@@ -18,18 +18,22 @@ contract UploadBinary {
         }
     }
     action {
-        var hash string
-        hash = Hash($Data["Body"])
+        var hash, mimeType string
+        var body bytes
 
-        if $Data["MimeType"] == "" {
-            $Data["MimeType"] = "application/octet-stream"
+        body = $Data["Body"]
+        hash = Hash(data)
+        mimeType = $Data["MimeType"]
+
+        if mimeType == "" {
+            mimeType = "application/octet-stream"
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, {"data": $Data["Body"],"hash": hash,"mime_type": $Data["MimeType"]})
+            DBUpdate("binaries", $Id, {"data": body,"hash": hash,"mime_type": mimeType})
         } else {
             $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
-               "name": $Name,"data": $Data["Body"],"hash": hash, "mime_type": $Data["MimeType"]})
+               "name": $Name,"data": body,"hash": hash,"mime_type": mimeType})
         }
 
         $result = $Id

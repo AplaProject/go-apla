@@ -2222,7 +2222,7 @@ func TransactionInfo(txHash string) (string, error) {
 			if err := msgpack.Unmarshal(txData, &smartTx); err != nil {
 				return ``, err
 			}
-			contract := GetContractByID(int32(smartTx.Type))
+			contract := GetContractByID(int32(smartTx.ID))
 			if contract == nil {
 				return ``, errParseTransaction
 			}

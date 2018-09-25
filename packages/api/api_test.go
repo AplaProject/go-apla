@@ -37,7 +37,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
@@ -237,7 +236,7 @@ func postTxResult(name string, form *url.Values) (id int64, msg string, err erro
 		name := field.Name
 		value := form.Get(name)
 
-		if len(value) == 0 && strings.Contains(field.Tags, script.TagOptional) {
+		if len(value) == 0 && field.Optional {
 			params[name] = setDefaultValue(field.Type)
 			continue
 		}
@@ -269,7 +268,7 @@ func postTxResult(name string, form *url.Values) (id int64, msg string, err erro
 
 	data, _, err := tx.NewTransaction(tx.SmartContract{
 		Header: tx.Header{
-			Type:        int(contract.ID),
+			ID:          int(contract.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: 1,
 			KeyID:       crypto.Address(publicKey),

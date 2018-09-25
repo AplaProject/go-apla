@@ -65,14 +65,7 @@ func (t *FirstBlockTransaction) Action() error {
 		return utils.ErrInfo(err)
 	}
 
-	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.IntToStr(firstEcosystemID))
-	_, err = sp.Get(nil, model.ParamMoneyDigit)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
-		return err
-	}
-	amount := decimal.New(consts.FounderAmount, int32(converter.StrToInt64(sp.Value))).String()
+	amount := decimal.New(consts.FounderAmount, int32(consts.MoneyDigits)).String()
 
 	commission := &model.SystemParameter{Name: `commission_wallet`}
 	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {

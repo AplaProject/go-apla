@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/shopspring/decimal"
@@ -811,9 +812,6 @@ func TestBytesToString(t *testing.T) {
 func TestMoneyDigits(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
-	var v paramValue
-	assert.NoError(t, sendGet("/ecosystemparam/money_digit", &url.Values{}, &v))
-
 	contract := randName("MoneyDigits")
 	assert.NoError(t, postTx("NewContract", &url.Values{
 		"Value": {`contract ` + contract + ` {
@@ -833,7 +831,7 @@ func TestMoneyDigits(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
+	d := decimal.New(1, int32(consts.MoneyDigits))
 	assert.Equal(t, d.StringFixed(0), result)
 }
 
