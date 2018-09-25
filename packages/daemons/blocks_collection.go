@@ -176,21 +176,32 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
-		rawBlocksChan, err := tcpclient.GetBlocksBodies(ctx, host, blockID, false)
-		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-			return err
-		}
+		ctxDone, cancel := context.WithCancel(ctx)
 
-		for rawBlock := range rawBlocksChan {
-			if err = playRawBlock(rawBlock); err != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+		if loopErr := func() error {
+			defer func() {
+				cancel()
+				d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
+			}()
+
+			rawBlocksChan, err := tcpclient.GetBlocksBodies(ctxDone, host, blockID, false)
+			if err != nil {
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 				return err
 			}
-			count++
-		}
 
-		d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
+			for rawBlock := range rawBlocksChan {
+				if err = playRawBlock(rawBlock); err != nil {
+					d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+					return err
+				}
+				count++
+			}
+
+			return nil
+		}(); loopErr != nil {
+			return loopErr
+		}
 	}
 	return nil
 }
