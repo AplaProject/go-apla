@@ -101,29 +101,13 @@ func (req *GetBodiesRequest) Write(w io.Writer) error {
 	return nil
 }
 
-type BodyResponse struct {
-	Data []byte
-}
-
-func (resp *BodyResponse) Read(r io.Reader, buf []byte) error {
-	fmt.Println(cap(buf))
-	slice, err := readSliceToBuf(r, buf)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("on reading BodyResponse")
-		return err
-	}
-
-	resp.Data = slice
-	return nil
-}
-
 // GetBodyResponse is Data []bytes
 type GetBodyResponse struct {
 	Data []byte
 }
 
 func (resp *GetBodyResponse) Read(r io.Reader) error {
-	slice, err := readSlice(r)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on reading GetBodyResponse")
 		return err
@@ -181,7 +165,7 @@ type DisRequest struct {
 }
 
 func (req *DisRequest) Read(r io.Reader) error {
-	slice, err := readSlice(r)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on reading disseminator request")
 		return err
@@ -209,7 +193,7 @@ type DisHashResponse struct {
 }
 
 func (resp *DisHashResponse) Read(r io.Reader) error {
-	slice, err := readSlice(r)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		return err
 	}
@@ -227,7 +211,7 @@ type StopNetworkRequest struct {
 }
 
 func (req *StopNetworkRequest) Read(r io.Reader) error {
-	slice, err := readSlice(r)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		return err
 	}
@@ -245,7 +229,7 @@ type StopNetworkResponse struct {
 }
 
 func (resp *StopNetworkResponse) Read(r io.Reader) error {
-	slice, err := readSlice(r)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		return err
 	}
@@ -276,27 +260,42 @@ func writeBool(w io.Writer, val bool) error {
 	return binary.Write(w, binary.LittleEndian, intVal)
 }
 
-func readSlice(r io.Reader) ([]byte, error) {
-	var size int32
-	if err := binary.Read(r, binary.LittleEndian, &size); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading binary slice size")
+func ReadSlice(r io.Reader) ([]byte, error) {
+	sizeBuf := make([]byte, 4)
+	if _, err := io.ReadFull(r, sizeBuf); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading bytes slice size")
 		return nil, err
 	}
 
-	slice := make([]byte, size)
-	_, err := io.ReadFull(r, slice)
-	return slice, err
+	size, errInt := binary.Uvarint(sizeBuf)
+	if errInt <= 0 {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convirt sizeBuf to value")
+		return nil, fmt.Errorf("wrong sizebuf")
+	}
+
+	data := make([]byte, size)
+	if _, err := io.ReadFull(r, data); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading block body")
+		return nil, err
+	}
+
+	return data, nil
 }
 
 func readSliceToBuf(r io.Reader, buf []byte) ([]byte, error) {
-	var size int32
-	if err := binary.Read(r, binary.LittleEndian, &size); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading binary slice size")
+	sizeBuf := make([]byte, 4)
+	if _, err := io.ReadFull(r, sizeBuf); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading bytes slice size")
 		return nil, err
 	}
 
+	size, errInt := binary.Uvarint(sizeBuf)
+	if errInt <= 0 {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convirt sizeBuf to value")
+		return nil, fmt.Errorf("wrong sizebuf")
+	}
+
 	if cap(buf) < int(size) {
-		// fmt.Println(cap(buf), size)
 		buf = make([]byte, size)
 	}
 
@@ -305,11 +304,10 @@ func readSliceToBuf(r io.Reader, buf []byte) ([]byte, error) {
 }
 
 func writeSlice(w io.Writer, slice []byte) error {
-	if err := binary.Write(w, binary.LittleEndian, int32(len(slice))); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending slice size")
-		return err
-	}
+	byteSize := make([]byte, 4)
+	binary.PutUvarint(byteSize, uint64(len(slice)))
 
+	w.Write(byteSize)
 	_, err := w.Write(slice)
 	return err
 }
