@@ -85,6 +85,8 @@ func Route(route *hr.Router) {
 	if !conf.Config.IsSupportingVDE() {
 		get(`txstatus/:hash`, ``, authWallet, txstatus)
 		get(`txstatusMultiple`, `data:string`, authWallet, txstatusMulti)
+		get(`txinfo/:hash`, `?contractinfo:int64`, authWallet, txinfo)
+		get(`txinfomultiple`, `data:string,?contractinfo:int64`, authWallet, txinfoMulti)
 		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
 		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
 		get(`history/:table/:id`, ``, authWallet, getHistory)

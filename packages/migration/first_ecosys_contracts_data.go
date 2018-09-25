@@ -1004,6 +1004,26 @@ VALUES
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d),
+	(next_id('1_contracts'), 'UpdateSysParam', 'contract UpdateSysParam {
+     data {
+        Name string
+        Value string
+        Conditions string "optional"
+     }
+     conditions {
+         if !GetContractByName($Name){
+            warning "System parameter not found"
+         }
+     }
+     action {
+        var params map
+        params["Value"] = $Value
+        CallContract($Name, params)
+        
+        DBUpdateSysParam($Name, $Value, $Conditions)
+     }
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d),
 	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
