@@ -699,14 +699,14 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		if err != nil {
 			err = logError(err, consts.ConversionError, "filling metaregistry model")
 		}
-		err = sc.MetaDb.Insert(
+		if err = sc.MetaDb.Insert(
 			nil, // TODO
 			&types.Registry{},
 			model.GetPrimaryKey(),
 			model,
-		)
-		if err != nil {
+		); err != nil {
 			err = logErrorDB(err, "inserting new meta value")
+			return 0, 0, nil
 		}
 
 		// TODO ret
