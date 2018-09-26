@@ -1,7 +1,10 @@
 package model
 
 import (
+	"strconv"
+
 	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/mitchellh/mapstructure"
 	"github.com/tidwall/gjson"
 )
 
@@ -15,12 +18,12 @@ type KeySchema struct {
 	Blocked   bool   `json:"blocked"`
 }
 
-func (ks KeySchema) Name() string {
-	return "key"
+func (ks KeySchema) ModelName() string {
+	return "keys"
 }
 
 func (ks KeySchema) GetIndexes() []types.Index {
-	registry := &types.Registry{Name: ks.Name()}
+	registry := &types.Registry{Name: ks.ModelName()}
 	return []types.Index{
 		{
 			Field:    "amount",
@@ -30,4 +33,14 @@ func (ks KeySchema) GetIndexes() []types.Index {
 			},
 		},
 	}
+}
+
+func (ks KeySchema) CreateFromData(data map[string]interface{}) (types.RegistryModel, error) {
+	k := &KeySchema{}
+	err := mapstructure.Decode(data, &k)
+	return k, err
+}
+
+func (ks KeySchema) GetPrimaryKey() string {
+	return strconv.FormatInt(ks.ID, 10)
 }

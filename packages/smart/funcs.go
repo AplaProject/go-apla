@@ -693,6 +693,26 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
 
+	// If metatable
+	if model.IsMetaRegistry(tblname) {
+		model, err := sc.MetaDb.Fill(tblname, values)
+		if err != nil {
+			err = logError(err, consts.ConversionError, "filling metaregistry model")
+		}
+		err = sc.MetaDb.Insert(
+			nil, // TODO
+			&types.Registry{},
+			model.GetPrimaryKey(),
+			model,
+		)
+		if err != nil {
+			err = logErrorDB(err, "inserting new meta value")
+		}
+
+		// TODO ret
+		return sc.MetaDb.Price(), 0, nil
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
 		return

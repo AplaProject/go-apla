@@ -17,8 +17,18 @@ type Registry struct {
 	Type      RegistryType
 }
 
+type RegistryModel interface {
+	ModelName() string
+	CreateFromData(data map[string]interface{}) (RegistryModel, error)
+	GetPrimaryKey() string
+}
+
 type Pricer interface {
 	Price() int64
+}
+
+type Filler interface {
+	Fill(name string, params map[string]interface{}) (RegistryModel, error)
 }
 
 type MetadataRegistryReader interface {
@@ -42,6 +52,7 @@ type MetadataRegistryReaderWriter interface {
 	MetadataRegistryReader
 	MetadataRegistryWriter
 	Pricer
+	Filler
 }
 
 // MetadataRegistryStorage provides a read or read-write transactions for metadata registry

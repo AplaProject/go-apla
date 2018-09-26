@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
@@ -155,6 +156,27 @@ func (m *metadataTx) Commit() error {
 
 func (m *metadataTx) Price() int64 {
 	return m.price.GetCurrentPrice()
+}
+
+func (m *metadataTx) Fill(name string, params map[string]interface{}) (types.RegistryModel, error) {
+	r := model.GetRegistries()
+	for _, registry := range r {
+		model, ok := registry.(types.RegistryModel)
+		if !ok {
+			panic("registry must implementing RegistryModel interface")
+		}
+
+		if model.ModelName() == name {
+			filled, err := model.CreateFromData(params)
+			if err != nil {
+				return nil, err
+			}
+
+			return filled, nil
+		}
+	}
+
+	return nil, ErrWrongRegistry
 }
 
 func (m *metadataTx) closeTx() {

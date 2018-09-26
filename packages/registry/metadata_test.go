@@ -208,3 +208,21 @@ func BenchmarkMetadataTx(b *testing.B) {
 	metadataTx.Commit()
 	fmt.Println("Updated", count, "keys:", time.Since(updStart))
 }
+
+func TestMetadataTx_Fill(t *testing.T) {
+	mtx := metadataTx{}
+	value, err := mtx.Fill(model.KeySchema{}.ModelName(), map[string]interface{}{
+		"id":        1,
+		"publickey": []byte{1, 2, 3},
+		"amount":    "10",
+		"blocked":   true,
+	})
+
+	require.Nil(t, err)
+	assert.Equal(t, value, &model.KeySchema{
+		ID:        1,
+		PublicKey: []byte{1, 2, 3},
+		Amount:    "10",
+		Blocked:   true,
+	})
+}
