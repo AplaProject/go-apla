@@ -76,7 +76,6 @@ func Confirmations(ctx context.Context, d *daemon) error {
 	if startBlockID == 0 {
 		startBlockID = lastBlockID
 	}
-	d.logger.WithFields(log.Fields{"start_block_id": startBlockID, "last_block_id": lastBlockID}).Info("confirming blocks from to")
 
 	return confirmationsBlocks(ctx, d, lastBlockID, startBlockID)
 }
