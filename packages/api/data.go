@@ -37,7 +37,6 @@ const binaryColumn = "data"
 var errWrongHash = errors.New("Wrong hash")
 
 func compareHash(w http.ResponseWriter, bin *model.Binary, data []byte, ps hr.Params) bool {
-
 	urlHash := strings.ToLower(ps.ByName(`hash`))
 	if len(urlHash) == 32 && fmt.Sprintf(`%x`, md5.Sum(data)) == urlHash {
 		return true
@@ -75,6 +74,7 @@ func dataHandler() hr.Handle {
 			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 			return
 		}
+
 		if !compareHash(w, nil, []byte(data), ps) {
 			return
 		}
@@ -102,6 +102,7 @@ func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		errorAPI(w, "E_SERVER", http.StatusNotFound)
 		return
 	}
+
 	if !compareHash(w, &bin, bin.Data, ps) {
 		return
 	}
