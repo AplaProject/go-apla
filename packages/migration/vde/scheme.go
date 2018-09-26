@@ -25,17 +25,18 @@ func GetVDEScript() string {
 }
 
 // SchemaEcosystem contains SQL queries for creating ecosystem
-var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
+var schemaVDE = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
 		"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
 		"multi" bigint NOT NULL DEFAULT '0',
 		"deleted" bigint NOT NULL DEFAULT '0',
-		"blocked" bigint NOT NULL DEFAULT '0'
+		"blocked" bigint NOT NULL DEFAULT '0',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
-		ALTER TABLE ONLY "%[1]d_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id);
+		ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "%[1]d_keys_pkey" PRIMARY KEY (id,ecosystem);
 		
-		DROP TABLE IF EXISTS "%[1]d_history"; CREATE TABLE "%[1]d_history" (
+		DROP TABLE IF EXISTS "1_history"; CREATE TABLE "1_history" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"sender_id" bigint NOT NULL DEFAULT '0',
 		"recipient_id" bigint NOT NULL DEFAULT '0',
@@ -43,7 +44,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" int  NOT NULL DEFAULT '0',
 		"txhash" bytea  NOT NULL DEFAULT '',
-		"created_at" timestamp DEFAULT NOW()
+		"created_at" timestamp DEFAULT NOW(),
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_history_index_sender" ON "%[1]d_history" (sender_id);
@@ -56,7 +58,7 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		  "name" character varying(100) NOT NULL DEFAULT '',
 		  "res" text NOT NULL DEFAULT '',
 		  "conditions" text NOT NULL DEFAULT '',
-		  "app_id" bigint NOT NULL DEFAULT '1'
+		  "ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_languages" ADD CONSTRAINT "%[1]d_languages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_languages_index_name" ON "%[1]d_languages" (name);
@@ -67,7 +69,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"urlname" varchar(255) NOT NULL DEFAULT '',
 		"page" varchar(255) NOT NULL DEFAULT '',
 		"roles_access" text NOT NULL DEFAULT '',
-		"delete" bigint NOT NULL DEFAULT '0'
+		"delete" bigint NOT NULL DEFAULT '0',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 	  ALTER TABLE ONLY "%[1]d_sections" ADD CONSTRAINT "%[1]d_sections_pkey" PRIMARY KEY (id);
 
@@ -77,7 +80,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"title" character varying(255) NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
-			"conditions" text NOT NULL DEFAULT ''
+			"conditions" text NOT NULL DEFAULT '',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_menu" ADD CONSTRAINT "%[1]d_menu_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_menu_index_name" ON "%[1]d_menu" (name);
@@ -91,7 +95,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"validate_count" bigint NOT NULL DEFAULT '1',
 			"conditions" text NOT NULL DEFAULT '',
 			"app_id" bigint NOT NULL DEFAULT '1',
-			"validate_mode" character(1) NOT NULL DEFAULT '0'
+			"validate_mode" character(1) NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_pages" ADD CONSTRAINT "%[1]d_pages_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_pages_index_name" ON "%[1]d_pages" (name);
@@ -102,7 +107,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"name" character varying(255) UNIQUE NOT NULL DEFAULT '',
 			"value" text NOT NULL DEFAULT '',
 			"conditions" text NOT NULL DEFAULT '',
-			"app_id" bigint NOT NULL DEFAULT '1'
+			"app_id" bigint NOT NULL DEFAULT '1',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_blocks" ADD CONSTRAINT "%[1]d_blocks_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_blocks_index_name" ON "%[1]d_blocks" (name);
@@ -123,7 +129,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"active" character(1) NOT NULL DEFAULT '0',
 		"conditions" text  NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '1'
+		"app_id" bigint NOT NULL DEFAULT '1',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_contracts" ADD CONSTRAINT "%[1]d_contracts_pkey" PRIMARY KEY (id);
 		
@@ -133,7 +140,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT ''
+		"conditions" text  NOT NULL DEFAULT '',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_parameters" ADD CONSTRAINT "%[1]d_parameters_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_parameters_index_name" ON "%[1]d_parameters" (name);
@@ -144,7 +152,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"app_id" bigint NOT NULL  DEFAULT '0',
 		"name" varchar(255) UNIQUE NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT ''
+		"conditions" text  NOT NULL DEFAULT '',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_app_params" ADD CONSTRAINT "%[1]d_app_params_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_app_params_index_name" ON "%[1]d_app_params" (name);
@@ -157,7 +166,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"permissions" jsonb,
 		"columns" jsonb,
 		"conditions" text  NOT NULL DEFAULT '',
-		"app_id" bigint NOT NULL DEFAULT '1'
+		"app_id" bigint NOT NULL DEFAULT '1',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_tables" ADD CONSTRAINT "%[1]d_tables_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_tables_index_name" ON "%[1]d_tables" (name);
@@ -174,7 +184,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"date_created"	timestamp,
 			"date_start_processing" timestamp,
 			"date_closed" timestamp,
-			"closed" bigint NOT NULL DEFAULT '0'
+			"closed" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_notifications" ADD CONSTRAINT "%[1]d_notifications_pkey" PRIMARY KEY ("id");
 
@@ -191,7 +202,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"date_deleted" timestamp,
 			"company_id" bigint NOT NULL DEFAULT '0',
 			"roles_access" jsonb, 
-			"image_id" bigint NOT NULL DEFAULT '0'
+			"image_id" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_roles" ADD CONSTRAINT "%[1]d_roles_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "%[1]d_roles_index_deleted" ON "%[1]d_roles" (deleted);
@@ -206,7 +218,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"appointed" jsonb,
 			"date_created" timestamp,
 			"date_deleted" timestamp,
-			"deleted" bigint NOT NULL DEFAULT '0'
+			"deleted" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_roles_participants" ADD CONSTRAINT "%[1]d_roles_participants_pkey" PRIMARY KEY ("id");
 
@@ -216,7 +229,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"image_id"	bigint NOT NULL DEFAULT '0',
-			"member_info"   jsonb
+			"member_info"   jsonb,
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
 
@@ -226,7 +240,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
 			"conditions" text NOT NULL DEFAULT '',
-			"deleted" bigint NOT NULL DEFAULT '0'
+			"deleted" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_applications" ADD CONSTRAINT "%[1]d_application_pkey" PRIMARY KEY ("id");
 
@@ -238,17 +253,19 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
 			"hash" varchar(32) NOT NULL DEFAULT '',
-			"mime_type" varchar(255) NOT NULL DEFAULT ''
+			"mime_type" varchar(255) NOT NULL DEFAULT '',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (app_id, member_id, name);
+		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (ecosystem,app_id, member_id, name);
 		
 		DROP TABLE IF EXISTS "%[1]d_buffer_data";
 		CREATE TABLE "%[1]d_buffer_data" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"key" varchar(255) NOT NULL DEFAULT '',
 			"value" jsonb,
-			"member_id" bigint NOT NULL DEFAULT '0'
+			"member_id" bigint NOT NULL DEFAULT '0',
+			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_buffer_data" ADD CONSTRAINT "%[1]d_buffer_data_pkey" PRIMARY KEY ("id");
 
@@ -257,7 +274,8 @@ var schemaVDE = `DROP TABLE IF EXISTS "%[1]d_keys"; CREATE TABLE "%[1]d_keys" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"name" varchar(255)  NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT ''
+		"conditions" text  NOT NULL DEFAULT '',
+		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_system_parameters" ADD CONSTRAINT "%[1]d_system_parameters_pkey" PRIMARY KEY (id);
 		CREATE INDEX "%[1]d_system_parameters_index_name" ON "%[1]d_system_parameters" (name);

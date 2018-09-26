@@ -115,7 +115,6 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 				err = fmt.Errorf("Invalid int type")
 			}
 		case script.Decimal:
-			// TODO digits for ecosystem
 			var s string
 			if s, ok = params[index].(string); !ok {
 				err = fmt.Errorf("Invalid money type")

@@ -812,6 +812,27 @@ func ValidateEmail(email string) bool {
 	return Re.MatchString(email)
 }
 
+// ParseName gets a state identifier and the name of the contract or table
+// from the full name like @[id]name
+func ParseName(in string) (id int64, name string) {
+	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
+	ret := re.FindStringSubmatch(in)
+	if len(ret) == 3 {
+		id = StrToInt64(ret[1])
+		name = ret[2]
+	}
+	return
+}
+
+func ParseTable(tblname string, defaultEcosystem int64) string {
+	ecosystem, name := ParseName(tblname)
+	if ecosystem == 0 {
+		ecosystem = defaultEcosystem
+		name = tblname
+	}
+	return strings.ToLower(fmt.Sprintf(`%d_%s`, ecosystem, Sanitize(name, ``)))
+}
+
 func IsByteColumn(table, column string) bool {
 	predefined := map[string]string{"txhash": "history", "pub": "keys", "data": "binaries"}
 	if suffix, ok := predefined[column]; ok {

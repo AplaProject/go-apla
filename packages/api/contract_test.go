@@ -30,6 +30,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUpdate_FullNodes(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	err := postTx("UpdateSysParam", &url.Values{
+		"Name":  {"full_nodes"},
+		"Value": {"[]"},
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
 func TestHardContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -71,7 +86,7 @@ func TestNewContracts(t *testing.T) {
 	rnd := crypto.RandSeq(4)
 	for i, item := range contracts {
 		var ret getContractResult
-		if i > 20 {
+		if i > 100 {
 			break
 		}
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
@@ -115,6 +130,19 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`FmtMoney`, `contract FmtMoney {
+		action {
+			Test("result", FormatMoney("123456789", 0))
+			$num2 = "5500000"
+			Test("t1", FormatMoney($num1, -1))  //123456723720
+			Test("t2", FormatMoney($num1, 0)   //12345672372
+			Test("t3", FormatMoney($num1, 1)   //1234567237,2
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `0.000000000123456789`,
+			`t1`: `123456723720`, `t2`: `12345672372`, `t3`: `1234567237.2`}},
+	}},
+
 	{`StrNil`, `contract StrNil {
 		action {
 			Test("result", Sprintf("empty: %s", Str(nil)))

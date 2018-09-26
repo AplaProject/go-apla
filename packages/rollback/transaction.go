@@ -18,6 +18,7 @@ package rollback
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -77,15 +78,15 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 			}
 			switch sysData.Type {
 			case "NewTable":
-				smart.SysRollbackTable(dbTransaction, txHash, sysData, tx["table_id"])
+				smart.SysRollbackTable(dbTransaction, sysData)
 			case "NewColumn":
-				smart.SysRollbackColumn(dbTransaction, sysData, tx["table_id"])
+				smart.SysRollbackColumn(dbTransaction, sysData)
 			case "NewContract":
 				smart.SysRollbackNewContract(sysData, tx["table_id"])
 			case "EditContract":
-				smart.SysRollbackEditContract(dbTransaction, txHash, tx["table_id"])
+				smart.SysRollbackEditContract(dbTransaction, sysData, tx["table_id"])
 			case "NewEcosystem":
-				smart.SysRollbackEcosystem(dbTransaction, txHash)
+				smart.SysRollbackEcosystem(dbTransaction, sysData)
 			case "ActivateContract":
 				smart.SysRollbackActivate(sysData)
 			case "DeactivateContract":
@@ -98,6 +99,14 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 			continue
 		}
 		where := " WHERE id='" + tx["table_id"] + `'`
+		table := tx[`table_name`]
+		if under := strings.IndexByte(table, '_'); under > 0 {
+			keyName := table[under+1:]
+			if v, ok := model.FirstEcosystemTables[keyName]; ok && !v {
+				where += fmt.Sprintf(` AND ecosystem='%d'`, converter.StrToInt64(table[:under]))
+				tx[`table_name`] = `1_` + keyName
+			}
+		}
 		if len(tx["data"]) > 0 {
 			if err := rollbackUpdatedRow(tx, where, dbTransaction, logger); err != nil {
 				return err

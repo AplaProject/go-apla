@@ -64,7 +64,7 @@ func TestNewMenuNoError(t *testing.T) {
 func TestEditMenuNoError(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	form := url.Values{
-		"Id": {"3"},
+		"Id": {"1"},
 		"Value": {`first
 		second
 		third

@@ -157,6 +157,39 @@ func TestRoleAccess(t *testing.T) {
 	assert.EqualError(t, postTx(`EditPage`, &form), `{"type":"panic","error":"Access denied"}`)
 }
 
+func TestDBFind(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := randName(`tbl`)
+	form := url.Values{"Name": {name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"txt","type":"varchar", 
+		"conditions":"true"},
+	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	assert.NoError(t, postTx(`NewTable`, &form))
+	form = url.Values{`Value`: {`contract sub` + name + ` {
+		action {
+			DBInsert("` + name + `", {txt:"ok", name: "thisis"})
+			DBInsert("` + name + `", {txt:"текст", name: "заголовок"})
+			$result = DBFind("` + name + `").Columns("name").Where({txt:"текст"}).One("name")
+		}
+	}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, ret, err := postTxResult(`sub`+name, &url.Values{})
+	assert.Equal(t, `заголовок`, ret)
+	var retPage contentResult
+	value := `DBFind(` + name + `, src).Columns(name).Where({txt:текст})`
+	form = url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
+		"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`NewPage`, &form))
+	assert.NoError(t, sendPost(`content/page/`+name, &url.Values{}, &retPage))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if RawToString(retPage.Tree) != `[{"tag":"dbfind","attr":{"columns":["name","id"],"data":[["заголовок","2"]],"name":"`+name+`","source":"src","types":["text","text"],"where":"{txt:текст}"}}]` {
+		t.Error(fmt.Errorf(`wrong tree %s`, RawToString(retPage.Tree)))
+		return
+	}
+}
 func TestPage(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

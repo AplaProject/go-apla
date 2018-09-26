@@ -6,28 +6,30 @@ import (
 
 // Language is model
 type Language struct {
-	tableName  string
+	ecosystem  int64
 	ID         int64  `gorm:"primary_key;not null"`
-	AppID      int64  `gorm:"column:app_id;not null"`
 	Name       string `gorm:"not null;size:100"`
 	Res        string `gorm:"type:jsonb(PostgreSQL)"`
 	Conditions string `gorm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix
-func (l *Language) SetTablePrefix(tablePrefix string) {
-	l.tableName = tablePrefix + "_languages"
+func (l *Language) SetTablePrefix(prefix string) {
+	l.ecosystem = converter.StrToInt64(prefix)
 }
 
 // TableName returns name of table
 func (l *Language) TableName() string {
-	return l.tableName
+	if l.ecosystem == 0 {
+		l.ecosystem = 1
+	}
+	return `1_languages`
 }
 
 // GetAll is retrieving all records from database
 func (l *Language) GetAll(prefix string) ([]Language, error) {
 	result := new([]Language)
-	err := DBConn.Table(prefix + "_languages").Order("name").Find(&result).Error
+	err := DBConn.Table("1_languages").Where("ecosystem = ?", prefix).Order("name").Find(&result).Error
 	return *result, err
 }
 
@@ -37,6 +39,5 @@ func (l *Language) ToMap() map[string]string {
 	result["name"] = l.Name
 	result["res"] = l.Res
 	result["conditions"] = l.Conditions
-	result["app_id"] = converter.Int64ToStr(l.AppID)
 	return result
 }

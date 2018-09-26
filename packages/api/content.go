@@ -20,7 +20,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -95,14 +94,12 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	return &vars
 }
 
-func parseEcosystem(in string) (id, name string) {
-	re := regexp.MustCompile(`(?is)^@(\d+)(\D.*)$`)
-	ret := re.FindStringSubmatch(in)
-	if len(ret) == 3 {
-		id = ret[1]
-		name = ret[2]
+func parseEcosystem(in string) (string, string) {
+	ecosystem, name := converter.ParseName(in)
+	if ecosystem == 0 {
+		return ``, name
 	}
-	return
+	return converter.Int64ToStr(ecosystem), name
 }
 
 func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.Page, string, error) {
