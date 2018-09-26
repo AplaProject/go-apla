@@ -60,7 +60,7 @@ type DBCountQueryRowCounter struct {
 }
 
 func (d *DBCountQueryRowCounter) RowCount(transaction *model.DbTransaction, tableName string) (int64, error) {
-	count, err := model.GetRecordsCountTx(transaction, tableName)
+	count, err := model.GetRecordsCountTx(transaction, tableName, ``)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": tableName}).Error("Getting record count from table")
 	}

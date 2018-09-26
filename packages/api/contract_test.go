@@ -30,6 +30,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUpdate_FullNodes(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	err := postTx("UpdateSysParam", &url.Values{
+		"Name":  {"full_nodes"},
+		"Value": {"[]"},
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
 func TestHardContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -71,7 +86,7 @@ func TestNewContracts(t *testing.T) {
 	rnd := crypto.RandSeq(4)
 	for i, item := range contracts {
 		var ret getContractResult
-		if i > 20 {
+		if i > 100 {
 			break
 		}
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)

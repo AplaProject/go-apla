@@ -648,7 +648,7 @@ func StateName(state uint32, name string) string {
 	if name[0] != '@' {
 		return fmt.Sprintf(`@%d%s`, state, name)
 	} else if name[1] < '0' || name[1] > '9' {
-		name = `@0` + name[1:]
+		name = `@1` + name[1:]
 	}
 	return name
 }
