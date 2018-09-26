@@ -119,6 +119,8 @@ func init() {
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`Show`:  {tplFunc{showTag, defaultTailFull, `show`, `Condition`}, false},
+		`Hide`:  {tplFunc{hideTag, defaultTailFull, `hide`, `Condition`}, false},
 	}}
 	tails[`form`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -872,6 +874,39 @@ func tailTag(par parFunc) string {
 		}
 	}
 	return ``
+}
+
+func showHideTag(par parFunc, action string) string {
+	setAllAttr(par)
+	cond := par.Node.Attr[`condition`]
+	switch v := cond.(type) {
+	case string:
+		val := make(map[string]string)
+		items := strings.Split(v, `,`)
+		for _, item := range items {
+			lr := strings.SplitN(strings.TrimSpace(item), `=`, 2)
+			key := strings.TrimSpace(lr[0])
+			if len(lr) == 2 {
+				val[key] = macro(strings.TrimSpace(lr[1]), par.Workspace.Vars)
+			} else {
+				val[key] = ``
+			}
+		}
+		if _, ok := par.Owner.Attr[action]; ok {
+			par.Owner.Attr[action] = append(par.Owner.Attr[action].([]map[string]string), val)
+		} else {
+			par.Owner.Attr[action] = []map[string]string{val}
+		}
+	}
+	return ``
+}
+
+func showTag(par parFunc) string {
+	return showHideTag(par, `show`)
+}
+
+func hideTag(par parFunc) string {
+	return showHideTag(par, `hide`)
 }
 
 func includeTag(par parFunc) string {
