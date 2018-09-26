@@ -200,12 +200,24 @@ func appendSign(ret map[string]interface{}, form *url.Values) error {
 }
 
 func waitTx(hash string) (int64, error) {
+	data, err := json.Marshal(&txstatusRequest{
+		Hashes: []string{hash},
+	})
+	if err != nil {
+		return 0, err
+	}
+
 	for i := 0; i < 15; i++ {
-		var ret txstatusResult
-		err := sendGet(`txstatus/`+hash, nil, &ret)
+		var multiRet multiTxStatusResult
+		err := sendPost(`txstatus`, &url.Values{
+			"data": {string(data)},
+		}, &multiRet)
 		if err != nil {
 			return 0, err
 		}
+
+		ret := multiRet.Results[hash]
+
 		if len(ret.BlockID) > 0 {
 			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}
