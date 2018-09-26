@@ -81,31 +81,33 @@ func validateAccess(funcName string, sc *SmartContract, contracts ...string) err
 }
 
 func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (map[string]interface{}, error) {
-	if len(params) != len(fieldInfos) {
-		return nil, fmt.Errorf("Invalid number of parameters")
-	}
-
 	txData := make(map[string]interface{})
 
 	for _, fitem := range fieldInfos {
 		var (
-			v   interface{}
-			ok  bool
-			err error
+			v     interface{}
+			ok    bool
+			err   error
+			index = fitem.Name
 		)
-		index := fitem.Name
+
+		if _, ok := params[index]; !ok && fitem.ContainsTag(script.TagOptional) {
+			txData[index] = getFieldDefaultValue(fitem.Type.String())
+			continue
+		}
+
 		switch fitem.Type.String() {
-		case `bool`:
+		case "bool":
 			if v, ok = params[index].(bool); !ok {
 				err = fmt.Errorf("Invalid bool type")
 				break
 			}
-		case `float64`:
+		case "float64":
 			if v, ok = params[index].(float64); !ok {
 				err = fmt.Errorf("Invalid float type")
 				break
 			}
-		case `int64`:
+		case "int64":
 			switch t := params[index].(type) {
 			case int64:
 				v = t
@@ -124,17 +126,17 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 			if err != nil {
 				break
 			}
-		case `string`:
+		case "string":
 			if v, ok = params[index].(string); !ok {
 				err = fmt.Errorf("Invalid string type")
 				break
 			}
-		case `[]uint8`:
+		case "[]uint8":
 			if v, ok = params[index].([]byte); !ok {
 				err = fmt.Errorf("Invalid bytes type")
 				break
 			}
-		case `[]interface {}`:
+		case "[]interface {}":
 			if v, ok = params[index].([]interface{}); !ok {
 				err = fmt.Errorf("Invalid array type")
 				break
@@ -160,5 +162,31 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 		}
 	}
 
+	if len(txData) != len(fieldInfos) {
+		return nil, fmt.Errorf("Invalid number of parameters")
+	}
+
 	return txData, nil
+}
+
+func getFieldDefaultValue(fieldType string) interface{} {
+	switch fieldType {
+	case "bool":
+		return false
+	case "float64":
+		return float64(0)
+	case "int64":
+		return int64(0)
+	case script.Decimal:
+		return decimal.New(0, consts.MoneyDigits)
+	case "string":
+		return ""
+	case "[]uint8":
+		return []byte{}
+	case "[]interface {}":
+		return []interface{}{}
+	case script.File:
+		return types.NewFile()
+	}
+	return nil
 }

@@ -225,7 +225,24 @@ func randName(prefix string) string {
 	return fmt.Sprintf(`%s%d`, prefix, time.Now().Unix())
 }
 
-func postTxResult(name string, form *url.Values) (id int64, msg string, err error) {
+type getter interface {
+	Get(string) string
+}
+
+type contractParams map[string]interface{}
+
+func (cp *contractParams) Get(key string) string {
+	if _, ok := (*cp)[key]; !ok {
+		return ""
+	}
+	return fmt.Sprintf("%v", (*cp)[key])
+}
+
+func (cp *contractParams) GetRaw(key string) interface{} {
+	return (*cp)[key]
+}
+
+func postTxResult(name string, form getter) (id int64, msg string, err error) {
 	var contract getContractResult
 	if err = sendGet("contract/"+name, nil, &contract); err != nil {
 		return
@@ -236,20 +253,25 @@ func postTxResult(name string, form *url.Values) (id int64, msg string, err erro
 		name := field.Name
 		value := form.Get(name)
 
-		if len(value) == 0 && field.Optional {
-			params[name] = setDefaultValue(field.Type)
+		if len(value) == 0 {
 			continue
 		}
 
 		switch field.Type {
 		case "bool":
 			params[name], err = strconv.ParseBool(value)
-		case "int64":
+		case "int":
 			params[name], err = strconv.ParseInt(value, 10, 64)
-		case "float64":
+		case "float":
 			params[name], err = strconv.ParseFloat(value, 64)
-		case "string", "decimal.Decimal":
+		case "string", "money":
 			params[name] = value
+		case "file", "bytes":
+			if cp, ok := form.(*contractParams); !ok {
+				err = fmt.Errorf("Form is not *contractParams type")
+			} else {
+				params[name] = cp.GetRaw(name)
+			}
 		}
 
 		if err != nil {
@@ -300,23 +322,6 @@ func postTxResult(name string, form *url.Values) (id int64, msg string, err erro
 	return
 }
 
-func setDefaultValue(fieldType string) interface{} {
-	switch fieldType {
-	case "bool":
-		return false
-	case "int64":
-		return 0
-	case "float64":
-		return 0.0
-	case "string":
-		return ""
-	case "decimal.Decimal":
-		return "0"
-	}
-
-	return nil
-}
-
 func RawToString(input json.RawMessage) string {
 	out := strings.Trim(string(input), `"`)
 	return strings.Replace(out, `\"`, `"`, -1)
@@ -357,33 +362,6 @@ func TestGetAvatar(t *testing.T) {
 	expectedMime := "image/png"
 	assert.Equal(t, expectedMime, mime, "content type must be a '%s' but returns '%s'", expectedMime, mime)
 }
-
-/* func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {
-	ret := make(map[string]interface{})
-	if err = sendMultipart("/prepare/"+txname, params, files, &ret); err != nil {
-		return
-	}
-
-	form := url.Values{}
-	if err = appendSign(ret, &form); err != nil {
-		return
-	}
-	requestID := ret["request_id"].(string)
-
-	ret = make(map[string]interface{})
-	err = sendPost(`contract/`+requestID, &form, &ret)
-	if err != nil {
-		return
-	}
-
-	id, err = waitTx(ret[`hash`].(string))
-	if id != 0 && err != nil {
-		msg = err.Error()
-		err = nil
-	}
-
-	return
-}*/
 
 func sendMultipart(url string, files map[string][]byte, v interface{}) error {
 	body := new(bytes.Buffer)
