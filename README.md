@@ -293,7 +293,7 @@ go get -v github.com/GenesisKernel/go-genesis && cp $GOPATH/bin/go-genesis /opt/
 3) Create Node 1 configuration file, all used network settings (IP-adresses and ports) are described in [Overview](#overview):
 
 ```bash
-./go-genesis config --dataDir=/opt/genesis/go-genesis/node1 --dbName=genesisdb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
+./go-genesis config --dataDir=/opt/genesis/go-genesis/node1 --dbName=genesisdb --runMode=privateBlockchain --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
 ```
 Where:
 
@@ -381,7 +381,7 @@ scp user@10.10.99.1:/opt/genesis/go-genesis/node1/first /opt/genesis/go-genesis/
 
 ```bash
 
-./go-genesis config --dataDir=/opt/genesis/go-genesis/node2 --dbName=genesisdb  --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
+./go-genesis config --dataDir=/opt/genesis/go-genesis/node2 --dbName=genesisdb --runMode=privateBlockchain --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
 ```
 
 Where:
@@ -625,7 +625,7 @@ Usage and flags of go-genesis.exe file are described in [documentation](http://g
 3) Create Node 1 config.toml configuration file. All used network settings (IP-adresses and ports) are described in [Overview](#overview).
 
 ```
-> go-genesis.exe config --dataDir=C:\Genesis\go-genesis\node --dbName=genesisdb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
+> go-genesis.exe config --dataDir=C:\Genesis\go-genesis\node --dbName=genesisdb --runMode=privateBlockchain --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
 ```
 
 Where:
@@ -708,7 +708,7 @@ In this example we will configure Node 2. Other Nodes can be configured in the s
 2) Create Node 2 config.toml configuration file:
 
 ```
-> go-genesis.exe config --dataDir=C:\Genesis\go-genesis\node --dbName=genesisdb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
+> go-genesis.exe config --dataDir=C:\Genesis\go-genesis\node --dbName=genesisdb --runMode=privateBlockchain --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
 ```
 
 Where:
