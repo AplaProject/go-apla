@@ -879,8 +879,7 @@ func tailTag(par parFunc) string {
 func showHideTag(par parFunc, action string) string {
 	setAllAttr(par)
 	cond := par.Node.Attr[`condition`]
-	switch v := cond.(type) {
-	case string:
+	if v, ok := cond.(string); ok {
 		val := make(map[string]string)
 		items := strings.Split(v, `,`)
 		for _, item := range items {
