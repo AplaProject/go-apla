@@ -510,63 +510,6 @@ func TestUpdateFullNodesWithEmptyArray(t *testing.T) {
 	require.NoError(t, postTx(`UpdateSysParam`, form))
 }
 
-func TestSetFullNodes(t *testing.T) {
-	require.NoErrorf(t, keyLogin(1), "on login")
-
-	byteNodes := `[{"tcp_address":"127.0.0.1:7078", "api_address":"https://127.0.0.1:7079", "key_id":"-4466900793776865315", "public_key":"ca901a97e84d76f8d46e2053028f709074b3e60d3e2e33495840586567a0c961820d789592666b67b05c6ae120d5bd83d4388b2f1218638d8226d40ced0bb208"},
-	{"tcp_address":"127.0.0.1:7080", "api_address":"https://127.0.0.1:7081", "key_id":"542353610328569127", "public_key":"a8ada71764fd2f0c9fa1d2986455288f11f0f3931492d27dc62862fdff9c97c38923ef46679488ad1cd525342d4d974621db58f809be6f8d1c19fdab50abc06b"},
-	{"tcp_address":"127.0.0.1:7082", "api_address":"https://127.0.0.1:7083", "key_id":"5972241339967729614", "public_key":"de1b74d36ae39422f2478cba591f4d14eb017306f6ffdc3b577cc52ee50edb8fe7c7b2eb191a24c8ddfc567cef32152bab17de698ed7b3f2ab75f3bcc8b9b372"}]`
-	form := &url.Values{
-		"Name":  {"full_nodes"},
-		"Value": {string(byteNodes)},
-	}
-
-	require.NoError(t, postTx(`UpdateSysParam`, form))
-}
-
-func TestHelper_InsertNodeKey(t *testing.T) {
-	require.NoErrorf(t, keyLogin(1), "on login")
-
-	form := url.Values{
-		`Value`: {`contract InsertNodeKey {
-			data {
-				KeyID string
-				PubKey string
-			}
-			conditions {}
-			action {
-				DBInsert("keys", {id: $KeyID, pub: $PubKey,amount: "100000000000000000000"})
-			}
-		}`},
-		`ApplicationId`: {`1`},
-		`Conditions`:    {`true`},
-	}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-
-	form = url.Values{
-		`KeyID`:  {"542353610328569127"},
-		`PubKey`: {"a8ada71764fd2f0c9fa1d2986455288f11f0f3931492d27dc62862fdff9c97c38923ef46679488ad1cd525342d4d974621db58f809be6f8d1c19fdab50abc06b"},
-	}
-
-	if err := postTx(`InsertNodeKey`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-
-	form = url.Values{
-		`KeyID`:  {"5972241339967729614"},
-		`PubKey`: {"de1b74d36ae39422f2478cba591f4d14eb017306f6ffdc3b577cc52ee50edb8fe7c7b2eb191a24c8ddfc567cef32152bab17de698ed7b3f2ab75f3bcc8b9b372"},
-	}
-
-	if err := postTx(`InsertNodeKey`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-}
-
 /*
 func TestHelper_InsertNodeKey(t *testing.T) {
 	require.NoErrorf(t, keyLogin(1), "on login")
