@@ -37,7 +37,6 @@ var (
 		`E_PERMISSION`:      `Permission denied`,
 		`E_QUERY`:           `DB query is wrong`,
 		`E_RECOVERED`:       `API recovered`,
-		`E_REFRESHTOKEN`:    `Refresh token is not valid`,
 		`E_SERVER`:          `Server error`,
 		`E_SIGNATURE`:       `Signature is incorrect`,
 		`E_UNKNOWNSIGN`:     `Unknown signature`,
