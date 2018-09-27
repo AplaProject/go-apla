@@ -28,6 +28,27 @@ var (
 
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("Database connection error")
+
+	FirstEcosystemTables = map[string]bool{
+		`keys`:               false,
+		`menu`:               true,
+		`pages`:              true,
+		`blocks`:             true,
+		`languages`:          true,
+		`contracts`:          true,
+		`tables`:             true,
+		`parameters`:         true,
+		`history`:            true,
+		`sections`:           true,
+		`members`:            false,
+		`roles`:              true,
+		`roles_participants`: true,
+		`notifications`:      true,
+		`applications`:       true,
+		`binaries`:           true,
+		`buffer_data`:        true,
+		`app_params`:         true,
+	}
 )
 
 func isFound(db *gorm.DB) (bool, error) {
@@ -132,14 +153,25 @@ func DropTables() error {
 }
 
 // GetRecordsCountTx is counting all records of table in transaction
-func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
+func GetRecordsCountTx(db *DbTransaction, tableName, where string) (int64, error) {
 	var count int64
-	err := GetDB(db).Table(tableName).Count(&count).Error
+	dbQuery := GetDB(db).Table(tableName)
+	if len(where) > 0 {
+		dbQuery = dbQuery.Where(where)
+	}
+	err := dbQuery.Count(&count).Error
 	return count, err
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
 func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder int64) error {
+	if id == 1 {
+		q := fmt.Sprintf(migration.GetCommonEcosystemScript())
+		if err := GetDB(db).Exec(q).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing comma ecosystem schema")
+			return err
+		}
+	}
 	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)
 	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
@@ -249,6 +281,27 @@ func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
 		ORDER BY ordinal_position ASC`, -1, tblname)
 }
 
+func DataTypeToColumnType(dataType string) string {
+	var itype string
+	switch {
+	case dataType == "character varying":
+		itype = `varchar`
+	case dataType == `bigint`:
+		itype = "number"
+	case dataType == `jsonb`:
+		itype = "json"
+	case strings.HasPrefix(dataType, `timestamp`):
+		itype = "datetime"
+	case strings.HasPrefix(dataType, `numeric`):
+		itype = "money"
+	case strings.HasPrefix(dataType, `double`):
+		itype = "double"
+	default:
+		itype = dataType
+	}
+	return itype
+}
+
 // GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
@@ -256,22 +309,7 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 		return
 	}
 	if dataType, ok := coltype["data_type"]; ok {
-		switch {
-		case dataType == "character varying":
-			itype = `varchar`
-		case dataType == `bigint`:
-			itype = "number"
-		case dataType == `jsonb`:
-			itype = "json"
-		case strings.HasPrefix(dataType, `timestamp`):
-			itype = "datetime"
-		case strings.HasPrefix(dataType, `numeric`):
-			itype = "money"
-		case strings.HasPrefix(dataType, `double`):
-			itype = "double"
-		default:
-			itype = dataType
-		}
+		itype = DataTypeToColumnType(dataType)
 	}
 	return
 }

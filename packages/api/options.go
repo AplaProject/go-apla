@@ -27,7 +27,7 @@ func optionsHandler() hr.Handle {
 		w.Header().Set("Content-Type", "text/plain")
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With")
 		w.Header().Set("Access-Control-Max-Age", "86400")
 		return
 	})

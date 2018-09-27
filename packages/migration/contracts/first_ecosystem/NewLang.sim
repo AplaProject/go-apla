@@ -20,6 +20,6 @@ contract NewLang {
     }
 
     action {
-        CreateLanguage($Name, $Trans, $ApplicationId)
+        CreateLanguage($Name, $Trans)
     }
 }

@@ -1,8 +1,10 @@
 package model
 
+import "github.com/GenesisKernel/go-genesis/packages/converter"
+
 // AppParam is model
 type AppParam struct {
-	tableName  string
+	ecosystem  int64
 	ID         int64  `gorm:"primary_key;not null"`
 	AppID      int64  `gorm:"not null"`
 	Name       string `gorm:"not null;size:100"`
@@ -12,23 +14,27 @@ type AppParam struct {
 
 // TableName returns name of table
 func (sp *AppParam) TableName() string {
-	return sp.tableName
+	if sp.ecosystem == 0 {
+		sp.ecosystem = 1
+	}
+	return `1_app_params`
 }
 
 // SetTablePrefix is setting table prefix
 func (sp *AppParam) SetTablePrefix(tablePrefix string) {
-	sp.tableName = tablePrefix + "_app_params"
+	sp.ecosystem = converter.StrToInt64(tablePrefix)
 }
 
 // Get is retrieving model from database
 func (sp *AppParam) Get(transaction *DbTransaction, app int64, name string) (bool, error) {
-	return isFound(GetDB(transaction).Where("app_id=? and name = ?", app, name).First(sp))
+	return isFound(GetDB(transaction).Where("ecosystem=? and app_id=? and name = ?",
+		sp.ecosystem, app, name).First(sp))
 }
 
 // GetAllAppParameters is returning all state parameters
 func (sp *AppParam) GetAllAppParameters(app int64) ([]AppParam, error) {
 	parameters := make([]AppParam, 0)
-	err := DBConn.Table(sp.TableName()).Find(&parameters).Error
+	err := DBConn.Table(sp.TableName()).Where(`ecosystem = ?`, sp.ecosystem).Find(&parameters).Error
 	if err != nil {
 		return nil, err
 	}

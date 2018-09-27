@@ -12,6 +12,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/protocols"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -160,12 +161,29 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
-
-		msg, err = t.Play()
+		var flush []smart.FlushInfo
+		msg, flush, err = t.Play()
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}
 		if err != nil {
+			if flush != nil {
+				for i := len(flush) - 1; i >= 0; i-- {
+					finfo := flush[i]
+					if finfo.Prev == nil {
+						if finfo.ID != uint32(len(smart.GetVM().Children)-1) {
+							logger.WithFields(log.Fields{"type": consts.ContractError, "value": finfo.ID,
+								"len": len(smart.GetVM().Children) - 1}).Error("flush rollback")
+						} else {
+							smart.GetVM().Children = smart.GetVM().Children[:len(smart.GetVM().Children)-1]
+							delete(smart.GetVM().Objects, finfo.Name)
+						}
+					} else {
+						smart.GetVM().Children[finfo.ID] = finfo.Prev
+						smart.GetVM().Objects[finfo.Name] = finfo.Info
+					}
+				}
+			}
 			if err == custom.ErrNetworkStopping {
 				return err
 			}

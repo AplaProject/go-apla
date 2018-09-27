@@ -165,7 +165,7 @@ func TestSystemParams(t *testing.T) {
 		return
 	}
 
-	assert.Equal(t, 62, len(ret.List), `wrong count of parameters %d`, len(ret.List))
+	assert.Equal(t, 66, len(ret.List), `wrong count of parameters %d`, len(ret.List))
 }
 
 func TestSomeSystemParam(t *testing.T) {

@@ -132,9 +132,8 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 	return fmt.Errorf(msg)
 }
 
-func getPrefix(data *apiData) (prefix string) {
-	prefix = converter.Int64ToStr(data.ecosystemId)
-	return
+func getPrefix(data *apiData) string {
+	return converter.Int64ToStr(data.ecosystemId)
 }
 
 func getSignHeader(txName string, data *apiData) tx.Header {

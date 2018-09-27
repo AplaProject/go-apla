@@ -148,7 +148,7 @@ func keyLogin(state int64) (err error) {
 		return
 	}
 	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"1"}}
+		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"}}
 	if gMobile {
 		form[`mobile`] = []string{`true`}
 	}

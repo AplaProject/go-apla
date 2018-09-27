@@ -89,7 +89,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, input []byte,
 	for _, fitem := range fieldInfos {
 		var v interface{}
 		var forv string
-		var isforv bool
+		var isforv, skipFor bool
 
 		if fitem.ContainsTag(script.TagFile) {
 			var (
@@ -112,72 +112,87 @@ func FillTxData(fieldInfos []*script.FieldInfo, input []byte,
 			}
 			continue
 		}
-
-		switch fitem.Type.String() {
-		case `uint64`:
-			var val uint64
-			converter.BinUnmarshal(&input, &val)
-			v = val
-		case `float64`:
-			var val float64
-			converter.BinUnmarshal(&input, &val)
-			v = val
-		case `int64`:
-			v, err = converter.DecodeLenInt64(&input)
-		case script.Decimal:
-			var s string
-			if err = converter.BinUnmarshal(&input, &s); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling script.Decimal")
-				return
+		if fitem.ContainsTag(script.TagOptional) && len(input) == 0 {
+			switch fitem.Type.String() {
+			case `uint64`:
+				v = uint64(0)
+			case `float64`:
+				v = float64(0)
+			case `int64`:
+				v = int64(0)
+			case script.Decimal:
+				v = decimal.New(0, 0)
+			case `string`, `[]uint8`, `[]interface {}`:
+				v = ``
 			}
-			v, err = decimal.NewFromString(s)
-		case `string`:
-			var s string
-			if err = converter.BinUnmarshal(&input, &s); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
-				return
-			}
-			v = s
-		case `[]uint8`:
-			var b []byte
-			if err = converter.BinUnmarshal(&input, &b); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
-				return
-			}
-			v = hex.EncodeToString(b)
-		case `[]interface {}`:
-			var count int64
-			count, err = converter.DecodeLength(&input)
-			if err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling []interface{}")
-				return
-			}
-			isforv = true
-			list := make([]interface{}, 0)
-			for count > 0 {
-				var length int64
-				length, err = converter.DecodeLength(&input)
+			skipFor = true
+		} else {
+			switch fitem.Type.String() {
+			case `uint64`:
+				var val uint64
+				converter.BinUnmarshal(&input, &val)
+				v = val
+			case `float64`:
+				var val float64
+				converter.BinUnmarshal(&input, &val)
+				v = val
+			case `int64`:
+				v, err = converter.DecodeLenInt64(&input)
+			case script.Decimal:
+				var s string
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling script.Decimal")
+					return
+				}
+				v, err = decimal.NewFromString(s)
+			case `string`:
+				var s string
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
+					return
+				}
+				v = s
+			case `[]uint8`:
+				var b []byte
+				if err = converter.BinUnmarshal(&input, &b); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
+					return
+				}
+				v = hex.EncodeToString(b)
+			case `[]interface {}`:
+				var count int64
+				count, err = converter.DecodeLength(&input)
 				if err != nil {
-					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling tx length")
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling []interface{}")
 					return
 				}
-				if len(input) < int(length) {
-					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "length": int(length), "slice length": len(input)}).Error("incorrect tx size")
-					err = errInputSlice
-					return
+				isforv = true
+				list := make([]interface{}, 0)
+				for count > 0 {
+					var length int64
+					length, err = converter.DecodeLength(&input)
+					if err != nil {
+						log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling tx length")
+						return
+					}
+					if len(input) < int(length) {
+						log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "length": int(length), "slice length": len(input)}).Error("incorrect tx size")
+						err = errInputSlice
+						return
+					}
+					list = append(list, string(input[:length]))
+					input = input[length:]
+					count--
 				}
-				list = append(list, string(input[:length]))
-				input = input[length:]
-				count--
-			}
-			if len(list) > 0 {
-				slist := make([]string, len(list))
-				for j, lval := range list {
-					slist[j] = lval.(string)
+				if len(list) > 0 {
+					slist := make([]string, len(list))
+					for j, lval := range list {
+						slist[j] = lval.(string)
+					}
+					forv = strings.Join(slist, `,`)
 				}
-				forv = strings.Join(slist, `,`)
+				v = list
 			}
-			v = list
 		}
 		if txData[fitem.Name] == nil {
 			txData[fitem.Name] = v
@@ -191,7 +206,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, input []byte,
 		if isforv {
 			v = forv
 		}
-		if forsign != nil {
+		if forsign != nil && !skipFor {
 			forsign = append(forsign, fmt.Sprintf("%v", v))
 		}
 	}
