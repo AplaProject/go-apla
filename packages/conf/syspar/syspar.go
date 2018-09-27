@@ -113,7 +113,6 @@ func SysUpdate(dbTransaction *model.DbTransaction) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 	for _, param := range systemParameters {
-		fmt.Println("name ", param.Name, " value ", param.Value)
 		cache[param.Name] = param.Value
 	}
 	if len(cache[FullNodes]) > 0 {

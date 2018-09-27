@@ -18,7 +18,6 @@ package custom
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -83,9 +82,7 @@ func (t *FirstBlockTransaction) Action() error {
 
 	if data.PrivateBlockchain == 1 {
 		err = model.GetDB(t.DbTransaction).Exec(`UPDATE "1_system_parameters" SET value = 1 WHERE name = 'private_blockchain';`).Error
-		fmt.Println("123")
 	} else {
-		fmt.Println("321")
 		err = model.GetDB(t.DbTransaction).Exec(`UPDATE "1_system_parameters" SET value = 0 WHERE name = 'private_blockchain';`).Error
 	}
 	if err != nil {
