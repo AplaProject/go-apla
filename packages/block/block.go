@@ -50,7 +50,7 @@ func (b *Block) PlaySafe() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
 		return err
 	}
-	fmt.Println("start play safe")
+
 	err = b.Play(dbTransaction)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
@@ -82,7 +82,6 @@ func (b *Block) PlaySafe() error {
 		b.SysUpdate = nb.SysUpdate
 		err = nil
 	} else if err != nil {
-		fmt.Println("rollback")
 		dbTransaction.Rollback()
 		if b.GenBlock && b.StopCount == 0 {
 			if err == ErrLimitStop {
@@ -103,7 +102,6 @@ func (b *Block) PlaySafe() error {
 		return err
 	}
 
-	fmt.Println("commit")
 	dbTransaction.Commit()
 	if b.SysUpdate {
 		b.SysUpdate = false

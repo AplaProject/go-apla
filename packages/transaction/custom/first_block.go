@@ -80,11 +80,7 @@ func (t *FirstBlockTransaction) Action() error {
 		return utils.ErrInfo(err)
 	}
 
-	if data.PrivateBlockchain == 1 {
-		err = model.GetDB(t.DbTransaction).Exec(`UPDATE "1_system_parameters" SET value = 1 WHERE name = 'private_blockchain';`).Error
-	} else {
-		err = model.GetDB(t.DbTransaction).Exec(`UPDATE "1_system_parameters" SET value = 0 WHERE name = 'private_blockchain';`).Error
-	}
+	err = model.GetDB(t.DbTransaction).Exec(`Update "1_system_parameters" SET value = ? where name = 'private_blockchain'`, data.PrivateBlockchain).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating private_blockchain")
 	}

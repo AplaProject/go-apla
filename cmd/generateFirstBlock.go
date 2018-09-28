@@ -102,5 +102,5 @@ var generateFirstBlockCmd = &cobra.Command{
 
 func init() {
 	generateFirstBlockCmd.Flags().StringVar(&stopNetworkBundleFilepath, "stopNetworkCert", "", "Filepath to the fullchain of certificates for network stopping")
-	generateFirstBlockCmd.Flags().BoolVar(&privateBlockchain, "private", true, "if 1 - all transactions will be free;;;;;;;;;;''''''''''''''''''''''''''''")
+	generateFirstBlockCmd.Flags().BoolVar(&privateBlockchain, "private", true, "if true - all transactions will be free")
 }
