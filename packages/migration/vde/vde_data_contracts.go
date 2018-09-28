@@ -24,7 +24,7 @@ VALUES
 	}
 	action {
 		DBUpdate("contracts", $Id, {"active": 1})
-		Activate($Id, $ecosystem_id)
+		BindWallet($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, '%[1]d'),
@@ -91,7 +91,7 @@ VALUES
 	}
 	action {
 		DBUpdate("contracts", $Id, {"active": 0})
-		Deactivate($Id, $ecosystem_id)
+		UnbindWallet($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, '%[1]d'),

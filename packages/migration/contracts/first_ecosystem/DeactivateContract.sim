@@ -19,6 +19,6 @@ contract DeactivateContract {
 	}
 	action {
 		DBUpdate("contracts", $Id, {"active": 0})
-		Deactivate($Id, $ecosystem_id)
+		UnbindWallet($Id, $ecosystem_id)
 	}
 }

@@ -71,8 +71,8 @@ var (
 		"FlushContract":     "extend_cost_flush_contract",
 		"Eval":              "extend_cost_eval",
 		"Len":               "extend_cost_len",
-		"Activate":          "extend_cost_activate",
-		"Deactivate":        "extend_cost_deactivate",
+		"BindWallet":        "extend_cost_activate",
+		"UnbindWallet":      "extend_cost_deactivate",
 		"CreateEcosystem":   "extend_cost_create_ecosystem",
 		"TableConditions":   "extend_cost_table_conditions",
 		"CreateTable":       "extend_cost_create_table",
@@ -506,9 +506,9 @@ func Substr(s string, off int64, slen int64) string {
 	return s[off : off+slen]
 }
 
-// Activate sets Active status of the contract in smartVM
-func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Activate`, sc, nActivateContract); err != nil {
+// BindWallet sets Active status of the contract in smartVM
+func BindWallet(sc *SmartContract, tblid int64, state int64) error {
+	if err := validateAccess(`BindWallet`, sc, nActivateContract); err != nil {
 		return err
 	}
 	ActivateContract(tblid, state, true)
@@ -521,9 +521,9 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 	return nil
 }
 
-// Deactivate sets Active status of the contract in smartVM
-func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Deactivate`, sc, nDeactivateContract); err != nil {
+// UnbindWallet sets Active status of the contract in smartVM
+func UnbindWallet(sc *SmartContract, tblid int64, state int64) error {
+	if err := validateAccess(`UnbindWallet`, sc, nDeactivateContract); err != nil {
 		return err
 	}
 	ActivateContract(tblid, state, false)
