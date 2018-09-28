@@ -62,6 +62,12 @@ const (
 	dateTimeFormat            = "2006-01-02 15:04:05"
 )
 
+type ThrowError struct {
+	Type    string `json:"type"`
+	Code    string `json:"id"`
+	ErrText string `json:"error"`
+}
+
 var BOM = []byte{0xEF, 0xBB, 0xBF}
 
 type permTable struct {
@@ -307,6 +313,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"TransactionInfo":              TransactionInfo,
 		"DelTable":                     DelTable,
 		"DelColumn":                    DelColumn,
+		"Throw":                        Throw,
 	}
 
 	switch vt {
@@ -2369,4 +2376,12 @@ func FormatMoney(sc *SmartContract, exp string, digit int64) (string, error) {
 		exp = retDec.Shift(int32(-cents)).String()
 	}
 	return exp, nil
+}
+
+func (throw *ThrowError) Error() string {
+	return throw.ErrText
+}
+
+func Throw(code, errText string) error {
+	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
 }
