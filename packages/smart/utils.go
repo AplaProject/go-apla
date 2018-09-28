@@ -17,13 +17,19 @@
 package smart
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
+	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 func logError(err error, errType string, comment string) error {
@@ -75,4 +81,137 @@ func validateAccess(funcName string, sc *SmartContract, contracts ...string) err
 		return logError(err, consts.IncorrectCallingContract, err.Error())
 	}
 	return nil
+}
+
+func FillTxData(fieldInfos []*script.FieldInfo, input []byte,
+	forsign []string) (txData map[string]interface{}, err error) {
+	txData = make(map[string]interface{})
+	for _, fitem := range fieldInfos {
+		var v interface{}
+		var forv string
+		var isforv, skipFor bool
+
+		if fitem.ContainsTag(script.TagFile) {
+			var (
+				data []byte
+				file *tx.File
+			)
+			if err = converter.BinUnmarshal(&input, &data); err != nil {
+				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling file")
+				return
+			}
+			if err = msgpack.Unmarshal(data, &file); err != nil {
+				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("unmarshalling file msgpack")
+				return
+			}
+
+			txData[fitem.Name] = file.Data
+			txData[fitem.Name+"MimeType"] = file.MimeType
+			if forsign != nil {
+				forsign = append(forsign, file.MimeType, file.Hash)
+			}
+			continue
+		}
+		if fitem.ContainsTag(script.TagOptional) && len(input) == 0 {
+			switch fitem.Type.String() {
+			case `uint64`:
+				v = uint64(0)
+			case `float64`:
+				v = float64(0)
+			case `int64`:
+				v = int64(0)
+			case script.Decimal:
+				v = decimal.New(0, 0)
+			case `string`, `[]uint8`, `[]interface {}`:
+				v = ``
+			}
+			skipFor = true
+		} else {
+			switch fitem.Type.String() {
+			case `uint64`:
+				var val uint64
+				converter.BinUnmarshal(&input, &val)
+				v = val
+			case `float64`:
+				var val float64
+				converter.BinUnmarshal(&input, &val)
+				v = val
+			case `int64`:
+				v, err = converter.DecodeLenInt64(&input)
+			case script.Decimal:
+				var s string
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling script.Decimal")
+					return
+				}
+				v, err = decimal.NewFromString(s)
+			case `string`:
+				var s string
+				if err = converter.BinUnmarshal(&input, &s); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
+					return
+				}
+				v = s
+			case `[]uint8`:
+				var b []byte
+				if err = converter.BinUnmarshal(&input, &b); err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling string")
+					return
+				}
+				v = hex.EncodeToString(b)
+			case `[]interface {}`:
+				var count int64
+				count, err = converter.DecodeLength(&input)
+				if err != nil {
+					log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling []interface{}")
+					return
+				}
+				isforv = true
+				list := make([]interface{}, 0)
+				for count > 0 {
+					var length int64
+					length, err = converter.DecodeLength(&input)
+					if err != nil {
+						log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("bin unmarshalling tx length")
+						return
+					}
+					if len(input) < int(length) {
+						log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError, "length": int(length), "slice length": len(input)}).Error("incorrect tx size")
+						err = errInputSlice
+						return
+					}
+					list = append(list, string(input[:length]))
+					input = input[length:]
+					count--
+				}
+				if len(list) > 0 {
+					slist := make([]string, len(list))
+					for j, lval := range list {
+						slist[j] = lval.(string)
+					}
+					forv = strings.Join(slist, `,`)
+				}
+				v = list
+			}
+		}
+		if txData[fitem.Name] == nil {
+			txData[fitem.Name] = v
+		}
+		if err != nil {
+			return
+		}
+		if strings.Index(fitem.Tags, `image`) >= 0 {
+			continue
+		}
+		if isforv {
+			v = forv
+		}
+		if forsign != nil && !skipFor {
+			forsign = append(forsign, fmt.Sprintf("%v", v))
+		}
+	}
+	if forsign != nil {
+		txData[`forsign`] = strings.Join(forsign, ",")
+	}
+	return
 }

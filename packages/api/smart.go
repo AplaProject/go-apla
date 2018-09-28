@@ -74,7 +74,7 @@ func validateSmartContractJSON(r *http.Request, data *apiData, cntname string, p
 					}
 					val = ``
 				}
-				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) {
+				if len(val) == 0 && !strings.Contains(fitem.Tags, script.TagOptional) {
 					log.WithFields(log.Fields{"type": consts.EmptyObject, "item_name": fitem.Name}).Error("route item is empty")
 					err = fmt.Errorf(`%s is empty`, fitem.Name)
 					break
@@ -149,7 +149,7 @@ func validateSmartContract(r *http.Request, data *apiData, result *prepareResult
 					}
 					val = ``
 				}
-				if len(val) == 0 && !strings.Contains(fitem.Tags, `optional`) &&
+				if len(val) == 0 && !strings.Contains(fitem.Tags, script.TagOptional) &&
 					!strings.Contains(fitem.Tags, `signature`) {
 					log.WithFields(log.Fields{"type": consts.EmptyObject, "item_name": fitem.Name}).Error("route item is empty")
 					err = fmt.Errorf(`%s is empty`, fitem.Name)

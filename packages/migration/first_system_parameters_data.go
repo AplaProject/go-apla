@@ -7,6 +7,7 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('3','default_ecosystem_contract', '', 'true'),
 	('4','gap_between_blocks', '2', 'true'),
 	('5','rb_blocks_1', '60', 'true'),
+	('6','max_forsign_size', '1000000', 'true'),
 	('7','new_version_url', 'upd.apla.io', 'true'),
 	('8','full_nodes', '', 'true'),
 	('9','number_of_nodes', '101', 'true'),
@@ -23,8 +24,8 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('20','max_columns', '50', 'true'),
 	('21','max_indexes', '5', 'true'),
 	('22','max_block_user_tx', '100', 'true'),
-	('23','max_fuel_tx', '20000', 'true'),
-	('24','max_fuel_block', '100000', 'true'),
+	('23','max_fuel_tx', '20000000', 'true'),
+	('24','max_fuel_block', '200000000', 'true'),
 	('25','commission_size', '3', 'true'),
 	('26','commission_wallet', '', 'true'),
 	('27','fuel_rate', '[["1","1000000000000000"]]', 'true'),
@@ -66,6 +67,5 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('63','block_reward','1000','true'),
 	('64','incorrect_blocks_per_day','10','true'),
 	('65','node_ban_time','86400000','true'),
-	('66','local_node_ban_time','1800000','true'),
-	('67','max_forsign_size', '1000000', 'true');
+	('66','local_node_ban_time','1800000','true');
 `

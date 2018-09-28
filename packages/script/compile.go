@@ -645,13 +645,10 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
-	if len(name) < 3 {
-		return name
-	}
 	if name[0] != '@' {
 		return fmt.Sprintf(`@%d%s`, state, name)
 	} else if name[1] < '0' || name[1] > '9' {
-		name = `@0` + name[1:]
+		name = `@1` + name[1:]
 	}
 	return name
 }
@@ -773,6 +770,15 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 	}
 	if len(stack) > 0 {
 		return nil, fError(&blockstack, errMustRCurly, lexems[len(lexems)-1])
+	}
+	for _, item := range root.Objects {
+		if item.Type == ObjContract {
+			if cond, ok := item.Value.(*Block).Objects[`conditions`]; ok {
+				if cond.Type == ObjFunc && cond.Value.(*Block).Info.(*FuncInfo).CanWrite {
+					return nil, errCondWrite
+				}
+			}
+		}
 	}
 	return root, nil
 }
@@ -993,6 +999,18 @@ main:
 	return ret, nil
 }
 
+func setWritable(block *[]*Block) {
+	for i := len(*block) - 1; i >= 0; i-- {
+		blockItem := (*block)[i]
+		if blockItem.Type == ObjFunc {
+			blockItem.Info.(*FuncInfo).CanWrite = true
+		}
+		if blockItem.Type == ObjContract {
+			blockItem.Info.(*ContractInfo).CanWrite = true
+		}
+	}
+}
+
 // This function is responsible for the compilation of expressions
 func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	var indexInfo *IndexInfo
@@ -1087,7 +1105,12 @@ main:
 				}
 				var tail *ByteCode
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdCall || prev.Cmd == cmdCallVari {
-					if prev.Value.(*ObjInfo).Type == ObjFunc && prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names != nil {
+					objInfo := prev.Value.(*ObjInfo)
+					if (objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(*FuncInfo).CanWrite) ||
+						(objInfo.Type == ObjExtFunc && objInfo.Value.(ExtFuncInfo).CanWrite) {
+						setWritable(block)
+					}
+					if objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(*FuncInfo).Names != nil {
 						if len(bytecode) == 0 || bytecode[len(bytecode)-1].Cmd != cmdFuncName {
 							bytecode = append(bytecode, &ByteCode{cmdPush, nil})
 						}
@@ -1250,7 +1273,10 @@ main:
 			}
 			if i < len(*lexems)-2 {
 				if (*lexems)[i+1].Type == isLPar {
-					var isContract bool
+					var (
+						isContract  bool
+						objContract *Block
+					)
 					if vm.Extern && objInfo == nil {
 						objInfo = &ObjInfo{Type: ObjContract}
 					}
@@ -1260,6 +1286,9 @@ main:
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))
 					}
 					if objInfo.Type == ObjContract {
+						if objInfo.Value != nil {
+							objContract = objInfo.Value.(*Block)
+						}
 						objInfo, tobj = vm.findObj(`ExecContract`, block)
 						isContract = true
 					}
@@ -1287,6 +1316,9 @@ main:
 								topblock.Info.(*ContractInfo).Used[name] = true
 							}
 						}
+						if objContract != nil && objContract.Info.(*ContractInfo).CanWrite {
+							setWritable(block)
+						}
 						bytecode = append(bytecode, &ByteCode{cmdPush, name})
 						if count == 0 {
 							count = 2
@@ -1311,6 +1343,9 @@ main:
 				}
 			}
 			if !call {
+				if objInfo.Type != ObjVar {
+					return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+				}
 				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
 		}

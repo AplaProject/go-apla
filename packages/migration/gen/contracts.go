@@ -23,17 +23,17 @@ var (
 		{
 			[]string{"./contracts/ecosystem"},
 			"./contracts_data.go",
-			"contractsDataSQL", "%[1]d_contracts", "%[2]d",
+			"contractsDataSQL", "%[1]d", "%[2]d",
 		},
 		{
 			[]string{"./contracts/common", "./contracts/first_ecosystem"},
 			"./first_ecosys_contracts_data.go",
-			"firstEcosystemContractsSQL", "1_contracts", "%[1]d",
+			"firstEcosystemContractsSQL", "1", "%[1]d",
 		},
 		{
-			[]string{"./contracts/common", "./contracts/vde"},
+			[]string{"./contracts/common", "./contracts/first_ecosystem", "./contracts/vde"},
 			"./vde/vde_data_contracts.go",
-			"contractsDataSQL", "%[1]d_contracts", "",
+			"contractsDataSQL", "%[1]d", "",
 		},
 	}
 
@@ -41,11 +41,11 @@ var (
 )
 
 type scenario struct {
-	Source   []string
-	Dest     string
-	Variable string
-	Table    string
-	Owner    string
+	Source    []string
+	Dest      string
+	Variable  string
+	Ecosystem string
+	Owner     string
 }
 
 type contract struct {
@@ -71,11 +71,11 @@ var contractsTemplate = template.Must(template.New("").Funcs(fns).Parse(`// Code
 package {{ .Package }}
 
 var {{ .Variable }} = ` + "`" + `
-INSERT INTO "{{ .Table }}" (id, name, value, conditions, app_id{{if .Owner }}, wallet_id{{end}})
+INSERT INTO "1_contracts" (id, name, value, conditions, app_id{{if .Owner }}, wallet_id{{end}}, ecosystem)
 VALUES
 {{- $last := add (len .Contracts) -1}}
 {{- range $i, $item := .Contracts}}
-	(next_id('{{ $.Table }}'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}', {{ $item.AppID }}{{if $.Owner }}, {{ $.Owner }}{{end}}){{if eq $last $i}};{{else}},{{end}}
+	(next_id('1_contracts'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}', {{ $item.AppID }}{{if $.Owner }}, {{ $.Owner }}{{end}}, '{{ $.Ecosystem }}'){{if eq $last $i}};{{else}},{{end}}
 {{- end}}
 ` + "`"))
 
@@ -179,7 +179,7 @@ func generate(s scenario) error {
 	return contractsTemplate.Execute(file, map[string]interface{}{
 		"Package":   pkg,
 		"Variable":  s.Variable,
-		"Table":     s.Table,
+		"Ecosystem": s.Ecosystem,
 		"Owner":     s.Owner,
 		"Contracts": sources,
 	})

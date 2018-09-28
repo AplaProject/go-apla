@@ -19,12 +19,11 @@ package script
 import (
 	"fmt"
 	"reflect"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -63,8 +62,6 @@ const (
 	CostContract = 100
 	// CostExtend is the cost of the extend function calling
 	CostExtend = 10
-	// CostDefault is the default maximum cost of F
-	CostDefault = int64(10000000)
 
 	// VMTypeSmart is smart vm type
 	VMTypeSmart VMType = 1
@@ -87,6 +84,7 @@ type ExtFuncInfo struct {
 	Auto     []string
 	Variadic bool
 	Func     interface{}
+	CanWrite bool // If the function can update DB
 }
 
 // FieldInfo describes the field of the data structure
@@ -115,6 +113,7 @@ type ContractInfo struct {
 	Used     map[string]bool // Called contracts
 	Tx       *[]*FieldInfo
 	Settings map[string]interface{}
+	CanWrite bool // If the function can update DB
 }
 
 // FuncNameCmd for cmdFuncName
@@ -137,6 +136,7 @@ type FuncInfo struct {
 	Names    *map[string]FuncName
 	Variadic bool
 	ID       uint32
+	CanWrite bool // If the function can update DB
 }
 
 // VarInfo contains the variable information
@@ -193,28 +193,14 @@ type VM struct {
 
 // ExtendData is used for the definition of the extended functions and variables
 type ExtendData struct {
-	Objects  map[string]interface{}
-	AutoPars map[string]string
+	Objects    map[string]interface{}
+	AutoPars   map[string]string
+	WriteFuncs map[string]struct{}
 }
 
 // Stacker represents interface for working with call stack
 type Stacker interface {
 	AppendStack(contract string) error
-}
-
-// ParseContract gets a state identifier and the name of the contract from the full name like @[id]name
-func ParseContract(in string) (id uint64, name string) {
-	var err error
-	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
-	ret := re.FindStringSubmatch(in)
-	if len(ret) == 3 {
-		id, err = strconv.ParseUint(ret[1], 10, 32)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": ret[1]}).Error("converting state identifier from string to int while parsing contract")
-		}
-		name = ret[2]
-	}
-	return
 }
 
 // ExecContract runs the name contract where txs contains the list of parameters and
@@ -257,7 +243,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return ``, fmt.Errorf(eUndefinedParam, tx.Name)
 				}
@@ -272,7 +258,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		(*rt.extend)[ipar] = params[i]
 	}
 	prevthis := (*rt.extend)[`this_contract`]
-	_, nameContract := ParseContract(name)
+	_, nameContract := converter.ParseName(name)
 	(*rt.extend)[`this_contract`] = nameContract
 
 	prevparent := (*rt.extend)[`parent`]
@@ -281,8 +267,8 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		if rt.blocks[i].Block.Type == ObjFunc && rt.blocks[i].Block.Parent != nil &&
 			rt.blocks[i].Block.Parent.Type == ObjContract {
 			parent = rt.blocks[i].Block.Parent.Info.(*ContractInfo).Name
-			fid, fname := ParseContract(parent)
-			cid, _ := ParseContract(name)
+			fid, fname := converter.ParseName(parent)
+			cid, _ := converter.ParseName(name)
 			if len(fname) > 0 {
 				if fid == 0 {
 					parent = `@` + fname
@@ -367,6 +353,7 @@ func NewVM() *VM {
 		map[string]string{
 			`*script.RunTime`: `rt`,
 		},
+		map[string]struct{}{"CallContract": {}},
 	})
 	vm.logger = log.WithFields(log.Fields{"extern": vm.Extern, "vm_block_type": vm.Block.Type})
 	return &vm
@@ -378,9 +365,10 @@ func (vm *VM) Extend(ext *ExtendData) {
 		fobj := reflect.ValueOf(item).Type()
 		switch fobj.Kind() {
 		case reflect.Func:
+			_, canWrite := ext.WriteFuncs[key]
 			data := ExtFuncInfo{key, make([]reflect.Type, fobj.NumIn()),
 				make([]reflect.Type, fobj.NumOut()), make([]string, fobj.NumIn()),
-				fobj.IsVariadic(), item}
+				fobj.IsVariadic(), item, canWrite}
 			for i := 0; i < fobj.NumIn(); i++ {
 				if isauto, ok := ext.AutoPars[fobj.In(i).String()]; ok {
 					data.Auto[i] = isauto
@@ -455,8 +443,15 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 	}
 	switch obj.Type {
 	case ObjFunc:
-		rt := vm.RunInit(CostDefault)
+		var cost int64
+		if v, ok := (*extend)[`txcost`]; ok {
+			cost = v.(int64)
+		} else {
+			cost = syspar.GetMaxCost()
+		}
+		rt := vm.RunInit(cost)
 		ret, err = rt.Run(obj.Value.(*Block), params, extend)
+		(*extend)[`txcost`] = rt.Cost()
 	case ObjExtFunc:
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)
@@ -504,7 +499,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			val, ok := params[tx.Name]
 			if !ok {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return nil, fmt.Errorf(eUndefinedParam, tx.Name)
 				}

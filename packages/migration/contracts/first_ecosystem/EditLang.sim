@@ -12,6 +12,6 @@ contract EditLang {
     }
 
     action {
-        EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
+        EditLanguage($Id, $lang["name"], $Trans)
     }
 }

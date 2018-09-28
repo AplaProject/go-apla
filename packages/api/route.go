@@ -92,6 +92,7 @@ func Route(route *hr.Router) {
 		get(`block/:id`, ``, getBlockInfo)
 		get(`maxblockid`, ``, getMaxBlockID)
 		get("blocks", "block_id ?count:int64", getBlocksTxInfo)
+		get("detailed_blocks", "block_id ?count:int64", getBlocksDetailedInfo)
 		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
 		get(`systemparams`, `?names:string`, authWallet, systemParams)
 		get(`ecosystems`, ``, authWallet, ecosystems)
