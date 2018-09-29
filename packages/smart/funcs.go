@@ -128,8 +128,12 @@ func (sc *SmartContract) AppendStack(contract string) error {
 				return fmt.Errorf(eContractLoop, contract)
 			}
 		}
-		cont.StackCont = append(cont.StackCont, contract)
-	} else {
+
+		// Stack contains only contracts
+		if c := VMGetContract(sc.VM, contract, uint32(sc.TxSmart.EcosystemID)); c != nil {
+			cont.StackCont = append(cont.StackCont, contract)
+		}
+	} else if len(cont.StackCont) > 0 {
 		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
 	}
 	(*sc.TxContract.Extend)["stack"] = cont.StackCont
