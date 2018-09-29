@@ -193,12 +193,9 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			stack Stacker
 			ok    bool
 		)
-		if finfo.Name != `ContractConditions` && finfo.Name != `ExecContract` &&
-			finfo.Name != `ContractAccess` {
-			if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
-				if err := stack.AppendStack(finfo.Name); err != nil {
-					return err
-				}
+		if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
+			if err := stack.AppendStack(finfo.Name); err != nil {
+				return err
 			}
 		}
 		(*rt.extend)[`rt`] = rt
@@ -239,7 +236,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		}
 		rt.stack = rt.stack[:shift]
 		if stack != nil {
-			stack.AppendStack("")
+			stack.PopStack(finfo.Name)
 		}
 
 		for i, iret := range result {

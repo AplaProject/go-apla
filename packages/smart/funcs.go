@@ -121,24 +121,34 @@ type SmartContract struct {
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
-func (sc *SmartContract) AppendStack(contract string) error {
-	cont := sc.TxContract
-	if len(contract) > 0 {
+func (sc *SmartContract) AppendStack(fn string) error {
+	if sc.isAllowStack(fn) {
+		cont := sc.TxContract
 		for _, item := range cont.StackCont {
-			if item == contract {
-				return fmt.Errorf(eContractLoop, contract)
+			if item == fn {
+				return fmt.Errorf(eContractLoop, fn)
 			}
 		}
-
-		// Stack contains only contracts
-		if c := VMGetContract(sc.VM, contract, uint32(sc.TxSmart.EcosystemID)); c != nil {
-			cont.StackCont = append(cont.StackCont, contract)
-		}
-	} else if len(cont.StackCont) > 0 {
-		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+		cont.StackCont = append(cont.StackCont, fn)
+		(*sc.TxContract.Extend)["stack"] = cont.StackCont
 	}
-	(*sc.TxContract.Extend)["stack"] = cont.StackCont
 	return nil
+}
+
+func (sc *SmartContract) PopStack(fn string) {
+	if sc.isAllowStack(fn) {
+		cont := sc.TxContract
+		if len(cont.StackCont) > 0 {
+			cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+			(*sc.TxContract.Extend)["stack"] = cont.StackCont
+		}
+	}
+}
+
+func (sc *SmartContract) isAllowStack(fn string) bool {
+	// Stack contains only contracts
+	c := VMGetContract(sc.VM, fn, uint32(sc.TxSmart.EcosystemID))
+	return c != nil
 }
 
 var (
@@ -480,7 +490,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			sc.AppendStack(``)
+			sc.PopStack(name)
 		} else {
 			return false, logError(errEmptyContract, consts.EmptyObject, "ContractConditions")
 		}
