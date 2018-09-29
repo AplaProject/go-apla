@@ -60,6 +60,7 @@ const (
 	nodeBanNotificationHeader = "Your node was banned"
 	historyLimit              = 250
 	dateTimeFormat            = "2006-01-02 15:04:05"
+	contractTxType            = 128
 )
 
 var BOM = []byte{0xEF, 0xBB, 0xBF}
@@ -2203,7 +2204,7 @@ func TransactionInfo(txHash string) (string, error) {
 			return ``, errParseTransaction
 		}
 
-		if int64(b) <= 127 {
+		if int64(b) < contractTxType {
 			continue
 		}
 

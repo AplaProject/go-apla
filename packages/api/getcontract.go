@@ -79,16 +79,16 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 	return nil
 }
 
-var fieldTypeAliases = map[string]string{
-	"int64":           "int",
-	"float64":         "float",
-	"decimal.Decimal": "money",
-	"[]uint8":         "bytes",
-	"[]interface {}":  "array",
-	"types.File":      "file",
-}
-
 func getFieldTypeAlias(t string) string {
+	var fieldTypeAliases = map[string]string{
+		"int64":           "int",
+		"float64":         "float",
+		"decimal.Decimal": "money",
+		"[]uint8":         "bytes",
+		"[]interface {}":  "array",
+		"types.File":      "file",
+	}
+
 	if v, ok := fieldTypeAliases[t]; ok {
 		return v
 	}

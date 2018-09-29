@@ -300,10 +300,8 @@ func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiDa
 		return nil
 	case service.PauseTypeUpdatingBlockchain:
 		reason = "E_UPDATING"
-		break
 	case service.PauseTypeStopingNetwork:
 		reason = "E_STOPPING"
-		break
 	}
 
 	return errorAPI(w, reason, http.StatusServiceUnavailable)
