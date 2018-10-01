@@ -218,8 +218,25 @@ func GetNextBlock(hash []byte) (*BlockWithHash, bool, error) {
 	return &BlockWithHash{Hash: nextHash, Block: b}, true, nil
 }
 
-func (b *Block) Insert(hash []byte) error {
+func (b *Block) Hash() ([]byte, error) {
+	bBlock, err := b.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	blockHash, err := crypto.DoubleHash(bBlock)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing block data")
+		return nil, err
+	}
+	return blockHash, nil
+}
+
+func (b *Block) Insert() error {
 	prevHash := b.PrevHash
+	hash, err := b.Hash()
+	if err != nil {
+		return err
+	}
 	val, err := b.Marshal()
 	if err != nil {
 		return err
@@ -241,6 +258,19 @@ func (b *Block) Insert(hash []byte) error {
 	}
 	if b.Header.BlockID != 1 {
 		if err := SetNextBlockHash(prevHash, hash); err != nil {
+			return err
+		}
+	}
+	for _, tx := range b.Transactions {
+		txHash, err := tx.Hash()
+		if err != nil {
+			return err
+		}
+		txStatus := TxStatus{BlockID: b.Header.BlockID}
+		if err := tx.Insert(); err != nil {
+			return err
+		}
+		if err := txStatus.Insert(txHash); err != nil {
 			return err
 		}
 	}

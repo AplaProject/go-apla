@@ -318,6 +318,10 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("signature is empty")
 		return errorAPI(w, `E_EMPTYSIGN`, http.StatusBadRequest)
 	}
+	files, err := req.AllFiles()
+	if err != nil {
+		return errorAPI(w, err, http.StatusInternalServerError)
+	}
 	toSerialize := blockchain.Transaction{
 		Header: blockchain.TxHeader{
 			Type:          int(info.ID),
@@ -335,6 +339,7 @@ func (c *contractHandlers) contract(w http.ResponseWriter, r *http.Request, data
 		PayOver:        data.params[`payover`].(string),
 		SignedBy:       signedBy,
 		Params:         req.AllValues(),
+		Files:          files,
 	}
 	if data.vde {
 		serializedData, err := toSerialize.Marshal()

@@ -436,7 +436,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		if err != nil {
 			return err
 		}
-		if err := bBlock.Insert(b.Hash); err != nil {
+		if err := bBlock.Insert(); err != nil {
 			dbTransaction.Rollback()
 			return err
 		}

@@ -99,16 +99,11 @@ func (b *PlayableBlock) PlaySafe() error {
 		return err
 	}
 
-	blockHash, err := crypto.DoubleHash(b.BinData)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing block data")
-		return err
-	}
 	bBlock, err := b.ToBlockchainBlock()
 	if err != nil {
 		return err
 	}
-	if err := bBlock.Insert(blockHash); err != nil {
+	if err := bBlock.Insert(); err != nil {
 		dbTransaction.Rollback()
 		return err
 	}

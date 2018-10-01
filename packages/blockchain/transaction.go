@@ -8,6 +8,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -97,6 +98,7 @@ type Transaction struct {
 	PayOver        string
 	SignedBy       int64
 	Params         map[string]string
+	Files          map[string]*tx.File
 }
 
 // ForSign is converting SmartContract to string

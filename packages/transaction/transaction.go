@@ -19,7 +19,6 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // Transaction is a structure for parsing transactions
@@ -104,7 +103,7 @@ func (t *Transaction) ToBlockchainTransaction() (*blockchain.Transaction, error)
 	return tx, nil
 }
 
-func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]string, forsign []string) error {
+func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files map[string]*tx.File, forsign []string) error {
 	for _, fitem := range fieldInfos {
 		var err error
 		var v interface{}
@@ -112,15 +111,10 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[stri
 		var isforv bool
 
 		if fitem.ContainsTag(script.TagFile) {
-			var (
-				data []byte
-				file *tx.File
-			)
-			if err := msgpack.Unmarshal(data, &file); err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.UnmarshallingError}).Error("unmarshalling file msgpack")
-				return err
+			file, ok := files[fitem.Name]
+			if !ok {
+				return nil
 			}
-
 			t.TxData[fitem.Name] = file.Data
 			t.TxData[fitem.Name+"MimeType"] = file.MimeType
 
@@ -198,7 +192,7 @@ func (t *Transaction) parseFromContract(smartTx *blockchain.Transaction) error {
 	txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 
 	if txInfo != nil {
-		if err := t.fillTxData(*txInfo, smartTx.Params, forsign); err != nil {
+		if err := t.fillTxData(*txInfo, smartTx.Params, smartTx.Files, forsign); err != nil {
 			return err
 		}
 	}

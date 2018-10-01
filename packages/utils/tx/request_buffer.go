@@ -33,6 +33,18 @@ func (r *Request) AllValues() map[string]string {
 	return r.values
 }
 
+func (r *Request) AllFiles() (map[string]*File, error) {
+	res := map[string]*File{}
+	for key, _ := range r.files {
+		file, err := r.ReadFile(key)
+		if err != nil {
+			return nil, err
+		}
+		res[key] = file
+	}
+	return res, nil
+}
+
 func (r *Request) WriteFile(key, mimeType string, reader io.ReadCloser) (*FileHeader, error) {
 	file, err := ioutil.TempFile(conf.Config.TempDir, "")
 	if err != nil {

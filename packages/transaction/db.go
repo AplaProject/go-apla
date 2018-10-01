@@ -14,8 +14,8 @@ func ProcessQueueTransaction(tx *blockchain.Transaction) error {
 	// get parameters for "struct" transactions
 	keyID := tx.Header.KeyID
 	if err := CheckTransaction(tx); err != nil {
-		hash, err := tx.Hash()
-		if err != nil {
+		hash, err2 := tx.Hash()
+		if err2 != nil {
 			return err
 		}
 		blockchain.SetTransactionError(hash, err.Error())
@@ -32,7 +32,7 @@ func ProcessQueueTransaction(tx *blockchain.Transaction) error {
 		return errors.New(errStr)
 	}
 
-	if err := tx.Insert(); err != nil {
+	if err := queue.ProcessTxQueue.Enqueue(tx); err != nil {
 		return err
 	}
 	return nil

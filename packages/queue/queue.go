@@ -10,14 +10,22 @@ import (
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
-var queue *goque.PrefixQueue
-
 type TransactionQueue struct {
-	prefix []byte
+	queue *goque.Queue
+}
+
+func (tq *TransactionQueue) Init(name string) error {
+	var err error
+	tq.queue, err = goque.OpenQueue("queues/" + name)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.QueueError, "name": name}).Error("opening queue")
+		return err
+	}
+	return nil
 }
 
 func (tq *TransactionQueue) Dequeue() (*blockchain.Transaction, bool, error) {
-	item, err := queue.Dequeue(tq.prefix)
+	item, err := tq.queue.Dequeue()
 	if err == goque.ErrEmpty {
 		return nil, true, nil
 	}
@@ -37,7 +45,7 @@ func (tq *TransactionQueue) Enqueue(tx *blockchain.Transaction) error {
 	if err != nil {
 		return err
 	}
-	_, err = queue.Enqueue(tq.prefix, val)
+	_, err = tq.queue.Enqueue(val)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing transaction")
 		return err
@@ -46,8 +54,8 @@ func (tq *TransactionQueue) Enqueue(tx *blockchain.Transaction) error {
 }
 
 func (tq *TransactionQueue) ProcessItems(processF func(tx *blockchain.Transaction) error) error {
-	if queue.Length() > 0 {
-		item, err := queue.Peek(tq.prefix)
+	for tq.queue.Length() > 0 {
+		item, err := tq.queue.Peek()
 		if err == goque.ErrEmpty {
 			return nil
 		}
@@ -63,7 +71,7 @@ func (tq *TransactionQueue) ProcessItems(processF func(tx *blockchain.Transactio
 		if err != nil {
 			return err
 		}
-		_, err = queue.Dequeue(tq.prefix)
+		_, err = tq.queue.Dequeue()
 		if err == goque.ErrEmpty {
 			return nil
 		}
@@ -76,11 +84,21 @@ func (tq *TransactionQueue) ProcessItems(processF func(tx *blockchain.Transactio
 }
 
 type BlockQueue struct {
-	prefix []byte
+	queue *goque.Queue
+}
+
+func (bq *BlockQueue) Init(name string) error {
+	var err error
+	bq.queue, err = goque.OpenQueue("queues/" + name)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.QueueError, "name": name}).Error("opening queue")
+		return err
+	}
+	return nil
 }
 
 func (bq *BlockQueue) Dequeue() (*blockchain.Block, bool, error) {
-	item, err := queue.Dequeue(bq.prefix)
+	item, err := bq.queue.Dequeue()
 	if err == goque.ErrEmpty {
 		return nil, true, nil
 	}
@@ -100,7 +118,7 @@ func (bq *BlockQueue) Enqueue(b *blockchain.Block) error {
 	if err != nil {
 		return err
 	}
-	_, err = queue.Enqueue(bq.prefix, val)
+	_, err = bq.queue.Enqueue(val)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing transaction")
 		return err
@@ -109,8 +127,8 @@ func (bq *BlockQueue) Enqueue(b *blockchain.Block) error {
 }
 
 func (bq *BlockQueue) ProcessItems(processF func(tx *blockchain.Block) error) error {
-	if queue.Length() > 0 {
-		item, err := queue.Peek(bq.prefix)
+	for bq.queue.Length() > 0 {
+		item, err := bq.queue.Peek()
 		if err == goque.ErrEmpty {
 			return nil
 		}
@@ -126,7 +144,7 @@ func (bq *BlockQueue) ProcessItems(processF func(tx *blockchain.Block) error) er
 		if err != nil {
 			return err
 		}
-		_, err = queue.Dequeue(bq.prefix)
+		_, err = bq.queue.Dequeue()
 		if err == goque.ErrEmpty {
 			return nil
 		}
@@ -153,11 +171,21 @@ func (qb *QueueBlock) Unmarshal(b []byte) error {
 }
 
 type QueueBlockQueue struct {
-	prefix []byte
+	queue *goque.Queue
+}
+
+func (bq *QueueBlockQueue) Init(name string) error {
+	var err error
+	bq.queue, err = goque.OpenQueue("queues/" + name)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.QueueError, "name": name}).Error("opening queue")
+		return err
+	}
+	return nil
 }
 
 func (bq *QueueBlockQueue) Dequeue() (*QueueBlock, bool, error) {
-	item, err := queue.Dequeue(bq.prefix)
+	item, err := bq.queue.Dequeue()
 	if err == goque.ErrEmpty {
 		return nil, true, nil
 	}
@@ -177,7 +205,7 @@ func (bq *QueueBlockQueue) Enqueue(b *QueueBlock) error {
 	if err != nil {
 		return err
 	}
-	_, err = queue.Enqueue(bq.prefix, val)
+	_, err = bq.queue.Enqueue(val)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing transaction")
 		return err
@@ -186,8 +214,8 @@ func (bq *QueueBlockQueue) Enqueue(b *QueueBlock) error {
 }
 
 func (bq *QueueBlockQueue) ProcessItems(processF func(tx *QueueBlock) error) error {
-	if queue.Length() > 0 {
-		item, err := queue.Peek(bq.prefix)
+	for bq.queue.Length() > 0 {
+		item, err := bq.queue.Peek()
 		if err == goque.ErrEmpty {
 			return nil
 		}
@@ -203,7 +231,7 @@ func (bq *QueueBlockQueue) ProcessItems(processF func(tx *QueueBlock) error) err
 		if err != nil {
 			return err
 		}
-		_, err = queue.Dequeue(bq.prefix)
+		_, err = bq.queue.Dequeue()
 		if err == goque.ErrEmpty {
 			return nil
 		}
@@ -215,18 +243,30 @@ func (bq *QueueBlockQueue) ProcessItems(processF func(tx *QueueBlock) error) err
 	return nil
 }
 
-var SendTxQueue *TransactionQueue = &TransactionQueue{[]byte("send_tx-")}
-var ValidateTxQueue *TransactionQueue = &TransactionQueue{[]byte("validate_tx-")}
-var ProcessTxQueue *TransactionQueue = &TransactionQueue{[]byte("process_tx-")}
-var SendBlockQueue *BlockQueue = &BlockQueue{[]byte("send_block-")}
-var ProcessBlockQueue *BlockQueue = &BlockQueue{[]byte("process_block-")}
-var ValidateBlockQueue *QueueBlockQueue = &QueueBlockQueue{[]byte("validate_block-")}
+var SendTxQueue *TransactionQueue = &TransactionQueue{}
+var ValidateTxQueue *TransactionQueue = &TransactionQueue{}
+var ProcessTxQueue *TransactionQueue = &TransactionQueue{}
+var SendBlockQueue *BlockQueue = &BlockQueue{}
+var ProcessBlockQueue *BlockQueue = &BlockQueue{}
+var ValidateBlockQueue *QueueBlockQueue = &QueueBlockQueue{}
 
 func Init() error {
-	var err error
-	queue, err = goque.OpenPrefixQueue("queues/queue")
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("opening sendTxQueue")
+	if err := SendTxQueue.Init("send_tx"); err != nil {
+		return err
+	}
+	if err := ValidateTxQueue.Init("validate_tx"); err != nil {
+		return err
+	}
+	if err := ProcessTxQueue.Init("process_tx"); err != nil {
+		return err
+	}
+	if err := SendBlockQueue.Init("send_block"); err != nil {
+		return err
+	}
+	if err := ValidateBlockQueue.Init("validate_block"); err != nil {
+		return err
+	}
+	if err := ProcessBlockQueue.Init("process_block"); err != nil {
 		return err
 	}
 	return nil
