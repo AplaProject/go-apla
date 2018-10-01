@@ -90,6 +90,14 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(my,Val)Div().Hide(Test = #my#, Test2=qwerty).Show(Param=#my##my#)`,
+		`[{"tag":"div","attr":{"hide":[{"Test":"Val","Test2":"qwerty"}],"show":[{"Param":"ValVal"}]}}]`},
+	{`SetVar(my,Val)Div().Show(Test = #my#, Test2=qwerty).Show(Param=#my##my#)`,
+		`[{"tag":"div","attr":{"show":[{"Test":"Val","Test2":"qwerty"},{"Param":"ValVal"}]}}]`},
+	{`SetVar(my,Val)Div().Show(Test = #my#, Test2=qwerty)`,
+		`[{"tag":"div","attr":{"show":[{"Test":"Val","Test2":"qwerty"}]}}]`},
+	{`SetVar(my, My Value)Div(){qqq}.Show(Test=#my#)`,
+		`[{"tag":"div","attr":{"show":[{"Test":"My Value"}]},"children":[{"tag":"text","text":"qqq"}]}]`},
 	{`SetVar(outer, [{"obj1_key1": "obj1_value1"},{"obj2_key2": "obj2_value2"}])
 	ArrayToSource(outer, #outer#, p1)`, `[{"tag":"arraytosource","attr":{"columns":["p1_key","p1_value"],"data":[["0","{\"obj1_key1\": \"obj1_value1\"}"],["1","{\"obj2_key2\": \"obj2_value2\"}"]],"prefix":"p1","source":"outer","types":["text","text"]}}]`},
 	{`SetVar(json, {"title": "Are you agree to send money?", "params": {"ggg1": "ggg2"}})

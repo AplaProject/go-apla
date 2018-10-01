@@ -21,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "0.9.6"
+const VERSION = "0.9.8"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
@@ -35,8 +35,8 @@ const DEFAULT_TCP_PORT = 7078
 // FounderAmount is the starting amount of founder
 const FounderAmount = 50000
 
-// EGS_DIGIT money_digit for EGS 1000000000000000000
-const EGS_DIGIT = 18
+// MoneyDigits is numbers of digits for tokens 1000000000000000000
+const MoneyDigits = 18
 
 // WAIT_CONFIRMED_NODES is used in confirmations
 const WAIT_CONFIRMED_NODES = 10
@@ -104,7 +104,7 @@ const (
 )
 
 // TxTypes is the list of the embedded transactions
-var TxTypes = map[int]string{
+var TxTypes = map[int64]string{
 	TxTypeFirstBlock:  TxTypeParserFirstBlock,
 	TxTypeStopNetwork: TxTypeParserStopNetwork,
 }
@@ -168,3 +168,7 @@ const DefaultVDE = 1
 
 // MoneyLength is the maximum number of digits in money value
 const MoneyLength = 30
+
+const TokenEcosystem = 1
+
+const HTTPServerMaxBodySize = 1 << 20

@@ -200,7 +200,8 @@ type ExtendData struct {
 
 // Stacker represents interface for working with call stack
 type Stacker interface {
-	AppendStack(contract string) error
+	AppendStack(fn string) error
+	PopStack(fn string)
 }
 
 // ExecContract runs the name contract where txs contains the list of parameters and
@@ -317,7 +318,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		}
 	}
 	if stack != nil {
-		stack.AppendStack("")
+		stack.PopStack(name)
 	}
 	(*rt.extend)[`parent`] = prevparent
 	(*rt.extend)[`this_contract`] = prevthis

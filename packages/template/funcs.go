@@ -119,6 +119,8 @@ func init() {
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`Show`:  {tplFunc{showTag, defaultTailFull, `show`, `Condition`}, false},
+		`Hide`:  {tplFunc{hideTag, defaultTailFull, `hide`, `Condition`}, false},
 	}}
 	tails[`form`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -204,15 +206,7 @@ func moneyTag(par parFunc) string {
 	if len((*par.Pars)[`Digit`]) > 0 {
 		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
 	} else {
-		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-		sp := &model.StateParameter{}
-		sp.SetTablePrefix(prefix)
-		_, err := sp.Get(nil, `money_digit`)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
-			return `unknown money_digit`
-		}
-		cents = converter.StrToInt(sp.Value)
+		cents = consts.MoneyDigits
 	}
 	if len(ret) > consts.MoneyLength {
 		return `invalid money value`
@@ -872,6 +866,38 @@ func tailTag(par parFunc) string {
 		}
 	}
 	return ``
+}
+
+func showHideTag(par parFunc, action string) string {
+	setAllAttr(par)
+	cond := par.Node.Attr[`condition`]
+	if v, ok := cond.(string); ok {
+		val := make(map[string]string)
+		items := strings.Split(v, `,`)
+		for _, item := range items {
+			lr := strings.SplitN(strings.TrimSpace(item), `=`, 2)
+			key := strings.TrimSpace(lr[0])
+			if len(lr) == 2 {
+				val[key] = macro(strings.TrimSpace(lr[1]), par.Workspace.Vars)
+			} else {
+				val[key] = ``
+			}
+		}
+		if _, ok := par.Owner.Attr[action]; ok {
+			par.Owner.Attr[action] = append(par.Owner.Attr[action].([]map[string]string), val)
+		} else {
+			par.Owner.Attr[action] = []map[string]string{val}
+		}
+	}
+	return ``
+}
+
+func showTag(par parFunc) string {
+	return showHideTag(par, `show`)
+}
+
+func hideTag(par parFunc) string {
+	return showHideTag(par, `hide`)
 }
 
 func includeTag(par parFunc) string {
