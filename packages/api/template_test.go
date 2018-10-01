@@ -58,7 +58,7 @@ func TestAPI(t *testing.T) {
 	Div(,#role_id#)
 	Div(,#isMobile#)`
 	form := url.Values{"Name": {name}, "Value": {value}, "ApplicationId": {`1`},
-		"Menu": {`default_menu`}, "Conditions": {"ContractConditions(`MainCondition`)"}}
+		"Menu": {`default_menu`}, "Conditions": {`ContractConditions("MainCondition")`}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
 	assert.NoError(t, sendPost(`content/hash/`+name, &url.Values{}, &retHash))

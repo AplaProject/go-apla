@@ -46,7 +46,6 @@ const nonceSalt = "LOGIN"
 
 type loginResult struct {
 	Token       string        `json:"token,omitempty"`
-	Refresh     string        `json:"refresh,omitempty"`
 	EcosystemID string        `json:"ecosystem_id,omitempty"`
 	KeyID       string        `json:"key_id,omitempty"`
 	Address     string        `json:"address,omitempty"`
@@ -273,7 +272,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
-	result.Refresh, err = jwtGenerateToken(w, claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)

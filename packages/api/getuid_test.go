@@ -40,7 +40,7 @@ func TestGetUID(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	sign, err := crypto.Sign(priv, ret.UID)
+	sign, err := crypto.Sign(priv, nonceSalt+ret.UID)
 	if err != nil {
 		t.Error(err)
 		return
@@ -53,11 +53,4 @@ func TestGetUID(t *testing.T) {
 		return
 	}
 	gAuth = lret.Token
-	var ref refreshResult
-	err = sendPost(`refresh`, &url.Values{"token": {lret.Refresh}}, &ref)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	gAuth = ref.Token
 }
