@@ -989,8 +989,8 @@ func (sc *SmartContract) CallContract() (string, error) {
 			return retError(errFuelRate)
 		}
 		var payOver decimal.Decimal
-		isActive := sc.TxContract.Block.Info.(*script.ContractInfo).Owner.Active
-		if isActive {
+
+		if sc.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID > 0 {
 			fromID = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID
 			sc.TxSmart.TokenEcosystem = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.TokenID
 		} else if len(sc.TxSmart.PayOver) > 0 {
