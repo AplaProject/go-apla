@@ -307,7 +307,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"TransactionInfo":              TransactionInfo,
 		"DelTable":                     DelTable,
 		"DelColumn":                    DelColumn,
-		"StackOverflow":                StackOverflow,
 	}
 
 	switch vt {
