@@ -116,6 +116,8 @@ func init() {
 		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
+		`ErrorRedirect`: {tplFunc{errredirTag, defaultTailFull, `errorredirect`,
+			`ErrorID,PageName,PageParams`}, false},
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -825,6 +827,19 @@ func compositeTag(par parFunc) string {
 		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
 		macro((*par.Pars)[`Data`], par.Workspace.Vars))
+	return ``
+}
+
+func errredirTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`ErrorID`]) == 0 {
+		return ``
+	}
+	if par.Owner.Attr[`errredirect`] == nil {
+		par.Owner.Attr[`errredirect`] = make(map[string]map[string]interface{})
+	}
+	par.Owner.Attr[`errredirect`].(map[string]map[string]interface{})[(*par.Pars)[`ErrorID`]] =
+		par.Node.Attr
 	return ``
 }
 
