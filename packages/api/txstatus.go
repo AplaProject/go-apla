@@ -37,7 +37,6 @@ type txstatusResult struct {
 	BlockID string         `json:"blockid"`
 	Message *txstatusError `json:"errmsg,omitempty"`
 	Result  string         `json:"result"`
-	Confirm int            `json:"confirm"`
 }
 
 func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstatusResult, error) {
@@ -59,14 +58,6 @@ func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstat
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
 		status.Result = ts.Error
-		var confirm model.Confirmation
-		found, err := confirm.GetConfirmation(ts.BlockID)
-		if err != nil {
-			return nil, errorAPI(w, err, http.StatusInternalServerError)
-		}
-		if found {
-			status.Confirm = int(confirm.Good)
-		}
 	} else if len(ts.Error) > 0 {
 		if err := json.Unmarshal([]byte(ts.Error), &status.Message); err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": ts.Error, "error": err}).Warn("unmarshalling txstatus error")
