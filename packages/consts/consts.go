@@ -21,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "0.9.6"
+const VERSION = "0.9.8"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
@@ -170,3 +170,5 @@ const DefaultVDE = 1
 const MoneyLength = 30
 
 const TokenEcosystem = 1
+
+const HTTPServerMaxBodySize = 1 << 20
