@@ -1,9 +1,9 @@
 package migration
 
-var pagesDataSQL = `INSERT INTO "%[1]d_pages" (id, name, value, menu, conditions) VALUES
-	(2, 'admin_index', '', 'admin_menu','ContractAccess("@1EditPage")'),
-	(3, 'notifications', '', 'default_menu','ContractAccess("@1EditPage")'),
-	(4, 'import_app', 'Div(content-wrapper){
+var pagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, conditions, ecosystem) VALUES
+	(next_id('1_pages'), 'admin_index', '', 'admin_menu','ContractAccess("@1EditPage")', '%[1]d'),
+	(next_id('1_pages'), 'notifications', '', 'default_menu','ContractAccess("@1EditPage")', '%[1]d'),
+	(next_id('1_pages'), 'import_app', 'Div(content-wrapper){
 	DBFind(buffer_data, src_buffer).Columns("id,value->name,value->data").Where({key:import,member_id:#key_id#}).Vars(hash00001)
 	DBFind(buffer_data, src_buffer).Columns("value->app_name,value->pages,value->pages_count,value->blocks,value->blocks_count,value->menu,value->menu_count,value->parameters,value->parameters_count,value->languages,value->languages_count,value->contracts,value->contracts_count,value->tables,value->tables_count").Where({key:import_info,member_id:#key_id#}).Vars(hash00002)
 
@@ -53,8 +53,8 @@ var pagesDataSQL = `INSERT INTO "%[1]d_pages" (id, name, value, menu, conditions
 			}
 		}
 	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")'),
-	(5, 'import_upload', 'Div(content-wrapper){
+}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d'),
+	(next_id('1_pages'), 'import_upload', 'Div(content-wrapper){
 	SetTitle("Import")
 	Div(breadcrumb){
 		Span(Class: text-muted, Body: "Select payload that you want to import")
@@ -67,5 +67,5 @@ var pagesDataSQL = `INSERT INTO "%[1]d_pages" (id, name, value, menu, conditions
 			Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: import_app)
 		}
 	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")');
+}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d');
 `

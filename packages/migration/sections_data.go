@@ -1,7 +1,7 @@
 package migration
 
 var sectionsDataSQL = `
-INSERT INTO "%[1]d_sections" ("id","title","urlname","page","roles_access", "status") VALUES
-('1', 'Home', 'home', 'default_page', '[]', 2),
-('2', 'Developer', 'admin', 'admin_index', '[]', 1);
+INSERT INTO "1_sections" ("id","title","urlname","page","roles_access", "status", "ecosystem") VALUES
+(next_id('1_sections'), 'Home', 'home', 'default_page', '[]', 2, '%[1]d'),
+(next_id('1_sections'), 'Developer', 'admin', 'admin_index', '[]', 1, '%[1]d');
 `

@@ -7,6 +7,7 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('3','default_ecosystem_contract', '', 'true'),
 	('4','gap_between_blocks', '2', 'true'),
 	('5','rb_blocks_1', '60', 'true'),
+	('6','max_forsign_size', '1000000', 'true'),
 	('7','new_version_url', 'upd.apla.io', 'true'),
 	('8','full_nodes', '', 'true'),
 	('9','number_of_nodes', '101', 'true'),
@@ -66,7 +67,6 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('63','block_reward','1000','true'),
 	('64','incorrect_blocks_per_day','10','true'),
 	('65','node_ban_time','86400000','true'),
-	('66','local_node_ban_time','1800000','true'),
-	('67','max_forsign_size', '1000000', 'true'),
+	('66','local_node_ban_time','1800000','true');
 	('68','private_blockchain', '0', 'true');
 `
