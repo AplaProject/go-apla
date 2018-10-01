@@ -172,7 +172,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				return errorAPI(w, err, http.StatusInternalServerError)
 			}
 			data.result = ret
-		} else {
+		} else if len(pubkey) > 0 {
 			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")

@@ -19,12 +19,11 @@ package script
 import (
 	"fmt"
 	"reflect"
-	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -204,21 +203,6 @@ type Stacker interface {
 	AppendStack(contract string) error
 }
 
-// ParseContract gets a state identifier and the name of the contract from the full name like @[id]name
-func ParseContract(in string) (id uint64, name string) {
-	var err error
-	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
-	ret := re.FindStringSubmatch(in)
-	if len(ret) == 3 {
-		id, err = strconv.ParseUint(ret[1], 10, 32)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": ret[1]}).Error("converting state identifier from string to int while parsing contract")
-		}
-		name = ret[2]
-	}
-	return
-}
-
 // ExecContract runs the name contract where txs contains the list of parameters and
 // params are the values of parameters
 func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interface{}, error) {
@@ -259,7 +243,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return ``, fmt.Errorf(eUndefinedParam, tx.Name)
 				}
@@ -274,7 +258,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		(*rt.extend)[ipar] = params[i]
 	}
 	prevthis := (*rt.extend)[`this_contract`]
-	_, nameContract := ParseContract(name)
+	_, nameContract := converter.ParseName(name)
 	(*rt.extend)[`this_contract`] = nameContract
 
 	prevparent := (*rt.extend)[`parent`]
@@ -283,8 +267,8 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		if rt.blocks[i].Block.Type == ObjFunc && rt.blocks[i].Block.Parent != nil &&
 			rt.blocks[i].Block.Parent.Type == ObjContract {
 			parent = rt.blocks[i].Block.Parent.Info.(*ContractInfo).Name
-			fid, fname := ParseContract(parent)
-			cid, _ := ParseContract(name)
+			fid, fname := converter.ParseName(parent)
+			cid, _ := converter.ParseName(name)
 			if len(fname) > 0 {
 				if fid == 0 {
 					parent = `@` + fname
@@ -515,7 +499,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			val, ok := params[tx.Name]
 			if !ok {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return nil, fmt.Errorf(eUndefinedParam, tx.Name)
 				}

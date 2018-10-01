@@ -373,15 +373,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	})
 }
 
-func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
-	if len(tblname) > 0 && tblname[0] == '@' {
-		return strings.ToLower(tblname[1:])
-	}
-	return strings.ToLower(fmt.Sprintf(`%s_%s`, converter.Int64ToStr(ecosystem), tblname))
-}
-
-func getDefTableName(sc *SmartContract, tblname string) string {
-	return converter.EscapeSQL(GetTableName(sc, tblname, sc.TxSmart.EcosystemID))
+func GetTableName(sc *SmartContract, tblname string) string {
+	return converter.ParseTable(tblname, sc.TxSmart.EcosystemID)
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
@@ -533,13 +526,13 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars["wallet_id"] = recipient
 	}
 	if len(pars) > 0 {
-		if _, err := DBUpdate(sc, "contracts", id, pars); err != nil {
-			return err
-		}
 		if !sc.VDE {
 			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
 				return err
 			}
+		}
+		if _, err := DBUpdate(sc, "@1contracts", id, pars); err != nil {
+			return err
 		}
 	}
 	if len(value) > 0 {
@@ -561,21 +554,24 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	}
 	var id int64
 	var err error
-
-	if GetContractByName(sc, name) != 0 {
+	isExists := GetContractByName(sc, name)
+	if isExists != 0 {
+		log.WithFields(log.Fields{"type": consts.ContractError, "name": name,
+			"tableId": isExists}).Error("create existing contract")
 		return 0, fmt.Errorf(eContractExist, name)
 	}
 	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", map[string]interface{}{
+	_, id, err = DBInsert(sc, "@1contracts", map[string]interface{}{
 		"name":       name,
 		"value":      value,
 		"conditions": conditions,
 		"wallet_id":  walletID,
 		"token_id":   tokenEcosystem,
 		"app_id":     appID,
+		"ecosystem":  sc.TxSmart.EcosystemID,
 	})
 	if err != nil {
 		return 0, err
@@ -660,7 +656,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return fmt.Errorf(eLatin, name)
 	}
 
-	tableName := getDefTableName(sc, name)
+	if (name[0] >= '0' && name[0] <= '9') || name[0] == '@' {
+		return errTableName
+	}
+
+	tableName := GetTableName(sc, name)
 	if model.IsTable(tableName) {
 		return fmt.Errorf(eTableExists, name)
 	}
@@ -683,23 +683,12 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return err
 	}
 	prefix, name := PrefixName(tableName)
-	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
-	if err != nil {
-		return logErrorDB(err, "getting next ID")
-	}
 
-	t := &model.TableVDE{
-		ID:          id,
-		Name:        name,
-		Columns:     string(colout),
-		Permissions: string(permout),
-		Conditions:  `ContractAccess("@1EditTable")`,
-		AppID:       applicationID,
-	}
-	t.SetTablePrefix(prefix)
-	err = t.Create(sc.DbTransaction)
+	_, _, err = sc.insert([]string{`name`, `columns`, `permissions`, `conditions`, `app_id`,
+		`ecosystem`}, []interface{}{name, string(colout), string(permout),
+		`ContractAccess("@1EditTable")`, applicationID, prefix}, `1_tables`)
 	if err != nil {
-		return logErrorDB(err, "insert vde table info")
+		return logErrorDB(err, "insert table info")
 	}
 	if !sc.VDE {
 		if err = SysRollback(sc, SysRollData{Type: "NewTable", TableName: tableName}); err != nil {
@@ -733,7 +722,7 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
 
-	tblname = getDefTableName(sc, tblname)
+	tblname = GetTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -1028,8 +1017,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, inOrder interface{},
-	offset, limit, ecosystem int64,
-	inWhere map[string]interface{}) (int64, []interface{}, error) {
+	offset, limit int64, inWhere map[string]interface{}) (int64, []interface{}, error) {
 
 	var (
 		err     error
@@ -1060,11 +1048,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if limit < 0 || limit > 250 {
 		limit = 250
 	}
-	if ecosystem == 0 {
-		ecosystem = sc.TxSmart.EcosystemID
-	}
-	tblname = GetTableName(sc, tblname, ecosystem)
-
+	tblname = GetTableName(sc, tblname)
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil {
 		return 0, nil, err
@@ -1129,7 +1113,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
 	}
-	tblname = getDefTableName(sc, tblname)
+	tblname = GetTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
 	}
@@ -1161,9 +1145,9 @@ func EcosysParam(sc *SmartContract, name string) string {
 }
 
 // AppParam returns the value of the specified app parameter for the ecosystem
-func AppParam(sc *SmartContract, app int64, name string) (string, error) {
+func AppParam(sc *SmartContract, app int64, name string, ecosystem int64) (string, error) {
 	ap := &model.AppParam{}
-	ap.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	ap.SetTablePrefix(converter.Int64ToStr(ecosystem))
 	_, err := ap.Get(sc.DbTransaction, app, name)
 	if err != nil {
 		return ``, logErrorDB(err, "getting app param")
@@ -1258,8 +1242,17 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	if err != nil {
 		return err
 	}
+	tbl := &model.Table{}
+	tbl.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	found, err := tbl.ExistsByName(sc.DbTransaction, strings.ToLower(name))
+	if err != nil {
+		return err
+	}
+	if !found {
+		return fmt.Errorf(eTableNotFound, name)
+	}
 	_, _, err = sc.update([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), `name`, strings.ToLower(name))
+		`1_tables`, `id`, tbl.ID)
 	return err
 }
 
@@ -1426,7 +1419,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 			return err
 		}
 	}
-	tblName := getDefTableName(sc, tableName)
+	tblName := GetTableName(sc, tableName)
 	if isExist {
 		return sc.AccessTable(tblName, `update`)
 	}
@@ -1454,8 +1447,8 @@ func AllowChangeCondition(sc *SmartContract, tblname string) error {
 
 // RowConditions checks conditions for table row by id
 func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bool) error {
-	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
-	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
+	condition, err := model.GetRowConditionsByTableNameAndID(sc.DbTransaction,
+		GetTableName(sc, tblname), id)
 	if err != nil {
 		return logErrorDB(err, "executing row condition query")
 	}
@@ -1508,10 +1501,10 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return
 	}
 
-	tableName = strings.ToLower(tableName)
-	tblname := getDefTableName(sc, tableName)
+	tblname := GetTableName(sc, tableName)
 
 	sqlColType, err = columnType(colType)
+
 	if err != nil {
 		return
 	}
@@ -1521,12 +1514,14 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return logErrorDB(err, "adding column to the table")
 	}
 
-	tables := getDefTableName(sc, `tables`)
 	type cols struct {
+		ID      int64
 		Columns string
 	}
 	temp := &cols{}
-	err = model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	err = model.GetDB(sc.DbTransaction).Table(`1_tables`).Where("name = ? and ecosystem = ?",
+		tableName, sc.TxSmart.EcosystemID).Select("id,columns").Find(temp).Error
+
 	if err != nil {
 		return
 	}
@@ -1540,7 +1535,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
-		tables, `name`, tableName)
+		`1_tables`, `id`, temp.ID)
 	if !sc.VDE {
 		return SysRollback(sc, SysRollData{Type: "NewColumn", TableName: tblname, Data: name})
 	}
@@ -1558,8 +1553,7 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
 		}
 	}
-	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey},
-		getDefTableName(sc, `keys`), `id`, id)
+	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey}, `1_keys`, `id`, id)
 	return
 }
 
@@ -1567,16 +1561,16 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
 		return err
 	}
-	_, _, err = sc.insert([]string{`id`, `amount`}, []interface{}{id, amount},
-		getDefTableName(sc, `keys`))
+	_, _, err = sc.insert([]string{`id`, `amount`, `ecosystem`}, []interface{}{id, amount,
+		sc.TxSmart.EcosystemID}, `1_keys`)
 	if err == nil {
 		var block int64
 		if sc.BlockData != nil {
 			block = sc.BlockData.BlockID
 		}
 		_, _, err = sc.insert([]string{`sender_id`, `recipient_id`, `amount`,
-			`comment`, `block_id`, `txhash`},
-			[]interface{}{0, id, amount, comment, block, sc.TxHash}, getDefTableName(sc, `history`))
+			`comment`, `block_id`, `txhash`, `ecosystem`},
+			[]interface{}{0, id, amount, comment, block, sc.TxHash, sc.TxSmart.EcosystemID}, `1_history`)
 	}
 	return err
 }
@@ -1588,7 +1582,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
-	tables := getDefTableName(sc, `tables`)
+	tables := `1_tables`
 	type cols struct {
 		Columns string
 	}
@@ -1801,7 +1795,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				}
 
 				for _, b := range blocks {
-					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID,
+					if _, err := DBUpdate(smartContract, "@1bad_blocks", b.ID,
 						map[string]interface{}{"deleted": "1"}); err != nil {
 						return logErrorValue(err, consts.DBError, "deleting bad block",
 							converter.Int64ToStr(b.ID))
@@ -1817,7 +1811,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				_, _, err = DBInsert(
 					smartContract,
-					"@1_node_ban_logs",
+					"@1node_ban_logs",
 					map[string]interface{}{
 						"node_id":   fullNode.KeyID,
 						"banned_at": now.Format(time.RFC3339),
@@ -1832,7 +1826,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				_, _, err = DBInsert(
 					smartContract,
-					"notifications",
+					"@1notifications",
 					map[string]interface{}{
 						"recipient->member_id": fullNode.KeyID,
 						"notification->type":   model.NotificationTypeSingle,
@@ -1927,7 +1921,7 @@ func Hash(data interface{}) (string, error) {
 
 // GetColumnType returns the type of the column
 func GetColumnType(sc *SmartContract, tableName, columnName string) (string, error) {
-	return model.GetColumnType(getDefTableName(sc, tableName), columnName)
+	return model.GetColumnType(GetTableName(sc, tableName), columnName)
 }
 
 // GetType returns the name of the type of the value
@@ -2234,8 +2228,7 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 		permout []byte
 	)
 	name = converter.EscapeSQL(strings.ToLower(name))
-	tableName = strings.ToLower(tableName)
-	tblname := getDefTableName(sc, tableName)
+	tblname := GetTableName(sc, strings.ToLower(tableName))
 
 	t := model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -2253,7 +2246,7 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
 		return fmt.Errorf(eTableNotFound, tblname)
 	}
-	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname, ``)
 	if err != nil {
 		return
 	}
@@ -2300,8 +2293,7 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 	var (
 		count int64
 	)
-	tableName = strings.ToLower(tableName)
-	tblname := getDefTableName(sc, tableName)
+	tblname := GetTableName(sc, strings.ToLower(tableName))
 
 	t := model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -2320,7 +2312,7 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 		return fmt.Errorf(eTableNotFound, tblname)
 	}
 
-	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname)
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname, ``)
 	if err != nil {
 		return
 	}

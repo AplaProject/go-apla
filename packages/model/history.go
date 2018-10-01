@@ -2,20 +2,17 @@ package model
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/shopspring/decimal"
 )
 
-const historyTableSuffix = "_history"
-
 var errLowBalance = errors.New("not enough APL on the balance")
 
 // History represent record of history table
 type History struct {
-	tableName   string
+	ecosystem   int64
 	ID          int64
 	SenderID    int64
 	RecipientID int64
@@ -28,13 +25,16 @@ type History struct {
 
 // SetTablePrefix is setting table prefix
 func (h *History) SetTablePrefix(prefix int64) *History {
-	h.tableName = HistoryTableName(prefix)
+	h.ecosystem = prefix
 	return h
 }
 
 // TableName returns table name
 func (h *History) TableName() string {
-	return h.tableName
+	if h.ecosystem == 0 {
+		h.ecosystem = 1
+	}
+	return `1_history`
 }
 
 // APLTransfer from to amount
@@ -88,9 +88,4 @@ func GetExcessTokenMovementQtyPerBlock(tx *DbTransaction, blockID int64) (excess
 		Scan(&excess).Error
 
 	return excess, err
-}
-
-// HistoryTableName returns name of history table
-func HistoryTableName(prefix int64) string {
-	return fmt.Sprintf("%d%s", prefix, historyTableSuffix)
 }

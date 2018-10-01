@@ -43,7 +43,7 @@ func WaitStopTime() {
 			}
 			first = true
 		}
-		dExists, err := model.Single(`SELECT stop_time FROM stop_daemons`).Int64()
+		dExists, err := model.Single(nil, `SELECT stop_time FROM stop_daemons`).Int64()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting stop_time from StopDaemons")
 		}

@@ -43,9 +43,10 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 		limit  int
 	)
 
-	table := getPrefix(data) + `_tables`
+	table := `1_tables`
+	where := fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
 
-	count, err := model.GetRecordsCountTx(nil, table)
+	count, err := model.GetRecordsCountTx(nil, table, ``)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)
@@ -55,8 +56,8 @@ func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	} else {
 		limit = 25
 	}
-	list, err := model.GetAll(`select name from "`+table+`" order by name`+
-		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+	list, err := model.GetAll(fmt.Sprintf(`select name from "1_tables" where %s order by name offset %d `,
+		where, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
 		return errorAPI(w, err.Error(), http.StatusInternalServerError)

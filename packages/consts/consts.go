@@ -21,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "0.9.6"
+const VERSION = "0.9.8"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
@@ -168,3 +168,5 @@ const DefaultVDE = 1
 
 // MoneyLength is the maximum number of digits in money value
 const MoneyLength = 30
+
+const HTTPServerMaxBodySize = 1 << 20
