@@ -4,29 +4,31 @@ contract Import {
     data {
         Data string
     }
-    func ReplaceValue(s string) string {
-        s = Replace(s, "#IMPORT_ECOSYSTEM_ID#", "#ecosystem_id#")
-        s = Replace(s, "#IMPORT_KEY_ID#", "#key_id#")
-        s = Replace(s, "#IMPORT_ISMOBILE#", "#isMobile#")
-        s = Replace(s, "#IMPORT_ROLE_ID#", "#role_id#")
-        s = Replace(s, "#IMPORT_ECOSYSTEM_NAME#", "#ecosystem_name#")
-        s = Replace(s, "#IMPORT_APP_ID#", "#app_id#")
+    func decodeGlobals(s string) string {
+        var globs array i lenGlobs int r map prefix from to string
+        prefix = "import_"
+        globs = ["guest_key", "ecosystem_id", "key_id", "isMobile", "role_id", "ecosystem_name", "app_id", "info_value_pages_count", "info_value_pages", "info_value_blocks_count", "info_value_blocks","info_value_menu_count", "info_value_menu", "info_value_parameters_count", "info_value_parameters","info_value_languages_count", "info_value_languages", "info_value_contracts_count", "info_value_contracts", "info_value_tables_count", "info_value_tables", "DataName", "DataCount", "DataInfo", "info_value_app_name", "import_id"]
+        lenGlobs = Len(globs)
+        while i < lenGlobs{
+            r = globs[i]
+            from = ToUpper("#" + prefix + r + "#")
+            to = "#" + r + "#"
+            s = Replace(s, from, to)
+            i = i + 1
+        }
         return s
     }
 
     conditions {
-        $Data = ReplaceValue($Data)
-
+        $Data = decodeGlobals($Data)
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where({key: "import_info",
-          member_id: $key_id}).Row()
+        app_map = DBFind("@1buffer_data").Columns("value->app_name").Where({key: "import_info", member_id: $key_id, ecosystem: $ecosystem_id}).Row()
 
         if app_map{
-            var app_id int
-            var ival string
+            var app_id int ival string
             ival = Str(app_map["value.app_name"])
-            app_id = DBFind("applications").Columns("id").Where({name: ival}).One("id")
+            app_id = DBFind("@1applications").Columns("id").Where({name: ival, ecosystem: $ecosystem_id}).One("id")
             if app_id {
                 $ApplicationId = Int(app_id)
             }
@@ -54,22 +56,28 @@ contract Import {
         var dataImport array
         dataImport = JSONDecode($Data)
         var i int
-        while i<Len(dataImport){
-            var item, cdata map
+        while i < Len(dataImport){
+            var item cdata map type name string
             cdata = dataImport[i]
             if cdata {
                 cdata["ApplicationId"] = $ApplicationId
-                $Type = cdata["Type"]
-                $Name = cdata["Name"]
+                type = cdata["Type"]
+                name = cdata["Name"]
+                // Println(Sprintf("import %v: %v", type, cdata["Name"]))
 
-                // Println(Sprintf("import %v: %v", $Type, cdata["Name"]))
-
-                item = DBFind($Type).Where({name: $Name}).Row()
+                var tbl string
+                tbl = "@1" + Str(type)
+                item = DBFind(tbl).Where({name: name, ecosystem: $ecosystem_id}).Row()
                 var contractName string
                 if item {
-                    contractName = editors[$Type]
+                    contractName = editors[type]
                     cdata["Id"] = Int(item["id"])
-                    if $Type == "menu"{
+                    if type == "contracts" {
+                        if item["conditions"] == "false"{
+                            // ignore updating impossibled
+                            contractName = ""
+                        }
+                    } elif type == "menu"{
                         var menu menuItem string
                         menu = Replace(item["value"], " ", "")
                         menu = Replace(menu, "\n", "")
@@ -85,14 +93,14 @@ contract Import {
                         }
                     }
                 } else {
-                    contractName = creators[$Type]
+                    contractName = creators[type]
                 }
 
                 if contractName != ""{
                     CallContract(contractName, cdata)
                 }
             }
-            i=i+1
+            i = i + 1
         }
         // Println(Sprintf("> time: %v", $time))
     }

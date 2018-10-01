@@ -206,15 +206,7 @@ func moneyTag(par parFunc) string {
 	if len((*par.Pars)[`Digit`]) > 0 {
 		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
 	} else {
-		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-		sp := &model.StateParameter{}
-		sp.SetTablePrefix(prefix)
-		_, err := sp.Get(nil, `money_digit`)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
-			return `unknown money_digit`
-		}
-		cents = converter.StrToInt(sp.Value)
+		cents = consts.MoneyDigits
 	}
 	if len(ret) > consts.MoneyLength {
 		return `invalid money value`

@@ -52,5 +52,6 @@ var (
 		`E_REQUESTNOTFOUND`: `Request %s doesn't exist`,
 		`E_UPDATING`:        `Node is updating blockchain`,
 		`E_STOPPING`:        `Network is stopping`,
+		`E_NOTIMPLEMENTED`:  `Not implemented`,
 	}
 )

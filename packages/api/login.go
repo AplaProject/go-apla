@@ -18,13 +18,11 @@ package api
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -109,75 +107,44 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		if account.Deleted == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
-	} else {
+	} else if !conf.Config.IsSupportingVDE() {
 		pubkey = data.params[`pubkey`].([]byte)
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 		}
-		NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-		if err != nil || len(NodePrivateKey) < 1 {
+
+		nodePrivateKey, err := utils.GetNodePrivateKey()
+		if err != nil || len(nodePrivateKey) < 1 {
 			if err == nil {
 				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 			}
 			return err
 		}
 
-		pubkey = data.params[`pubkey`].([]byte)
-		hexPubKey := hex.EncodeToString(pubkey)
-		params := converter.EncodeLength(int64(len(hexPubKey)))
-		params = append(params, hexPubKey...)
-
 		contract := smart.GetContract("NewUser", 1)
-
 		sc := tx.SmartContract{
 			Header: tx.Header{
-				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
+				ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
 				Time:        time.Now().Unix(),
 				EcosystemID: 1,
 				KeyID:       conf.Config.KeyID,
 				NetworkID:   consts.NETWORK_ID,
-				PublicKey:   pubkey,
 			},
-			SignedBy: smart.PubToID(NodePublicKey),
-			Data:     params,
+			Params: map[string]interface{}{
+				"NewPubkey": hex.EncodeToString(data.params[`pubkey`].([]byte)),
+			},
 		}
 
-		if conf.Config.IsSupportingVDE() {
-
-			signPrms := []string{sc.ForSign()}
-			signPrms = append(signPrms, hexPubKey)
-			signData := strings.Join(signPrms, ",")
-			signature, err := crypto.Sign(NodePrivateKey, signData)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
-				return err
-			}
-
-			sc.BinSignatures = converter.EncodeLengthPlusData(signature)
-
-			if sc.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
-				return err
-			}
-
-			serializedContract, err := msgpack.Marshal(sc)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-				return errorAPI(w, err, http.StatusInternalServerError)
-			}
-			ret, err := VDEContract(serializedContract, data)
-			if err != nil {
-				return errorAPI(w, err, http.StatusInternalServerError)
-			}
-			data.result = ret
-		} else if len(pubkey) > 0 {
-			err = tx.BuildTransaction(sc, NodePrivateKey, NodePublicKey, hexPubKey)
+		txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
+		} else {
+			err = tx.CreateTransaction(txData, txHash, sc.KeyID)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 			}
 		}
-
 	}
 
 	if ecosystemID > 1 && len(pubkey) == 0 {
@@ -207,7 +174,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
-	verify, err := crypto.CheckSign(pubkey, nonceSalt+msg, data.params[`signature`].([]byte))
+	verify, err := crypto.CheckSign(pubkey, []byte(nonceSalt+msg), data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
 		return errorAPI(w, err, http.StatusBadRequest)

@@ -40,7 +40,7 @@ func TestGetUID(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	sign, err := crypto.Sign(priv, nonceSalt+ret.UID)
+	sign, err := crypto.SignString(priv, nonceSalt+ret.UID)
 	if err != nil {
 		t.Error(err)
 		return
