@@ -8,5 +8,5 @@ const (
 )
 
 var keysDataSQL = `
-INSERT INTO "%[1]d_keys" (id, pub, blocked) VALUES (` + GuestKey + `, '` + GuestPublic + `', 1);
+INSERT INTO "1_keys" (id, pub, blocked, ecosystem) VALUES (` + GuestKey + `, '` + GuestPublic + `', 1, '%[1]d');
 `
