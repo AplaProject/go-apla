@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/types"
@@ -41,6 +42,17 @@ func (ks KeySchema) CreateFromData(data map[string]interface{}) (types.RegistryM
 	return k, err
 }
 
+func (ks KeySchema) UpdateFromData(model types.RegistryModel, data map[string]interface{}) error {
+	oldStruct := model.(*KeySchema)
+	return mapstructure.Decode(data, oldStruct)
+}
+
 func (ks KeySchema) GetPrimaryKey() string {
 	return strconv.FormatInt(ks.ID, 10)
+}
+
+func (ks *KeySchema) UnmarshalJSON(b []byte) error {
+	type schema *KeySchema
+	err := json.Unmarshal(b, schema(ks))
+	return err
 }

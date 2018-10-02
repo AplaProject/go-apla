@@ -2,9 +2,9 @@ package model
 
 import "github.com/GenesisKernel/go-genesis/packages/types"
 
-var registries = []interface{}{
-	KeySchema{},
-	Ecosystem{},
+var registries = []types.RegistryModel{
+	&KeySchema{},
+	&Ecosystem{},
 }
 
 func GetIndexes() []types.Index {
@@ -36,6 +36,16 @@ func IsMetaRegistry(name string) bool {
 	return false
 }
 
-func GetRegistries() []interface{} {
+func GetRegistries() []types.RegistryModel {
 	return registries
+}
+
+func GetRegistry(name string) types.RegistryModel {
+	for _, registry := range registries {
+		if registry.ModelName() == name {
+			return registry
+		}
+	}
+
+	return nil
 }

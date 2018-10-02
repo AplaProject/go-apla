@@ -25,14 +25,17 @@ type metadataTx struct {
 	db kv.Database
 	tx kv.Transaction
 
-	price priceCounter
+	pricing      bool
+	priceCounter priceCounter
 
-	rollback *metadataRollback
-	indexer  registryIndexer
+	saveState bool
+	rollback  metadataRollback
+
+	indexer registryIndexer
 }
 
 func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registry, pkValue string, value interface{}) error {
-	if m.rollback != nil && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
+	if m.saveState && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
 		return ErrUnknownContext
 	}
 
@@ -46,17 +49,17 @@ func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registr
 		return errors.Wrapf(err, "inserting value %s to %s registry", value, registry.Name)
 	}
 
-	if registry.Name == "ecosystem" {
+	if registry.Type == types.RegistryTypePrimary {
 		if err := m.indexer.addPrimaryValue(m.tx, pkValue); err != nil {
 			return err
 		}
-	} else {
-		if err := m.price.Add(Set, registry); err != nil {
+	} else if m.pricing {
+		if err := m.priceCounter.Add(Set, registry); err != nil {
 			return err
 		}
 	}
 
-	if m.rollback != nil {
+	if m.saveState {
 		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, "")
 		if err != nil {
 			return errors.Wrapf(err, "saving rollback info")
@@ -67,7 +70,7 @@ func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registr
 }
 
 func (m *metadataTx) Update(ctx types.BlockchainContext, registry *types.Registry, pkValue string, newValue interface{}) error {
-	if m.rollback != nil && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
+	if m.saveState && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
 		return ErrUnknownContext
 	}
 
@@ -81,13 +84,13 @@ func (m *metadataTx) Update(ctx types.BlockchainContext, registry *types.Registr
 		return errors.Wrapf(err, "inserting value %s to %s registry", pkValue, registry.Name)
 	}
 
-	if registry.Name != "ecosystem" {
-		if err := m.price.Add(Update, registry); err != nil {
+	if registry.Name != "ecosystem" && m.pricing {
+		if err := m.priceCounter.Add(Update, registry); err != nil {
 			return err
 		}
 	}
 
-	if m.rollback != nil {
+	if m.saveState {
 		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, old)
 		if err != nil {
 			return errors.Wrapf(err, "saving rollback info")
@@ -113,11 +116,47 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 		return errors.Wrapf(err, "unmarshalling value %s to struct", value)
 	}
 
-	if err := m.price.Add(Get, registry); err != nil {
-		return err
+	if m.pricing {
+		if err := m.priceCounter.Add(Get, registry); err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func (m *metadataTx) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
+	key, err := m.formatKey(registry, pkValue)
+	if err != nil {
+		return nil, err
+	}
+
+	value, err := m.tx.Get(key)
+	if err != nil {
+		return nil, errors.Wrapf(err, "retrieving %s from database", key)
+	}
+
+	registries := model.GetRegistries()
+	var out types.RegistryModel
+	for _, r := range registries {
+		if r.ModelName() == registry.Name {
+			out = r
+			break
+		}
+	}
+
+	err = json.Unmarshal([]byte(value), &out)
+	if err != nil {
+		return nil, errors.Wrapf(err, "unmarshalling value %s to struct", value)
+	}
+
+	if m.pricing {
+		if err := m.priceCounter.Add(Get, registry); err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
 }
 
 func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
@@ -127,8 +166,10 @@ func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value 
 		return err
 	}
 
-	if err := m.price.AddWalk(registry, field); err != nil {
-		return err
+	if m.pricing {
+		if err := m.priceCounter.AddWalk(registry, field); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -155,28 +196,19 @@ func (m *metadataTx) Commit() error {
 }
 
 func (m *metadataTx) Price() int64 {
-	return m.price.GetCurrentPrice()
-}
-
-func (m *metadataTx) Fill(name string, params map[string]interface{}) (types.RegistryModel, error) {
-	r := model.GetRegistries()
-	for _, registry := range r {
-		model, ok := registry.(types.RegistryModel)
-		if !ok {
-			panic("registry must implementing RegistryModel interface")
-		}
-
-		if model.ModelName() == name {
-			filled, err := model.CreateFromData(params)
-			if err != nil {
-				return nil, err
-			}
-
-			return filled, nil
-		}
+	if m.pricing {
+		return m.priceCounter.GetCurrentPrice()
 	}
 
-	return nil, ErrWrongRegistry
+	return 0
+}
+
+func (m *metadataTx) CreateFromParams(name string, params map[string]interface{}) (types.RegistryModel, error) {
+	return converter{}.createFromParams(name, params)
+}
+
+func (m *metadataTx) UpdateFromParams(name string, value types.RegistryModel, params map[string]interface{}) error {
+	return converter{}.updateFromParams(name, value, params)
 }
 
 func (m *metadataTx) closeTx() {
@@ -242,11 +274,11 @@ func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	tx := &metadataTx{tx: databaseTx, indexer: m.indexer}
 
 	if m.rollback {
-		tx.rollback = &metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
+		tx.rollback = metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
 	}
 
 	if m.pricing {
-		tx.price = priceCounter{tx: databaseTx, indexer: m.indexer}
+		tx.priceCounter = priceCounter{tx: databaseTx, indexer: m.indexer}
 	}
 
 	return tx
@@ -262,6 +294,12 @@ func (m *metadataStorage) Get(registry *types.Registry, pkValue string, out inte
 	tx := &metadataTx{tx: m.db.Begin(false)}
 	defer tx.Rollback()
 	return tx.Get(registry, pkValue, out)
+}
+
+func (m *metadataStorage) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
+	tx := &metadataTx{tx: m.db.Begin(false)}
+	defer tx.Rollback()
+	return tx.Get2(registry, pkValue)
 }
 
 func (m *metadataStorage) Rollback(block []byte) error {

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/types"
@@ -36,6 +37,11 @@ func (sys Ecosystem) CreateFromData(data map[string]interface{}) (types.Registry
 	k := &Ecosystem{}
 	err := mapstructure.Decode(data, &k)
 	return k, err
+}
+
+func (sys Ecosystem) UpdateFromData(model types.RegistryModel, data map[string]interface{}) error {
+	oldStruct := model.(*Ecosystem)
+	return mapstructure.Decode(data, oldStruct)
 }
 
 func (sys Ecosystem) GetIndexes() []types.Index {
@@ -78,4 +84,8 @@ func (sys *Ecosystem) Get(id int64) (bool, error) {
 // Delete is deleting record
 func (sys *Ecosystem) Delete(transaction *DbTransaction) error {
 	return GetDB(transaction).Delete(sys).Error
+}
+
+func (sys *Ecosystem) UnmarshalJSON(b []byte) error {
+	return json.Unmarshal(b, sys)
 }

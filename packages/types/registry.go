@@ -1,8 +1,8 @@
+//go:generate sh -c "mockery -inpkg -name MetadataRegistryReaderWriter -print > file.tmp && mv file.tmp metadata_registry_rw_mock.go"
+
 package types
 
-import (
-	"database/sql/driver"
-)
+import "encoding/json"
 
 type RegistryType int8
 
@@ -19,8 +19,10 @@ type Registry struct {
 
 type RegistryModel interface {
 	ModelName() string
-	CreateFromData(data map[string]interface{}) (RegistryModel, error)
 	GetPrimaryKey() string
+	CreateFromData(data map[string]interface{}) (RegistryModel, error)
+	UpdateFromData(model RegistryModel, data map[string]interface{}) error
+	json.Unmarshaler
 }
 
 type Pricer interface {
@@ -28,11 +30,13 @@ type Pricer interface {
 }
 
 type Filler interface {
-	Fill(name string, params map[string]interface{}) (RegistryModel, error)
+	CreateFromParams(name string, params map[string]interface{}) (RegistryModel, error)
+	UpdateFromParams(name string, value RegistryModel, params map[string]interface{}) error
 }
 
 type MetadataRegistryReader interface {
 	Get(registry *Registry, pkValue string, out interface{}) error
+	Get2(registry *Registry, pkValue string) (RegistryModel, error)
 	Walk(registry *Registry, field string, fn func(jsonRow string) bool) error
 }
 
@@ -45,7 +49,8 @@ type MetadataRegistryWriter interface {
 	Insert(ctx BlockchainContext, registry *Registry, pkValue string, value interface{}) error
 	Update(ctx BlockchainContext, registry *Registry, pkValue string, newValue interface{}) error
 
-	driver.Tx
+	Commit() error
+	Rollback() error
 }
 
 type MetadataRegistryReaderWriter interface {

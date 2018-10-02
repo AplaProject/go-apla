@@ -693,15 +693,16 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
 
-	// If metatable
+	// TODO access
+
 	if model.IsMetaRegistry(tblname) {
-		model, err := sc.MetaDb.Fill(tblname, values)
+		model, err := sc.MetaDb.CreateFromParams(tblname, values)
 		if err != nil {
 			err = logError(err, consts.ConversionError, "filling metaregistry model")
 		}
 		if err = sc.MetaDb.Insert(
 			nil, // TODO
-			&types.Registry{},
+			&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
 			model.GetPrimaryKey(),
 			model,
 		); err != nil {
@@ -1109,6 +1110,37 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
 	}
+
+	// TODO Check Access
+
+	if model.IsMetaRegistry(tblname) {
+		registry := &types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}}
+
+		model, err := sc.MetaDb.Get2(registry, value.(string))
+		if err != nil {
+			return 0, err
+		}
+
+		err = sc.MetaDb.UpdateFromParams(tblname, model, values)
+		if err != nil {
+			err = logError(err, consts.ConversionError, "filling metaregistry model with new values")
+			return 0, err
+		}
+
+		if err = sc.MetaDb.Update(
+			nil, // TODO
+			registry,
+			model.GetPrimaryKey(),
+			model,
+		); err != nil {
+			err = logErrorDB(err, "inserting new meta value")
+			return 0, err
+		}
+
+		// TODO ret
+		return sc.MetaDb.Price(), nil
+	}
+
 	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return

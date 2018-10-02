@@ -124,8 +124,8 @@ func TestMetadataTx_RW(t *testing.T) {
 }
 
 func BenchmarkMetadataTx(b *testing.B) {
-	rollbacks := false
-	persist := false
+	rollbacks := true
+	persist := true
 	db, err := newKvDB(persist)
 	require.Nil(b, err)
 	fmt.Println("Database persistence:", persist)
@@ -133,7 +133,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 
 	storage, err := NewMetadataStorage(db, []types.Index{
 		{
-			Registry: &types.Registry{Name: "key"},
+			Registry: &types.Registry{Name: "keys"},
 			Field:    "amount",
 			SortFn: func(a, b string) bool {
 				return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
@@ -141,12 +141,12 @@ func BenchmarkMetadataTx(b *testing.B) {
 		},
 		{
 			Field:    "name",
-			Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
+			Registry: &types.Registry{Name: "ecosystems", Type: types.RegistryTypePrimary},
 			SortFn: func(a, b string) bool {
 				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
 			},
 		},
-	}, rollbacks, true)
+	}, rollbacks, false)
 	require.Nil(b, err)
 
 	metadataTx := storage.Begin()
@@ -165,7 +165,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 	for i := 0; i < count; i++ {
 		ecosystem := ecosystems[rand.Intn(9)]
 		reg := types.Registry{
-			Name:      "key",
+			Name:      "keys",
 			Ecosystem: &types.Ecosystem{Name: ecosystem},
 		}
 
@@ -194,7 +194,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 		metadataTx.Update(
 			nil,
 			&types.Registry{
-				Name:      "key",
+				Name:      "keys",
 				Ecosystem: &types.Ecosystem{Name: ecosys},
 			},
 			strconv.FormatInt(id, 10),
@@ -207,22 +207,4 @@ func BenchmarkMetadataTx(b *testing.B) {
 
 	metadataTx.Commit()
 	fmt.Println("Updated", count, "keys:", time.Since(updStart))
-}
-
-func TestMetadataTx_Fill(t *testing.T) {
-	mtx := metadataTx{}
-	value, err := mtx.Fill(model.KeySchema{}.ModelName(), map[string]interface{}{
-		"id":        1,
-		"publickey": []byte{1, 2, 3},
-		"amount":    "10",
-		"blocked":   true,
-	})
-
-	require.Nil(t, err)
-	assert.Equal(t, value, &model.KeySchema{
-		ID:        1,
-		PublicKey: []byte{1, 2, 3},
-		Amount:    "10",
-		Blocked:   true,
-	})
 }
