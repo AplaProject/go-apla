@@ -5,7 +5,7 @@ package migration
 var firstEcosystemContractsSQL = `
 INSERT INTO "1_contracts" (id, name, value, conditions, app_id, wallet_id, ecosystem)
 VALUES
-	(next_id('1_contracts'), 'ActivateContract', 'contract ActivateContract {
+	(next_id('1_contracts'), 'BindWallet', 'contract BindWallet {
 	data {
 		Id  int
 	}
@@ -23,7 +23,6 @@ VALUES
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, {"active": 1})
 		BindWallet($Id, $ecosystem_id)
 	}
 }
@@ -69,29 +68,6 @@ VALUES
 	(next_id('1_contracts'), 'CheckNodesBan', 'contract CheckNodesBan {
 	action {
 		UpdateNodesBan($block_time)
-	}
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
-	(next_id('1_contracts'), 'DeactivateContract', 'contract DeactivateContract {
-	data {
-		Id         int
-	}
-	conditions {
-		$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
-		if !$cur {
-			error Sprintf("Contract %%d does not exist", $Id)
-		}
-		if Int($cur["active"]) == 0 {
-			error Sprintf("The contract %%d has been already deactivated", $Id)
-		}
-		Eval($cur["conditions"])
-		if $key_id != Int($cur["wallet_id"]) {
-			error Sprintf("Wallet %%d cannot deactivate the contract", $key_id)
-		}
-	}
-	action {
-		DBUpdate("contracts", $Id, {"active": 0})
-		UnbindWallet($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
@@ -978,6 +954,28 @@ VALUES
             }
             warning "Sorry, you do not have access to this action."
         }
+	}
+}
+', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+	(next_id('1_contracts'), 'UnbindWallet', 'contract UnbindWallet {
+	data {
+		Id         int
+	}
+	conditions {
+		$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
+		if !$cur {
+			error Sprintf("Contract %%d does not exist", $Id)
+		}
+		if Int($cur["active"]) == 0 {
+			error Sprintf("The contract %%d has been already deactivated", $Id)
+		}
+		Eval($cur["conditions"])
+		if $key_id != Int($cur["wallet_id"]) {
+			error Sprintf("Wallet %%d cannot deactivate the contract", $key_id)
+		}
+	}
+	action {
+		UnbindWallet($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
