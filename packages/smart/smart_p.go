@@ -570,7 +570,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		forsign += fmt.Sprintf(`,%v`, val)
 	}
 
-	CheckSignResult, err := utils.CheckSign(sc.PublicKeys, forsign, hexsign, true)
+	CheckSignResult, err := utils.CheckSign(sc.PublicKeys, []byte(forsign), hexsign, true)
 	if err != nil {
 		return err
 	}

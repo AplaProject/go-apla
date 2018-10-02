@@ -8,7 +8,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 
@@ -225,30 +224,30 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
+type RawTransaction interface {
+	Bytes() []byte
+	Hash() []byte
+	Type() int64
+}
+
 // SendTx is creates transaction
-func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing data")
-		return nil, err
-	}
+func SendTx(rtx RawTransaction, adminWallet int64) error {
 	ts := &TransactionStatus{
-		Hash:     hash,
+		Hash:     rtx.Hash(),
 		Time:     time.Now().Unix(),
-		Type:     txType,
+		Type:     rtx.Type(),
 		WalletID: adminWallet,
 	}
-	err = ts.Create()
+	err := ts.Create()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("transaction status create")
-		return nil, err
+		return err
 	}
 	qtx := &QueueTx{
-		Hash: hash,
-		Data: data,
+		Hash: rtx.Hash(),
+		Data: rtx.Bytes(),
 	}
-	err = qtx.Create()
-	return hash, err
+	return qtx.Create()
 }
 
 // AlterTableAddColumn is adding column to table
