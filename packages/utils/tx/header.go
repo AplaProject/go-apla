@@ -2,13 +2,10 @@ package tx
 
 // Header is contain header data
 type Header struct {
-	Type          int
-	Time          int64
-	EcosystemID   int64
-	KeyID         int64
-	RoleID        int64
-	NetworkID     int64
-	NodePosition  int64
-	PublicKey     []byte
-	BinSignatures []byte
+	ID          int
+	Time        int64
+	EcosystemID int64
+	KeyID       int64
+	NetworkID   int64
+	PublicKey   []byte
 }
