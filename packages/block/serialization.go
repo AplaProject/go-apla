@@ -39,7 +39,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
 
 		var err error
-		signed, err = crypto.Sign(key, forSign)
+		signed, err = crypto.SignString(key, forSign)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing blocko")
 			return nil, err

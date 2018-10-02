@@ -26,7 +26,7 @@ func InsertInLogTx(t *Transaction, blockID int64) error {
 // CheckLogTx checks if this transaction exists
 // And it would have successfully passed a frontal test
 func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
-	searchedHash, err := crypto.Hash(txBinary)
+	searchedHash, err := crypto.DoubleHash(txBinary)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal(err)
 	}
@@ -136,7 +136,7 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 		return err
 	}
 
-	if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
+	if !( /*txType > 127 ||*/ consts.IsStruct(txType)) {
 		if header == nil {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("tx header is nil")
 			return utils.ErrInfo(errors.New("header is nil"))
