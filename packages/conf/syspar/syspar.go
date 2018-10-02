@@ -80,6 +80,7 @@ const (
 	LocalNodeBanTime = `local_node_ban_time`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
+	TestNewUser    = `test`
 
 	// CostDefault is the default maximum cost of F
 	CostDefault = int64(20000000)
@@ -406,6 +407,10 @@ func GetMaxIndexes() int {
 // GetMaxBlockUserTx is returns max tx block user
 func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
+}
+
+func GetTestNewUser() bool {
+	return SysString(TestNewUser) == `true` || SysString(TestNewUser) == `1`
 }
 
 func GetIncorrectBlocksPerDay() int {
