@@ -2172,7 +2172,6 @@ func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
 		blockOwner      model.Block
 		found           bool
 		transactionSize int
-		txhash          []byte
 	)
 
 	found, err = blockOwner.Get(blockId)
