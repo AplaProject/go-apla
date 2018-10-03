@@ -70,6 +70,12 @@
 			"revisionTime": "2018-01-10T05:33:47Z"
 		},
 		{
+			"checksumSHA1": "VjnDsqsnX8zCKj03+o2k0WTPWJY=",
+			"path": "github.com/gizak/termui",
+			"revision": "fede2b0a7496f62f701fff3ea518ffd0740cf580",
+			"revisionTime": "2018-09-15T19:10:53Z"
+		},
+		{
 			"checksumSHA1": "2T3sb2ZthMry+Tyng2oWGRjSFv0=",
 			"path": "github.com/go-chi/chi",
 			"revision": "f2aed534ddaae0ec331ea305ef9a804b67b672f6",
@@ -227,6 +233,18 @@
 			"revisionTime": "2018-02-17T13:45:45Z"
 		},
 		{
+			"checksumSHA1": "KGCifxxR5cm2gz94i2iha+RIZlk=",
+			"path": "github.com/mattn/go-runewidth",
+			"revision": "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb",
+			"revisionTime": "2018-04-08T05:53:51Z"
+		},
+		{
+			"checksumSHA1": "2gW/SeTAbHsmAdoDes4DksvqTj4=",
+			"path": "github.com/mitchellh/go-wordwrap",
+			"revision": "9e67c67572bc5dd02aef930e2b0ae3c02a4b5a5c",
+			"revisionTime": "2018-08-28T14:53:44Z"
+		},
+		{
 			"checksumSHA1": "Yvzge1YQcD/wSDXLD5qNHqmI/0s=",
 			"path": "github.com/mitchellh/mapstructure",
 			"revision": "00c29f56e2386353d58c599509e8dc3801b0d716",
@@ -243,6 +261,12 @@
 			"path": "github.com/moul/http2curl",
 			"revision": "9ac6cf4d929b2fa8fd2d2e6dec5bb0feb4f4911d",
 			"revisionTime": "2017-09-19T18:10:01Z"
+		},
+		{
+			"checksumSHA1": "q0bUck/aTfm7+gHNDUf7PuAqux8=",
+			"path": "github.com/nsf/termbox-go",
+			"revision": "b66b20ab708e289ff1eb3e218478302e6aec28ce",
+			"revisionTime": "2018-08-19T12:58:58Z"
 		},
 		{
 			"checksumSHA1": "gcLub3oB+u4QrOJZcYmk/y2AP4k=",
