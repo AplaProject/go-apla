@@ -49,7 +49,8 @@ func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registr
 		return errors.Wrapf(err, "inserting value %s to %s registry", value, registry.Name)
 	}
 
-	if registry.Type == types.RegistryTypePrimary {
+	n := model.Ecosystem{}.ModelName()
+	if registry.Name == n {
 		if err := m.indexer.addPrimaryValue(m.tx, pkValue); err != nil {
 			return err
 		}
@@ -59,7 +60,7 @@ func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registr
 		}
 	}
 
-	if m.saveState {
+	if m.saveState && registry.Name != "ecosystems" {
 		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, "")
 		if err != nil {
 			return errors.Wrapf(err, "saving rollback info")
@@ -84,13 +85,13 @@ func (m *metadataTx) Update(ctx types.BlockchainContext, registry *types.Registr
 		return errors.Wrapf(err, "inserting value %s to %s registry", pkValue, registry.Name)
 	}
 
-	if registry.Name != "ecosystem" && m.pricing {
+	if registry.Name != "ecosystems" && m.pricing {
 		if err := m.priceCounter.Add(Update, registry); err != nil {
 			return err
 		}
 	}
 
-	if m.saveState {
+	if m.saveState && registry.Name != "ecosystems" {
 		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, old)
 		if err != nil {
 			return errors.Wrapf(err, "saving rollback info")
@@ -230,7 +231,7 @@ func (m *metadataTx) prepareValue(registry *types.Registry, pkValue string, newV
 }
 
 func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
-	if reg.Name == "ecosystem" {
+	if reg.Name == "ecosystems" {
 		return fmt.Sprintf("%s.%s", reg.Name, pk), nil
 	}
 
@@ -274,10 +275,12 @@ func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	tx := &metadataTx{tx: databaseTx, indexer: m.indexer}
 
 	if m.rollback {
+		tx.saveState = true
 		tx.rollback = metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
 	}
 
 	if m.pricing {
+		tx.pricing = true
 		tx.priceCounter = priceCounter{tx: databaseTx, indexer: m.indexer}
 	}
 

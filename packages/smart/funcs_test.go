@@ -51,7 +51,7 @@ func TestDBUpdateExt2(t *testing.T) {
 		TxSmart: tx.SmartContract{Header: tx.Header{EcosystemID: 1}},
 	}
 
-	cost, err := DBUpdateExt(
+	_, err := DBUpdateExt(
 		sc,
 		model.KeySchema{}.ModelName(),
 		"",
@@ -61,7 +61,6 @@ func TestDBUpdateExt2(t *testing.T) {
 		},
 	)
 
-	assert.Equal(t, 1, cost)
 	require.Nil(t, err)
 
 	got := model.KeySchema{}

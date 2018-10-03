@@ -26,6 +26,7 @@ func init() {
 		configCmd,
 		stopNetworkCmd,
 		versionCmd,
+		metaregBenchCmd,
 	)
 
 	// This flags are visible for all child commands

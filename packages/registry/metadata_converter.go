@@ -34,7 +34,6 @@ func (m converter) updateFromParams(name string, value types.RegistryModel, para
 
 	r := model.GetRegistries()
 	for _, registry := range r {
-		registry := registry
 		if registry.ModelName() == name {
 			err := registry.UpdateFromData(value, params)
 			if err != nil {
