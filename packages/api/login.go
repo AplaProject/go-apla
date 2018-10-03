@@ -109,7 +109,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
 	} else if !conf.Config.IsSupportingVDE() {
-		if syspar.GetTestNewUser() {
+		if syspar.IsTestMode() {
 			pubkey = data.params[`pubkey`].([]byte)
 			if len(pubkey) == 0 {
 				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
