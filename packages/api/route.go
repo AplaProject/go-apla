@@ -74,6 +74,8 @@ func Route(route *hr.Router) {
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 
 	if !conf.Config.IsSupportingVDE() {
+		get(`txinfo/:hash`, `?contractinfo:int64`, authWallet, txinfo)
+		get(`txinfomultiple`, `data:string,?contractinfo:int64`, authWallet, txinfoMulti)
 		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
 		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
 		get(`history/:table/:id`, ``, authWallet, getHistory)
