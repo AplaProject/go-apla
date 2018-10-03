@@ -68,5 +68,5 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('64','incorrect_blocks_per_day','10','true'),
 	('65','node_ban_time','86400000','true'),
 	('66','local_node_ban_time','1800000','true'),
-	('67','test','false','true');
+	('67','test','false','false');
 `
