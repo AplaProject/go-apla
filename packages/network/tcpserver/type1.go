@@ -23,9 +23,9 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -239,12 +239,13 @@ func saveNewTransactions(r *network.DisRequest) error {
 			return utils.ErrInfo("len(txBinData) > max_tx_size")
 		}
 
-		hash, err := crypto.Hash(txBinData)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": txBinData}).Fatal("cannot hash bindata")
+		tx := transaction.RawTransaction{}
+		if err = tx.Unmarshall(bytes.NewBuffer(txBinData)); err != nil {
+			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling transaction")
+			return err
 		}
 
-		queue = append(queue, &model.QueueTx{Hash: hash, Data: txBinData, FromGate: 1})
+		queue = append(queue, &model.QueueTx{Hash: tx.Hash(), Data: txBinData, FromGate: 1})
 	}
 
 	if err := model.BatchInsert(queue, []string{"hash", "data", "from_gate"}); err != nil {

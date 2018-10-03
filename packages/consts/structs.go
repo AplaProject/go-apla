@@ -73,7 +73,7 @@ func MakeStruct(name string) interface{} {
 }
 
 // IsStruct is only used for FirstBlock now
-func IsStruct(tx int) bool {
+func IsStruct(tx int64) bool {
 	return tx == TxTypeFirstBlock || tx == TxTypeStopNetwork
 }
 

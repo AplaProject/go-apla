@@ -51,6 +51,10 @@ type Contract struct {
 	Block         *script.Block
 }
 
+func (c *Contract) Info() *script.ContractInfo {
+	return c.Block.Info.(*script.ContractInfo)
+}
+
 const (
 	// MaxPrice is a maximal value that price function can return
 	MaxPrice = 100000000000000000
@@ -233,7 +237,10 @@ func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []s
 
 func VMGetContractByID(vm *script.VM, id int32) *Contract {
 	idcont := id // - CNTOFF
-	if len(vm.Children) <= int(idcont) || vm.Children[idcont].Type != script.ObjContract {
+	if len(vm.Children) <= int(idcont) {
+		return nil
+	}
+	if vm.Children[idcont] == nil || vm.Children[idcont].Type != script.ObjContract {
 		return nil
 	}
 	return &Contract{Name: vm.Children[idcont].Info.(*script.ContractInfo).Name,
@@ -523,7 +530,7 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 }
 
 func (sc *SmartContract) getExtend() *map[string]interface{} {
-	var block, blockTime, blockKeyID int64
+	var block, blockTime, blockKeyID, blockNodePosition int64
 
 	head := sc.TxSmart
 	keyID := int64(head.KeyID)
@@ -531,12 +538,13 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		block = sc.BlockData.BlockID
 		blockKeyID = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
+		blockNodePosition = sc.BlockData.NodePosition
 	}
 	extend := map[string]interface{}{
-		`type`:              head.Type,
+		`type`:              head.ID,
 		`time`:              head.Time,
 		`ecosystem_id`:      head.EcosystemID,
-		`node_position`:     head.NodePosition,
+		`node_position`:     blockNodePosition,
 		`block`:             block,
 		`key_id`:            keyID,
 		`block_key_id`:      blockKeyID,
@@ -549,7 +557,6 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`block_time`:        blockTime,
 		`original_contract`: ``,
 		`this_contract`:     ``,
-		`role_id`:           head.RoleID,
 		`guest_key`:         vde.GuestKey,
 	}
 
@@ -914,6 +921,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	logger := sc.GetLogger()
 	payWallet := &model.Key{}
 	sc.TxContract.Extend = sc.getExtend()
+	sc.TxSmart.TokenEcosystem = consts.TokenEcosystem
 
 	retError := func(err error) (string, error) {
 		eText := err.Error()
@@ -951,7 +959,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	if len(wallet.PublicKey) > 0 {
 		public = wallet.PublicKey
 	}
-	if sc.TxSmart.Type == 258 { // UpdFullNodes
+	if sc.TxSmart.ID == 258 { // UpdFullNodes
 		node := syspar.GetNode(sc.TxSmart.KeyID)
 		if node == nil {
 			logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
@@ -966,7 +974,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.PublicKeys = append(sc.PublicKeys, public)
 
 	var CheckSignResult bool
-	CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
+	CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxHash, sc.TxSignature, false)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
 		return retError(err)
@@ -976,9 +984,6 @@ func (sc *SmartContract) CallContract() (string, error) {
 		return retError(errIncorrectSign)
 	}
 	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
-		if sc.TxSmart.TokenEcosystem == 0 {
-			sc.TxSmart.TokenEcosystem = 1
-		}
 		fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
@@ -1043,7 +1048,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 				return retError(errNegPrice)
 			}
 		}
-		sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
+		sizeFuel = syspar.GetSizeFuel() * sc.TxSize / 1024
 		priceCost := decimal.New(price, 0)
 		if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
 			logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
