@@ -60,6 +60,7 @@ const (
 	nodeBanNotificationHeader = "Your node was banned"
 	historyLimit              = 250
 	dateTimeFormat            = "2006-01-02 15:04:05"
+	contractTxType            = 128
 )
 
 type ThrowError struct {
@@ -84,8 +85,8 @@ type permColumn struct {
 }
 
 type TxInfo struct {
-	Block    string                 `json:"block"`
-	Contract string                 `json:"contract"`
+	Block    string                 `json:"block,omitempty"`
+	Contract string                 `json:"contract,omitempty"`
 	Params   map[string]interface{} `json:"params,omitempty"`
 }
 
@@ -117,6 +118,8 @@ type SmartContract struct {
 	BlockData     *utils.BlockData
 	Loop          map[string]bool
 	TxHash        []byte
+	TxSignature   []byte
+	TxSize        int64
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
@@ -124,20 +127,34 @@ type SmartContract struct {
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
-func (sc *SmartContract) AppendStack(contract string) error {
-	cont := sc.TxContract
-	if len(contract) > 0 {
+func (sc *SmartContract) AppendStack(fn string) error {
+	if sc.isAllowStack(fn) {
+		cont := sc.TxContract
 		for _, item := range cont.StackCont {
-			if item == contract {
-				return fmt.Errorf(eContractLoop, contract)
+			if item == fn {
+				return fmt.Errorf(eContractLoop, fn)
 			}
 		}
-		cont.StackCont = append(cont.StackCont, contract)
-	} else {
-		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+		cont.StackCont = append(cont.StackCont, fn)
+		(*sc.TxContract.Extend)["stack"] = cont.StackCont
 	}
-	(*sc.TxContract.Extend)["stack"] = cont.StackCont
 	return nil
+}
+
+func (sc *SmartContract) PopStack(fn string) {
+	if sc.isAllowStack(fn) {
+		cont := sc.TxContract
+		if len(cont.StackCont) > 0 {
+			cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+			(*sc.TxContract.Extend)["stack"] = cont.StackCont
+		}
+	}
+}
+
+func (sc *SmartContract) isAllowStack(fn string) bool {
+	// Stack contains only contracts
+	c := VMGetContract(sc.VM, fn, uint32(sc.TxSmart.EcosystemID))
+	return c != nil
 }
 
 var (
@@ -427,11 +444,20 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 
 // RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
 func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
+	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.TxSmart.KeyID)
+	if err != nil {
+		return false, err
+	}
+
+	rolesIndex := make(map[int64]bool)
+	for _, id := range rolesList {
+		rolesIndex[id] = true
+	}
 
 	for _, id := range ids {
 		switch v := id.(type) {
 		case int64:
-			if sc.TxSmart.RoleID == v {
+			if rolesIndex[v] {
 				return true, nil
 			}
 			break
@@ -456,8 +482,14 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if block == nil {
 				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
 			}
-			vars := map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID, `guest_key`: vde.GuestKey}
+			vars := map[string]interface{}{
+				`ecosystem_id`:      int64(sc.TxSmart.EcosystemID),
+				`key_id`:            sc.TxSmart.KeyID,
+				`sc`:                sc,
+				`original_contract`: ``,
+				`this_contract`:     ``,
+				`guest_key`:         vde.GuestKey,
+			}
 			if err := sc.AppendStack(name); err != nil {
 				return false, err
 			}
@@ -465,7 +497,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			sc.AppendStack(``)
+			sc.PopStack(name)
 		} else {
 			return false, logError(errEmptyContract, consts.EmptyObject, "ContractConditions")
 		}
@@ -2142,6 +2174,81 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
 }
 
+func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
+	var (
+		blockOwner      model.Block
+		found           bool
+		transactionSize int
+	)
+
+	found, err = blockOwner.Get(blockId)
+	if err != nil || !found {
+		return
+	}
+	data = &TxInfo{}
+	data.Block = converter.Int64ToStr(blockId)
+	blockBuffer := bytes.NewBuffer(blockOwner.Data)
+	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
+	if err != nil {
+		return
+	}
+	for blockBuffer.Len() > 0 {
+		transactionSize, err = converter.DecodeLengthBuf(blockBuffer)
+		if err != nil {
+			return
+		}
+		if blockBuffer.Len() < int(transactionSize) || transactionSize == 0 {
+			err = errParseTransaction
+			return
+		}
+		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
+		if bufTransaction.Len() == 0 {
+			err = errParseTransaction
+			return
+		}
+
+		b, errRead := bufTransaction.ReadByte()
+		if errRead != nil {
+			err = errParseTransaction
+			return
+		}
+
+		if int64(b) < contractTxType {
+			continue
+		}
+
+		var txData, txHash []byte
+		if err = converter.BinUnmarshalBuff(bufTransaction, &txData); err != nil {
+			return
+		}
+
+		txHash, err = crypto.DoubleHash(txData)
+		if err != nil {
+			return
+		}
+		if bytes.Equal(txHash, hash) {
+			smartTx := tx.SmartContract{}
+			if err = msgpack.Unmarshal(txData, &smartTx); err != nil {
+				return
+			}
+			contract := GetContractByID(int32(smartTx.ID))
+			if contract == nil {
+				err = errParseTransaction
+				return
+			}
+			data.Contract = contract.Name
+			txInfo := contract.Block.Info.(*script.ContractInfo).Tx
+			if txInfo != nil {
+				if data.Params, err = FillTxData(*txInfo, smartTx.Params); err != nil {
+					return
+				}
+			}
+			break
+		}
+	}
+	return
+}
+
 func TransactionInfo(txHash string) (string, error) {
 	var out []byte
 	hash, err := hex.DecodeString(txHash)
@@ -2156,60 +2263,9 @@ func TransactionInfo(txHash string) (string, error) {
 	if !found {
 		return ``, nil
 	}
-	var blockOwner model.Block
-	var data TxInfo
-	found, err = blockOwner.Get(ltx.Block)
+	data, err := TransactionData(ltx.Block, hash)
 	if err != nil {
 		return ``, err
-	}
-	if !found {
-		return ``, nil
-	}
-	data.Block = converter.Int64ToStr(ltx.Block)
-	blockBuffer := bytes.NewBuffer(blockOwner.Data)
-	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
-	if err != nil {
-		return ``, err
-	}
-	for blockBuffer.Len() > 0 {
-		transactionSize, err := converter.DecodeLengthBuf(blockBuffer)
-		if err != nil {
-			return ``, err
-		}
-		if blockBuffer.Len() < int(transactionSize) || transactionSize == 0 {
-			return ``, errParseTransaction
-		}
-		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		if bufTransaction.Len() == 0 {
-			return ``, errParseTransaction
-		}
-		txhash, err := crypto.Hash(bufTransaction.Bytes())
-		if err != nil {
-			return ``, err
-		}
-		if bytes.Equal(txhash, hash) {
-			if int64(bufTransaction.Bytes()[0]) > 127 {
-				bufTransaction.Next(1)
-				smartTx := tx.SmartContract{}
-				if err := msgpack.Unmarshal(bufTransaction.Bytes(), &smartTx); err != nil {
-					return ``, err
-				}
-				contract := GetContractByID(int32(smartTx.Type))
-				if contract == nil {
-					return ``, errParseTransaction
-				}
-				data.Contract = contract.Name
-				txInfo := contract.Block.Info.(*script.ContractInfo).Tx
-				if txInfo != nil {
-					if data.Params, err = FillTxData(*txInfo, smartTx.Data, nil); err != nil {
-						return ``, err
-					}
-				}
-			} else {
-				return ``, nil
-			}
-			break
-		}
 	}
 	out, err = json.Marshal(data)
 	return string(out), err

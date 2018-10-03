@@ -51,6 +51,11 @@ var (
 	modes = [][]rune{{'(', ')'}, {'{', '}'}, {'[', ']'}}
 )
 
+const (
+	columnNameKey = "column_name"
+	dataTypeKey   = "data_type"
+)
+
 func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTailTag, defaultTailTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
@@ -121,6 +126,8 @@ func init() {
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`Show`:  {tplFunc{showTag, defaultTailFull, `show`, `Condition`}, false},
+		`Hide`:  {tplFunc{hideTag, defaultTailFull, `hide`, `Condition`}, false},
 	}}
 	tails[`form`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -206,15 +213,7 @@ func moneyTag(par parFunc) string {
 	if len((*par.Pars)[`Digit`]) > 0 {
 		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
 	} else {
-		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-		sp := &model.StateParameter{}
-		sp.SetTablePrefix(prefix)
-		_, err := sp.Get(nil, `money_digit`)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
-			return `unknown money_digit`
-		}
-		cents = converter.StrToInt(sp.Value)
+		cents = consts.MoneyDigits
 	}
 	if len(ret) > consts.MoneyLength {
 		return `invalid money value`
@@ -632,7 +631,7 @@ func dbfindTag(par parFunc) string {
 	}
 	columnTypes := make(map[string]string, len(rows))
 	for _, row := range rows {
-		columnTypes[row["column_name"]] = row["data_type"]
+		columnTypes[row[columnNameKey]] = row[dataTypeKey]
 	}
 	columnNames := make([]string, 0)
 
@@ -643,8 +642,8 @@ func dbfindTag(par parFunc) string {
 
 	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
-			queryColumns = append(queryColumns, col["column_name"])
-			columnNames = append(columnNames, col["column_name"])
+			queryColumns = append(queryColumns, col[columnNameKey])
+			columnNames = append(columnNames, col[columnNameKey])
 		}
 	} else {
 		if !utils.StringInSlice(columns, `id`) {
@@ -887,6 +886,38 @@ func tailTag(par parFunc) string {
 		}
 	}
 	return ``
+}
+
+func showHideTag(par parFunc, action string) string {
+	setAllAttr(par)
+	cond := par.Node.Attr[`condition`]
+	if v, ok := cond.(string); ok {
+		val := make(map[string]string)
+		items := strings.Split(v, `,`)
+		for _, item := range items {
+			lr := strings.SplitN(strings.TrimSpace(item), `=`, 2)
+			key := strings.TrimSpace(lr[0])
+			if len(lr) == 2 {
+				val[key] = macro(strings.TrimSpace(lr[1]), par.Workspace.Vars)
+			} else {
+				val[key] = ``
+			}
+		}
+		if _, ok := par.Owner.Attr[action]; ok {
+			par.Owner.Attr[action] = append(par.Owner.Attr[action].([]map[string]string), val)
+		} else {
+			par.Owner.Attr[action] = []map[string]string{val}
+		}
+	}
+	return ``
+}
+
+func showTag(par parFunc) string {
+	return showHideTag(par, `show`)
+}
+
+func hideTag(par parFunc) string {
+	return showHideTag(par, `hide`)
 }
 
 func includeTag(par parFunc) string {
@@ -1347,18 +1378,25 @@ func getHistoryTag(par parFunc) string {
 	if err != nil {
 		return err.Error()
 	}
+
+	colsList, err := model.GetAllColumnTypes((*par.Workspace.Vars)[`ecosystem_id`] + "_" + table)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
+		return err.Error()
+	}
+
+	cols := make([]string, 0, len(colsList))
+	types := make([]string, 0, len(colsList))
+	for _, v := range colsList {
+
+		cols = append(cols, v[columnNameKey])
+		types = append(types, `text`)
+	}
+
 	data := make([][]string, 0)
-	cols := make([]string, 0, 8)
-	types := make([]string, 0, 8)
 	if len(list) > 0 {
 		for i := range list {
 			item := list[i].(map[string]string)
-			if i == 0 {
-				for key := range item {
-					cols = append(cols, key)
-					types = append(types, `text`)
-				}
-			}
 			items := make([]string, len(cols))
 			for ind, key := range cols {
 				val := item[key]
