@@ -73,10 +73,6 @@ func ParseBlockHeader(binaryBlock *bytes.Buffer, checkMaxSize bool) (BlockData, 
 		return BlockData{}, fmt.Errorf("bad binary block length")
 	}
 
-	private := binaryBlock.Next(1)
-	if bytes.Compare(private, []byte{1}) == 0 {
-		block.PrivateBlockchain = true
-	}
 	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
 
 	if checkMaxSize && int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
