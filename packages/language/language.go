@@ -132,14 +132,13 @@ func LangText(in string, state int, accept string) (string, bool) {
 	if state == 0 {
 		return in, false
 	}
-	mutex.RLock()
-	defer mutex.RUnlock()
-
 	if _, ok := lang[state]; !ok {
 		if err := loadLang(state); err != nil {
 			return err.Error(), false
 		}
 	}
+	mutex.RLock()
+	defer mutex.RUnlock()
 	langs := strings.Split(accept, `,`)
 	if _, ok := (*lang[state]).res[in]; !ok {
 		return in, false
