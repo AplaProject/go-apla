@@ -7,7 +7,6 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('3','default_ecosystem_contract', '', 'true'),
 	('4','gap_between_blocks', '2', 'true'),
 	('5','rollback_blocks', '60', 'true'),
-	('6','max_forsign_size', '1000000', 'true'),
 	('7','new_version_url', 'upd.apla.io', 'true'),
 	('8','full_nodes', '', 'true'),
 	('9','number_of_nodes', '101', 'true'),
