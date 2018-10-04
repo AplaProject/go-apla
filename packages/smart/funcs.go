@@ -79,8 +79,8 @@ type permColumn struct {
 }
 
 type TxInfo struct {
-	Block    string                 `json:"block"`
-	Contract string                 `json:"contract"`
+	Block    string                 `json:"block,omitempty"`
+	Contract string                 `json:"contract,omitempty"`
 	Params   map[string]interface{} `json:"params,omitempty"`
 }
 
@@ -2167,6 +2167,81 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
 }
 
+func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
+	var (
+		blockOwner      model.Block
+		found           bool
+		transactionSize int
+	)
+
+	found, err = blockOwner.Get(blockId)
+	if err != nil || !found {
+		return
+	}
+	data = &TxInfo{}
+	data.Block = converter.Int64ToStr(blockId)
+	blockBuffer := bytes.NewBuffer(blockOwner.Data)
+	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
+	if err != nil {
+		return
+	}
+	for blockBuffer.Len() > 0 {
+		transactionSize, err = converter.DecodeLengthBuf(blockBuffer)
+		if err != nil {
+			return
+		}
+		if blockBuffer.Len() < int(transactionSize) || transactionSize == 0 {
+			err = errParseTransaction
+			return
+		}
+		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
+		if bufTransaction.Len() == 0 {
+			err = errParseTransaction
+			return
+		}
+
+		b, errRead := bufTransaction.ReadByte()
+		if errRead != nil {
+			err = errParseTransaction
+			return
+		}
+
+		if int64(b) < contractTxType {
+			continue
+		}
+
+		var txData, txHash []byte
+		if err = converter.BinUnmarshalBuff(bufTransaction, &txData); err != nil {
+			return
+		}
+
+		txHash, err = crypto.DoubleHash(txData)
+		if err != nil {
+			return
+		}
+		if bytes.Equal(txHash, hash) {
+			smartTx := tx.SmartContract{}
+			if err = msgpack.Unmarshal(txData, &smartTx); err != nil {
+				return
+			}
+			contract := GetContractByID(int32(smartTx.ID))
+			if contract == nil {
+				err = errParseTransaction
+				return
+			}
+			data.Contract = contract.Name
+			txInfo := contract.Block.Info.(*script.ContractInfo).Tx
+			if txInfo != nil {
+				if data.Params, err = FillTxData(*txInfo, smartTx.Params); err != nil {
+					return
+				}
+			}
+			break
+		}
+	}
+	return
+}
+
 func TransactionInfo(txHash string) (string, error) {
 	var out []byte
 	hash, err := hex.DecodeString(txHash)
@@ -2181,70 +2256,9 @@ func TransactionInfo(txHash string) (string, error) {
 	if !found {
 		return ``, nil
 	}
-	var blockOwner model.Block
-	var data TxInfo
-	found, err = blockOwner.Get(ltx.Block)
+	data, err := TransactionData(ltx.Block, hash)
 	if err != nil {
 		return ``, err
-	}
-	if !found {
-		return ``, nil
-	}
-	data.Block = converter.Int64ToStr(ltx.Block)
-	blockBuffer := bytes.NewBuffer(blockOwner.Data)
-	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
-	if err != nil {
-		return ``, err
-	}
-	for blockBuffer.Len() > 0 {
-		transactionSize, err := converter.DecodeLengthBuf(blockBuffer)
-		if err != nil {
-			return ``, err
-		}
-		if blockBuffer.Len() < int(transactionSize) || transactionSize == 0 {
-			return ``, errParseTransaction
-		}
-		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		if bufTransaction.Len() == 0 {
-			return ``, errParseTransaction
-		}
-
-		b, err := bufTransaction.ReadByte()
-		if err != nil {
-			return ``, errParseTransaction
-		}
-
-		if int64(b) < contractTxType {
-			continue
-		}
-
-		var txData []byte
-		if err = converter.BinUnmarshalBuff(bufTransaction, &txData); err != nil {
-			return "", err
-		}
-
-		txHash, err := crypto.DoubleHash(txData)
-		if err != nil {
-			return ``, err
-		}
-		if bytes.Equal(txHash, hash) {
-			smartTx := tx.SmartContract{}
-			if err := msgpack.Unmarshal(txData, &smartTx); err != nil {
-				return ``, err
-			}
-			contract := GetContractByID(int32(smartTx.ID))
-			if contract == nil {
-				return ``, errParseTransaction
-			}
-			data.Contract = contract.Name
-			txInfo := contract.Block.Info.(*script.ContractInfo).Tx
-			if txInfo != nil {
-				if data.Params, err = FillTxData(*txInfo, smartTx.Params); err != nil {
-					return ``, err
-				}
-			}
-			break
-		}
 	}
 	out, err = json.Marshal(data)
 	return string(out), err
