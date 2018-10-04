@@ -18,10 +18,10 @@ package language
 
 import (
 	"encoding/json"
-	"strings"
-	"unicode/utf8"
-
 	"strconv"
+	"strings"
+	"sync"
+	"unicode/utf8"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -39,6 +39,7 @@ var (
 	// LangList is the list of available languages. It stores two-bytes codes
 	LangList []string
 	lang     = make(map[int]*cacheLang)
+	mutex    = &sync.RWMutex{}
 )
 
 // IsLang checks if there is a language with code name
@@ -64,6 +65,8 @@ func DefLang() string {
 
 // UpdateLang updates language sources for the specified state
 func UpdateLang(state int, name, value string) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	if _, ok := lang[state]; !ok {
 		lang[state] = &cacheLang{make(map[string]*map[string]string)}
 	}
@@ -106,6 +109,8 @@ func loadLang(state int) error {
 		}
 		res[ilist[`name`]] = &ires
 	}
+	mutex.Lock()
+	defer mutex.Unlock()
 	if _, ok := lang[state]; !ok {
 		lang[state] = &cacheLang{}
 	}
@@ -127,6 +132,9 @@ func LangText(in string, state int, accept string) (string, bool) {
 	if state == 0 {
 		return in, false
 	}
+	mutex.RLock()
+	defer mutex.RUnlock()
+
 	if _, ok := lang[state]; !ok {
 		if err := loadLang(state); err != nil {
 			return err.Error(), false
