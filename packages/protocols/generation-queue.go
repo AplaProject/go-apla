@@ -66,11 +66,11 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 		blockTime := b.Header.Time
 		if blockTime >= startInterval.Unix() && blockTime < endInterval.Unix() {
 			if b.Header.NodePosition == int64(nodePosition) {
-				return false, DuplicateBlockError
+				return true, DuplicateBlockError
 			}
 		}
 	}
-	return true, nil
+	return false, nil
 }
 
 // NextTime returns next generation time for node position at time

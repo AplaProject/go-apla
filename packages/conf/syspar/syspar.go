@@ -80,6 +80,8 @@ const (
 	LocalNodeBanTime = `local_node_ban_time`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
+	// FirstBlockData is first block data
+	FirstBlockData = `first_block_data`
 )
 
 var (
@@ -92,7 +94,6 @@ var (
 	wallets         = make(map[int64]string)
 	mutex           = &sync.RWMutex{}
 
-	firstBlockData    *consts.FirstBlock
 	errFirstBlockData = errors.New("Failed to get data of the first block")
 )
 
@@ -454,27 +455,35 @@ func HasSys(name string) bool {
 }
 
 // SetFirstBlockData sets data of first block to global variable
-func SetFirstBlockData(data *consts.FirstBlock) {
+func SetFirstBlockData() {
 	mutex.Lock()
 	defer mutex.Unlock()
-
-	firstBlockData = data
+	fbData, err := getFirstBlockData()
 
 	// If list of nodes is empty, then used node from the first block
-	if len(nodesByPosition) == 0 {
-		keyID := crypto.Address(firstBlockData.PublicKey)
-		addFullNodeKeys(keyID, firstBlockData.NodePublicKey)
+	if len(nodesByPosition) == 0 && err == nil {
+		keyID := crypto.Address(fbData.PublicKey)
+		addFullNodeKeys(keyID, fbData.NodePublicKey)
 	}
+}
+
+func getFirstBlockData() (*consts.FirstBlock, error) {
+	fbData := &consts.FirstBlock{}
+	data := cache[FirstBlockData]
+	if len(data) > 0 {
+		if err := json.Unmarshal([]byte(data), fbData); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("json unmarshal error")
+			return nil, err
+		}
+	} else {
+		return nil, errFirstBlockData
+	}
+	return fbData, nil
 }
 
 // GetFirstBlockData gets data of first block from global variable
 func GetFirstBlockData() (*consts.FirstBlock, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-
-	if firstBlockData == nil {
-		return nil, errFirstBlockData
-	}
-
-	return firstBlockData, nil
+	return getFirstBlockData()
 }

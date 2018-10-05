@@ -560,7 +560,18 @@ func InitFirstEcosystem(sc *SmartContract, data string) error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
 		return err
 	}
-	syspar.SetFirstBlockData(fbData)
+	spFirstBlockData := &model.SystemParameter{Name: "first_block_data"}
+	var jsonFBData []byte
+	jsonFBData, err = json.Marshal(fbData)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("Marshalling fb data to json")
+		return err
+	}
+	if err := spFirstBlockData.Update(string(jsonFBData)); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Updating first block data")
+		return err
+	}
+	syspar.SetFirstBlockData()
 	return nil
 }
 

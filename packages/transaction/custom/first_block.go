@@ -101,7 +101,7 @@ func (t *FirstBlockTransaction) Action() error {
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
-	syspar.SetFirstBlockData(data)
+	syspar.SetFirstBlockData()
 	return nil
 }
 

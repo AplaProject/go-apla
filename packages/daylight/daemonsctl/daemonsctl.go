@@ -25,7 +25,7 @@ func RunAllDaemons(ctx context.Context) error {
 			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
 			return err
 		}
-
+		syspar.SetFirstBlockData()
 	} else {
 		err := syspar.SysUpdate(nil)
 		if err != nil {

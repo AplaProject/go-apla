@@ -12,10 +12,12 @@ import (
 
 type TransactionQueue struct {
 	queue *goque.Queue
+	name  string
 }
 
 func (tq *TransactionQueue) Init(name string) error {
 	var err error
+	tq.name = name
 	tq.queue, err = goque.OpenQueue("queues/" + name)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError, "name": name}).Error("opening queue")
