@@ -135,6 +135,7 @@ func init() {
 	configCmd.Flags().StringVar(&conf.Config.TLSCert, "tls-cert", "", "Filepath to the fullchain of certificates")
 	configCmd.Flags().StringVar(&conf.Config.TLSKey, "tls-key", "", "Filepath to the private key")
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
+	configCmd.Flags().Int64Var(&conf.Config.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
 	configCmd.Flags().StringVar(&conf.Config.RunningMode, "runMode", "PublicBlockchain", "Node running mode")
 
@@ -147,6 +148,7 @@ func init() {
 	viper.BindPFlag("TLSCert", configCmd.Flags().Lookup("tls-cert"))
 	viper.BindPFlag("TLSKey", configCmd.Flags().Lookup("tls-key"))
 	viper.BindPFlag("MaxPageGenerationTime", configCmd.Flags().Lookup("mpgt"))
+	viper.BindPFlag("HTTPServerMaxBodySize", configCmd.Flags().Lookup("mbs"))
 	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
 	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
 	viper.BindPFlag("RunningMode", configCmd.Flags().Lookup("runMode"))
