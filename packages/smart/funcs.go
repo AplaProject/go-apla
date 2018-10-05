@@ -42,7 +42,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
@@ -96,6 +95,13 @@ type FlushInfo struct {
 	Name string // the name
 }
 
+// NotifyInfo is used for sending delayed notifications
+type NotifyInfo struct {
+	Roles       bool // if true then UpdateRolesNotifications, otherwise UpdateNotifications
+	EcosystemID int64
+	List        []int64
+}
+
 // SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
@@ -118,6 +124,7 @@ type SmartContract struct {
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
+	Notifications []NotifyInfo
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
@@ -2131,7 +2138,7 @@ func UnixDateTime(value string) int64 {
 	return t.Unix()
 }
 
-func UpdateNotifications(ecosystemID int64, users ...interface{}) {
+func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interface{}) {
 	userList := make([]int64, 0, len(users))
 	for i, userID := range users {
 		switch v := userID.(type) {
@@ -2141,15 +2148,15 @@ func UpdateNotifications(ecosystemID int64, users ...interface{}) {
 			userList = append(userList, converter.StrToInt64(v))
 		case []interface{}:
 			if i == 0 {
-				UpdateNotifications(ecosystemID, v...)
+				UpdateNotifications(sc, ecosystemID, v...)
 				return
 			}
 		}
 	}
-	notificator.UpdateNotifications(ecosystemID, userList)
+	sc.Notifications = append(sc.Notifications, NotifyInfo{false, ecosystemID, userList})
 }
 
-func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
+func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...interface{}) {
 	rolesList := make([]int64, 0, len(roles))
 	for i, roleID := range roles {
 		switch v := roleID.(type) {
@@ -2159,12 +2166,12 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 			rolesList = append(rolesList, converter.StrToInt64(v))
 		case []interface{}:
 			if i == 0 {
-				UpdateRolesNotifications(ecosystemID, v...)
+				UpdateRolesNotifications(sc, ecosystemID, v...)
 				return
 			}
 		}
 	}
-	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
+	sc.Notifications = append(sc.Notifications, NotifyInfo{true, ecosystemID, rolesList})
 }
 
 func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
