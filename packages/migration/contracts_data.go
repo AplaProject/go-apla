@@ -5,6 +5,24 @@ package migration
 var contractsDataSQL = `
 INSERT INTO "1_contracts" (id, name, value, conditions, app_id, wallet_id, ecosystem)
 VALUES
+	(next_id('1_contracts'), 'AdminCondition', 'contract AdminCondition {
+	conditions {
+		if EcosysParam("founder_account")!=$key_id
+		{
+			warning "Sorry, you do not have access to this action."
+		}
+	}
+}
+', 'ContractConditions("MainCondition")', 1, %[2]d, '%[1]d'),
+	(next_id('1_contracts'), 'DeveloperCondition', 'contract DeveloperCondition {
+	conditions {
+		if EcosysParam("founder_account")!=$key_id
+		{
+			warning "Sorry, you do not have access to this action."
+		}
+	}
+}
+', 'ContractConditions("MainCondition")', 1, %[2]d, '%[1]d'),
 	(next_id('1_contracts'), 'MainCondition', 'contract MainCondition {
 	conditions {
 		if EcosysParam("founder_account")!=$key_id
