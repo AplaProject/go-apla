@@ -116,6 +116,7 @@ var (
 		DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
 		"id" bigint NOT NULL  default nextval('rollback_tx_id_seq'),
 		"block_id" bigint NOT NULL DEFAULT '0',
+		"block_hash" bytea  NOT NULL DEFAULT '',
 		"tx_hash" bytea  NOT NULL DEFAULT '',
 		"table_name" varchar(255) NOT NULL DEFAULT '',
 		"table_id" varchar(255) NOT NULL DEFAULT '',
