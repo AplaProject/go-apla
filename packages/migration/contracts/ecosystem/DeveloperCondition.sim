@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '%[5]d'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract DeveloperCondition {
 	conditions {

@@ -163,7 +163,7 @@ func GetRecordsCountTx(db *DbTransaction, tableName, where string) (int64, error
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder int64) error {
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder, appID int64) error {
 	if id == 1 {
 		q := fmt.Sprintf(migration.GetCommonEcosystemScript())
 		if err := GetDB(db).Exec(q).Error; err != nil {
@@ -171,7 +171,7 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 			return err
 		}
 	}
-	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)
+	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder, appID)
 	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err

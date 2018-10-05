@@ -13,7 +13,7 @@ VALUES
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[2]d, '%[1]d'),
+', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d'),
 	(next_id('1_contracts'), 'DeveloperCondition', 'contract DeveloperCondition {
 	conditions {
 		if EcosysParam("founder_account")!=$key_id
@@ -22,7 +22,7 @@ VALUES
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[2]d, '%[1]d'),
+', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d'),
 	(next_id('1_contracts'), 'MainCondition', 'contract MainCondition {
 	conditions {
 		if EcosysParam("founder_account")!=$key_id
@@ -31,5 +31,5 @@ VALUES
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[2]d, '%[1]d');
+', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d');
 `

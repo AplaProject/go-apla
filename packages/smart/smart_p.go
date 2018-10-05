@@ -425,7 +425,15 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, logErrorDB(err, "generating next ecosystem id")
 	}
 
-	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value)); err != nil {
+	_, appID, err := DBInsert(sc, "@1applications", map[string]interface{}{
+		"name":      "System",
+		"ecosystem": id,
+	})
+	if err != nil {
+		return 0, logErrorDB(err, "inserting application")
+	}
+
+	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value), appID); err != nil {
 		return 0, logErrorDB(err, "executing ecosystem schema")
 	}
 

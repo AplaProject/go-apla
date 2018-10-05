@@ -32,7 +32,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const firstEcosystemID = 1
+const (
+	firstEcosystemID = 1
+	firstAppID       = 1
+)
 
 // FirstBlockParser is parser wrapper
 type FirstBlockTransaction struct {
@@ -59,7 +62,7 @@ func (t *FirstBlockTransaction) Action() error {
 	logger := t.Logger
 	data := t.Data.(*consts.FirstBlock)
 	keyID := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID)
+	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID, firstAppID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return utils.ErrInfo(err)
