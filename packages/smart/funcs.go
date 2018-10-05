@@ -49,7 +49,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
-	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -296,7 +295,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Deactivate":                   Deactivate,
 		"check_signature":              CheckSignature,
 		"RowConditions":                RowConditions,
-		"UUID":                         UUID,
 		"DecodeBase64":                 DecodeBase64,
 		"EncodeBase64":                 EncodeBase64,
 		"Hash":                         Hash,
@@ -1908,11 +1906,6 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 		"time":   block.Time,
 		"key_id": block.KeyID,
 	}, nil
-}
-
-// UUID returns new uuid
-func UUID(sc *SmartContract) string {
-	return uuid.Must(uuid.NewV4()).String()
 }
 
 // DecodeBase64 decodes base64 string
