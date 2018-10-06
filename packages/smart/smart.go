@@ -19,6 +19,7 @@ package smart
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -926,7 +927,15 @@ func (sc *SmartContract) CallContract() (string, error) {
 	retError := func(err error) (string, error) {
 		eText := err.Error()
 		if !strings.HasPrefix(eText, `{`) {
-			err = script.SetVMError(`panic`, eText)
+			if throw, ok := err.(*ThrowError); ok {
+				out, errThrow := json.Marshal(throw)
+				if errThrow != nil {
+					out = []byte(`{"type": "panic", "error": "marshalling throw"}`)
+				}
+				err = errors.New(string(out))
+			} else {
+				err = script.SetVMError(`panic`, eText)
+			}
 		}
 		return ``, err
 	}
