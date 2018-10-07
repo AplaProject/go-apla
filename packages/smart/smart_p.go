@@ -426,7 +426,8 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	_, appID, err := DBInsert(sc, "@1applications", map[string]interface{}{
-		"name":      "System",
+		"name": "System",
+		"conditions": `ContractConditions("MainCondition")`,
 		"ecosystem": id,
 	})
 	if err != nil {
