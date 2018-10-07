@@ -48,14 +48,15 @@ import (
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockID      int64
-	Time         int64
-	EcosystemID  int64
-	KeyID        int64
-	NodePosition int64
-	Sign         []byte
-	Hash         []byte
-	Version      int
+	BlockID           int64
+	Time              int64
+	EcosystemID       int64
+	KeyID             int64
+	NodePosition      int64
+	Sign              []byte
+	Hash              []byte
+	Version           int
+	PrivateBlockchain bool
 }
 
 func (b BlockData) String() string {

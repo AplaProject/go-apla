@@ -97,10 +97,10 @@ func TestLimit(t *testing.T) {
 	assert.NoError(t, checkList(10, 1))
 
 	var syspar ecosystemParamsResult
-	assert.NoError(t, sendGet(`systemparams?names=max_tx_count,max_block_user_tx`, nil, &syspar))
+	assert.NoError(t, sendGet(`systemparams?names=max_tx_block,max_tx_block_per_user`, nil, &syspar))
 
 	var maxusers, maxtx string
-	if syspar.List[0].Name == "max_tx_count" {
+	if syspar.List[0].Name == "max_tx_block" {
 		maxusers = syspar.List[1].Value
 		maxtx = syspar.List[0].Value
 	} else {
@@ -108,16 +108,16 @@ func TestLimit(t *testing.T) {
 		maxtx = syspar.List[1].Value
 	}
 	restoreMax := func() {
-		assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {maxtx}}))
-		assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_user_tx`}, `Value`: {maxusers}}))
+		assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_block`}, `Value`: {maxtx}}))
+		assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_block_per_user`}, `Value`: {maxusers}}))
 	}
 	defer restoreMax()
 
-	assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_count`}, `Value`: {`7`}}))
+	assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_block`}, `Value`: {`7`}}))
 
 	sendList()
 	assert.NoError(t, checkList(20, 3))
-	assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_block_user_tx`}, `Value`: {`3`}}))
+	assert.NoError(t, postTx(`Upd`+rnd, &url.Values{`Name`: {`max_tx_block_per_user`}, `Value`: {`3`}}))
 
 	sendList()
 	assert.NoError(t, checkList(30, 7))
