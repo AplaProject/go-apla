@@ -80,6 +80,8 @@ const (
 	LocalNodeBanTime = `local_node_ban_time`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
+	// Test equals true or 1 if we have a test blockchain
+	Test = `test`
 
 	// CostDefault is the default maximum cost of F
 	CostDefault = int64(20000000)
@@ -406,6 +408,10 @@ func GetMaxIndexes() int {
 // GetMaxBlockUserTx is returns max tx block user
 func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
+}
+
+func IsTestMode() bool {
+	return SysString(Test) == `true` || SysString(Test) == `1`
 }
 
 func GetIncorrectBlocksPerDay() int {
