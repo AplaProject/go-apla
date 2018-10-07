@@ -425,12 +425,9 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, logErrorDB(err, "generating next ecosystem id")
 	}
 
-	_, appID, err := DBInsert(sc, "@1applications", map[string]interface{}{
-		"name":      "System",
-		"ecosystem": id,
-	})
+	appID, err := model.GetNextID(sc.DbTransaction, "1_applications")
 	if err != nil {
-		return 0, logErrorDB(err, "inserting application")
+		return 0, logErrorDB(err, "generating next application id")
 	}
 
 	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value), appID); err != nil {
@@ -448,6 +445,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	sc.FullAccess = true
+	if _, _, err = DBInsert(sc, "@1applications", map[string]interface{}{
+		"name":      "System",
+		"ecosystem": id,
+	}); err != nil {
+		return 0, logErrorDB(err, "inserting application")
+	}
 	if _, _, err = DBInsert(sc, `@1pages`, map[string]interface{}{"ecosystem": idStr,
 		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
 		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
@@ -472,7 +475,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 	if _, _, err := DBInsert(sc, `@1keys`,
 		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr}); err != nil {
-		return 0, logErrorDB(err, "inserting default page")
+		return 0, logErrorDB(err, "inserting key")
 	}
 
 	sc.FullAccess = false
