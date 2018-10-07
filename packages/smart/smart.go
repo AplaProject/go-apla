@@ -1048,15 +1048,6 @@ func (sc *SmartContract) CallContract() (string, error) {
 		if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
 			amount = maxpay
 		}
-		if priceName, ok := script.ContractPrices[sc.TxContract.Name]; ok {
-			price = SysParamInt(priceName)
-			if price > MaxPrice {
-				return retError(errMaxPrice)
-			}
-			if price < 0 {
-				return retError(errNegPrice)
-			}
-		}
 		sizeFuel = syspar.GetSizeFuel() * sc.TxSize / 1024
 		priceCost := decimal.New(price, 0)
 		if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {

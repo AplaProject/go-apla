@@ -809,7 +809,7 @@ VALUES
         $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
     }
     func price() int {
-        return SysParamInt("contract_price")
+        return SysParamInt("price_create_contract")
     }
 }
 ', 'ContractConditions("MainCondition")', 1, '%[1]d'),
@@ -891,7 +891,7 @@ VALUES
         DBInsert("menu", {name:$Name,value: $Value, title: $Title, conditions: $Conditions})
     }
     func price() int {
-        return SysParamInt("menu_price")
+        return SysParamInt("price_create_menu")
     }
 }
 ', 'ContractConditions("MainCondition")', 1, '%[1]d'),
@@ -946,7 +946,7 @@ VALUES
              conditions: $Conditions,app_id: $ApplicationId})
     }
     func price() int {
-        return SysParamInt("page_price")
+        return SysParamInt("price_create_page")
     }
 }
 ', 'ContractConditions("MainCondition")', 1, '%[1]d'),
