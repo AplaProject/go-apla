@@ -145,7 +145,7 @@ func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
 		return nil
 	}
 	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
-		`ContractAccess\(\s*\".*\"\s*\)`}
+		`ContractAccess\(\s*\".*\"\s*\)`, `RoleAccess\(\s*.*\s*\)`}
 	for _, v := range allowed {
 		re := regexp.MustCompile(`^` + v + `$`)
 		if re.Match([]byte(src)) {
