@@ -42,14 +42,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
-	"github.com/satori/go.uuid"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -62,6 +60,12 @@ const (
 	dateTimeFormat            = "2006-01-02 15:04:05"
 	contractTxType            = 128
 )
+
+type ThrowError struct {
+	Type    string `json:"type"`
+	Code    string `json:"id"`
+	ErrText string `json:"error"`
+}
 
 var BOM = []byte{0xEF, 0xBB, 0xBF}
 
@@ -96,6 +100,13 @@ type FlushInfo struct {
 	Name string // the name
 }
 
+// NotifyInfo is used for sending delayed notifications
+type NotifyInfo struct {
+	Roles       bool // if true then UpdateRolesNotifications, otherwise UpdateNotifications
+	EcosystemID int64
+	List        []int64
+}
+
 // SmartContract is storing smart contract data
 type SmartContract struct {
 	VDE           bool
@@ -118,6 +129,7 @@ type SmartContract struct {
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
+	Notifications []NotifyInfo
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
@@ -296,7 +308,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Deactivate":                   Deactivate,
 		"check_signature":              CheckSignature,
 		"RowConditions":                RowConditions,
-		"UUID":                         UUID,
 		"DecodeBase64":                 DecodeBase64,
 		"EncodeBase64":                 EncodeBase64,
 		"Hash":                         Hash,
@@ -324,6 +335,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"TransactionInfo":              TransactionInfo,
 		"DelTable":                     DelTable,
 		"DelColumn":                    DelColumn,
+		"Throw":                        Throw,
 	}
 
 	switch vt {
@@ -1910,11 +1922,6 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 	}, nil
 }
 
-// UUID returns new uuid
-func UUID(sc *SmartContract) string {
-	return uuid.Must(uuid.NewV4()).String()
-}
-
 // DecodeBase64 decodes base64 string
 func DecodeBase64(input string) (out string, err error) {
 	var bin []byte
@@ -2131,7 +2138,7 @@ func UnixDateTime(value string) int64 {
 	return t.Unix()
 }
 
-func UpdateNotifications(ecosystemID int64, users ...interface{}) {
+func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interface{}) {
 	userList := make([]int64, 0, len(users))
 	for i, userID := range users {
 		switch v := userID.(type) {
@@ -2141,15 +2148,15 @@ func UpdateNotifications(ecosystemID int64, users ...interface{}) {
 			userList = append(userList, converter.StrToInt64(v))
 		case []interface{}:
 			if i == 0 {
-				UpdateNotifications(ecosystemID, v...)
+				UpdateNotifications(sc, ecosystemID, v...)
 				return
 			}
 		}
 	}
-	notificator.UpdateNotifications(ecosystemID, userList)
+	sc.Notifications = append(sc.Notifications, NotifyInfo{false, ecosystemID, userList})
 }
 
-func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
+func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...interface{}) {
 	rolesList := make([]int64, 0, len(roles))
 	for i, roleID := range roles {
 		switch v := roleID.(type) {
@@ -2159,12 +2166,12 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 			rolesList = append(rolesList, converter.StrToInt64(v))
 		case []interface{}:
 			if i == 0 {
-				UpdateRolesNotifications(ecosystemID, v...)
+				UpdateRolesNotifications(sc, ecosystemID, v...)
 				return
 			}
 		}
 	}
-	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
+	sc.Notifications = append(sc.Notifications, NotifyInfo{true, ecosystemID, rolesList})
 }
 
 func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
@@ -2425,4 +2432,12 @@ func FormatMoney(sc *SmartContract, exp string, digit int64) (string, error) {
 		exp = retDec.Shift(int32(-cents)).String()
 	}
 	return exp, nil
+}
+
+func (throw *ThrowError) Error() string {
+	return throw.ErrText
+}
+
+func Throw(code, errText string) error {
+	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
 }

@@ -106,6 +106,7 @@ type Transaction struct {
 	DbTransaction *model.DbTransaction
 	SysUpdate     bool
 	Rand          *rand.Rand
+	Notifications []smart.NotifyInfo
 
 	SmartContract smart.SmartContract
 }
@@ -346,6 +347,7 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 	resultContract, err = sc.CallContract()
 	t.TxFuel = sc.TxFuel
 	t.SysUpdate = sc.SysUpdate
+	t.Notifications = sc.Notifications
 	if sc.FlushRollback != nil {
 		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
 		copy(flushRollback, sc.FlushRollback)

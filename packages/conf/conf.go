@@ -89,6 +89,7 @@ type GlobalConfig struct {
 	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
 	TLSKey         string // TLSKey is a filepath of the private key.
 	VDEMode        string
+	HTTPServerMaxBodySize int64
 
 	MaxPageGenerationTime int64 // in milliseconds
 

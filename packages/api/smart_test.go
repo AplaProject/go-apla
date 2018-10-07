@@ -151,7 +151,7 @@ func TestRoleAccess(t *testing.T) {
 	var ret listResult
 	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
 	id := ret.Count
-	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess(2)`}}
+	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess(65)`}}
 	assert.NoError(t, postTx(`EditPage`, &form))
 	form = url.Values{"Id": {id}, "Value": {"Div(){Update}"}}
 	assert.EqualError(t, postTx(`EditPage`, &form), `{"type":"panic","error":"Access denied"}`)
@@ -439,10 +439,10 @@ func TestUpdateSysParam(t *testing.T) {
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
 			var costlen int
-			costlen = SysParamInt("extend_cost_len") + 1
+			costlen = SysParamInt("price_exec_len") + 1
 			UpdateSysParam("Name,Value","max_columns","51")
-			DBUpdateSysParam("extend_cost_len", Str(costlen), "true" )
-			if SysParamInt("extend_cost_len") != costlen {
+			DBUpdateSysParam("price_exec_len", Str(costlen), "true" )
+			if SysParamInt("price_exec_len") != costlen {
 				error "Incorrect updated value"
 			}
 			DBUpdateSysParam("max_indexes", "4", "false" )
@@ -470,8 +470,8 @@ func TestUpdateSysParam(t *testing.T) {
 
 	notvalid := []invalidPar{
 		{`gap_between_blocks`, `100000`},
-		{`rb_blocks_1`, `-1`},
-		{`page_price`, `-20`},
+		{`rollback_blocks`, `-1`},
+		{`price_create_page`, `-20`},
 		{`max_block_size`, `0`},
 		{`max_fuel_tx`, `20string`},
 		{`fuel_rate`, `string`},

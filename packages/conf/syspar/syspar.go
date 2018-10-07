@@ -56,7 +56,7 @@ const (
 	// MaxTxFuel is the maximum fuel of the transaction
 	MaxTxFuel = `max_fuel_tx`
 	// MaxTxCount is the maximum count of the transactions
-	MaxTxCount = `max_tx_count`
+	MaxTxCount = `max_tx_block`
 	// MaxBlockGenerationTime is the time limit for block generation (in ms)
 	MaxBlockGenerationTime = `max_block_generation_time`
 	// MaxColumns is the maximum columns in tables
@@ -64,13 +64,13 @@ const (
 	// MaxIndexes is the maximum indexes in tables
 	MaxIndexes = `max_indexes`
 	// MaxBlockUserTx is the maximum number of user's transactions in one block
-	MaxBlockUserTx = `max_block_user_tx`
+	MaxBlockUserTx = `max_tx_block_per_user`
 	// SizeFuel is the fuel cost of 1024 bytes of the transaction data
-	SizeFuel = `size_fuel`
+	SizeFuel = `price_tx_data`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
 	// RbBlocks1 rollback from queue_bocks
-	RbBlocks1 = `rb_blocks_1`
+	RbBlocks1 = `rollback_blocks`
 	// BlockReward value of reward, which is chrged on block generation
 	BlockReward = "block_reward"
 	// IncorrectBlocksPerDay is value of incorrect blocks per day before global ban
@@ -78,9 +78,11 @@ const (
 	// NodeBanTime is value of ban time for bad nodes (in ms)
 	NodeBanTime = `node_ban_time`
 	// LocalNodeBanTime is value of local ban time for bad nodes (in ms)
-	LocalNodeBanTime = `local_node_ban_time`
+	LocalNodeBanTime = `node_ban_time_local`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
+	// Test equals true or 1 if we have a test blockchain
+	Test = `test`
 	// PrivateBlockchain is value defining blockchain mode
 	PrivateBlockchain = `private_blockchain`
 
@@ -409,6 +411,10 @@ func GetMaxIndexes() int {
 // GetMaxBlockUserTx is returns max tx block user
 func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
+}
+
+func IsTestMode() bool {
+	return SysString(Test) == `true` || SysString(Test) == `1`
 }
 
 func GetIncorrectBlocksPerDay() int {

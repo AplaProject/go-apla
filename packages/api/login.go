@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 
@@ -108,42 +109,46 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
 	} else if !conf.Config.IsSupportingVDE() {
-		pubkey = data.params[`pubkey`].([]byte)
-		if len(pubkey) == 0 {
-			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
-		}
-
-		nodePrivateKey, err := utils.GetNodePrivateKey()
-		if err != nil || len(nodePrivateKey) < 1 {
-			if err == nil {
-				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+		if syspar.IsTestMode() {
+			pubkey = data.params[`pubkey`].([]byte)
+			if len(pubkey) == 0 {
+				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
+				return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 			}
-			return err
-		}
 
-		contract := smart.GetContract("NewUser", 1)
-		sc := tx.SmartContract{
-			Header: tx.Header{
-				ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
-				Time:        time.Now().Unix(),
-				EcosystemID: 1,
-				KeyID:       conf.Config.KeyID,
-				NetworkID:   consts.NETWORK_ID,
-			},
-			Params: map[string]interface{}{
-				"NewPubkey": hex.EncodeToString(data.params[`pubkey`].([]byte)),
-			},
-		}
+			nodePrivateKey, err := utils.GetNodePrivateKey()
+			if err != nil || len(nodePrivateKey) < 1 {
+				if err == nil {
+					log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+				}
+				return err
+			}
 
-		txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
-		} else {
-			err = tx.CreateTransaction(txData, txHash, sc.KeyID)
+			contract := smart.GetContract("NewUser", 1)
+			sc := tx.SmartContract{
+				Header: tx.Header{
+					ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
+					Time:        time.Now().Unix(),
+					EcosystemID: 1,
+					KeyID:       conf.Config.KeyID,
+					NetworkID:   consts.NETWORK_ID,
+				},
+				Params: map[string]interface{}{
+					"NewPubkey": hex.EncodeToString(data.params[`pubkey`].([]byte)),
+				},
+			}
+
+			txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
 			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
+			} else {
+				err = tx.CreateTransaction(txData, txHash, sc.KeyID)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+				}
 			}
+		} else {
+			return errorAPI(w, `E_KEYNOTFOUND`, http.StatusForbidden)
 		}
 	}
 
