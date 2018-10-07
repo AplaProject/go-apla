@@ -52,11 +52,11 @@ type contract struct {
 	Name       string
 	Source     template.HTML
 	Conditions template.HTML
-	AppID      int
+	AppID      string
 }
 
 type meta struct {
-	AppID      int
+	AppID      string
 	Conditions string
 }
 
@@ -75,7 +75,7 @@ INSERT INTO "1_contracts" (id, name, value, conditions, app_id{{if .Owner }}, wa
 VALUES
 {{- $last := add (len .Contracts) -1}}
 {{- range $i, $item := .Contracts}}
-	(next_id('1_contracts'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}', {{ $item.AppID }}{{if $.Owner }}, {{ $.Owner }}{{end}}, '{{ $.Ecosystem }}'){{if eq $last $i}};{{else}},{{end}}
+	(next_id('1_contracts'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}', '{{ $item.AppID }}'{{if $.Owner }}, {{ $.Owner }}{{end}}, '{{ $.Ecosystem }}'){{if eq $last $i}};{{else}},{{end}}
 {{- end}}
 ` + "`"))
 
