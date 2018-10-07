@@ -19,6 +19,7 @@ package smart
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -144,7 +145,7 @@ func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
 		return nil
 	}
 	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
-		`ContractAccess\(\s*\".*\"\s*\)`}
+		`ContractAccess\(\s*\".*\"\s*\)`, `RoleAccess\(\s*.*\s*\)`}
 	for _, v := range allowed {
 		re := regexp.MustCompile(`^` + v + `$`)
 		if re.Match([]byte(src)) {
@@ -926,7 +927,15 @@ func (sc *SmartContract) CallContract() (string, error) {
 	retError := func(err error) (string, error) {
 		eText := err.Error()
 		if !strings.HasPrefix(eText, `{`) {
-			err = script.SetVMError(`panic`, eText)
+			if throw, ok := err.(*ThrowError); ok {
+				out, errThrow := json.Marshal(throw)
+				if errThrow != nil {
+					out = []byte(`{"type": "panic", "error": "marshalling throw"}`)
+				}
+				err = errors.New(string(out))
+			} else {
+				err = script.SetVMError(`panic`, eText)
+			}
 		}
 		return ``, err
 	}
