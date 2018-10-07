@@ -17,6 +17,7 @@
 package tcpserver
 
 import (
+	"bytes"
 	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -28,6 +29,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -58,20 +60,19 @@ func Type2(rw io.ReadWriter) (*network.DisTrResponse, error) {
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
 
-	decryptedBinDataFull := decryptedBinData
-	hash, err := crypto.Hash(decryptedBinDataFull)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": decryptedBinDataFull}).Fatal("cannot hash tx bindata")
+	tx := transaction.RawTransaction{}
+	if err = tx.Unmarshall(bytes.NewBuffer(decryptedBinData)); err != nil {
+		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling transaction")
+		return nil, err
 	}
 
-	_, err = model.DeleteQueueTxByHash(nil, hash)
+	_, err = model.DeleteQueueTxByHash(nil, tx.Hash())
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": hash}).Error("Deleting queue_tx with hash")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": tx.Hash()}).Error("Deleting queue_tx with hash")
 		return nil, utils.ErrInfo(err)
 	}
 
-	//hexBinData := converter.BinToHex(decryptedBinDataFull)
-	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
+	queueTx := &model.QueueTx{Hash: tx.Hash(), Data: decryptedBinData, FromGate: 0}
 	err = queueTx.Create()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating queue_tx")

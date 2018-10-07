@@ -1,7 +1,9 @@
 package transaction
 
 import (
+	"bytes"
 	"errors"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -99,7 +101,7 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 	}
 
 	// set loglevel as error because default level setups to "error"
-	log.WithFields(log.Fields{"type": consts.BadTxError, "tx_hash": string(hash), "error": errText}).Error("tx marked as bad")
+	log.WithFields(log.Fields{"type": consts.BadTxError, "tx_hash": hash, "error": errText}).Error("tx marked as bad")
 
 	// looks like there is not hash in queue_tx in this moment
 	qtx := &model.QueueTx{}
@@ -127,57 +129,56 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 
 // TxParser writes transactions into the queue
 func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx []byte, myTx bool) error {
-	// get parameters for "struct" transactions
-	txType, keyID := GetTxTypeAndUserID(binaryTx)
-
-	header, err := CheckTransaction(binaryTx)
+	t, err := UnmarshallTransaction(bytes.NewBuffer(binaryTx))
 	if err != nil {
-		MarkTransactionBad(dbTransaction, hash, err.Error())
 		return err
 	}
 
-	if !( /*txType > 127 ||*/ consts.IsStruct(txType)) {
-		if header == nil {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("tx header is nil")
-			return utils.ErrInfo(errors.New("header is nil"))
-		}
-		keyID = header.KeyID
+	if err = t.Check(time.Now().Unix(), true); err != nil {
+		return err
 	}
 
-	if keyID == 0 {
+	if t.TxKeyID == 0 {
 		errStr := "undefined keyID"
-		MarkTransactionBad(dbTransaction, hash, errStr)
+		MarkTransactionBad(dbTransaction, t.TxHash, errStr)
 		return errors.New(errStr)
 	}
 
 	tx := &model.Transaction{}
-	_, err = tx.Get(hash)
+	_, err = tx.Get(t.TxHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction by hash")
 		return utils.ErrInfo(err)
 	}
 	counter := tx.Counter
 	counter++
-	_, err = model.DeleteTransactionByHash(hash)
+	_, err = model.DeleteTransactionByHash(t.TxHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction by hash")
 		return utils.ErrInfo(err)
 	}
 
-	// put with verified=1
-	newTx := &model.Transaction{
-		Hash:     hash,
-		Data:     binaryTx,
-		Type:     int8(txType),
-		KeyID:    keyID,
-		Counter:  counter,
-		Verified: 1,
-		HighRate: tx.HighRate,
-	}
-	err = newTx.Create()
+	logExist, err := model.GetLogTransactionsCount(t.TxHash)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
-		return utils.ErrInfo(err)
+		return err
+	}
+
+	if logExist == 0 {
+		// put with verified=1
+		newTx := &model.Transaction{
+			Hash:     t.TxHash,
+			Data:     binaryTx,
+			Type:     int8(t.TxType),
+			KeyID:    t.TxKeyID,
+			Counter:  counter,
+			Verified: 1,
+			HighRate: tx.HighRate,
+		}
+		err = newTx.Create()
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
+			return utils.ErrInfo(err)
+		}
 	}
 
 	// remove transaction from the queue (with verified=0)
