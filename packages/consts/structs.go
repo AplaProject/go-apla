@@ -44,6 +44,7 @@ type FirstBlock struct {
 	NodePublicKey         []byte
 	StopNetworkCertBundle []byte
 	Test                  int64
+	PrivateBlockchain     uint64
 }
 
 type StopNetwork struct {

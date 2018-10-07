@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -82,6 +83,8 @@ const (
 	CommissionSize = `commission_size`
 	// Test equals true or 1 if we have a test blockchain
 	Test = `test`
+	// PrivateBlockchain is value defining blockchain mode
+	PrivateBlockchain = `private_blockchain`
 
 	// CostDefault is the default maximum cost of F
 	CostDefault = int64(20000000)
@@ -486,6 +489,16 @@ func GetFirstBlockData() (*consts.FirstBlock, error) {
 	}
 
 	return firstBlockData, nil
+}
+
+// IsPrivateBlockchain returns the value of private_blockchain system parameter or true
+func IsPrivateBlockchain() bool {
+	res, err := strconv.ParseBool(SysString(PrivateBlockchain))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ParameterExceeded, "error": err}).Error("getting private_blockchain system parameters")
+		return true
+	}
+	return res
 }
 
 func GetMaxCost() int64 {

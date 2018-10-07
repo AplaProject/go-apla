@@ -137,7 +137,7 @@ func init() {
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
 	configCmd.Flags().Int64Var(&conf.Config.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
-	configCmd.Flags().StringVar(&conf.Config.RunningMode, "runMode", "PublicBlockchain", "Node running mode")
+	configCmd.Flags().StringVar(&conf.Config.VDEMode, "vdeMode", "none", "VDE running mode")
 
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
 	viper.BindPFlag("LockFilePath", configCmd.Flags().Lookup("lock"))
@@ -151,5 +151,5 @@ func init() {
 	viper.BindPFlag("HTTPServerMaxBodySize", configCmd.Flags().Lookup("mbs"))
 	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
 	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
-	viper.BindPFlag("RunningMode", configCmd.Flags().Lookup("runMode"))
+	viper.BindPFlag("VDEMode", configCmd.Flags().Lookup("vdeMode"))
 }

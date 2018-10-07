@@ -992,7 +992,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 		return retError(errIncorrectSign)
 	}
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain() {
 		fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
@@ -1096,7 +1096,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		}
 	}
 
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain() {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
 		}

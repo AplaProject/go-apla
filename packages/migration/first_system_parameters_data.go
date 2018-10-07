@@ -66,5 +66,6 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('67','test','false','false'),
 	('68','price_tx_data', '0', 'true'),
 	('69', 'price_exec_contract_by_name', '0', 'true'),
-	('70', 'price_exec_contract_by_id', '0', 'true');
+	('70', 'price_exec_contract_by_id', '0', 'true'),
+	('71','private_blockchain', '1', 'true');
 `

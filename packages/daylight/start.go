@@ -216,7 +216,7 @@ func Start() {
 		}
 	}
 
-	log.WithFields(log.Fields{"mode": conf.Config.RunningMode}).Info("Node running mode")
+	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()

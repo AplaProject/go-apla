@@ -1,10 +1,6 @@
 package conf
 
-// PrivateBlockchain const label for running mode
-const privateBlockchain RunMode = "PrivateBlockchain"
-
-// PublicBlockchain const label for running mode
-const publicBlockchain RunMode = "PublicBlockchain"
+type RunMode string
 
 // VDEManager const label for running mode
 const vdeMaster RunMode = "VDEMaster"
@@ -12,17 +8,8 @@ const vdeMaster RunMode = "VDEMaster"
 // VDE const label for running mode
 const vde RunMode = "VDE"
 
-type RunMode string
-
-// IsPublicBlockchain returns true if mode equal PublicBlockchain
-func (rm RunMode) IsPublicBlockchain() bool {
-	return rm == publicBlockchain
-}
-
-// IsPrivateBlockchain returns true if mode equal PrivateBlockchain
-func (rm RunMode) IsPrivateBlockchain() bool {
-	return rm == privateBlockchain
-}
+// VDE const label for running mode
+const node RunMode = "NONE"
 
 // IsVDEMaster returns true if mode equal vdeMaster
 func (rm RunMode) IsVDEMaster() bool {
@@ -32,6 +19,11 @@ func (rm RunMode) IsVDEMaster() bool {
 // IsVDE returns true if mode equal vde
 func (rm RunMode) IsVDE() bool {
 	return rm == vde
+}
+
+// IsNode returns true if mode not equal to any VDE
+func (rm RunMode) IsNode() bool {
+	return rm == node
 }
 
 // IsSupportingVDE returns true if mode support vde
