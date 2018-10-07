@@ -4,91 +4,91 @@ var firstTablesDataSQL = `
 INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
     (next_id('1_tables'), 'delayed_contracts',
         '{
-            "insert": "ContractConditions(\"MainCondition\")",
-            "update": "ContractConditions(\"MainCondition\")",
-            "new_column": "ContractConditions(\"MainCondition\")"
+            "insert": "ContractConditions(\"@1AdminCondition\")",
+            "update": "ContractConditions(\"@1AdminCondition\")",
+            "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "contract": "ContractConditions(\"MainCondition\")",
-            "key_id": "ContractConditions(\"MainCondition\")",
-            "block_id": "ContractConditions(\"MainCondition\")",
-            "every_block": "ContractConditions(\"MainCondition\")",
-            "counter": "ContractConditions(\"MainCondition\")",
-            "limit": "ContractConditions(\"MainCondition\")",
-            "deleted": "ContractConditions(\"MainCondition\")",
-            "conditions": "ContractConditions(\"MainCondition\")"
+            "contract": "ContractAccess(\"@1EditDelayedContract\")",
+            "key_id": "ContractAccess(\"@1EditDelayedContract\")",
+            "block_id": "ContractAccess(\"@1CallDelayedContract\",\"@1EditDelayedContract\")",
+            "every_block": "ContractAccess(\"@1EditDelayedContract\")",
+            "counter": "ContractAccess(\"@1CallDelayedContract\",\"@1EditDelayedContract\")",
+            "limit": "ContractAccess(\"@1EditDelayedContract\")",
+            "deleted": "ContractAccess(\"@1EditDelayedContract\")",
+            "conditions": "ContractAccess(\"@1EditDelayedContract\")"
         }',
-        'ContractConditions("MainCondition")'
+        'ContractConditions("@1AdminCondition")'
     ),
     (next_id('1_tables'), 'ecosystems',
         '{
-            "insert": "true",
-            "update": "ContractConditions(\"MainCondition\")",
-            "new_column": "ContractConditions(\"MainCondition\")"
+            "insert": "ContractAccess(\"@1NewEcosystem\")",
+            "update": "ContractAccess(\"@1EditEcosystemName\",\"@1VotingDecisionCheck\")",
+            "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "name": "ContractConditions(\"MainCondition\")",
-            "is_valued": "ContractConditions(\"MainCondition\")"
+            "name": "ContractAccess(\"@1EditEcosystemName\")",
+            "is_valued": "ContractAccess(\"@1VotingDecisionCheck\")"
         }',
-        'ContractConditions("MainCondition")'
+        'ContractConditions("@1AdminCondition")'
     ),
     (next_id('1_tables'), 'metrics',
         '{
-            "insert": "ContractConditions(\"MainCondition\")",
-            "update": "ContractConditions(\"MainCondition\")",
-            "new_column": "ContractConditions(\"MainCondition\")"
+            "insert": "ContractAccess(\"@1UpdateMetrics\")",
+            "update": "ContractAccess(\"@1UpdateMetrics\")",
+            "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "time": "ContractConditions(\"MainCondition\")",
-            "metric": "ContractConditions(\"MainCondition\")",
-            "key": "ContractConditions(\"MainCondition\")",
-            "value": "ContractConditions(\"MainCondition\")"
+            "time": "ContractAccess(\"@1UpdateMetrics\")",
+            "metric": "ContractAccess(\"@1UpdateMetrics\")",
+            "key": "ContractAccess(\"@1UpdateMetrics\")",
+            "value": "ContractAccess(\"@1UpdateMetrics\")"
         }',
-        'ContractConditions("MainCondition")'
+        'ContractConditions("@1AdminCondition")'
     ),
     (next_id('1_tables'), 'system_parameters',
         '{
             "insert": "false",
-            "update": "ContractAccess(\"1@UpdateSysParam\")",
-            "new_column": "ContractConditions(\"MainCondition\")"
+            "update": "ContractAccess(\"@1UpdateSysParam\")",
+            "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "value": "ContractConditions(\"MainCondition\")"
+            "value": "ContractAccess(\"@UpdateSysParam\")",
+			"name": "false",
+			"conditions": "ContractAccess(\"@UpdateSysParam\")"
         }',
-        'ContractConditions("MainCondition")'
+        'ContractConditions("@1AdminCondition")'
     ),
     (next_id('1_tables'), 'bad_blocks',
         '{
-            "insert": "ContractAccess(\"NewBadBlock\")",
-            "update": "ContractAccess(\"NewBadBlock\", \"CheckNodesBan\")",
-            "new_column": "ContractConditions(\"MainCondition\")"
+            "insert": "ContractAccess(\"@1NewBadBlock\")",
+            "update": "ContractAccess(\"@1NewBadBlock\", \"@1CheckNodesBan\")",
+            "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "contract": "ContractConditions(\"MainCondition\")",
-            "id": "ContractConditions(\"MainCondition\")",
-            "block_id": "ContractConditions(\"MainCondition\")",
-            "producer_node_id": "ContractConditions(\"MainCondition\")",
-            "consumer_node_id": "ContractConditions(\"MainCondition\")",
-            "block_time": "ContractConditions(\"MainCondition\")",
-            "reason": "ContractConditions(\"MainCondition\")",
-            "deleted": "ContractAccess(\"NewBadBlock\", \"CheckNodesBan\")"
+            "id": "ContractAccess(\"@1CheckNodesBan\")",
+            "block_id": "ContractAccess(\"@1CheckNodesBan\")",
+            "producer_node_id": "ContractAccess(\"@1CheckNodesBan\")",
+            "consumer_node_id": "ContractAccess(\"@1CheckNodesBan\")",
+            "block_time": "ContractAccess(\"@1CheckNodesBan\")",
+            "reason": "ContractAccess(\"@1CheckNodesBan\")",
+            "deleted": "ContractAccess(\"@1CheckNodesBan\")"
         }',
-        'ContractConditions(\"MainCondition\")'
+        'ContractConditions("@1AdminCondition")'
     ),
     (next_id('1_tables'), 'node_ban_logs',
         '{
-            "insert": "ContractAccess(\"CheckNodesBan\")",
-            "update": "ContractConditions(\"MainCondition\")",
-            "new_column": "ContractConditions(\"MainCondition\")"
+            "insert": "ContractAccess(\"@1CheckNodesBan\")",
+            "update": "ContractAccess(\"@1CheckNodesBan\")",
+            "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "contract": "ContractConditions(\"MainCondition\")",
-            "id": "ContractConditions(\"MainCondition\")",
-            "node_id": "ContractConditions(\"MainCondition\")",
-            "banned_at": "ContractConditions(\"MainCondition\")",
-            "ban_time": "ContractConditions(\"MainCondition\")",
-            "reason": "ContractConditions(\"MainCondition\")"
+            "id": "ContractAccess(\"@1CheckNodesBan\")",
+            "node_id": "ContractAccess(\"@1CheckNodesBan\")",
+            "banned_at": "ContractAccess(\"@1CheckNodesBan\")",
+            "ban_time": "ContractAccess(\"@1CheckNodesBan\")",
+            "reason": "ContractAccess(\"@1CheckNodesBan\")"
         }',
-        'ContractConditions(\"MainCondition\")'
+        'ContractConditions("@1AdminCondition")'
     );
 `
