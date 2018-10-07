@@ -27,11 +27,11 @@ DROP TABLE IF EXISTS "1_system_parameters";
 		"id" int NOT NULL default 0,
 		"contract" varchar(255) NOT NULL DEFAULT '',
 		"key_id" bigint NOT NULL DEFAULT '0',
-		"block_id" int NOT NULL DEFAULT '0',
-		"every_block" int NOT NULL DEFAULT '0',
-		"counter" int NOT NULL DEFAULT '0',
-		"limit" int NOT NULL DEFAULT '0',
-		"deleted" boolean NOT NULL DEFAULT 'false',
+		"block_id" bigint NOT NULL DEFAULT '0',
+		"every_block" bigint NOT NULL DEFAULT '0',
+		"counter" bigint NOT NULL DEFAULT '0',
+		"limit" bigint NOT NULL DEFAULT '0',
+		"deleted" bigint NOT NULL DEFAULT '0',
 		"conditions" text NOT NULL DEFAULT ''
 	);
 	ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
@@ -51,11 +51,11 @@ DROP TABLE IF EXISTS "1_system_parameters";
 	DROP TABLE IF EXISTS "1_bad_blocks"; CREATE TABLE "1_bad_blocks" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"producer_node_id" bigint NOT NULL,
-		"block_id" int NOT NULL,
+		"block_id" bigint NOT NULL,
 		"consumer_node_id" bigint NOT NULL,
 		"block_time" timestamp NOT NULL,
 		"reason" TEXT NOT NULL DEFAULT '',
-		"deleted" boolean NOT NULL DEFAULT 'false'
+		"deleted" bigint NOT NULL DEFAULT '0'
 	);
 	ALTER TABLE ONLY "1_bad_blocks" ADD CONSTRAINT "1_bad_blocks_pkey" PRIMARY KEY ("id");
 
@@ -179,7 +179,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"recipient_id" bigint NOT NULL DEFAULT '0',
 		"amount" decimal(30) NOT NULL DEFAULT '0',
 		"comment" text NOT NULL DEFAULT '',
-		"block_id" int  NOT NULL DEFAULT '0',
+		"block_id" bigint  NOT NULL DEFAULT '0',
 		"txhash" bytea  NOT NULL DEFAULT '',
 		"created_at" timestamp DEFAULT NOW(),
 		"ecosystem" bigint NOT NULL DEFAULT '1'
