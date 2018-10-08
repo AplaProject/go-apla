@@ -34,7 +34,7 @@ VALUES
 	}
 	conditions {
 		var rows array
-		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: 0} )
 
 		if !Len(rows) {
 			error Sprintf("Delayed contract %%d does not exist", $Id)
