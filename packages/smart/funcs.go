@@ -536,7 +536,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 }
 
 func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string,
-	recipient int64, active, tokenID string) error {
+	recipient int64, tokenID string) error {
 	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
 		return err
 	}
@@ -568,7 +568,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		}
 	}
 	if len(value) > 0 {
-		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
+		if err := FlushContract(sc, root, id); err != nil {
 			return err
 		}
 	} else if len(walletID) > 0 {
@@ -608,7 +608,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	if err = FlushContract(sc, root, id, false); err != nil {
+	if err = FlushContract(sc, root, id); err != nil {
 		return 0, err
 	}
 	if !sc.VDE {
@@ -1203,7 +1203,7 @@ func Eval(sc *SmartContract, condition string) error {
 }
 
 // FlushContract is flushing contract
-func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) error {
+func FlushContract(sc *SmartContract, iroot interface{}, id int64) error {
 	if err := validateAccess(`FlushContract`, sc, nNewContract, nEditContract, nImport); err != nil {
 		return err
 	}
@@ -1216,7 +1216,6 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
-			root.Children[i].Info.(*script.ContractInfo).Owner.Active = active
 		}
 	}
 	for key, item := range root.Objects {

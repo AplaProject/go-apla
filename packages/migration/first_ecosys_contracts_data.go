@@ -192,7 +192,7 @@ VALUES
         if $Conditions {
             ValidateCondition($Conditions, $ecosystem_id)
         }
-        $cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
+        $cur = DBFind("contracts").Columns("id,value,conditions,wallet_id,token_id").WhereId($Id).Row()
         if !$cur {
             error Sprintf("Contract %%d does not exist", $Id)
         }
@@ -204,16 +204,13 @@ VALUES
             if $recipient == 0 {
                 error Sprintf("New contract owner %%s is invalid", $WalletId)
             }
-            if Int($cur["active"]) == 1 {
-                error "Contract must be deactivated before wallet changing"
-            }
         } else {
             $recipient = Int($cur["wallet_id"])
         }
     }
 
     action {
-        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
+        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["token_id"])
     }
 }
 ', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
