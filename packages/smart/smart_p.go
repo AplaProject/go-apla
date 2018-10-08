@@ -48,41 +48,43 @@ var (
 	}
 
 	extendCostSysParams = map[string]string{
-		"AddressToId":       "extend_cost_address_to_id",
-		"IdToAddress":       "extend_cost_id_to_address",
-		"NewState":          "extend_cost_new_state",
-		"Sha256":            "extend_cost_sha256",
-		"PubToID":           "extend_cost_pub_to_id",
-		"EcosysParam":       "extend_cost_ecosys_param",
-		"SysParamString":    "extend_cost_sys_param_string",
-		"SysParamInt":       "extend_cost_sys_param_int",
-		"SysFuel":           "extend_cost_sys_fuel",
-		"ValidateCondition": "extend_cost_validate_condition",
-		"EvalCondition":     "extend_cost_eval_condition",
-		"HasPrefix":         "extend_cost_has_prefix",
-		"Contains":          "extend_cost_contains",
-		"Replace":           "extend_cost_replace",
-		"Join":              "extend_cost_join",
-		"Size":              "extend_cost_size",
-		"Substr":            "extend_cost_substr",
-		"ContractsList":     "extend_cost_contracts_list",
-		"IsObject":          "extend_cost_is_object",
-		"CompileContract":   "extend_cost_compile_contract",
-		"FlushContract":     "extend_cost_flush_contract",
-		"Eval":              "extend_cost_eval",
-		"Len":               "extend_cost_len",
-		"BindWallet":        "extend_cost_activate",
-		"UnbindWallet":      "extend_cost_deactivate",
-		"CreateEcosystem":   "extend_cost_create_ecosystem",
-		"TableConditions":   "extend_cost_table_conditions",
-		"CreateTable":       "extend_cost_create_table",
-		"PermTable":         "extend_cost_perm_table",
-		"ColumnCondition":   "extend_cost_column_condition",
-		"CreateColumn":      "extend_cost_create_column",
-		"PermColumn":        "extend_cost_perm_column",
-		"JSONToMap":         "extend_cost_json_to_map",
-		"GetContractByName": "extend_cost_contract_by_name",
-		"GetContractById":   "extend_cost_contract_by_id",
+		"AddressToId":        "price_exec_address_to_id",
+		"IdToAddress":        "price_exec_id_to_address",
+		"Sha256":             "price_exec_sha256",
+		"PubToID":            "price_exec_pub_to_id",
+		"EcosysParam":        "price_exec_ecosys_param",
+		"SysParamString":     "price_exec_sys_param_string",
+		"SysParamInt":        "price_exec_sys_param_int",
+		"SysFuel":            "price_exec_sys_fuel",
+		"ValidateCondition":  "price_exec_validate_condition",
+		"EvalCondition":      "price_exec_eval_condition",
+		"HasPrefix":          "price_exec_has_prefix",
+		"Contains":           "price_exec_contains",
+		"Replace":            "price_exec_replace",
+		"Join":               "price_exec_join",
+		"Size":               "price_exec_size",
+		"Substr":             "price_exec_substr",
+		"ContractsList":      "price_exec_contracts_list",
+		"IsObject":           "price_exec_is_object",
+		"CompileContract":    "price_exec_compile_contract",
+		"FlushContract":      "price_exec_flush_contract",
+		"Eval":               "price_exec_eval",
+		"Len":                "price_exec_len",
+		"BindWallet":         "price_exec_bind_wallet",
+		"UnbindWallet":       "price_exec_unbind_wallet",
+		"CreateEcosystem":    "price_exec_create_ecosystem",
+		"TableConditions":    "price_exec_table_conditions",
+		"CreateTable":        "price_exec_create_table",
+		"PermTable":          "price_exec_perm_table",
+		"ColumnCondition":    "price_exec_column_condition",
+		"CreateColumn":       "price_exec_create_column",
+		"PermColumn":         "price_exec_perm_column",
+		"JSONToMap":          "price_exec_json_to_map",
+		"GetContractByName":  "price_exec_contract_by_name",
+		"GetContractById":    "price_exec_contract_by_id",
+		"TxData":             "price_tx_data",
+		"ExecContractByName": "price_exec_contract_by_name",
+		"ExecContractById":   "price_exec_contract_by_id",
 	}
 )
 
@@ -425,7 +427,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, logErrorDB(err, "generating next ecosystem id")
 	}
 
-	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value)); err != nil {
+	appID, err := model.GetNextID(sc.DbTransaction, "1_applications")
+	if err != nil {
+		return 0, logErrorDB(err, "generating next application id")
+	}
+
+	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value), appID); err != nil {
 		return 0, logErrorDB(err, "executing ecosystem schema")
 	}
 
@@ -440,6 +447,13 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	sc.FullAccess = true
+	if _, _, err = DBInsert(sc, "@1applications", map[string]interface{}{
+		"name":       "System",
+		"conditions": `ContractConditions("MainCondition")`,
+		"ecosystem":  id,
+	}); err != nil {
+		return 0, logErrorDB(err, "inserting application")
+	}
 	if _, _, err = DBInsert(sc, `@1pages`, map[string]interface{}{"ecosystem": idStr,
 		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
 		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
@@ -464,7 +478,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 	if _, _, err := DBInsert(sc, `@1keys`,
 		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr}); err != nil {
-		return 0, logErrorDB(err, "inserting default page")
+		return 0, logErrorDB(err, "inserting key")
 	}
 
 	sc.FullAccess = false

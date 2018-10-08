@@ -55,6 +55,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
 	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
+
 	// data
 	buf.Write(blockDataTx)
 

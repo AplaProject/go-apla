@@ -26,7 +26,7 @@ VALUES
 		BndWallet($Id, $ecosystem_id)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'CallDelayedContract', 'contract CallDelayedContract {
 	data {
 		Id int
@@ -64,13 +64,13 @@ VALUES
 		CallContract($cur["contract"], params)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'CheckNodesBan', 'contract CheckNodesBan {
 	action {
 		UpdateNodesBan($block_time)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditAppParam', 'contract EditAppParam {
     data {
         Id int
@@ -101,7 +101,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditApplication', 'contract EditApplication {
     data {
         ApplicationId int
@@ -128,7 +128,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditBlock', 'contract EditBlock {
     data {
         Id int
@@ -159,7 +159,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditColumn', 'contract EditColumn {
     data {
         TableName string
@@ -175,7 +175,7 @@ VALUES
         PermColumn($TableName, $Name, $Permissions)
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditContract', 'contract EditContract {
     data {
         Id int
@@ -213,7 +213,7 @@ VALUES
         UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["token_id"])
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditLang', 'contract EditLang {
     data {
         Id int
@@ -229,7 +229,7 @@ VALUES
         EditLanguage($Id, $lang["name"], $Trans)
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditMenu', 'contract EditMenu {
     data {
         Id int
@@ -264,7 +264,7 @@ VALUES
         }            
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditPage', 'contract EditPage {
     data {
         Id int
@@ -324,7 +324,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditTable', 'contract EditTable {
     data {
         Name string
@@ -360,7 +360,7 @@ VALUES
         PermTable($Name, JSONEncode($Permissions))
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'Import', 'contract Import {
     data {
         Data string
@@ -466,7 +466,7 @@ VALUES
         // Println(Sprintf("> time: %%v", $time))
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'ImportUpload', 'contract ImportUpload {
     data {
         input_file file
@@ -604,7 +604,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewAppParam', 'contract NewAppParam {
     data {
         ApplicationId int
@@ -630,7 +630,7 @@ VALUES
               conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewApplication', 'contract NewApplication {
     data {
         Name string
@@ -653,7 +653,7 @@ VALUES
         $result = DBInsert("applications", {name: $Name,conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewBadBlock', 'contract NewBadBlock {
 	data {
 		ProducerNodeID int
@@ -667,7 +667,7 @@ VALUES
             block_id: $BlockID, "timestamp block_time": $Timestamp, reason: $Reason})
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int
@@ -693,7 +693,7 @@ VALUES
               app_id: $ApplicationId})
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewContract', 'contract NewContract {
     data {
         ApplicationId int
@@ -740,7 +740,7 @@ VALUES
         return SysParamInt("contract_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewEcosystem', 'contract NewEcosystem {
 	data {
 		Name  string
@@ -749,7 +749,7 @@ VALUES
 		$result = CreateEcosystem($key_id, $Name)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewLang', 'contract NewLang {
     data {
         ApplicationId int
@@ -773,7 +773,7 @@ VALUES
         CreateLanguage($Name, $Trans)
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewMenu', 'contract NewMenu {
     data {
         Name string
@@ -797,7 +797,7 @@ VALUES
         return SysParamInt("menu_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewPage', 'contract NewPage {
     data {
         ApplicationId int
@@ -852,7 +852,7 @@ VALUES
         return SysParamInt("page_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewTable', 'contract NewTable {
     data {
         ApplicationId int
@@ -874,7 +874,7 @@ VALUES
         return SysParamInt("table_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewUser', 'contract NewUser {
 	data {
 		NewPubkey string
@@ -895,7 +895,7 @@ VALUES
         SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }
-', 'ContractConditions("NodeOwnerCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("NodeOwnerCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
         $raw_full_nodes = SysParamString("full_nodes")
@@ -915,7 +915,7 @@ VALUES
         }
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'UnbindWallet', 'contract UnbindWallet {
 	data {
 		Id         int
@@ -937,7 +937,7 @@ VALUES
 		UnbndWallet($Id, $ecosystem_id)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {
 	conditions {
 		ContractConditions("MainCondition")
@@ -969,7 +969,7 @@ VALUES
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'UpdateSysParam', 'contract UpdateSysParam {
      data {
         Name string
@@ -989,7 +989,7 @@ VALUES
         DBUpdateSysParam($Name, $Value, $Conditions)
      }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
@@ -1026,7 +1026,7 @@ VALUES
         $result = $Id
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'UploadFile', 'contract UploadFile {
     data {
         ApplicationId int
@@ -1047,5 +1047,5 @@ VALUES
         $result = $Id
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d, '1');
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1');
 `

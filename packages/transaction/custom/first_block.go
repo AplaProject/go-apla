@@ -32,7 +32,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const firstEcosystemID = 1
+const (
+	firstEcosystemID = 1
+	firstAppID       = 1
+)
 
 // FirstBlockParser is parser wrapper
 type FirstBlockTransaction struct {
@@ -59,7 +62,7 @@ func (t *FirstBlockTransaction) Action() error {
 	logger := t.Logger
 	data := t.Data.(*consts.FirstBlock)
 	keyID := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID)
+	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID, firstAppID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return utils.ErrInfo(err)
@@ -72,7 +75,20 @@ func (t *FirstBlockTransaction) Action() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
 		return utils.ErrInfo(err)
 	}
-	if err = syspar.SysUpdate(nil); err != nil {
+
+	err = model.GetDB(t.DbTransaction).Exec(`update "1_system_parameters" SET value = ? where name = 'test'`, data.Test).Error
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating test parameter")
+		return utils.ErrInfo(err)
+	}
+
+	err = model.GetDB(t.DbTransaction).Exec(`Update "1_system_parameters" SET value = ? where name = 'private_blockchain'`, data.PrivateBlockchain).Error
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating private_blockchain")
+		return utils.ErrInfo(err)
+	}
+
+	if err = syspar.SysUpdate(t.DbTransaction); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return utils.ErrInfo(err)
 	}

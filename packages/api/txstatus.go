@@ -31,6 +31,7 @@ import (
 type txstatusError struct {
 	Type  string `json:"type,omitempty"`
 	Error string `json:"error,omitempty"`
+	Id    string `json:"id,omitempty"`
 }
 
 type txstatusResult struct {

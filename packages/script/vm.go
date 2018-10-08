@@ -70,7 +70,6 @@ var sysVars = map[string]struct{}{
 	`type`:              {},
 	`txcost`:            {},
 	`txhash`:            {},
-	`role_id`:           {},
 	`guest_key`:         {},
 }
 

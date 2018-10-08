@@ -50,6 +50,7 @@ func Route(route *hr.Router) {
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
 	get(`getuid`, ``, getUID)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
+	get(`sections`, `?limit ?offset:int64,?lang:string`, authWallet, sections)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)
 	get(`interface/page/:name`, ``, authWallet, getPageRow)
 	get(`interface/menu/:name`, ``, authWallet, getMenuRow)
@@ -64,7 +65,7 @@ func Route(route *hr.Router) {
 	post(`content/source/:name`, ``, authWallet, getSource)
 	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
 	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
-	post(`content/hash/:name`, ``, getPageHash)
+	post(`content/hash/:name`, `?lang:string`, getPageHash)
 	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
 	post(`sendTx`, ``, authWallet, sendTx)
 	post(`test/:name`, ``, getTest)
@@ -73,6 +74,8 @@ func Route(route *hr.Router) {
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
 
 	if !conf.Config.IsSupportingVDE() {
+		get(`txinfo/:hash`, `?contractinfo:int64`, authWallet, txinfo)
+		get(`txinfomultiple`, `data:string,?contractinfo:int64`, authWallet, txinfoMulti)
 		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
 		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
 		get(`history/:table/:id`, ``, authWallet, getHistory)

@@ -90,6 +90,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(t,7)
+		Button(Body: Span(my#t#)).ErrorRedirect(PageParams: name=Val(#t#val), PageName: "v#t#", ErrorID: myerr).ErrorRedirect(PageParams: par=#t#, PageName: "qqq", ErrorID: err1)`,
+		`[{"tag":"button","attr":{"errredirect":{"err1":{"errorid":"err1","pagename":"qqq","pageparams":{"par":{"text":"7","type":"text"}}},"myerr":{"errorid":"myerr","pagename":"v7","pageparams":{"name":{"params":["7val"],"type":"Val"}}}}},"children":[{"tag":"span","children":[{"tag":"text","text":"my7"}]}]}]`},
 	{`SetVar(my,Val)Div().Hide(Test = #my#, Test2=qwerty).Show(Param=#my##my#)`,
 		`[{"tag":"div","attr":{"hide":[{"Test":"Val","Test2":"qwerty"}],"show":[{"Param":"ValVal"}]}}]`},
 	{`SetVar(my,Val)Div().Show(Test = #my#, Test2=qwerty).Show(Param=#my##my#)`,

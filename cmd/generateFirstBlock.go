@@ -18,6 +18,8 @@ import (
 )
 
 var stopNetworkBundleFilepath string
+var testBlockchain bool
+var privateBlockchain bool
 
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
@@ -26,7 +28,6 @@ var generateFirstBlockCmd = &cobra.Command{
 	PreRun: loadConfigWKey,
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now().Unix()
-
 		header := &utils.BlockData{
 			BlockID:      1,
 			Time:         now,
@@ -65,6 +66,14 @@ var generateFirstBlockCmd = &cobra.Command{
 		}
 
 		var tx []byte
+		var test int64
+		var pb uint64
+		if testBlockchain == true {
+			test = 1
+		}
+		if privateBlockchain == true {
+			pb = 1
+		}
 		_, err := converter.BinMarshal(&tx,
 			&consts.FirstBlock{
 				TxHeader: consts.TxHeader{
@@ -75,6 +84,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
+				Test: test,
+				PrivateBlockchain:     pb,
 			},
 		)
 
@@ -96,4 +107,6 @@ var generateFirstBlockCmd = &cobra.Command{
 
 func init() {
 	generateFirstBlockCmd.Flags().StringVar(&stopNetworkBundleFilepath, "stopNetworkCert", "", "Filepath to the fullchain of certificates for network stopping")
+	generateFirstBlockCmd.Flags().BoolVar(&testBlockchain, "test", false, "if true - test blockchain")
+	generateFirstBlockCmd.Flags().BoolVar(&privateBlockchain, "private", false, "if true - all transactions will be free")
 }
