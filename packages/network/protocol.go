@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 
@@ -28,6 +29,7 @@ const (
 )
 
 var ErrNotAccepted = errors.New("Not accepted")
+var ErrMaxSize = errors.New("Size greater than max size")
 
 // SelfReaderWriter read from Reader to himself and write to io.Writer from himself
 type SelfReaderWriter interface {
@@ -54,7 +56,7 @@ type MaxBlockRequest struct{}
 
 // MaxBlockResponse is max block response
 type MaxBlockResponse struct {
-	BlockID uint32
+	BlockID int64
 }
 
 func (resp *MaxBlockResponse) Read(r io.Reader) error {
@@ -193,7 +195,7 @@ type DisHashResponse struct {
 }
 
 func (resp *DisHashResponse) Read(r io.Reader) error {
-	slice, err := ReadSlice(r)
+	slice, err := ReadSliceWithMaxSize(r, uint64(syspar.GetMaxTxSize()))
 	if err != nil {
 		return err
 	}
@@ -269,8 +271,34 @@ func ReadSlice(r io.Reader) ([]byte, error) {
 
 	size, errInt := binary.Uvarint(sizeBuf)
 	if errInt <= 0 {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convirt sizeBuf to value")
+		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convert sizeBuf to value")
 		return nil, fmt.Errorf("wrong sizebuf")
+	}
+
+	data := make([]byte, size)
+	if _, err := io.ReadFull(r, data); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading block body")
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func ReadSliceWithMaxSize(r io.Reader, maxSize uint64) ([]byte, error) {
+	sizeBuf := make([]byte, 4)
+	if _, err := io.ReadFull(r, sizeBuf); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading bytes slice size")
+		return nil, err
+	}
+
+	size, errInt := binary.Uvarint(sizeBuf)
+	if errInt <= 0 {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convert sizeBuf to value")
+		return nil, fmt.Errorf("wrong sizebuf")
+	}
+
+	if size > maxSize {
+		return nil, ErrMaxSize
 	}
 
 	data := make([]byte, size)
@@ -319,7 +347,7 @@ func readSliceWithSize(r io.Reader, size int) ([]byte, error) {
 	return slice, err
 }
 
-func writeSliceWithSize(w io.Writer, value []byte, size int) error {
+func writeSliceWithSize(w io.Writer, value []byte, size int32) error {
 	if err := binary.Write(w, binary.LittleEndian, size); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on writing size")
 		return err
