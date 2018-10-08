@@ -73,26 +73,10 @@ func (mr *rollback) saveState(block, tx []byte, registry *types.Registry, pk, va
 
 // rollbackState is rollback all block transactions
 func (mr *rollback) rollbackState(block []byte) error {
-	txses := make([]state, 0)
-	var err error
-	mr.tx.Ascend("rollback_tx", func(key, value string) bool {
-		if match.Match(key, fmt.Sprintf(searchPrefix, string(block), "*", "*")) {
-			state := state{}
-			err = json.Unmarshal([]byte(value), &state)
-			if err != nil {
-				err = errors.Wrapf(err, "retrieving block transactions")
-				return false
-			}
-
-			txses = append(txses, state)
-		}
-
-		return true
-	})
-
-	sort.Slice(txses, func(i, j int) bool {
-		return txses[i].Counter > txses[j].Counter
-	})
+	txses, err := mr.getBlockStates(block)
+	if err != nil {
+		return errors.Wrapf(err, "retrieving block states")
+	}
 
 	for _, tx := range txses {
 		key := fmt.Sprintf(keyConvention, tx.RegistryName, tx.Ecosystem, tx.Key)
@@ -118,4 +102,49 @@ func (mr *rollback) rollbackState(block []byte) error {
 	}
 
 	return nil
+}
+
+func (mr *rollback) removeState(block []byte) error {
+	txses, err := mr.getBlockStates(block)
+	if err != nil {
+		return errors.Wrapf(err, "retrieving block states")
+	}
+
+	for _, tx := range txses {
+		key := fmt.Sprintf(keyConvention, tx.RegistryName, tx.Ecosystem, tx.Key)
+		if err := mr.tx.Delete(key); err != nil {
+			return errors.Wrapf(err, "removing block state %s", key)
+		}
+	}
+
+	return nil
+}
+
+func (mr *rollback) getBlockStates(block []byte) ([]state, error) {
+	txses := make([]state, 0)
+	var err error
+	err = mr.tx.Ascend("rollback_tx", func(key, value string) bool {
+		if match.Match(key, fmt.Sprintf(searchPrefix, string(block), "*", "*")) {
+			state := state{}
+			err = json.Unmarshal([]byte(value), &state)
+			if err != nil {
+				err = errors.Wrapf(err, "retrieving block transactions")
+				return false
+			}
+
+			txses = append(txses, state)
+		}
+
+		return true
+	})
+
+	if err != nil {
+		return txses, err
+	}
+
+	sort.Slice(txses, func(i, j int) bool {
+		return txses[i].Counter > txses[j].Counter
+	})
+
+	return txses, nil
 }
