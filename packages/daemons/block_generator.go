@@ -27,6 +27,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
+	"github.com/GenesisKernel/go-genesis/packages/protocols"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -61,15 +62,16 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("building block time calculator")
-		return err
+	btc := protocols.NewBlockTimeCounter()
+	at := time.Now()
+
+	if exists, err := btc.BlockForTimeExists(at, int(nodePosition)); exists || err != nil {
+		return nil
 	}
 
-	timeToGenerate, err := blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
+	timeToGenerate, err := btc.TimeToGenerate(at, int(nodePosition))
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
+		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err, "position": nodePosition}).Debug("calculating block time")
 		return err
 	}
 
@@ -78,6 +80,12 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
+	_, endTime, err := btc.RangeByTime(time.Now())
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.TimeCalcError, "error": err}).Error("on getting end time of generation")
+	}
+
+	done := time.After(endTime.Sub(time.Now()))
 	prevBlock := &model.InfoBlock{}
 	_, err = prevBlock.Get()
 	if err != nil {
@@ -98,9 +106,10 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		publicKey:  NodePublicKey,
 		logger:     d.logger,
 	}
+
 	dtx.RunForBlockID(prevBlock.BlockID + 1)
 
-	trs, err := processTransactions(d.logger)
+	trs, err := processTransactions(d.logger, done)
 	if err != nil {
 		return err
 	}
@@ -119,17 +128,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		Version:      consts.BLOCK_VERSION,
 	}
 
-	timeToGenerate, err = blockTimeCalculator.SetClock(&utils.ClockWrapper{}).TimeToGenerate(nodePosition)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("calculating block time")
-		return err
-	}
-
-	if !timeToGenerate {
-		d.logger.WithFields(log.Fields{"type": consts.JustWaiting}).Debug("not my generation time")
-		return nil
-	}
-
 	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
 	if err != nil {
 		return err
@@ -139,7 +137,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
-	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Error("Generated block ID")
+	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
 
 	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 	return nil
@@ -154,7 +152,7 @@ func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, k
 	return block.MarshallBlock(blockHeader, trData, prevBlockHash, key)
 }
 
-func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
+func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Transaction, error) {
 	p := new(transaction.Transaction)
 
 	// verify transactions
@@ -170,39 +168,80 @@ func processTransactions(logger *log.Entry) ([]*model.Transaction, error) {
 	}
 
 	limits := block.NewLimits(nil)
+
+	type badTxStruct struct {
+		hash []byte
+		msg  string
+	}
+
+	processBadTx := func(dbTx *model.DbTransaction) chan badTxStruct {
+		ch := make(chan badTxStruct)
+
+		go func() {
+			for badTxItem := range ch {
+				transaction.MarkTransactionBad(p.DbTransaction, badTxItem.hash, badTxItem.msg)
+			}
+		}()
+
+		return ch
+	}
+
+	processIncAttemptCnt := func() chan []byte {
+		ch := make(chan []byte)
+		go func() {
+			for tx := range ch {
+				model.IncrementTxAttemptCount(nil, tx)
+			}
+		}()
+
+		return ch
+	}
+
+	txBadChan := processBadTx(p.DbTransaction)
+	attemptCountChan := processIncAttemptCnt()
+
+	defer func() {
+		close(txBadChan)
+		close(attemptCountChan)
+	}()
+
 	// Checks preprocessing count limits
 	txList := make([]*model.Transaction, 0, len(trs))
 	for i, txItem := range trs {
-		bufTransaction := bytes.NewBuffer(txItem.Data)
-		p, err := transaction.UnmarshallTransaction(bufTransaction)
-		if err != nil {
-			if p != nil {
-				transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
-			}
-			continue
-		}
-
-		if err := p.Check(time.Now().Unix(), false); err != nil {
-			transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
-			continue
-		}
-
-		if p.TxSmart != nil {
-			err = limits.CheckLimit(p)
-			if err == block.ErrLimitStop && i > 0 {
-				model.IncrementTxAttemptCount(nil, p.TxHash)
-				break
-			} else if err != nil {
-				if err == block.ErrLimitSkip {
-					model.IncrementTxAttemptCount(nil, p.TxHash)
-				} else {
-					transaction.MarkTransactionBad(p.DbTransaction, p.TxHash, err.Error())
+		select {
+		case <-done:
+			return txList, err
+		default:
+			bufTransaction := bytes.NewBuffer(txItem.Data)
+			p, err := transaction.UnmarshallTransaction(bufTransaction)
+			if err != nil {
+				if p != nil {
+					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
 				}
 				continue
 			}
-		}
-		txList = append(txList, trs[i])
-	}
 
+			if err := p.Check(time.Now().Unix(), false); err != nil {
+				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+				continue
+			}
+
+			if p.TxSmart != nil {
+				err = limits.CheckLimit(p)
+				if err == block.ErrLimitStop && i > 0 {
+					attemptCountChan <- p.TxHash
+					break
+				} else if err != nil {
+					if err == block.ErrLimitSkip {
+						attemptCountChan <- p.TxHash
+					} else {
+						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+					}
+					continue
+				}
+			}
+			txList = append(txList, trs[i])
+		}
+	}
 	return txList, nil
 }

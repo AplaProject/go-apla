@@ -48,46 +48,64 @@ var (
 	}
 
 	extendCostSysParams = map[string]string{
-		"AddressToId":       "extend_cost_address_to_id",
-		"IdToAddress":       "extend_cost_id_to_address",
-		"NewState":          "extend_cost_new_state",
-		"Sha256":            "extend_cost_sha256",
-		"PubToID":           "extend_cost_pub_to_id",
-		"EcosysParam":       "extend_cost_ecosys_param",
-		"SysParamString":    "extend_cost_sys_param_string",
-		"SysParamInt":       "extend_cost_sys_param_int",
-		"SysFuel":           "extend_cost_sys_fuel",
-		"ValidateCondition": "extend_cost_validate_condition",
-		"EvalCondition":     "extend_cost_eval_condition",
-		"HasPrefix":         "extend_cost_has_prefix",
-		"Contains":          "extend_cost_contains",
-		"Replace":           "extend_cost_replace",
-		"Join":              "extend_cost_join",
-		"Size":              "extend_cost_size",
-		"Substr":            "extend_cost_substr",
-		"Eval":              "extend_cost_eval",
-		"Len":               "extend_cost_len",
-		"Activate":          "extend_cost_activate",
-		"Deactivate":        "extend_cost_deactivate",
-		"CreateEcosystem":   "extend_cost_create_ecosystem",
-		"TableConditions":   "extend_cost_table_conditions",
-		"CreateTable":       "extend_cost_create_table",
-		"PermTable":         "extend_cost_perm_table",
-		"ColumnCondition":   "extend_cost_column_condition",
-		"CreateColumn":      "extend_cost_create_column",
-		"PermColumn":        "extend_cost_perm_column",
-		"JSONToMap":         "extend_cost_json_to_map",
-		"GetContractByName": "extend_cost_contract_by_name",
-		"GetContractById":   "extend_cost_contract_by_id",
+		"AddressToId":        "price_exec_address_to_id",
+		"IdToAddress":        "price_exec_id_to_address",
+		"Sha256":             "price_exec_sha256",
+		"PubToID":            "price_exec_pub_to_id",
+		"EcosysParam":        "price_exec_ecosys_param",
+		"SysParamString":     "price_exec_sys_param_string",
+		"SysParamInt":        "price_exec_sys_param_int",
+		"SysFuel":            "price_exec_sys_fuel",
+		"ValidateCondition":  "price_exec_validate_condition",
+		"EvalCondition":      "price_exec_eval_condition",
+		"HasPrefix":          "price_exec_has_prefix",
+		"Contains":           "price_exec_contains",
+		"Replace":            "price_exec_replace",
+		"Join":               "price_exec_join",
+		"Size":               "price_exec_size",
+		"Substr":             "price_exec_substr",
+		"ContractsList":      "price_exec_contracts_list",
+		"IsObject":           "price_exec_is_object",
+		"CompileContract":    "price_exec_compile_contract",
+		"FlushContract":      "price_exec_flush_contract",
+		"Eval":               "price_exec_eval",
+		"Len":                "price_exec_len",
+		"BindWallet":         "price_exec_bind_wallet",
+		"UnbindWallet":       "price_exec_unbind_wallet",
+		"CreateEcosystem":    "price_exec_create_ecosystem",
+		"TableConditions":    "price_exec_table_conditions",
+		"CreateTable":        "price_exec_create_table",
+		"PermTable":          "price_exec_perm_table",
+		"ColumnCondition":    "price_exec_column_condition",
+		"CreateColumn":       "price_exec_create_column",
+		"PermColumn":         "price_exec_perm_column",
+		"JSONToMap":          "price_exec_json_to_map",
+		"GetContractByName":  "price_exec_contract_by_name",
+		"GetContractById":    "price_exec_contract_by_id",
+		"TxData":             "price_tx_data",
+		"ExecContractByName": "price_exec_contract_by_name",
+		"ExecContractById":   "price_exec_contract_by_id",
 	}
 )
 
 const (
 	nActivateContract   = "ActivateContract"
 	nDeactivateContract = "DeactivateContract"
+	nEditColumn         = "EditColumn"
 	nEditContract       = "EditContract"
+	nEditEcosystemName  = "EditEcosystemName"
+	nEditLang           = "EditLang"
+	nEditLangJoint      = "EditLangJoint"
+	nEditTable          = "EditTable"
 	nImport             = "Import"
+	nNewColumn          = "NewColumn"
 	nNewContract        = "NewContract"
+	nNewEcosystem       = "NewEcosystem"
+	nNewLang            = "NewLang"
+	nNewLangJoint       = "NewLangJoint"
+	nNewTable           = "NewTable"
+	nNewTableJoint      = "NewTableJoint"
+	nNewUser            = "NewUser"
 )
 
 //SignRes contains the data of the signature
@@ -124,23 +142,19 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 	par := &model.SystemParameter{}
 	found, err := par.Get(name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("system parameter get")
-		return 0, err
+		return 0, logErrorDB(err, "system parameter get")
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("system parameter get")
-		return 0, fmt.Errorf(`Parameter %s has not been found`, name)
+		return 0, logErrorf(eParamNotFound, name, consts.NotFound, "system parameter get")
 	}
 	cond := par.Conditions
 	if len(cond) > 0 {
 		ret, err := sc.EvalIf(cond)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.EvalError, "error": err}).Error("evaluating conditions")
-			return 0, err
+			return 0, logError(err, consts.EvalError, "evaluating conditions")
 		}
 		if !ret {
-			log.WithFields(log.Fields{"type": consts.AccessDenied}).Error("Access denied")
-			return 0, errAccessDenied
+			return 0, logErrorShort(errAccessDenied, consts.AccessDenied)
 		}
 	}
 	if len(value) > 0 {
@@ -151,28 +165,25 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 		ival := converter.StrToInt64(value)
 	check:
 		switch name {
-		case `gap_between_blocks`:
+		case syspar.GapsBetweenBlocks:
 			ok = ival > 0 && ival < 86400
-		case `rb_blocks_1`, `number_of_nodes`:
+		case syspar.RbBlocks1, syspar.NumberNodes:
 			ok = ival > 0 && ival < 1000
-		case `ecosystem_price`, `contract_price`, `column_price`, `table_price`, `menu_price`,
-			`page_price`, `commission_size`:
+		case syspar.CommissionSize:
 			ok = ival >= 0
-		case `max_block_size`, `max_tx_size`, `max_tx_count`, `max_columns`, `max_indexes`,
-			`max_block_user_tx`, `max_fuel_tx`, `max_fuel_block`, `max_forsign_size`:
+		case syspar.MaxBlockSize, syspar.MaxTxSize, syspar.MaxTxCount, syspar.MaxColumns,
+			syspar.MaxIndexes, syspar.MaxBlockUserTx, syspar.MaxTxFuel, syspar.MaxBlockFuel, syspar.MaxForsignSize:
 			ok = ival > 0
-		case `fuel_rate`, `commission_wallet`:
-			err := json.Unmarshal([]byte(value), &list)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling system param")
+		case syspar.FuelRate, syspar.CommissionWallet:
+			if err := unmarshalJSON([]byte(value), &list, `system param`); err != nil {
 				return 0, err
 			}
 			for _, item := range list {
 				switch name {
-				case `fuel_rate`, `commission_wallet`:
+				case syspar.FuelRate, syspar.CommissionWallet:
 					if len(item) != 2 || converter.StrToInt64(item[0]) <= 0 ||
-						(name == `fuel_rate` && converter.StrToInt64(item[1]) <= 0) ||
-						(name == `commission_wallet` && converter.StrToInt64(item[1]) == 0) {
+						(name == syspar.FuelRate && converter.StrToInt64(item[1]) <= 0) ||
+						(name == syspar.CommissionWallet && converter.StrToInt64(item[1]) == 0) {
 						break check
 					}
 				}
@@ -185,61 +196,39 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			}
 			checked = len(fnodes) > 0
 		default:
-			if strings.HasPrefix(name, `extend_cost_`) {
+			if strings.HasPrefix(name, `extend_cost_`) || strings.HasSuffix(name, `_price`) {
 				ok = ival >= 0
 				break
 			}
 			checked = true
 		}
 		if !checked && (!ok || converter.Int64ToStr(ival) != value) {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "value": value, "name": name}).Error(ErrInvalidValue.Error())
-			return 0, ErrInvalidValue
+			return 0, logErrorValue(errInvalidValue, consts.InvalidObject, errInvalidValue.Error(),
+				value)
 		}
 		fields = append(fields, "value")
 		values = append(values, value)
 	}
 	if len(conditions) > 0 {
 		if err := CompileEval(conditions, 0); err != nil {
-			log.WithFields(log.Fields{"error": err, "conditions": conditions, "state_id": 0, "type": consts.EvalError}).Error("compiling eval")
-			return 0, err
+			return 0, logErrorValue(err, consts.EvalError, "compiling eval", conditions)
 		}
 		fields = append(fields, "conditions")
 		values = append(values, conditions)
 	}
 	if len(fields) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty value and condition")
-		return 0, fmt.Errorf(`empty value and condition`)
+		return 0, logErrorShort(errEmpty, consts.EmptyObject)
 	}
-	_, _, err = sc.selectiveLoggingAndUpd(fields, values, "1_system_parameters", []string{"id"}, []string{converter.Int64ToStr(par.ID)}, !sc.VDE && sc.Rollback, false)
+	_, _, err = sc.update(fields, values, "1_system_parameters", "id", par.ID)
 	if err != nil {
 		return 0, err
 	}
 	err = syspar.SysUpdate(sc.DbTransaction)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
-		return 0, err
+		return 0, logErrorDB(err, "updating syspar")
 	}
 	sc.SysUpdate = true
 	return 0, nil
-}
-
-// DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
-	params string, val ...interface{}) (qcost int64, err error) {
-	tblname = getDefTableName(sc, tblname)
-	if err = sc.AccessTable(tblname, "update"); err != nil {
-		return
-	}
-	if strings.Contains(tblname, `_reports_`) {
-		err = fmt.Errorf(`Access denied to report table`)
-		return
-	}
-	columns := strings.Split(params, `,`)
-	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
-		return
-	}
-	qcost, _, err = sc.selectiveLoggingAndUpd(columns, val, tblname, []string{column}, []string{fmt.Sprint(value)}, !sc.VDE && sc.Rollback, true)
-	return
 }
 
 // SysParamString returns the value of the system parameter
@@ -264,6 +253,9 @@ func Int(v interface{}) (int64, error) {
 
 // Str converts the value to a string
 func Str(v interface{}) (ret string) {
+	if v == nil {
+		return
+	}
 	switch val := v.(type) {
 	case float64:
 		ret = fmt.Sprintf(`%f`, val)
@@ -306,20 +298,20 @@ func Split(input, sep string) []interface{} {
 }
 
 // Sha256 returns SHA256 hash value
-func Sha256(text string) string {
+func Sha256(text string) (string, error) {
 	hash, err := crypto.Hash([]byte(text))
 	if err != nil {
-		log.WithFields(log.Fields{"value": text, "error": err, "type": consts.CryptoError}).Fatal("hashing text")
+		return ``, logErrorValue(err, consts.CryptoError, "hashing text", text)
 	}
 	hash = converter.BinToHex(hash)
-	return string(hash)
+	return string(hash), nil
 }
 
 // PubToID returns a numeric identifier for the public key specified in the hexadecimal form.
 func PubToID(hexkey string) int64 {
 	pubkey, err := hex.DecodeString(hexkey)
 	if err != nil {
-		log.WithFields(log.Fields{"value": hexkey, "error": err, "type": consts.CryptoError}).Error("decoding hexkey to string")
+		logErrorValue(err, consts.CryptoError, "decoding hexkey to string", hexkey)
 		return 0
 	}
 	return crypto.Address(pubkey)
@@ -331,38 +323,37 @@ func HexToBytes(hexdata string) ([]byte, error) {
 }
 
 // LangRes returns the language resource
-func LangRes(sc *SmartContract, appID int64, idRes, lang string) string {
-	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), int(appID), lang, sc.VDE)
+func LangRes(sc *SmartContract, idRes, lang string) string {
+	ret, _ := language.LangText(idRes, int(sc.TxSmart.EcosystemID), lang)
 	return ret
 }
 
 // NewLang creates new language
-func CreateLanguage(sc *SmartContract, name, trans string, appID int64) (id int64, err error) {
-	if !accessContracts(sc, "NewLang", "NewLangJoint", "Import") {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import")
-		return 0, fmt.Errorf(`CreateLanguage can be only called from @1NewLang, @1NewLangJoint, @1Import`)
+func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error) {
+	if err := validateAccess(`CreateLanguage`, sc, nNewLang, nNewLangJoint, nImport); err != nil {
+		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, id, err = DBInsert(sc, `@`+idStr+"_languages", "name,res,app_id", name, trans, appID); err != nil {
+	if _, id, err = DBInsert(sc, `@1languages`, map[string]interface{}{"name": name,
+		"ecosystem": idStr, "res": trans}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
 	}
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
 	return id, nil
 }
 
 // EditLanguage edits language
-func EditLanguage(sc *SmartContract, id int64, name, trans string, appID int64) error {
-	if !accessContracts(sc, "EditLang", "EditLangJoint", "Import") {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import")
-		return fmt.Errorf(`EditLanguage can be only called from @1EditLang, @1EditLangJoint and @1Import`)
+func EditLanguage(sc *SmartContract, id int64, name, trans string) error {
+	if err := validateAccess(`EditLanguage`, sc, nEditLang, nEditLangJoint, nImport); err != nil {
+		return err
 	}
-	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, err := DBUpdate(sc, `@`+idStr+"_languages", id, "name,res,app_id", name, trans, appID); err != nil {
+	if _, err := DBUpdate(sc, `@1languages`, id,
+		map[string]interface{}{"name": name, "res": trans}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
 	}
-	language.UpdateLang(int(sc.TxSmart.EcosystemID), int(appID), name, trans, sc.VDE)
+	language.UpdateLang(int(sc.TxSmart.EcosystemID), name, trans)
 	return nil
 }
 
@@ -381,10 +372,9 @@ func GetContractByName(sc *SmartContract, name string) int64 {
 
 // GetContractById returns the name of the contract with this id
 func GetContractById(sc *SmartContract, id int64) string {
-	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1,
-		0, ``, []interface{}{})
+	_, ret, err := DBSelect(sc, "contracts", "value", id, `id`, 0, 1, nil)
 	if err != nil || len(ret) != 1 {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract name")
+		logErrorDB(err, "getting contract name")
 		return ``
 	}
 
@@ -398,15 +388,14 @@ func GetContractById(sc *SmartContract, id int64) string {
 
 // EvalCondition gets the condition and check it
 func EvalCondition(sc *SmartContract, table, name, condfield string) error {
-	conditions, err := model.Single(`SELECT `+converter.EscapeName(condfield)+` FROM "`+getDefTableName(sc, table)+
-		`" WHERE name = ?`, name).String()
+	tableName := converter.ParseTable(table, sc.TxSmart.EcosystemID)
+	query := `SELECT ` + converter.EscapeName(condfield) + ` FROM "` + tableName + `" WHERE name = ? and ecosystem = ?`
+	conditions, err := model.Single(sc.DbTransaction, query, name, sc.TxSmart.EcosystemID).String()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return err
+		return logErrorDB(err, "executing single query")
 	}
 	if len(conditions) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "name": name}).Error("Record not found")
-		return fmt.Errorf(`Record %s has not been found`, name)
+		return logErrorfShort(eRecordNotFound, name, consts.NotFound)
 	}
 	return Eval(sc, conditions)
 }
@@ -418,95 +407,99 @@ func Replace(s, old, new string) string {
 
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error) {
-	if sc.TxContract.Name != `@1NewEcosystem` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("CreateEcosystem can be only called from @1NewEcosystem")
-		return 0, fmt.Errorf(`CreateEcosystem can be only called from @1NewEcosystem`)
+	if err := validateAccess(`CreateEcosystem`, sc, nNewEcosystem); err != nil {
+		return 0, err
 	}
 
 	var sp model.StateParameter
 	sp.SetTablePrefix(`1`)
 	found, err := sp.Get(sc.DbTransaction, `founder_account`)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting founder")
-		return 0, err
+		return 0, logErrorDB(err, "getting founder")
 	}
 
 	if !found || len(sp.Value) == 0 {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": ErrFounderAccount}).Error("founder not found")
-		return 0, ErrFounderAccount
+		return 0, logErrorShort(errFounderAccount, consts.NotFound)
 	}
 
 	id, err := model.GetNextID(sc.DbTransaction, "1_ecosystems")
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("generating next ecosystem id")
-		return 0, err
+		return 0, logErrorDB(err, "generating next ecosystem id")
 	}
 
-	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value)); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
-		return 0, err
+	appID, err := model.GetNextID(sc.DbTransaction, "1_applications")
+	if err != nil {
+		return 0, logErrorDB(err, "generating next application id")
+	}
+
+	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value), appID); err != nil {
+		return 0, logErrorDB(err, "executing ecosystem schema")
 	}
 
 	idStr := converter.Int64ToStr(id)
 	if err := LoadContract(sc.DbTransaction, idStr); err != nil {
 		return 0, err
 	}
-
-	sc.Rollback = false
-	sc.FullAccess = true
-	if _, _, err = DBInsert(sc, `@`+idStr+"_pages", "id,name,value,menu,conditions", "1", "default_page",
-		SysParamString("default_ecosystem_page"), "default_menu", `ContractConditions("MainCondition")`); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return 0, err
+	if !sc.VDE {
+		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem", ID: id}); err != nil {
+			return 0, err
+		}
 	}
-	if _, _, err = DBInsert(sc, `@`+idStr+"_menu", "id,name,value,title,conditions", "1", "default_menu",
-		SysParamString("default_ecosystem_menu"), "default", `ContractConditions("MainCondition")`); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return 0, err
+
+	sc.FullAccess = true
+	if _, _, err = DBInsert(sc, "@1applications", map[string]interface{}{
+		"name":      "System",
+		"conditions": `ContractConditions("MainCondition")`,
+		"ecosystem": id,
+	}); err != nil {
+		return 0, logErrorDB(err, "inserting application")
+	}
+	if _, _, err = DBInsert(sc, `@1pages`, map[string]interface{}{"ecosystem": idStr,
+		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
+		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
+		return 0, logErrorDB(err, "inserting default page")
+	}
+	if _, _, err = DBInsert(sc, `@1menu`, map[string]interface{}{"ecosystem": idStr,
+		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
+		return 0, logErrorDB(err, "inserting default page")
 	}
 
 	var (
 		ret []interface{}
 		pub string
 	)
-	_, ret, err = DBSelect(sc, "@1_keys", "pub", wallet, `id`, 0, 1, 0, ``, []interface{}{})
+	_, ret, err = DBSelect(sc, "@1keys", "pub", wallet, `id`, 0, 1, nil)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting pub key")
-		return 0, err
+		return 0, logErrorDB(err, "getting pub key")
 	}
 
 	if Len(ret) > 0 {
 		pub = ret[0].(map[string]interface{})[`pub`].(string)
 	}
-	if _, _, err := DBInsert(sc, `@`+idStr+"_keys", "id,pub", wallet, pub); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return 0, err
+	if _, _, err := DBInsert(sc, `@1keys`,
+		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr}); err != nil {
+		return 0, logErrorDB(err, "inserting key")
 	}
 
 	sc.FullAccess = false
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
-	sc.Rollback = true
-	if _, _, err := DBInsert(sc, "@1_ecosystems", "id,name", id, name); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("insert new ecosystem to stat table")
-		return 0, err
-	}
-	if !sc.VDE {
-		if err := SysRollback(sc, `{"Type": "NewEcosystem"}`); err != nil {
-			return 0, err
-		}
+	if _, _, err := DBInsert(sc, "@1ecosystems", map[string]interface{}{
+		"id":   id,
+		"name": name,
+	}); err != nil {
+		return 0, logErrorDB(err, "insert new ecosystem to stat table")
 	}
 	return id, err
 }
 
 // EditEcosysName set newName for ecosystem
 func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
-	if sc.TxContract.Name != `@1EditEcosystemName` {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("EditEcosystemName can be only called from @1EditEcosystemName")
-		return fmt.Errorf(`EditEcosystemName can be only called from @1EditEcosystemName`)
+	if err := validateAccess(`EditEcosysName`, sc, nEditEcosystemName); err != nil {
+		return err
 	}
 
-	_, err := DBUpdate(sc, "@1_ecosystems", sysID, "name", newName)
+	_, err := DBUpdate(sc, "@1ecosystems", sysID, map[string]interface{}{"name": newName})
 	return err
 }
 
@@ -529,14 +522,13 @@ func Substr(s string, off int64, slen int64) string {
 
 // Activate sets Active status of the contract in smartVM
 func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("ActivateContract can be only called from @1ActivateContract or @1DeactivateContract")
-		return fmt.Errorf(`ActivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
+	if err := validateAccess(`Activate`, sc, nActivateContract); err != nil {
+		return err
 	}
 	ActivateContract(tblid, state, true)
 	if !sc.VDE {
-		if err := SysRollback(sc, fmt.Sprintf(`{"Type": "ActivateContract", "Id": "%d", "State": "%d"}`,
-			tblid, state)); err != nil {
+		if err := SysRollback(sc, SysRollData{Type: "ActivateContract",
+			EcosystemID: state, ID: tblid}); err != nil {
 			return err
 		}
 	}
@@ -545,14 +537,13 @@ func Activate(sc *SmartContract, tblid int64, state int64) error {
 
 // Deactivate sets Active status of the contract in smartVM
 func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if !accessContracts(sc, nActivateContract, nDeactivateContract) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract}).Error("DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract")
-		return fmt.Errorf(`DeactivateContract can be only called from @1ActivateContract or @1DeactivateContract`)
+	if err := validateAccess(`Deactivate`, sc, nDeactivateContract); err != nil {
+		return err
 	}
 	ActivateContract(tblid, state, false)
 	if !sc.VDE {
-		if err := SysRollback(sc, fmt.Sprintf(`{"Type": "DeactivateContract", "Id": "%d", "State": "%d"}`,
-			tblid, state)); err != nil {
+		if err := SysRollback(sc, SysRollData{Type: "DeactivateContract",
+			EcosystemID: state, ID: tblid}); err != nil {
 			return err
 		}
 	}
@@ -561,27 +552,24 @@ func Deactivate(sc *SmartContract, tblid int64, state int64) error {
 
 // CheckSignature checks the additional signatures for the contract
 func CheckSignature(i *map[string]interface{}, name string) error {
-	state, name := script.ParseContract(name)
-	pref := converter.Int64ToStr(int64(state))
+	state, name := converter.ParseName(name)
 	sc := (*i)[`sc`].(*SmartContract)
-	value, err := model.Single(`select value from "`+pref+`_signatures" where name=?`, name).String()
+	sn := model.Signature{}
+	sn.SetTablePrefix(converter.Int64ToStr(int64(state)))
+	_, err := sn.Get(name)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing single query")
-		return err
+		return logErrorDB(err, "executing single query")
 	}
-	if len(value) == 0 {
+	if len(sn.Value) == 0 {
 		return nil
 	}
 	hexsign, err := hex.DecodeString((*i)[`Signature`].(string))
 	if len(hexsign) == 0 || err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("comverting signature to hex")
-		return fmt.Errorf(`wrong signature`)
+		return logError(errWrongSignature, consts.ConversionError, "converting signature to hex")
 	}
 
 	var sign TxSignJSON
-	err = json.Unmarshal([]byte(value), &sign)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling sign")
+	if err = unmarshalJSON([]byte(sn.Value), &sign, `unmarshalling sign`); err != nil {
 		return err
 	}
 	wallet := (*i)[`key_id`].(int64)
@@ -594,32 +582,13 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 		forsign += fmt.Sprintf(`,%v`, val)
 	}
 
-	CheckSignResult, err := utils.CheckSign(sc.PublicKeys, forsign, hexsign, true)
+	CheckSignResult, err := utils.CheckSign(sc.PublicKeys, []byte(forsign), hexsign, true)
 	if err != nil {
 		return err
 	}
 	if !CheckSignResult {
-		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect signature")
-		return fmt.Errorf(`incorrect signature ` + forsign)
+		return logErrorfShort(eIncorrectSignature, forsign, consts.InvalidObject)
 	}
-	return nil
-}
-
-// RollbackContract performs rollback for the contract
-func RollbackContract(sc *SmartContract, name string) error {
-	if !accessContracts(sc, nNewContract, nImport) {
-		log.WithFields(log.Fields{"type": consts.IncorrectCallingContract, "error": errAccessRollbackContract}).Error("Check contract access")
-		return errAccessRollbackContract
-	}
-
-	if c := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID)); c != nil {
-		id := c.Block.Info.(*script.ContractInfo).ID
-		if int(id) < len(sc.VM.Children) {
-			sc.VM.Children = sc.VM.Children[:id]
-		}
-		delete(sc.VM.Objects, c.Name)
-	}
-
 	return nil
 }
 
@@ -627,8 +596,7 @@ func RollbackContract(sc *SmartContract, name string) error {
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get values of metric")
-		return nil, err
+		return nil, logErrorDB(err, "get values of metric")
 	}
 	return result, nil
 }
@@ -644,33 +612,43 @@ func DBCollectMetrics() []interface{} {
 }
 
 // JSONDecode converts json string to object
-func JSONDecode(input string) (interface{}, error) {
-	var ret interface{}
-	err := json.Unmarshal([]byte(input), &ret)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling json")
-		return nil, err
-	}
-	return ret, nil
+func JSONDecode(input string) (ret interface{}, err error) {
+	err = unmarshalJSON([]byte(input), &ret, "unmarshalling json")
+	return
 }
 
-// JSONEncode converts object to json string
-func JSONEncode(input interface{}) (string, error) {
+// JSONEncodeIdent converts object to json string
+func JSONEncodeIndent(input interface{}, indent string) (string, error) {
 	rv := reflect.ValueOf(input)
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
-
 	if rv.Kind() == reflect.Struct {
-		return "", fmt.Errorf("Type %T doesn't support json marshalling", input)
+		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
-
-	b, err := json.Marshal(input)
+	var (
+		b   []byte
+		err error
+	)
+	if len(indent) == 0 {
+		b, err = json.Marshal(input)
+	} else {
+		b, err = json.MarshalIndent(input, ``, indent)
+	}
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling json")
-		return "", err
+		return ``, logError(err, consts.JSONMarshallError, `marshalling json`)
 	}
-	return string(b), nil
+	out := string(b)
+	out = strings.Replace(out, `\u003c`, `<`, -1)
+	out = strings.Replace(out, `\u003e`, `>`, -1)
+	out = strings.Replace(out, `\u0026`, `&`, -1)
+
+	return out, nil
+}
+
+// JSONEncode converts object to json string
+func JSONEncode(input interface{}) (string, error) {
+	return JSONEncodeIndent(input, ``)
 }
 
 // Append syn for golang 'append' function

@@ -79,17 +79,17 @@ type GlobalConfig struct {
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`
 
-	PrivateBlockchain bool
-	PidFilePath       string
-	LockFilePath      string
-	DataDir           string // application work dir (cwd by default)
-	KeysDir           string // place for private keys files: NodePrivateKey, PrivateKey
-	TempDir           string // temporary dir
-	FirstBlockPath    string
-	TLS               bool   // TLS is on/off. It is required for https
-	TLSCert           string // TLSCert is a filepath of the fullchain of certificate.
-	TLSKey            string // TLSKey is a filepath of the private key.
-	RunningMode       string
+	PidFilePath    string
+	LockFilePath   string
+	DataDir        string // application work dir (cwd by default)
+	KeysDir        string // place for private keys files: NodePrivateKey, PrivateKey
+	TempDir        string // temporary dir
+	FirstBlockPath string
+	TLS            bool   // TLS is on/off. It is required for https
+	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
+	TLSKey         string // TLSKey is a filepath of the private key.
+	VDEMode        string
+	HTTPServerMaxBodySize int64
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -117,7 +117,10 @@ func (c *GlobalConfig) GetPidPath() string {
 // the function has side effect updating global var Config
 func LoadConfig(path string) error {
 	log.WithFields(log.Fields{"path": path}).Info("Loading config")
+	return LoadConfigToVar(path, &Config)
+}
 
+func LoadConfigToVar(path string, v *GlobalConfig) error {
 	_, err := os.Stat(path)
 	if os.IsNotExist(err) {
 		return errors.Errorf("Unable to load config file %s", path)
@@ -129,7 +132,7 @@ func LoadConfig(path string) error {
 		return errors.Wrapf(err, "reading config")
 	}
 
-	err = viper.Unmarshal(&Config)
+	err = viper.Unmarshal(v)
 	if err != nil {
 		return errors.Wrapf(err, "marshalling config to global struct variable")
 	}
@@ -241,27 +244,22 @@ func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
 }
 
-// IsPrivateBlockchain check running mode
-func (c GlobalConfig) IsPrivateBlockchain() bool {
-	return RunMode(c.RunningMode).IsPrivateBlockchain()
-}
-
-// IsPublicBlockchain check running mode
-func (c GlobalConfig) IsPublicBlockchain() bool {
-	return RunMode(c.RunningMode).IsPublicBlockchain()
-}
-
 // IsVDE check running mode
 func (c GlobalConfig) IsVDE() bool {
-	return RunMode(c.RunningMode).IsVDE()
+	return RunMode(c.VDEMode).IsVDE()
 }
 
 // IsVDEMaster check running mode
 func (c GlobalConfig) IsVDEMaster() bool {
-	return RunMode(c.RunningMode).IsVDEMaster()
+	return RunMode(c.VDEMode).IsVDEMaster()
 }
 
 // IsSupportingVDE check running mode
 func (c GlobalConfig) IsSupportingVDE() bool {
-	return RunMode(c.RunningMode).IsSupportingVDE()
+	return RunMode(c.VDEMode).IsSupportingVDE()
+}
+
+// IsNode check running mode
+func (c GlobalConfig) IsNode() bool {
+	return RunMode(c.VDEMode).IsNode()
 }

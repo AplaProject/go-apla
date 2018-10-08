@@ -1,0 +1,42 @@
+// +prop AppID = '1'
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract EditContract {
+    data {
+        Id int
+        Value string "optional"
+        Conditions string "optional"
+        WalletId string "optional"
+    }
+    func onlyConditions() bool {
+        return $Conditions && !$Value && !$WalletId
+    }
+
+    conditions {
+        RowConditions("contracts", $Id, onlyConditions())
+        if $Conditions {
+            ValidateCondition($Conditions, $ecosystem_id)
+        }
+        $cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
+        if !$cur {
+            error Sprintf("Contract %d does not exist", $Id)
+        }
+        if $Value {
+            ValidateEditContractNewValue($Value, $cur["value"])
+        }
+        if $WalletId != "" {
+            $recipient = AddressToId($WalletId)
+            if $recipient == 0 {
+                error Sprintf("New contract owner %s is invalid", $WalletId)
+            }
+            if Int($cur["active"]) == 1 {
+                error "Contract must be deactivated before wallet changing"
+            }
+        } else {
+            $recipient = Int($cur["wallet_id"])
+        }
+    }
+
+    action {
+        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
+    }
+}

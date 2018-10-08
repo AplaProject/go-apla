@@ -24,7 +24,6 @@ import (
 	"io"
 	"io/ioutil"
 	"math/rand"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -32,7 +31,6 @@ import (
 	"reflect"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -50,14 +48,15 @@ import (
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockID      int64
-	Time         int64
-	EcosystemID  int64
-	KeyID        int64
-	NodePosition int64
-	Sign         []byte
-	Hash         []byte
-	Version      int
+	BlockID           int64
+	Time              int64
+	EcosystemID       int64
+	KeyID             int64
+	NodePosition      int64
+	Sign              []byte
+	Hash              []byte
+	Version           int
+	PrivateBlockchain bool
 }
 
 func (b BlockData) String() string {
@@ -120,8 +119,6 @@ var (
 	CancelFunc context.CancelFunc
 	// DaemonsCount is number of daemons
 	DaemonsCount int
-
-	ErrNodesUnavailable = errors.New("All nodes unvailabale")
 )
 
 // GetHTTPTextAnswer returns HTTP answer as a string
@@ -246,7 +243,7 @@ func CopyFileContents(src, dst string) error {
 }
 
 // CheckSign checks the signature
-func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
+func CheckSign(publicKeys [][]byte, forSign []byte, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r}).Error("recovered panic in check sign")
@@ -343,18 +340,6 @@ func TypeInt(txType string) int64 {
 	return 0
 }
 
-// TCPConn connects to the address
-func TCPConn(Addr string) (net.Conn, error) {
-	conn, err := net.DialTimeout("tcp", Addr, consts.TCPConnTimeout)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConnectionError, "error": err, "address": Addr}).Debug("dialing tcp")
-		return nil, ErrInfo(err)
-	}
-	conn.SetReadDeadline(time.Now().Add(consts.READ_TIMEOUT * time.Second))
-	conn.SetWriteDeadline(time.Now().Add(consts.WRITE_TIMEOUT * time.Second))
-	return conn, nil
-}
-
 // GetCurrentDir returns the current directory
 func GetCurrentDir() string {
 	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -363,82 +348,6 @@ func GetCurrentDir() string {
 		return "."
 	}
 	return dir
-}
-
-// GetBlocksBody is retrieving `blocksCount` blocks bodies starting with blockID and puts them in the channel
-func GetBlocksBody(host string, blockID int64, blocksCount int32, dataTypeBlockBody int64, reverseOrder bool) (chan []byte, error) {
-	conn, err := TCPConn(host)
-	if err != nil {
-		return nil, ErrInfo(err)
-	}
-
-	// send the type of data
-	_, err = conn.Write(converter.DecToBin(dataTypeBlockBody, 2))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
-		return nil, ErrInfo(err)
-	}
-
-	// send the number of a block
-	_, err = conn.Write(converter.DecToBin(blockID, 4))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data type block body to connection")
-		return nil, ErrInfo(err)
-	}
-
-	rvBytes := make([]byte, 1)
-	if reverseOrder {
-		rvBytes[0] = 1
-	} else {
-		rvBytes[0] = 0
-	}
-
-	// send reverse flag
-	_, err = conn.Write(rvBytes)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing reverse flag to connection")
-		return nil, ErrInfo(err)
-	}
-
-	rawBlocksCh := make(chan []byte, blocksCount)
-	go func() {
-		defer func() {
-			close(rawBlocksCh)
-			conn.Close()
-		}()
-
-		for {
-			// receive the data size as a response that server wants to transfer
-			buf := make([]byte, 4)
-			_, err = conn.Read(buf)
-			if err != nil {
-				if err != io.EOF {
-					log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data size from connection")
-				}
-				return
-			}
-			dataSize := converter.BinToDec(buf)
-			var binaryBlock []byte
-
-			// data size must be less than 10mb
-			if dataSize >= 10485760 && dataSize == 0 {
-				log.Error("null block")
-				return
-			}
-
-			binaryBlock = make([]byte, dataSize)
-
-			_, err = io.ReadFull(conn, binaryBlock)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading block data from connection")
-				return
-			}
-
-			rawBlocksCh <- binaryBlock
-		}
-	}()
-	return rawBlocksCh, nil
-
 }
 
 // ShellExecute runs cmdline
@@ -492,89 +401,18 @@ func GetNodeKeys() (string, string, error) {
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
 }
 
-// best host is a host with the biggest last block ID
-func ChooseBestHost(ctx context.Context, hosts []string, logger *log.Entry) (string, int64, error) {
-	maxBlockID := int64(-1)
-	var bestHost string
-
-	type blockAndHost struct {
-		host    string
-		blockID int64
-		err     error
-	}
-	c := make(chan blockAndHost, len(hosts))
-
-	ShuffleSlice(hosts)
-
-	var wg sync.WaitGroup
-	for _, h := range hosts {
-		if ctx.Err() != nil {
-			logger.WithFields(log.Fields{"error": ctx.Err(), "type": consts.ContextError}).Error("context error")
-			return "", maxBlockID, ctx.Err()
-		}
-
-		wg.Add(1)
-
-		go func(host string) {
-			blockID, err := GetHostBlockID(host, logger)
-			wg.Done()
-
-			c <- blockAndHost{
-				host:    host,
-				blockID: blockID,
-				err:     err,
-			}
-		}(GetHostPort(h))
-	}
-	wg.Wait()
-
-	var errCount int
-	for i := 0; i < len(hosts); i++ {
-		bl := <-c
-
-		if bl.err != nil {
-			errCount++
-			continue
-		}
-
-		// If blockID is maximal then the current host is the best
-		if bl.blockID > maxBlockID {
-			maxBlockID = bl.blockID
-			bestHost = bl.host
-		}
-	}
-
-	if errCount == len(hosts) {
-		return "", 0, ErrNodesUnavailable
-	}
-
-	return bestHost, maxBlockID, nil
-}
-
-func GetHostBlockID(host string, logger *log.Entry) (int64, error) {
-	conn, err := TCPConn(host)
+func GetNodePrivateKey() ([]byte, error) {
+	data, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Debug("error connecting to host")
-		return 0, err
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
+		return nil, err
 	}
-	defer conn.Close()
-
-	// get max block request
-	_, err = conn.Write(converter.DecToBin(consts.DATA_TYPE_MAX_BLOCK_ID, 2))
+	privateKey, err := hex.DecodeString(string(data))
 	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("writing max block id to host")
-		return 0, err
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return nil, err
 	}
-
-	// response
-	blockIDBin := make([]byte, 4)
-	_, err = conn.Read(blockIDBin)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
-		return 0, err
-	}
-
-	return converter.BinToDec(blockIDBin), nil
+	return privateKey, nil
 }
 
 func GetHostPort(h string) string {
@@ -634,7 +472,7 @@ func LockOrDie(dir string) *flock.Flock {
 }
 
 func ShuffleSlice(slice []string) {
-	for i, _ := range slice {
+	for i := range slice {
 		j := rand.Intn(i + 1)
 		slice[i], slice[j] = slice[j], slice[i]
 	}
@@ -653,4 +491,13 @@ func MakeDirectory(dir string) error {
 		return err
 	}
 	return nil
+}
+
+func StringInSlice(slice []string, v string) bool {
+	for _, item := range slice {
+		if v == item {
+			return true
+		}
+	}
+	return false
 }

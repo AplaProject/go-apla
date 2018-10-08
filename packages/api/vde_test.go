@@ -33,14 +33,22 @@ import (
 	taskContract "github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 )
 
+func TestVDETables(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	var res tableResult
+
+	require.NoError(t, sendGet("/table/system_parameters", nil, &res))
+	fmt.Println(res)
+}
+
 func TestVDECreate(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 
 	form := url.Values{
 		"VDEName":    {"myvde3"},
-		"DBUser":     {"myvdeuser3"},
+		"DBUser":     {"myvde3user"},
 		"DBPassword": {"vdepassword"},
-		"VDEAPIPort": {"8004"},
+		"VDEAPIPort": {"8098"},
 	}
 	assert.NoError(t, postTx("NewVDE", &form))
 }
@@ -74,6 +82,22 @@ func TestRemoveVDE(t *testing.T) {
 	}
 	require.NoError(t, postTx("RemoveVDE", &form))
 }
+
+func TestCreateTable(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	sql1 := `new_column`
+
+	form := url.Values{
+		"Name":          {"my_test_table"},
+		"Columns":       {"[{\"name\":\"" + sql1 + "\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]"},
+		"ApplicationId": {"1"},
+		"Permissions":   {"{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}"},
+	}
+
+	require.NoError(t, postTx("NewTable", &form))
+}
+
 func TestVDEParams(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -380,6 +404,29 @@ func TestNodeHTTPRequest(t *testing.T) {
 		}
 		assert.Equal(t, `Test NodeContract NodeContract testing `+rnd, msg)
 	}
+}
+
+func TestCreateCron(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	require.EqualError(t, postTx("NewCron", &url.Values{
+		"Cron":       {"60 * * * *"},
+		"Contract":   {"TestCron"},
+		"Conditions": {`ContractConditions("MainCondition")`},
+		"vde":        {"true"},
+	}),
+		`500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }`,
+	)
+
+	till := time.Now().Format(time.RFC3339)
+	require.NoError(t,
+		postTx("NewCron", &url.Values{
+			"Cron":       {"* * * * *"},
+			"Contract":   {"TestCron"},
+			"Conditions": {`ContractConditions("MainCondition")`},
+			"Till":       {till},
+			"vde":        {"true"},
+		}))
 }
 
 func TestCron(t *testing.T) {

@@ -23,7 +23,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -102,14 +101,11 @@ func rollbackBlock(dbTransaction *model.DbTransaction, block *block.Block) error
 		}
 
 		if t.TxContract != nil {
-			if _, err := t.CallContract(smart.CallInit | smart.CallRollback); err != nil {
-				return err
-			}
 			if err = rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
 				return err
 			}
 		} else {
-			MethodName := consts.TxTypes[int(t.TxType)]
+			MethodName := consts.TxTypes[t.TxType]
 			txParser, err := transaction.GetTransaction(t, MethodName)
 			if err != nil {
 				return utils.ErrInfo(err)

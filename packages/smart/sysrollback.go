@@ -17,7 +17,6 @@
 package smart
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -29,15 +28,31 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func SysRollback(sc *SmartContract, data string) error {
+const (
+	SysName = `@system`
+)
+
+type SysRollData struct {
+	Type        string `json:"type,omitempty"`
+	EcosystemID int64  `json:"ecosystem,omitempty"`
+	ID          int64  `json:"id,omitempty"`
+	Data        string `json:"data,omitempty"`
+	TableName   string `json:"table,omitempty"`
+}
+
+func SysRollback(sc *SmartContract, data SysRollData) error {
+	out, err := marshalJSON(data, `marshaling sys rollback`)
+	if err != nil {
+		return err
+	}
 	rollbackSys := &model.RollbackTx{
 		BlockID:   sc.BlockData.BlockID,
 		TxHash:    sc.TxHash,
-		NameTable: `@system`,
+		NameTable: SysName,
 		TableID:   converter.Int64ToStr(sc.TxSmart.EcosystemID),
-		Data:      data,
+		Data:      string(out),
 	}
-	err := rollbackSys.Create(sc.DbTransaction)
+	err = rollbackSys.Create(sc.DbTransaction)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating system  rollback")
 		return err
@@ -46,51 +61,18 @@ func SysRollback(sc *SmartContract, data string) error {
 }
 
 // SysRollbackTable is rolling back table
-func SysRollbackTable(DbTransaction *model.DbTransaction, TxHash []byte,
-	TableName, EcosystemID string) error {
-	err := model.DropTable(DbTransaction, TableName)
+func SysRollbackTable(DbTransaction *model.DbTransaction, sysData SysRollData) error {
+	err := model.DropTable(DbTransaction, sysData.TableName)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 		return err
-	}
-	t := model.Table{}
-	t.SetTablePrefix(EcosystemID)
-	if strings.HasPrefix(TableName, EcosystemID+`_`) {
-		TableName = TableName[len(EcosystemID)+1:]
-	}
-	found, err := t.Get(DbTransaction, TableName)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
-		return err
-	}
-	if found {
-		err = t.Delete(DbTransaction)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
-			return err
-		}
-	} else {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
 	}
 	return nil
 }
 
 // SysRollbackColumn is rolling back column
-func SysRollbackColumn(DbTransaction *model.DbTransaction, TxHash []byte,
-	TableName, Name, EcosystemID string) error {
-	Name = converter.EscapeSQL(strings.ToLower(Name))
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(DbTransaction, TxHash, fmt.Sprintf("%s_tables", EcosystemID))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column from rollback table")
-		return err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("column record in rollback table")
-		// if there is not such hash then NewColumn was faulty. Do nothing.
-		return nil
-	}
-	return model.AlterTableDropColumn(TableName, Name)
+func SysRollbackColumn(DbTransaction *model.DbTransaction, sysData SysRollData) error {
+	return model.AlterTableDropColumn(DbTransaction, sysData.TableName, sysData.Data)
 }
 
 // SysRollbackContract performs rollback for the contract
@@ -107,8 +89,8 @@ func SysRollbackContract(name string, EcosystemID int64) error {
 	return nil
 }
 
-func SysRollbackNewContract(value, EcosystemID string) error {
-	contractList, err := script.ContractsList(value)
+func SysRollbackNewContract(sysData SysRollData, EcosystemID string) error {
+	contractList, err := script.ContractsList(sysData.Data)
 	if err != nil {
 		return err
 	}
@@ -151,24 +133,13 @@ func SysSetContractWallet(tblid, state int64, wallet int64) error {
 	return nil
 }
 
-// RollbackEditContract rollbacks the contract
-func SysRollbackEditContract(DbTransaction *model.DbTransaction, TxHash []byte,
+// SysRollbackEditContract rollbacks the contract
+func SysRollbackEditContract(transaction *model.DbTransaction, sysData SysRollData,
 	EcosystemID string) error {
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(DbTransaction, TxHash, fmt.Sprintf("%s_contracts", EcosystemID))
+
+	fields, err := model.GetOneRowTransaction(transaction, `select * from "1_contracts" where id=?`,
+		sysData.ID).String()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting contract from rollback table")
-		return err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("contract record in rollback table")
-		// if there is not such hash then EditContract was faulty. Do nothing.
-		return nil
-	}
-	var fields map[string]string
-	err = json.Unmarshal([]byte(rollbackTx.Data), &fields)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling contract values")
 		return err
 	}
 	if len(fields["value"]) > 0 {
@@ -176,7 +147,7 @@ func SysRollbackEditContract(DbTransaction *model.DbTransaction, TxHash []byte,
 		for i, item := range smartVM.Block.Children {
 			if item != nil && item.Type == script.ObjContract {
 				cinfo := item.Info.(*script.ContractInfo)
-				if cinfo.Owner.TableID == converter.StrToInt64(rollbackTx.TableID) &&
+				if cinfo.Owner.TableID == sysData.ID &&
 					cinfo.Owner.StateID == uint32(converter.StrToInt64(EcosystemID)) {
 					owner = smartVM.Children[i].Info.(*script.ContractInfo).Owner
 					break
@@ -204,111 +175,94 @@ func SysRollbackEditContract(DbTransaction *model.DbTransaction, TxHash []byte,
 			return err
 		}
 	} else if len(fields["wallet_id"]) > 0 {
-		return SysSetContractWallet(converter.StrToInt64(rollbackTx.TableID),
-			converter.StrToInt64(EcosystemID), converter.StrToInt64(fields["wallet_id"]))
+		return SysSetContractWallet(sysData.ID, converter.StrToInt64(EcosystemID),
+			converter.StrToInt64(fields["wallet_id"]))
 	}
 	return nil
 }
 
 // SysRollbackEcosystem is rolling back ecosystem
-func SysRollbackEcosystem(DbTransaction *model.DbTransaction, TxHash []byte) error {
-	rollbackTx := &model.RollbackTx{}
-	found, err := rollbackTx.Get(DbTransaction, TxHash, "1_ecosystems")
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting rollback tx")
-		return err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("system states in rollback table")
-		// if there is not such hash then NewEcosystem was faulty. Do nothing.
-		return nil
-	}
-	lastID, err := model.GetNextID(DbTransaction, "1_ecosystems")
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id")
-		return err
-	}
-	lastID--
-	if converter.StrToInt64(rollbackTx.TableID) != lastID {
-		log.WithFields(log.Fields{"table_id": rollbackTx.TableID, "last_id": lastID, "type": consts.InvalidObject}).Error("incorrect ecosystem id")
-		return fmt.Errorf(`Incorrect ecosystem id %s != %d`, rollbackTx.TableID, lastID)
-	}
-
-	if model.IsTable(fmt.Sprintf(`%s_vde_tables`, rollbackTx.TableID)) {
-		// Drop all _local_ tables
-		table := &model.Table{}
-		prefix := fmt.Sprintf(`%s_vde`, rollbackTx.TableID)
-		table.SetTablePrefix(prefix)
-		list, err := table.GetAll(prefix)
+func SysRollbackEcosystem(DbTransaction *model.DbTransaction, sysData SysRollData) error {
+	tables := make([]string, 0)
+	for table := range model.FirstEcosystemTables {
+		tables = append(tables, table)
+		err := model.Delete(DbTransaction, `1_`+table, fmt.Sprintf(`where ecosystem='%d'`, sysData.ID))
 		if err != nil {
 			return err
 		}
-		for _, item := range list {
-			err = model.DropTable(DbTransaction, fmt.Sprintf("%s_%s", prefix, item.Name))
+	}
+	if sysData.ID == 1 {
+		tables = append(tables, `node_ban_logs`, `bad_blocks`, `system_parameters`, `ecosystems`)
+		for _, name := range tables {
+			err := model.DropTable(DbTransaction, fmt.Sprintf("%d_%s", sysData.ID, name))
 			if err != nil {
+				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
 				return err
 			}
 		}
-		for _, name := range []string{`tables`, `parameters`} {
-			err = model.DropTable(DbTransaction, fmt.Sprintf("%s_%s", prefix, name))
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	rbTables := []string{
-		`menu`,
-		`pages`,
-		`languages`,
-		`signatures`,
-		`tables`,
-		`contracts`,
-		`parameters`,
-		`blocks`,
-		`history`,
-		`keys`,
-		`sections`,
-		`members`,
-		`roles`,
-		`roles_participants`,
-		`notifications`,
-		`applications`,
-		`binaries`,
-		`app_params`,
-		`buffer_data`,
-	}
-
-	if rollbackTx.TableID == "1" {
-		rbTables = append(rbTables, `node_ban_logs`, `bad_blocks`, `system_parameters`, `ecosystems`)
-	}
-
-	for _, name := range rbTables {
-		err = model.DropTable(DbTransaction, fmt.Sprintf("%s_%s", rollbackTx.TableID, name))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("dropping table")
+	} else {
+		if err := SysRollbackContract(`MainCondition`, sysData.ID); err != nil {
 			return err
 		}
 	}
-	rollbackTxToDel := &model.RollbackTx{TxHash: TxHash, NameTable: "1_ecosystems"}
-	err = rollbackTxToDel.DeleteByHashAndTableName(DbTransaction)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting rollback tx by hash and table name")
-		return err
-	}
-
-	ecosysToDel := &model.Ecosystem{ID: lastID}
-	return ecosysToDel.Delete(DbTransaction)
+	return nil
 }
 
 // SysRollbackActivate sets Deactive status of the contract in smartVM
-func SysRollbackActivate(tblid, state string) error {
-	ActivateContract(converter.StrToInt64(tblid), converter.StrToInt64(state), false)
+func SysRollbackActivate(sysData SysRollData) error {
+	ActivateContract(sysData.ID, sysData.EcosystemID, false)
 	return nil
 }
 
 // SysRollbackDeactivate sets Active status of the contract in smartVM
-func SysRollbackDeactivate(tblid, state string) error {
-	ActivateContract(converter.StrToInt64(tblid), converter.StrToInt64(state), true)
+func SysRollbackDeactivate(sysData SysRollData) error {
+	ActivateContract(sysData.ID, sysData.EcosystemID, true)
+	return nil
+}
+
+// SysRollbackDeleteColumn is rolling back delete column
+func SysRollbackDeleteColumn(DbTransaction *model.DbTransaction, sysData SysRollData) error {
+	var (
+		data map[string]string
+	)
+	err := unmarshalJSON([]byte(sysData.Data), &data, `rollback delete to json`)
+	if err != nil {
+		return err
+	}
+	sqlColType, err := columnType(data["type"])
+	if err != nil {
+		return err
+	}
+	err = model.AlterTableAddColumn(DbTransaction, sysData.TableName, data["name"], sqlColType)
+	if err != nil {
+		return logErrorDB(err, "adding column to the table")
+	}
+	return nil
+}
+
+// SysRollbackDeleteTable is rolling back delete table
+func SysRollbackDeleteTable(DbTransaction *model.DbTransaction, sysData SysRollData) error {
+	var (
+		data    TableInfo
+		colsSQL string
+	)
+	err := unmarshalJSON([]byte(sysData.Data), &data, `rollback delete table to json`)
+	if err != nil {
+		return err
+	}
+	for key, item := range data.Columns {
+		colsSQL += `"` + key + `" ` + typeToPSQL[item] + " ,\n"
+	}
+	err = model.CreateTable(DbTransaction, sysData.TableName, strings.TrimRight(colsSQL, ",\n"))
+	if err != nil {
+		return logErrorDB(err, "creating tables")
+	}
+
+	prefix, _ := PrefixName(sysData.TableName)
+	data.Table.SetTablePrefix(prefix)
+	err = data.Table.Create(DbTransaction)
+	if err != nil {
+		return logErrorDB(err, "insert table info")
+	}
 	return nil
 }

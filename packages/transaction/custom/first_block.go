@@ -32,7 +32,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const firstEcosystemID = 1
+const (
+	firstEcosystemID = 1
+	firstAppID       = 1
+)
 
 // FirstBlockParser is parser wrapper
 type FirstBlockTransaction struct {
@@ -59,27 +62,33 @@ func (t *FirstBlockTransaction) Action() error {
 	logger := t.Logger
 	data := t.Data.(*consts.FirstBlock)
 	keyID := crypto.Address(data.PublicKey)
-	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID)
+	err := model.ExecSchemaEcosystem(nil, firstEcosystemID, keyID, ``, keyID, firstAppID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return utils.ErrInfo(err)
 	}
 
-	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.IntToStr(firstEcosystemID))
-	_, err = sp.Get(nil, model.ParamMoneyDigit)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
-		return err
-	}
-	amount := decimal.New(consts.FounderAmount, int32(converter.StrToInt64(sp.Value))).String()
+	amount := decimal.New(consts.FounderAmount, int32(consts.MoneyDigits)).String()
 
 	commission := &model.SystemParameter{Name: `commission_wallet`}
 	if err = commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
 		return utils.ErrInfo(err)
 	}
-	if err = syspar.SysUpdate(nil); err != nil {
+
+	err = model.GetDB(t.DbTransaction).Exec(`update "1_system_parameters" SET value = ? where name = 'test'`, data.Test).Error
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating test parameter")
+		return utils.ErrInfo(err)
+	}
+
+	err = model.GetDB(t.DbTransaction).Exec(`Update "1_system_parameters" SET value = ? where name = 'private_blockchain'`, data.PrivateBlockchain).Error
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating private_blockchain")
+		return utils.ErrInfo(err)
+	}
+
+	if err = syspar.SysUpdate(t.DbTransaction); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 		return utils.ErrInfo(err)
 	}
@@ -90,14 +99,23 @@ func (t *FirstBlockTransaction) Action() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return utils.ErrInfo(err)
 	}
-	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values('1', 'default_page',
-		  'default_menu', ?, 'ContractAccess("@1EditPage")')`, syspar.SysString(`default_ecosystem_page`)).Error
+	id, err := model.GetNextID(t.DbTransaction, "1_pages")
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values(?, 'default_page',
+		  'default_menu', ?, 'ContractAccess("@1EditPage")')`,
+		id, syspar.SysString(`default_ecosystem_page`)).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return utils.ErrInfo(err)
 	}
-	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values('1', 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`,
-		syspar.SysString(`default_ecosystem_menu`), `default`).Error
+	id, err = model.GetNextID(t.DbTransaction, "1_menu")
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values(?, 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`,
+		id, syspar.SysString(`default_ecosystem_menu`), `default`).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
 		return utils.ErrInfo(err)

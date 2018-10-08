@@ -386,11 +386,9 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		}
 	}
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
-	appID := int(converter.StrToInt64((*workspace.Vars)[`app_id`]))
 	if (*workspace.Vars)[`_full`] != `1` {
 		for i, v := range pars {
-			pars[i] = language.LangMacro(v, state, appID, (*workspace.Vars)[`lang`],
-				workspace.SmartContract.VDE)
+			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`lang`])
 			if pars[i] != v {
 				if parFunc.RawPars == nil {
 					rawpars := make(map[string]string)
@@ -487,6 +485,8 @@ func getFunc(input string, curFunc tplFunc) (*[][]rune, int, *[]*[][]rune) {
 	} else {
 		lenParams = len(strings.Split(curFunc.Params, `,`))
 	}
+	objLevel := 0
+	objMode := 0
 	level := 1
 	if input[0] == '{' {
 		mode = 1
@@ -496,6 +496,16 @@ main:
 	for off, ch = range input {
 		if skip > 0 {
 			skip--
+			continue
+		}
+		if objLevel > 0 {
+			params[curp] = append(params[curp], ch)
+			switch ch {
+			case modes[objMode][0]:
+				objLevel++
+			case modes[objMode][1]:
+				objLevel--
+			}
 			continue
 		}
 		if pair > 0 {
@@ -519,6 +529,13 @@ main:
 			if ch >= '!' {
 				if ch == '"' || ch == '`' {
 					pair = ch
+				} else if ch == '[' || ch == '{' {
+					objMode = 2
+					if ch == '{' {
+						objMode = 1
+					}
+					objLevel = 1
+					params[curp] = append(params[curp], ch)
 				} else {
 					if ch == modes[mode][0] {
 						level++
@@ -697,7 +714,6 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 			Header: tx.Header{
 				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
 				KeyID:       converter.StrToInt64((*vars)[`key_id`]),
-				RoleID:      converter.StrToInt64((*vars)[`role_id`]),
 				NetworkID:   consts.NETWORK_ID,
 			},
 		},

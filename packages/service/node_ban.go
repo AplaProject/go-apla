@@ -4,12 +4,9 @@ import (
 	"sync"
 	"time"
 
-	"strconv"
-
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -115,8 +112,8 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 }
 
 func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64, reason string) error {
-	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-	if err != nil || len(NodePrivateKey) < 1 {
+	nodePrivateKey, err := utils.GetNodePrivateKey()
+	if err != nil || len(nodePrivateKey) < 1 {
 		if err == nil {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		}
@@ -137,38 +134,46 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		return errors.New("cant find current node in full nodes list")
 	}
 
-	params := make([]byte, 0)
-	for _, p := range []int64{producer.KeyID, currentNode.KeyID, blockId, blockTime} {
-		converter.EncodeLenInt64(&params, p)
-	}
-	params = append(append(params, converter.EncodeLength(int64(len(reason)))...), []byte(reason)...)
-
 	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, "NewBadBlock", 1)
 	info := contract.Block.Info.(*script.ContractInfo)
 
-	err = tx.BuildTransaction(tx.SmartContract{
+	sc := tx.SmartContract{
 		Header: tx.Header{
-			Type:        int(info.ID),
+			ID:          int(info.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: 1,
 			KeyID:       conf.Config.KeyID,
 		},
-		SignedBy: smart.PubToID(NodePublicKey),
-		Data:     params,
-	},
-		NodePrivateKey,
-		NodePublicKey,
-		strconv.FormatInt(producer.KeyID, 10),
-		strconv.FormatInt(currentNode.KeyID, 10),
-		strconv.FormatInt(blockId, 10),
-		strconv.FormatInt(blockTime, 10),
-		reason,
-	)
+		Params: map[string]interface{}{
+			"ProducerNodeID": producer.KeyID,
+			"ConsumerNodeID": currentNode.KeyID,
+			"BlockID":        blockId,
+			"Timestamp":      blockTime,
+			"Reason":         reason,
+		},
+	}
+
+	txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return err
 	}
 
-	return nil
+	return tx.CreateTransaction(txData, txHash, conf.Config.KeyID)
+}
+
+func (nbs *NodesBanService) FilterBannedHosts(hosts []string) ([]string, error) {
+	var goodHosts []string
+	for _, h := range hosts {
+		n, err := syspar.GetNodeByHost(h)
+		if err != nil {
+			log.WithFields(log.Fields{"error": err, "host": h}).Error("getting node by host")
+			return nil, err
+		}
+
+		if !nbs.IsBanned(n) {
+			goodHosts = append(goodHosts, n.TCPAddress)
+		}
+	}
+	return goodHosts, nil
 }

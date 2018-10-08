@@ -1,0 +1,21 @@
+// +prop AppID = '1'
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract NodeOwnerCondition {
+	conditions {
+        $raw_full_nodes = SysParamString("full_nodes")
+        if Size($raw_full_nodes) == 0 {
+            ContractConditions("MainCondition")
+        } else {
+            $full_nodes = JSONDecode($raw_full_nodes)
+            var i int
+            while i < Len($full_nodes) {
+                $fn = $full_nodes[i]
+                if $fn["key_id"] == $key_id {
+                    return true
+                }
+                i = i + 1
+            }
+            warning "Sorry, you do not have access to this action."
+        }
+	}
+}

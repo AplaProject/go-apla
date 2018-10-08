@@ -1,5 +1,7 @@
 package migration
 
+//go:generate go run ./gen/contracts.go
+
 var (
 	migrationInitial = `
 		DROP SEQUENCE IF EXISTS migration_history_id_seq CASCADE;
@@ -47,10 +49,10 @@ var (
 		
 		DROP TABLE IF EXISTS "log_transactions"; CREATE TABLE "log_transactions" (
 		"hash" bytea  NOT NULL DEFAULT '',
-		"time" int NOT NULL DEFAULT '0'
+		"block" int NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "log_transactions" ADD CONSTRAINT log_transactions_pkey PRIMARY KEY (hash);
-		
+
 		DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
 		"hash" bytea  NOT NULL DEFAULT '',
 		"data" bytea NOT NULL DEFAULT '',
@@ -148,5 +150,15 @@ var (
 		
 		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
 		"stop_time" int NOT NULL DEFAULT '0'
-		);`
+		);
+		
+		CREATE OR REPLACE FUNCTION next_id(table_name TEXT, OUT result INT) AS
+		$$
+		BEGIN
+			EXECUTE FORMAT('SELECT COUNT(*) + 1 FROM "%s"', table_name)
+			INTO result;
+			RETURN;
+		END
+		$$
+		LANGUAGE plpgsql;`
 )

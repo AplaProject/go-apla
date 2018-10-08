@@ -49,7 +49,6 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 	"QueueParserTx":     QueueParserTx,
 	"QueueParserBlocks": QueueParserBlocks,
 	"Confirmations":     Confirmations,
-	"Notificator":       Notificate,
 	"Scheduler":         Scheduler,
 }
 
@@ -60,7 +59,6 @@ var serverList = []string{
 	"QueueParserBlocks",
 	"Disseminator",
 	"Confirmations",
-	"Notificator",
 	"Scheduler",
 }
 
@@ -112,7 +110,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 }
 
 // StartDaemons starts daemons
-func StartDaemons() {
+func StartDaemons(ctx context.Context) {
 	go WaitStopTime()
 
 	daemonsTable := make(map[string]string)
@@ -126,9 +124,9 @@ func StartDaemons() {
 		}
 	}()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	utils.CancelFunc = cancel
-	utils.ReturnCh = make(chan string)
+	// ctx, cancel := context.WithCancel(context.Background())
+	// utils.CancelFunc = cancel
+	// utils.ReturnCh = make(chan string)
 
 	daemonsToStart := getDaemonsToStart()
 	if conf.Config.TestRollBack {
@@ -160,7 +158,6 @@ func getHostPort(h string) string {
 func getDaemonsToStart() []string {
 	if conf.Config.IsSupportingVDE() {
 		return []string{
-			"Notificator",
 			"Scheduler",
 		}
 	}

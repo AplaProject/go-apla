@@ -8,7 +8,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 
@@ -28,6 +27,27 @@ var (
 
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("Database connection error")
+
+	FirstEcosystemTables = map[string]bool{
+		`keys`:               false,
+		`menu`:               true,
+		`pages`:              true,
+		`blocks`:             true,
+		`languages`:          true,
+		`contracts`:          true,
+		`tables`:             true,
+		`parameters`:         true,
+		`history`:            true,
+		`sections`:           true,
+		`members`:            false,
+		`roles`:              true,
+		`roles_participants`: true,
+		`notifications`:      true,
+		`applications`:       true,
+		`binaries`:           true,
+		`buffer_data`:        true,
+		`app_params`:         true,
+	}
 )
 
 func isFound(db *gorm.DB) (bool, error) {
@@ -132,15 +152,26 @@ func DropTables() error {
 }
 
 // GetRecordsCountTx is counting all records of table in transaction
-func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
+func GetRecordsCountTx(db *DbTransaction, tableName, where string) (int64, error) {
 	var count int64
-	err := GetDB(db).Table(tableName).Count(&count).Error
+	dbQuery := GetDB(db).Table(tableName)
+	if len(where) > 0 {
+		dbQuery = dbQuery.Where(where)
+	}
+	err := dbQuery.Count(&count).Error
 	return count, err
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder int64) error {
-	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder, appID int64) error {
+	if id == 1 {
+		q := fmt.Sprintf(migration.GetCommonEcosystemScript())
+		if err := GetDB(db).Exec(q).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing comma ecosystem schema")
+			return err
+		}
+	}
+	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder, appID)
 	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
@@ -156,7 +187,12 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	return DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error
+	if err := DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing vde script")
+		return err
+	}
+
+	return nil
 }
 
 // ExecSchema is executing schema
@@ -188,30 +224,30 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
+type RawTransaction interface {
+	Bytes() []byte
+	Hash() []byte
+	Type() int64
+}
+
 // SendTx is creates transaction
-func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing data")
-		return nil, err
-	}
+func SendTx(rtx RawTransaction, adminWallet int64) error {
 	ts := &TransactionStatus{
-		Hash:     hash,
+		Hash:     rtx.Hash(),
 		Time:     time.Now().Unix(),
-		Type:     txType,
+		Type:     rtx.Type(),
 		WalletID: adminWallet,
 	}
-	err = ts.Create()
+	err := ts.Create()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("transaction status create")
-		return nil, err
+		return err
 	}
 	qtx := &QueueTx{
-		Hash: hash,
-		Data: data,
+		Hash: rtx.Hash(),
+		Data: rtx.Bytes(),
 	}
-	err = qtx.Create()
-	return hash, err
+	return qtx.Create()
 }
 
 // AlterTableAddColumn is adding column to table
@@ -220,8 +256,8 @@ func AlterTableAddColumn(transaction *DbTransaction, tableName, columnName, colu
 }
 
 // AlterTableDropColumn is dropping column from table
-func AlterTableDropColumn(tableName, columnName string) error {
-	return DBConn.Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN "` + columnName + `"`).Error
+func AlterTableDropColumn(transaction *DbTransaction, tableName, columnName string) error {
+	return GetDB(transaction).Exec(`ALTER TABLE "` + tableName + `" DROP COLUMN "` + columnName + `"`).Error
 }
 
 // CreateIndex is creating index on table column
@@ -244,6 +280,27 @@ func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
 		ORDER BY ordinal_position ASC`, -1, tblname)
 }
 
+func DataTypeToColumnType(dataType string) string {
+	var itype string
+	switch {
+	case dataType == "character varying":
+		itype = `varchar`
+	case dataType == `bigint`:
+		itype = "number"
+	case dataType == `jsonb`:
+		itype = "json"
+	case strings.HasPrefix(dataType, `timestamp`):
+		itype = "datetime"
+	case strings.HasPrefix(dataType, `numeric`):
+		itype = "money"
+	case strings.HasPrefix(dataType, `double`):
+		itype = "double"
+	default:
+		itype = dataType
+	}
+	return itype
+}
+
 // GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
@@ -251,22 +308,7 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 		return
 	}
 	if dataType, ok := coltype["data_type"]; ok {
-		switch {
-		case dataType == "character varying":
-			itype = `varchar`
-		case dataType == `bigint`:
-			itype = "number"
-		case dataType == `jsonb`:
-			itype = "json"
-		case strings.HasPrefix(dataType, `timestamp`):
-			itype = "datetime"
-		case strings.HasPrefix(dataType, `numeric`):
-			itype = "money"
-		case strings.HasPrefix(dataType, `double`):
-			itype = "double"
-		default:
-			itype = dataType
-		}
+		itype = DataTypeToColumnType(dataType)
 	}
 	return
 }
@@ -334,7 +376,7 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
 	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting next id from table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("selecting next id from table")
 		return 0, err
 	}
 	rows.Next()

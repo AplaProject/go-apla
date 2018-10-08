@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/protocols"
+
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -106,18 +109,15 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		RollbacksHash: rollbackTxsHash,
 		Tx:            int32(len(block.Transactions)),
 	}
-	blockTimeCalculator, err := utils.BuildBlockTimeCalculator(nil)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
-		return err
-	}
 	validBlockTime := true
 	if blockID > 1 {
-		validBlockTime, err = blockTimeCalculator.ValidateBlock(b.NodePosition, time.Unix(b.Time, 0))
+		exists, err := protocols.NewBlockTimeCounter().BlockForTimeExists(time.Unix(b.Time, 0), int(b.NodePosition))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("block validation")
 			return err
 		}
+
+		validBlockTime = !exists
 	}
 	if validBlockTime {
 		err = b.Create(transaction)
@@ -184,6 +184,13 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		log.WithFields(log.Fields{"type": consts.ParserError}).Error("getting data of first block")
 		return
 	}
-
+	sysParam := &model.SystemParameter{}
+	sysParam.Name = "test"
+	if data.Test == 1 {
+		sysParam.Update("1")
+	} else {
+		sysParam.Update("0")
+	}
+	syspar.SysUpdate(nil)
 	return
 }

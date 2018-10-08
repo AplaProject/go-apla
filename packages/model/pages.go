@@ -1,8 +1,10 @@
 package model
 
+import "github.com/GenesisKernel/go-genesis/packages/converter"
+
 // Page is model
 type Page struct {
-	tableName     string
+	ecosystem     int64
 	ID            int64  `gorm:"primary_key;not null" json:"id"`
 	Name          string `gorm:"not null" json:"name"`
 	Value         string `gorm:"not null" json:"value"`
@@ -14,17 +16,20 @@ type Page struct {
 
 // SetTablePrefix is setting table prefix
 func (p *Page) SetTablePrefix(prefix string) {
-	p.tableName = prefix + "_pages"
+	p.ecosystem = converter.StrToInt64(prefix)
 }
 
 // TableName returns name of table
 func (p *Page) TableName() string {
-	return p.tableName
+	if p.ecosystem == 0 {
+		p.ecosystem = 1
+	}
+	return `1_pages`
 }
 
 // Get is retrieving model from database
 func (p *Page) Get(name string) (bool, error) {
-	return isFound(DBConn.Where("name = ?", name).First(p))
+	return isFound(DBConn.Where("ecosystem=? and name = ?", p.ecosystem, name).First(p))
 }
 
 // Count returns count of records in table

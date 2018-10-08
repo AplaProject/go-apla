@@ -82,6 +82,10 @@ func TestEditEcosystem(t *testing.T) {
 		t.Error(err)
 		return
 	}
+	form = url.Values{"Name": {name}, "Value": {`MenuItem(default_page)`}, "ApplicationId": {`1`},
+		"Conditions": {"ContractConditions(`MainCondition`)"}}
+	assert.NoError(t, postTx(`@1NewMenu`, &form))
+
 	form = url.Values{"Id": {`1`}, "Value": {value},
 		"Menu": {menu}, "Conditions": {"ContractConditions(`MainCondition`)"}}
 	err = postTx(`@1EditPage`, &form)
@@ -89,21 +93,35 @@ func TestEditEcosystem(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	name = randName(`test`)
-	form = url.Values{"Value": {`contract ` + name + ` {
-		action { Test("empty",  "empty value")}}`},
+	nameCont := randName(`test`)
+	form = url.Values{"Value": {`contract ` + nameCont + ` {
+		action { Test("empty",  "empty value")}}`}, "ApplicationId": {`1`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	_, id, err := postTxResult(`@1NewContract`, &form)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Id": {id}, "Value": {`contract ` + name + ` {
+	form = url.Values{"Id": {id}, "Value": {`contract ` + nameCont + ` {
 		action { Test("empty3",  "empty value")}}`},
 		"Conditions": {`ContractConditions("MainCondition")`}}
 	if err := postTx(`@1EditContract`, &form); err != nil {
 		t.Error(err)
 		return
+	}
+	gAuth = ``
+	if err = keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	var ret contentResult
+	assert.NoError(t, sendPost(`content/page/@2`+name, &url.Values{}, &ret))
+	if RawToString(ret.Tree) != `[{"tag":"p","attr":{"class":"test paragraph"},"children":[{"tag":"text","text":"test"}]}]` {
+		t.Errorf(`%s != %s`, RawToString(ret.Tree), `[{"tag":"p","attr":{"class":"test paragraph"},"children":[{"tag":"text","text":"test"}]}]`)
+	}
+	assert.NoError(t, sendPost(`content/menu/@2`+name, &url.Values{}, &ret))
+	if RawToString(ret.Tree) != `[{"tag":"menuitem","attr":{"title":"default_page"}}]` {
+		t.Errorf(`%s != %s`, RawToString(ret.Tree), `[{"tag":"menuitem","attr":{"title":"default_page"}}]`)
 	}
 }
 
@@ -147,7 +165,7 @@ func TestSystemParams(t *testing.T) {
 		return
 	}
 
-	assert.Equal(t, 62, len(ret.List), `wrong count of parameters %d`, len(ret.List))
+	assert.Equal(t, 66, len(ret.List), `wrong count of parameters %d`, len(ret.List))
 }
 
 func TestSomeSystemParam(t *testing.T) {

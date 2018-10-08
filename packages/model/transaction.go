@@ -155,6 +155,11 @@ func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte)
 	return query.RowsAffected, query.Error
 }
 
+func DecrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+	query := GetDB(transaction).Exec("update transactions set attempt=attempt-1, used = case when attempt <= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
+	return query.RowsAffected, query.Error
+}
+
 func getTxRateByTxType(txType int8) transactionRate {
 	switch txType {
 	case consts.TxTypeStopNetwork:
@@ -164,18 +169,12 @@ func getTxRateByTxType(txType int8) transactionRate {
 	}
 }
 
-// GetTxesByHashlist returns map of hash-*Transaction
-func GetTxesByHashlist(dbtx *DbTransaction, hashes [][]byte) (map[string]*Transaction, error) {
+func GetManyTransactions(dbtx *DbTransaction, hashes [][]byte) ([]Transaction, error) {
 	txes := []Transaction{}
-	if err := GetDB(dbtx).Where("hash in (?)", hashes).Find(&txes).Error; err != nil {
+	query := GetDB(dbtx).Where("hash in (?)", hashes).Find(&txes)
+	if err := query.Error; err != nil {
 		return nil, err
 	}
 
-	txMap := make(map[string]*Transaction, len(txes))
-
-	for _, tx := range txes {
-		txMap[string(tx.Hash)] = &tx
-	}
-
-	return txMap, nil
+	return txes, nil
 }

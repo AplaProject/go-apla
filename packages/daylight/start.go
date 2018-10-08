@@ -17,6 +17,7 @@
 package daylight
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -35,6 +36,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network/httpserver"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -129,6 +131,7 @@ func initLogs() error {
 	}
 
 	log.AddHook(logtools.ContextHook{})
+	log.AddHook(logtools.HexHook{})
 
 	return nil
 }
@@ -158,6 +161,9 @@ func initRoutes(listenHost string) {
 	route := httprouter.New()
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
+
+	handler := httpserver.NewMaxBodyReader(route, conf.Config.HTTPServerMaxBodySize)
+
 	if conf.Config.TLS {
 		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
 			log.Fatal("-tls-cert/TLSCert and -tls-key/TLSKey must be specified with -tls/TLS")
@@ -169,7 +175,7 @@ func initRoutes(listenHost string) {
 			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
 		}
 		go func() {
-			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, route)
+			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, handler)
 			if err != nil {
 				log.WithFields(log.Fields{"host": listenHost, "error": err, "type": consts.NetworkError}).Fatal("Listening TLS server")
 			}
@@ -180,7 +186,7 @@ func initRoutes(listenHost string) {
 		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
 	}
 
-	httpListener(listenHost, route)
+	httpListener(listenHost, handler)
 }
 
 // Start starts the main code of the program
@@ -211,7 +217,7 @@ func Start() {
 		}
 	}
 
-	log.WithFields(log.Fields{"mode": conf.Config.RunningMode}).Info("Node running mode")
+	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
@@ -245,8 +251,12 @@ func Start() {
 	defer delPidFile()
 
 	if model.DBConn != nil {
+		ctx, cancel := context.WithCancel(context.Background())
+		utils.CancelFunc = cancel
+		utils.ReturnCh = make(chan string)
+
 		// The installation process is already finished (where user has specified DB and where wallet has been restarted)
-		err := daemonsctl.RunAllDaemons()
+		err := daemonsctl.RunAllDaemons(ctx)
 		log.Info("Daemons started")
 		if err != nil {
 			os.Exit(1)
@@ -264,23 +274,21 @@ func Start() {
 
 			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
 			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-			na.Run()
+			na.Run(ctx)
 
 			err = service.InitNodesBanService()
 			if err != nil {
 				log.WithError(err).Fatal("Can't init ban service")
 			}
-		}
-
-		if conf.Config.IsSupportingVDE() {
+		} else {
 			if err := smart.LoadVDEContracts(nil, converter.Int64ToStr(consts.DefaultVDE)); err != nil {
 				log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Fatal("on loading vde virtual mashine")
 				Exit(1)
 			}
-		}
 
-		if conf.Config.IsVDEMaster() {
-			vdemanager.InitVDEManager()
+			if conf.Config.IsVDEMaster() {
+				vdemanager.InitVDEManager()
+			}
 		}
 	}
 

@@ -20,8 +20,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -68,13 +70,13 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 		return err
 	}
 
-	sc.TxContract = smart.VMGetContractByID(smart.GetVM(), int32(sc.TxSmart.Type))
+	sc.TxContract = smart.VMGetContractByID(smart.GetVM(), int32(sc.TxSmart.ID))
 	if sc.TxContract == nil {
-		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.Type)
+		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.ID)
 	}
-	forsign := sc.TxSmart.ForSign()
+	forsign := ""
 
-	input := sc.TxSmart.Data
+	input := data[:]
 	sc.TxData = make(map[string]interface{})
 
 	if sc.TxContract.Block.Info.(*script.ContractInfo).Tx != nil {
@@ -167,7 +169,7 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 	}
 	result = &contractResult{Hash: hex.EncodeToString(hash)}
 
-	sc := smart.SmartContract{VDE: true, TxHash: hash}
+	sc := smart.SmartContract{VDE: true, TxHash: hash, Rand: rand.New(rand.NewSource(time.Now().Unix()))}
 	err = InitSmartContract(&sc, contractData)
 	if err != nil {
 		result.Message = &txstatusError{Type: "panic", Error: err.Error()}
@@ -180,7 +182,7 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 		}
 	}
 
-	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
+	if ret, err = sc.CallContract(); err == nil {
 		result.Result = ret
 	} else {
 		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {

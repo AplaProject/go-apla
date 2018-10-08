@@ -30,6 +30,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUpdate_FullNodes(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	err := postTx("UpdateSysParam", &url.Values{
+		"Name":  {"full_nodes"},
+		"Value": {"[]"},
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
 func TestHardContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -54,10 +69,23 @@ func TestHardContract(t *testing.T) {
 
 func TestExistContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
-	form := url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+	rnd := `cnt` + crypto.RandSeq(4)
+	form := url.Values{"Name": {rnd}, "Value": {`contract ` + rnd + ` {
+		data {
+			Name string
+		}
+		action {
+		Throw($Name, "Text of the error")
+	}}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
-	err := postTx(`NewContract`, &form)
-	assert.EqualError(t, err, `{"type":"panic","error":"Contract EditPage already exists"}`)
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.EqualError(t, postTx(rnd, &url.Values{"Name": {"1"}}),
+		`{"type":"exception","error":"Text of the error","id":"1"}`)
+	form = url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"Contract EditPage already exists"}`)
 }
 
 func TestNewContracts(t *testing.T) {
@@ -69,8 +97,11 @@ func TestNewContracts(t *testing.T) {
 
 	assert.NoError(t, keyLogin(1))
 	rnd := crypto.RandSeq(4)
-	for _, item := range contracts {
+	for i, item := range contracts {
 		var ret getContractResult
+		if i > 100 {
+			break
+		}
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
 		err := sendGet(`contract/`+name, nil, &ret)
 		if err != nil {
@@ -112,17 +143,178 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
-	{`RowType`, `contract RowType {
+	{`FmtMoney`, `contract FmtMoney {
 		action {
-			var app map
-			var result string
-			result = GetType(app)
-			app = DBFind("applications").Where("id=1").Row()
-			result = result + GetType(app)
-			app["app_id"] = 2
-			Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+			Test("result", FormatMoney("123456789", 0))
+			$num2 = "5500000"
+			Test("t1", FormatMoney($num1, -1))  //123456723720
+			Test("t2", FormatMoney($num1, 0)   //12345672372
+			Test("t3", FormatMoney($num1, 1)   //1234567237,2
 		}
 	}`, []smartParams{
+		{nil, map[string]string{`result`: `0.000000000123456789`,
+			`t1`: `123456723720`, `t2`: `12345672372`, `t3`: `1234567237.2`}},
+	}},
+
+	{`StrNil`, `contract StrNil {
+		action {
+			Test("result", Sprintf("empty: %s", Str(nil)))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `empty: `}},
+	}},
+	{`TestJSON`, `contract TestJSON {
+		data {}
+		conditions { }
+		action {
+		   var a map
+		   a["ok"] = 10
+		   a["arr"] = ["first", "<second>"]
+		   Test("json", JSONEncode(a))
+		   Test("ok", JSONEncodeIndent(a, "\t"))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: "{\n\t\"arr\": [\n\t\t\"first\",\n\t\t\"<second>\"\n\t],\n\t\"ok\": 10\n}",
+			`json`: "{\"arr\":[\"first\",\"<second>\"],\"ok\":10}"}},
+	}},
+	{`GuestKey`, `contract GuestKey {
+		action {
+			Test("result", $guest_key)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `4544233900443112470`}},
+	}},
+	{`TestCyr`, `contract TestCyr {
+		data {}
+		conditions { }
+		action {
+		   //тест
+		   var a map
+		   a["тест"] = "тест"
+		   Test("ok", a["тест"])
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`ok`: `тест`}},
+	}},
+	{`DBFindLike`, `contract DBFindLike {
+		action {
+			var list array
+			list = DBFind("pages").Where({"name":{"$like": "ort_"}})
+			Test("size", Len(list))
+			list = DBFind("pages").Where({"name":{"$end": "page"}})
+			Test("end", Len(list))
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`size`: `2`, `end`: `1`}},
+	}},
+	{`TestDBFindOK`, `
+			contract TestDBFindOK {
+			action {
+				var ret array
+				var vals map
+				ret = DBFind("contracts").Columns("id,value").Where({"$and":[{"id":{"$gte": 3}}, {"id":{"$lte":5}}]}).Order("id")
+				if Len(ret) {
+					Test("0",  "1")
+				} else {
+					Test("0",  "0")
+				}
+				ret = DBFind("contracts").Limit(3)
+				if Len(ret) == 3 {
+					Test("1",  "1")
+				} else {
+					Test("1",  "0")
+				}
+				ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
+				if Len(ret) != 1 {
+					Test("2",  "0")
+				} else {
+					vals = ret[0]
+					Test("2",  vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Order(["id"]).Offset(1).Limit(1)
+				if Len(ret) != 1 {
+					Test("3",  "0")
+				} else {
+					vals = ret[0]
+					Test("3", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Where({"$or":[{"id": "1"}]})
+				if Len(ret) != 1 {
+					Test("4",  "0")
+				} else {
+					vals = ret[0]
+					Test("4", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id").Where({"id": 1})
+				if Len(ret) != 1 {
+					Test("4",  "0")
+				} else {
+					vals = ret[0]
+					Test("4", vals["id"])
+				}
+				ret = DBFind("contracts").Columns("id,value").Where({"id":[{"$gt":3},{"$lt":8}]}).Order([{"id": 1}, {"name": "-1"}])
+				if Len(ret) != 4 {
+					Test("5",  "0")
+				} else {
+					vals = ret[0]
+					Test("5", vals["id"])
+				}
+				ret = DBFind("contracts").WhereId(7)
+				if Len(ret) != 1 {
+					Test("6",  "0")
+				} else {
+					vals = ret[0]
+					Test("6", vals["id"])
+				}
+				var one string
+				one = DBFind("contracts").WhereId(5).One("id")
+				Test("7",  one)
+				var row map
+				row = DBFind("contracts").WhereId(3).Row()
+				Test("8",  row["id"])
+				Test("255",  "255")
+			}
+		}`,
+		[]smartParams{
+			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
+				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
+		}},
+	{`DBFindCol`, `contract DBFindCol {
+		action {
+			var ret string
+			ret = DBFind("keys").Columns(["amount", "id"]).One("amount")
+			Test("size", Size(ret)>0)
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`size`: `true`}},
+	}},
+	{`DBFindColumnNow`, `contract DBFindColumnNow {
+		action {
+			var list array
+			list = DBFind("keys").Columns("now()")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"pq: current transaction is aborted, commands ignored until end of transaction block"}`}},
+	}},
+	{`DBFindCURRENT`, `contract DBFindCURRENT {
+		action {
+			var list array
+			list = DBFind("mytable").Where({"date": {"$lt": "CURRENT_DATE"}})
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
+	}},
+	{`RowType`, `contract RowType {
+	action {
+		var app map
+		var result string
+		result = GetType(app)
+		app = DBFind("applications").Where({"id":"1"}).Row()
+		result = result + GetType(app)
+		app["app_id"] = 2
+		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
+	}
+}`, []smartParams{
 		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
 	}},
 	{`StackType`, `contract StackType {
@@ -136,26 +328,10 @@ var contracts = []smartContract{
 	}`, []smartParams{
 		{nil, map[string]string{`result`: `len=1 [@1StackType] @1StackType`}},
 	}},
-	{`DBFindCURRENT`, `contract DBFindCURRENT {
-		action {
-			var list array
-			list = DBFind("mytable").Where("date < CURRENT_DATE")
-		}
-	}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
-	}},
-	{`DBFindColNow`, `contract DBFindColNow {
-		action {
-			var list array
-			list = DBFind("mytable").Columns("now()")
-		}
-	}`, []smartParams{
-		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
-	}},
 	{`DBFindNow`, `contract DBFindNow {
 		action {
 			var list array
-			list = DBFind("mytable").Where("date < now ( )")
+			list = DBFind("mytable").Where({"date": {"$lt": "now ( )"}})
 		}
 	}`, []smartParams{
 		{nil, map[string]string{`error`: `{"type":"panic","error":"It is prohibited to use NOW() or current time functions"}`}},
@@ -192,16 +368,16 @@ var contracts = []smartContract{
 	}},
 	{`MyTable#rnd#`, `contract MyTable#rnd# {
 		action {
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1",
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#1", 
 				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
 			var cols array
 			cols[0] = "{\"conditions\":\"true\",\"name\":\"column1\",\"type\":\"text\"}"
 			cols[1] = "{\"conditions\":\"true\",\"name\":\"column2\",\"type\":\"text\"}"
-			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2",
+			NewTable("Name,Columns,ApplicationId,Permissions", "#rnd#2", 
 				JSONEncode(cols), 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
-
+			
 			Test("ok", "1")
 		}
 	}`, []smartParams{
@@ -247,7 +423,7 @@ var contracts = []smartContract{
 	}},
 	{`Crash`, `contract Crash { data {} conditions {} action
 
-			{ $result=DBUpdate("menu", 1, "value", "updated") }
+			{ $result=DBUpdate("menu", 1, {"value": "updated"}) }
 			}`,
 		[]smartParams{
 			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
@@ -267,7 +443,7 @@ var contracts = []smartContract{
 		}},
 	{`DBProblem`, `contract DBProblem {
 		action{
-			DBFind("members1").Where("member_name=?", "name")
+			DBFind("members1").Where({"member_name": "name"})
 		}
 	}`,
 		[]smartParams{
@@ -302,85 +478,12 @@ var contracts = []smartContract{
 				var ar array
 				ar = Split("point 1,point 2", ",")
 				Test("split",  Str(ar[1]))
-				$ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
+				$ret = DBFind("contracts").Columns("id,value").Where({"id":[{"$gte": 3}, {"$lte":5}]}).Order("id")
 				Test("edit",  "edit value 0")
 			}
 		}`,
 		[]smartParams{
 			{nil, map[string]string{`edit`: `edit value 0`, `split`: `point 2`}},
-		}},
-
-	{`TestDBFindOK`, `
-			contract TestDBFindOK {
-			action {
-				var ret array
-				var vals map
-				ret = DBFind("contracts").Columns("id,value").Where("id>= ? and id<= ?",3,5).Order("id")
-				if Len(ret) {
-					Test("0",  "1")
-				} else {
-					Test("0",  "0")
-				}
-				ret = DBFind("contracts").Limit(3)
-				if Len(ret) == 3 {
-					Test("1",  "1")
-				} else {
-					Test("1",  "0")
-				}
-				ret = DBFind("contracts").Order("id").Offset(1).Limit(1)
-				if Len(ret) != 1 {
-					Test("2",  "0")
-				} else {
-					vals = ret[0]
-					Test("2",  vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id").Order("id").Offset(1).Limit(1)
-				if Len(ret) != 1 {
-					Test("3",  "0")
-				} else {
-					vals = ret[0]
-					Test("3", vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id").Where("id='1'")
-				if Len(ret) != 1 {
-					Test("4",  "0")
-				} else {
-					vals = ret[0]
-					Test("4", vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id").Where("id='1'")
-				if Len(ret) != 1 {
-					Test("4",  "0")
-				} else {
-					vals = ret[0]
-					Test("4", vals["id"])
-				}
-				ret = DBFind("contracts").Columns("id,value").Where("id> ? and id < ?", 3, 8).Order("id")
-				if Len(ret) != 4 {
-					Test("5",  "0")
-				} else {
-					vals = ret[0]
-					Test("5", vals["id"])
-				}
-				ret = DBFind("contracts").WhereId(7)
-				if Len(ret) != 1 {
-					Test("6",  "0")
-				} else {
-					vals = ret[0]
-					Test("6", vals["id"])
-				}
-				var one string
-				one = DBFind("contracts").WhereId(5).One("id")
-				Test("7",  one)
-				var row map
-				row = DBFind("contracts").WhereId(3).Row()
-				Test("8",  row["id"])
-				Test("255",  "255")
-			}
-		}`,
-		[]smartParams{
-			{nil, map[string]string{`0`: `1`, `1`: `1`, `2`: `2`, `3`: `2`, `4`: `1`, `5`: `4`,
-				`6`: `7`, `7`: `5`, `8`: `3`, `255`: `255`}},
 		}},
 	{`testEmpty`, `contract testEmpty {
 					action { Test("empty",  "empty value")}}`,
@@ -425,8 +528,8 @@ var contracts = []smartContract{
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
-			{nil, map[string]string{`ByName`: `0 29`,
-				`ById`: `NewColumn`}},
+			{nil, map[string]string{`ByName`: `0 2`,
+				`ById`: `EditLang`}},
 		}},
 	{
 		`testDateTime`, `contract testDateTime {
@@ -756,7 +859,7 @@ var (
 		"contracts": [
 			{
 				"Name": "testContract%[1]s",
-				"Value": "contract testContract%[1]s {\n    data {}\n    conditions {}\n    action {\n        var res array\n        res = DBFind(\"pages\").Columns(\"name\").Where(\"id=?\", 1).Order(\"id\")\n        $result = res\n    }\n    }",
+				"Value": "contract testContract%[1]s {\n    data {}\n    conditions {}\n    action {\n        var res array\n        res = DBFind(\"pages\").Columns(\"name\").Where({id: 1}).Order(\"id\")\n        $result = res\n    }\n    }",
 				"Conditions": "ContractConditions(` + "`MainCondition`" + `)"
 			}
 		],
@@ -1118,7 +1221,9 @@ func TestContractChain(t *testing.T) {
 			}
 			$record = $row[0]
 			$new = $record["value"]
-			DBUpdate("` + rnd + `", $Id, "value", $new+"="+$new )
+			var val string
+			val = $new+"="+$new
+			DBUpdate("` + rnd + `", $Id, {"value": val })
 		}
 	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	err = postTx(`NewContract`, &form)
@@ -1132,7 +1237,7 @@ func TestContractChain(t *testing.T) {
 			Initial string
 		}
 		action {
-			$id = DBInsert("` + rnd + `", "value,amount", $Initial, "0")
+			$id = DBInsert("` + rnd + `", {value: $Initial, amount:"0"})
 			sub` + rnd + `("Id", $id)
 			$row = DBFind("` + rnd + `").Columns("value").WhereId($id)
 			if Len($row) != 1 {
@@ -1159,7 +1264,7 @@ func TestContractChain(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract ` + rnd + `1 {
 		action {
-			DBInsert("` + rnd + `", "amount,dt", 0, "timestamp NOW()")
+			DBInsert("` + rnd + `", {amount: 0,dt: "timestamp NOW()"})
 		}
 	}
 		`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
@@ -1223,7 +1328,7 @@ func TestLoopCond(t *testing.T) {
 
 	form = url.Values{`Value`: {`contract ` + rnd + `shutdown {
 		action
-		{ DBInsert("` + rnd + `table", "test", "SHUTDOWN") }
+		{ DBInsert("` + rnd + `table", {"test": "SHUTDOWN"}) }
 	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
@@ -1238,6 +1343,44 @@ func TestLoopCond(t *testing.T) {
 	assert.EqualError(t, postTx(rnd+`shutdown`, &url.Values{}), `{"type":"panic","error":"There is loop in @1`+rnd+`shutdown contract"}`)
 }
 
+func TestRand(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		action {
+			var result i int
+			i = 3
+			while i < 15 {
+				var rnd int
+				rnd = Random(0, 3*i)
+				result = result + rnd
+				i=i+1
+			}
+			$result = result
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, val1, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	_, val2, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	// val1 == val2 for seed = blockId % 1
+	if val1 != val2 {
+		t.Errorf(`%s!=%s`, val1, val2)
+	}
+}
+func TestKillNode(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{"Name": {`MyTestContract1`}, "Value": {`contract MyTestContract1 {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}, "nowait": {`true`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+	require.NoError(t, postTx("Kill", &url.Values{"nowait": {`true`}}))
+}
+
 func TestLoopCondExt(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -1247,7 +1390,7 @@ func TestLoopCondExt(t *testing.T) {
 
 	form := url.Values{`Value`: {`contract ` + rnd + `1 {
 		conditions {
-	    
+
 		}
 	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
 	err := postTx(`NewContract`, &form)
@@ -1309,4 +1452,59 @@ func TestBlockTransactions(t *testing.T) {
 	require.NoError(t, sendGet(`blocks?block_id=1&count=10`, nil, &result))
 
 	fmt.Printf("%+v", result)
+}
+
+func TestCost(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`cnt`)
+
+	form := url.Values{`Value`: {`contract ` + name + `1 {
+		func my() {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		conditions {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		action {
+			var i int
+			while i < 10000 {
+				i = i + 1
+			}
+			my()
+			$result = "OK"
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{`Value`: {`contract ` + name + `2 {
+		conditions {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		action {
+			var i int
+			while i < 10000 {
+				i = i + 1
+			}
+			` + name + `1()
+			$result = "OK"
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	require.NoError(t, postTx(name+`1`, &url.Values{}))
+	require.NoError(t, postTx(name+`2`, &url.Values{}))
+	t.Error(`OK`)
+
 }

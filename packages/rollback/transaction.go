@@ -18,6 +18,7 @@ package rollback
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -68,35 +69,44 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 		return err
 	}
 	for _, tx := range txs {
-		if tx["table_name"] == `@system` {
-			var v map[string]string
-
-			err := json.Unmarshal([]byte(tx["data"]), &v)
+		if tx["table_name"] == smart.SysName {
+			var sysData smart.SysRollData
+			err := json.Unmarshal([]byte(tx["data"]), &sysData)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollback.Data from json")
 				return err
 			}
-			switch v["Type"] {
+			switch sysData.Type {
 			case "NewTable":
-				smart.SysRollbackTable(dbTransaction, txHash, v["Name"], tx["table_id"])
+				smart.SysRollbackTable(dbTransaction, sysData)
 			case "NewColumn":
-				smart.SysRollbackColumn(dbTransaction, txHash, v["TableName"], v["Name"],
-					tx["table_id"])
+				smart.SysRollbackColumn(dbTransaction, sysData)
 			case "NewContract":
-				smart.SysRollbackNewContract(v["Value"], tx["table_id"])
+				smart.SysRollbackNewContract(sysData, tx["table_id"])
 			case "EditContract":
-				smart.SysRollbackEditContract(dbTransaction, txHash, tx["table_id"])
+				smart.SysRollbackEditContract(dbTransaction, sysData, tx["table_id"])
 			case "NewEcosystem":
-				smart.SysRollbackEcosystem(dbTransaction, txHash)
+				smart.SysRollbackEcosystem(dbTransaction, sysData)
 			case "ActivateContract":
-				smart.SysRollbackActivate(v["Id"], v["State"])
+				smart.SysRollbackActivate(sysData)
 			case "DeactivateContract":
-				smart.SysRollbackDeactivate(v["Id"], v["State"])
+				smart.SysRollbackDeactivate(sysData)
+			case "DeleteColumn":
+				smart.SysRollbackDeleteColumn(dbTransaction, sysData)
+			case "DeleteTable":
+				smart.SysRollbackDeleteTable(dbTransaction, sysData)
 			}
 			continue
 		}
-
 		where := " WHERE id='" + tx["table_id"] + `'`
+		table := tx[`table_name`]
+		if under := strings.IndexByte(table, '_'); under > 0 {
+			keyName := table[under+1:]
+			if v, ok := model.FirstEcosystemTables[keyName]; ok && !v {
+				where += fmt.Sprintf(` AND ecosystem='%d'`, converter.StrToInt64(table[:under]))
+				tx[`table_name`] = `1_` + keyName
+			}
+		}
 		if len(tx["data"]) > 0 {
 			if err := rollbackUpdatedRow(tx, where, dbTransaction, logger); err != nil {
 				return err
