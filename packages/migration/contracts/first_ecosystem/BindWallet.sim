@@ -18,6 +18,6 @@ contract BindWallet {
 		}
 	}
 	action {
-		BindWallet($Id, $ecosystem_id)
+		BndWallet($Id, $ecosystem_id)
 	}
 }

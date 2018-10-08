@@ -23,7 +23,7 @@ VALUES
 		}
 	}
 	action {
-		BindWallet($Id, $ecosystem_id)
+		BndWallet($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, '%[1]d'),
@@ -1081,7 +1081,7 @@ VALUES
 		}
 	}
 	action {
-		UnbindWallet($Id, $ecosystem_id)
+		UnbndWallet($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', 1, '%[1]d'),

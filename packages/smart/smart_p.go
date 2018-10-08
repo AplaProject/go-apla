@@ -506,8 +506,8 @@ func Substr(s string, off int64, slen int64) string {
 	return s[off : off+slen]
 }
 
-// BindWallet sets wallet_id to current wallet and updates value in vm
-func BindWallet(sc *SmartContract, tblid int64, state int64) error {
+// BndWallet sets wallet_id to current wallet and updates value in vm
+func BndWallet(sc *SmartContract, tblid int64, state int64) error {
 	if err := validateAccess(`BindWallet`, sc, nBindWallet); err != nil {
 		return err
 	}
@@ -519,8 +519,8 @@ func BindWallet(sc *SmartContract, tblid int64, state int64) error {
 	return SetContractWallet(sc, tblid, state, sc.TxSmart.KeyID)
 }
 
-// UnbindWallet sets Active status of the contract in smartVM
-func UnbindWallet(sc *SmartContract, tblid int64, state int64) error {
+// UnbndWallet sets Active status of the contract in smartVM
+func UnbndWallet(sc *SmartContract, tblid int64, state int64) error {
 	if err := validateAccess(`UnbindWallet`, sc, nUnbindWallet); err != nil {
 		return err
 	}

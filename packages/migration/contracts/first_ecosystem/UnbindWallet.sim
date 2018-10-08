@@ -18,6 +18,6 @@ contract UnbindWallet {
 		}
 	}
 	action {
-		UnbindWallet($Id, $ecosystem_id)
+		UnbndWallet($Id, $ecosystem_id)
 	}
 }
