@@ -87,5 +87,7 @@ func (sys *Ecosystem) Delete(transaction *DbTransaction) error {
 }
 
 func (sys *Ecosystem) UnmarshalJSON(b []byte) error {
-	return json.Unmarshal(b, sys)
+	type schema *Ecosystem
+	err := json.Unmarshal(b, schema(sys))
+	return err
 }

@@ -1,4 +1,4 @@
-package registry
+package metadata
 
 import (
 	"encoding/json"
@@ -20,8 +20,8 @@ var (
 	ErrRollbackDisabled = errors.New("rollback is disabled")
 )
 
-// metadataTx must be closed by calling Commit() or Rollback() when done
-type metadataTx struct {
+// tx must be closed by calling Commit() or Rollback() when done
+type tx struct {
 	db kv.Database
 	tx kv.Transaction
 
@@ -29,12 +29,12 @@ type metadataTx struct {
 	priceCounter priceCounter
 
 	saveState bool
-	rollback  metadataRollback
+	rollback  rollback
 
 	indexer registryIndexer
 }
 
-func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registry, pkValue string, value interface{}) error {
+func (m *tx) Insert(ctx types.BlockchainContext, registry *types.Registry, pkValue string, value interface{}) error {
 	if m.saveState && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
 		return ErrUnknownContext
 	}
@@ -70,7 +70,7 @@ func (m *metadataTx) Insert(ctx types.BlockchainContext, registry *types.Registr
 	return nil
 }
 
-func (m *metadataTx) Update(ctx types.BlockchainContext, registry *types.Registry, pkValue string, newValue interface{}) error {
+func (m *tx) Update(ctx types.BlockchainContext, registry *types.Registry, pkValue string, newValue interface{}) error {
 	if m.saveState && (len(ctx.GetBlockHash()) == 0 || len(ctx.GetTransactionHash()) == 0) {
 		return ErrUnknownContext
 	}
@@ -101,7 +101,7 @@ func (m *metadataTx) Update(ctx types.BlockchainContext, registry *types.Registr
 	return nil
 }
 
-func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface{}) error {
+func (m *tx) Get(registry *types.Registry, pkValue string, out interface{}) error {
 	key, err := m.formatKey(registry, pkValue)
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func (m *metadataTx) Get(registry *types.Registry, pkValue string, out interface
 	return nil
 }
 
-func (m *metadataTx) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
+func (m *tx) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
 	key, err := m.formatKey(registry, pkValue)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (m *metadataTx) Get2(registry *types.Registry, pkValue string) (types.Regis
 	return out, nil
 }
 
-func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
+func (m *tx) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
 	if err := m.tx.Ascend(m.indexer.formatIndexName(registry, field), func(key, value string) bool {
 		return fn(value)
 	}); err != nil {
@@ -176,7 +176,7 @@ func (m *metadataTx) Walk(registry *types.Registry, field string, fn func(value 
 	return nil
 }
 
-func (m *metadataTx) Rollback() error {
+func (m *tx) Rollback() error {
 	err := m.tx.Rollback()
 	if err != nil {
 		return err
@@ -186,7 +186,7 @@ func (m *metadataTx) Rollback() error {
 	return nil
 }
 
-func (m *metadataTx) Commit() error {
+func (m *tx) Commit() error {
 	err := m.tx.Commit()
 	if err != nil {
 		return err
@@ -196,7 +196,7 @@ func (m *metadataTx) Commit() error {
 	return nil
 }
 
-func (m *metadataTx) Price() int64 {
+func (m *tx) Price() int64 {
 	if m.pricing {
 		return m.priceCounter.GetCurrentPrice()
 	}
@@ -204,19 +204,19 @@ func (m *metadataTx) Price() int64 {
 	return 0
 }
 
-func (m *metadataTx) CreateFromParams(name string, params map[string]interface{}) (types.RegistryModel, error) {
+func (m *tx) CreateFromParams(name string, params map[string]interface{}) (types.RegistryModel, error) {
 	return converter{}.createFromParams(name, params)
 }
 
-func (m *metadataTx) UpdateFromParams(name string, value types.RegistryModel, params map[string]interface{}) error {
+func (m *tx) UpdateFromParams(name string, value types.RegistryModel, params map[string]interface{}) error {
 	return converter{}.updateFromParams(name, value, params)
 }
 
-func (m *metadataTx) closeTx() {
+func (m *tx) closeTx() {
 	m.tx = nil
 }
 
-func (m *metadataTx) prepareValue(registry *types.Registry, pkValue string, newValue interface{}) (string, string, error) {
+func (m *tx) prepareValue(registry *types.Registry, pkValue string, newValue interface{}) (string, string, error) {
 	jsonValue, err := json.Marshal(newValue)
 	if err != nil {
 		return "", "", errors.Wrapf(err, "marshalling struct to json")
@@ -230,7 +230,7 @@ func (m *metadataTx) prepareValue(registry *types.Registry, pkValue string, newV
 	return key, string(jsonValue), nil
 }
 
-func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
+func (m *tx) formatKey(reg *types.Registry, pk string) (string, error) {
 	if reg.Name == "ecosystems" {
 		return fmt.Sprintf("%s.%s", reg.Name, pk), nil
 	}
@@ -242,7 +242,7 @@ func (m *metadataTx) formatKey(reg *types.Registry, pk string) (string, error) {
 	return fmt.Sprintf(keyConvention, reg.Name, reg.Ecosystem.Name, pk), nil
 }
 
-type metadataStorage struct {
+type storage struct {
 	db      kv.Database
 	indexer registryIndexer
 
@@ -251,7 +251,7 @@ type metadataStorage struct {
 }
 
 func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool, pricing bool) (types.MetadataRegistryStorage, error) {
-	ms := &metadataStorage{
+	ms := &storage{
 		db:       db,
 		indexer:  newIndexer(indexes),
 		rollback: rollback,
@@ -270,13 +270,13 @@ func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool, pr
 	return ms, nil
 }
 
-func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
+func (m *storage) Begin() types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
-	tx := &metadataTx{tx: databaseTx, indexer: m.indexer}
+	tx := &tx{tx: databaseTx, indexer: m.indexer}
 
 	if m.rollback {
 		tx.saveState = true
-		tx.rollback = metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
+		tx.rollback = rollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
 	}
 
 	if m.pricing {
@@ -287,31 +287,31 @@ func (m *metadataStorage) Begin() types.MetadataRegistryReaderWriter {
 	return tx
 }
 
-func (m *metadataStorage) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
-	tx := &metadataTx{tx: m.db.Begin(false)}
+func (m *storage) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
+	tx := &tx{tx: m.db.Begin(false)}
 	defer tx.Rollback()
 	return tx.Walk(registry, field, fn)
 }
 
-func (m *metadataStorage) Get(registry *types.Registry, pkValue string, out interface{}) error {
-	tx := &metadataTx{tx: m.db.Begin(false)}
+func (m *storage) Get(registry *types.Registry, pkValue string, out interface{}) error {
+	tx := &tx{tx: m.db.Begin(false)}
 	defer tx.Rollback()
 	return tx.Get(registry, pkValue, out)
 }
 
-func (m *metadataStorage) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
-	tx := &metadataTx{tx: m.db.Begin(false)}
+func (m *storage) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
+	tx := &tx{tx: m.db.Begin(false)}
 	defer tx.Rollback()
 	return tx.Get2(registry, pkValue)
 }
 
-func (m *metadataStorage) Rollback(block []byte) error {
+func (m *storage) Rollback(block []byte) error {
 	if !m.rollback {
 		return ErrRollbackDisabled
 	}
 
 	databaseTx := m.db.Begin(true)
-	rollback := &metadataRollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
+	rollback := &rollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
 
 	err := rollback.rollbackState(block)
 	if err != nil {
@@ -329,6 +329,6 @@ func (m *metadataStorage) Rollback(block []byte) error {
 	return nil
 }
 
-func (m *metadataStorage) Reader() types.MetadataRegistryReader {
-	return &metadataTx{db: m.db}
+func (m *storage) Reader() types.MetadataRegistryReader {
+	return &tx{db: m.db}
 }

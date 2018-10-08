@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/registry"
+	"github.com/GenesisKernel/go-genesis/packages/registry/metadata"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/memdb"
@@ -177,7 +177,7 @@ func setupDB() (types.MetadataRegistryStorage, []int64) {
 	db, err := memdb.OpenDB("metabench.db", persist)
 	checkErr(err)
 
-	storage, err := registry.NewMetadataStorage(&kv.DatabaseAdapter{Database: *db}, []types.Index{
+	storage, err := metadata.NewMetadataStorage(&kv.DatabaseAdapter{Database: *db}, []types.Index{
 		{
 			Registry: &types.Registry{Name: model.KeySchema{}.ModelName()},
 			Field:    "amount",

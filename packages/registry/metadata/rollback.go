@@ -1,4 +1,4 @@
-package registry
+package metadata
 
 import (
 	"encoding/json"
@@ -44,12 +44,12 @@ func (c *counter) decrement(key string) uint64 {
 	return c.txCounter[key]
 }
 
-type metadataRollback struct {
+type rollback struct {
 	tx      kv.Transaction
 	counter counter
 }
 
-func (mr *metadataRollback) saveState(block, tx []byte, registry *types.Registry, pk, value string) error {
+func (mr *rollback) saveState(block, tx []byte, registry *types.Registry, pk, value string) error {
 	key := string(block)
 
 	counter := mr.counter.increment(key)
@@ -72,7 +72,7 @@ func (mr *metadataRollback) saveState(block, tx []byte, registry *types.Registry
 }
 
 // rollbackState is rollback all block transactions
-func (mr *metadataRollback) rollbackState(block []byte) error {
+func (mr *rollback) rollbackState(block []byte) error {
 	txses := make([]state, 0)
 	var err error
 	mr.tx.Ascend("rollback_tx", func(key, value string) bool {

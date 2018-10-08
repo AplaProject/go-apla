@@ -37,13 +37,13 @@ import (
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+	"github.com/GenesisKernel/go-genesis/packages/registry/metadata"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 
-	"github.com/GenesisKernel/go-genesis/packages/registry"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/memdb"
 	"github.com/julienschmidt/httprouter"
@@ -231,7 +231,7 @@ func Start() {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
 		Exit(1)
 	}
-	model.MetadataRegistry, err = registry.NewMetadataStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), false, true)
+	model.MetadataRegistry, err = metadata.NewMetadataStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), false, true)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("adding indexes")
 		Exit(1)

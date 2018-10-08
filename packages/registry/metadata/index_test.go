@@ -1,4 +1,4 @@
-package registry
+package metadata
 
 import (
 	"testing"
@@ -90,7 +90,7 @@ func TestMetadataIndex(t *testing.T) {
 	}))
 
 	assert.Nil(t, mtx.Insert(nil, &types.Registry{
-		Name:      "ecosystem",
+		Name:      model.Ecosystem{}.ModelName(),
 		Ecosystem: &types.Ecosystem{Name: "ecosystem"},
 	}, "ddd", model.Ecosystem{Name: "ddd"}))
 

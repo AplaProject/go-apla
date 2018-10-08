@@ -1,4 +1,4 @@
-package registry
+package metadata
 
 import (
 	"fmt"
@@ -102,7 +102,7 @@ func TestMetadataTx_RW(t *testing.T) {
 		metadataTx := reg.Begin()
 		require.Nil(t, err, c.testname)
 
-		err = metadataTx.Insert(nil, &types.Registry{Name: "ecosystem"}, "abc", model.Ecosystem{
+		err = metadataTx.Insert(nil, &types.Registry{Name: model.Ecosystem{}.ModelName()}, "abc", model.Ecosystem{
 			Name: "abc",
 		})
 		require.Nil(t, err, c.testname)

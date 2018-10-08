@@ -1,4 +1,4 @@
-package registry
+package metadata
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ type teststruct struct {
 
 func TestMetadataRollbackSaveState(t *testing.T) {
 	txMock := &kv.MockTransaction{}
-	mr := metadataRollback{tx: txMock, counter: counter{txCounter: make(map[string]uint64)}}
+	mr := rollback{tx: txMock, counter: counter{txCounter: make(map[string]uint64)}}
 
 	registry := &types.Registry{
 		Name:      "keys",
@@ -65,7 +65,7 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 	db := kv.DatabaseAdapter{Database: *mDb}
 
 	dbTx := db.Begin(true)
-	mr := metadataRollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
+	mr := rollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
 
 	registry := &types.Registry{
 		Name:      "key",
@@ -74,7 +74,7 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 
 	block := []byte("123")
 
-	mtx := metadataTx{}
+	mtx := tx{}
 	for key := range make([]int, 20) {
 		// Emulating new value in database
 		mtx.formatKey(registry, strconv.Itoa(key))
@@ -121,7 +121,7 @@ func TestMetadataRollbackSaveRollback(t *testing.T) {
 		Pattern: fmt.Sprintf(searchPrefix, "*", "*", "*"),
 	})
 
-	mr = metadataRollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
+	mr = rollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
 	require.Nil(t, mr.rollbackState(block))
 
 	// We are checking that all values are now at the previous state

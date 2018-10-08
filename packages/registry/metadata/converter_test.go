@@ -1,4 +1,4 @@
-package registry
+package metadata
 
 import (
 	"testing"
@@ -30,8 +30,6 @@ func TestMetadataTx_FillUpdate(t *testing.T) {
 	converter := converter{}
 
 	key := model.KeySchema{Amount: "999"}
-	require.Error(t, converter.updateFromParams(model.KeySchema{}.ModelName(), &key, map[string]interface{}{}))
-
 	err := converter.updateFromParams(model.KeySchema{}.ModelName(), &key, map[string]interface{}{
 		"id":        1,
 		"publickey": []byte{1, 2, 3},
