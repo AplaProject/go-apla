@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"bytes"
 
@@ -919,11 +920,12 @@ func IsValidAddress(address string) bool {
 
 // Escape deletes unaccessable characters
 func Escape(data string) string {
-	out := make([]byte, 0, len(data)+2)
+	out := make([]rune, 0, len(data))
 	available := `_ ,=!-'()"?*$#{}<>: `
-	for _, ch := range []byte(data) {
+	for _, ch := range []rune(data) {
 		if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
+			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, byte(ch)) >= 0 ||
+			unicode.IsLetter(ch) {
 			out = append(out, ch)
 		}
 	}
