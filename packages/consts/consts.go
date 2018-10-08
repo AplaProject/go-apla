@@ -172,3 +172,9 @@ const MoneyLength = 30
 const TokenEcosystem = 1
 
 const HTTPServerMaxBodySize = 1 << 20
+
+// GuestKey is the guest id
+const GuestKey = `4544233900443112470`
+
+// GuestPublic is the public guest key
+const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86`
