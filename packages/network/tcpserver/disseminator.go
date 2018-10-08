@@ -99,15 +99,31 @@ func Type1(rw io.ReadWriter) error {
 	}
 
 	// get this new transactions
-	trs := &network.DisRequest{}
-	err = trs.Read(rw)
+	txBodies, err := resieveTxBodies(rw)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on reading needed txes from disseminator")
 		return err
 	}
 
 	// and save them
-	return saveNewTransactions(trs)
+	return saveNewTransactions(txBodies)
+}
+
+func resieveTxBodies(con io.Reader) ([]byte, error) {
+	sizeBuf := make([]byte, 4)
+	if _, err := io.ReadFull(con, sizeBuf); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on getting size of tx bodies")
+		return nil, err
+	}
+
+	size := converter.BinToDec(sizeBuf)
+	txBodies := make([]byte, size)
+	if _, err := io.ReadFull(con, txBodies); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on getting tx bodies")
+		return nil, err
+	}
+
+	return txBodies, nil
 }
 
 func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
@@ -212,8 +228,7 @@ func readHashes(buf *bytes.Buffer) ([][]byte, error) {
 	return hashes, nil
 }
 
-func saveNewTransactions(r *network.DisRequest) error {
-	binaryTxs := r.Data
+func saveNewTransactions(binaryTxs []byte) error {
 	queue := []model.BatchModel{}
 	log.WithFields(log.Fields{"binaryTxs": binaryTxs}).Debug("trying to save binary txs")
 
