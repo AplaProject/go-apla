@@ -131,6 +131,7 @@ func initLogs() error {
 	}
 
 	log.AddHook(logtools.ContextHook{})
+	log.AddHook(logtools.HexHook{})
 
 	return nil
 }

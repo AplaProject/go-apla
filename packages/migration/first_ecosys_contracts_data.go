@@ -34,12 +34,14 @@ VALUES
 	}
 	conditions {
 		var rows array
-		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: 0} )
 
 		if !Len(rows) {
 			error Sprintf("Delayed contract %%d does not exist", $Id)
 		}
 		$cur = rows[0]
+		$limit = Int($cur["limit"])
+		$counter = Int($cur["counter"])
 
 		if $key_id != Int($cur["key_id"]) {
 			error "Access denied"
@@ -48,18 +50,21 @@ VALUES
 		if $block < Int($cur["block_id"]) {
 			error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
 		}
+
+		if $limit > 0 && $counter >= $limit {
+			error Sprintf("Delayed contract %%d is limited by number of launches", $Id)
+		}
 	}
 	action {
-		var limit, counter, block_id int
+		$counter = $counter + 1
 
-		limit = Int($cur["limit"])
-		counter = Int($cur["counter"])+1
+		var block_id int
 		block_id = $block
-
-		if limit == 0 || limit > counter {
+		if $limit == 0 || $limit > $counter {
 			block_id = block_id + Int($cur["every_block"])
 		}
-		DBUpdate("delayed_contracts", $Id, {"counter": counter, "block_id": block_id})
+
+		DBUpdate("delayed_contracts", $Id, {"counter": $counter, "block_id": block_id})
 
 		var params map
 		CallContract($cur["contract"], params)
