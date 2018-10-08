@@ -131,34 +131,36 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx []byte, myTx bool) error {
 	t, err := UnmarshallTransaction(bytes.NewBuffer(binaryTx))
 	if err != nil {
+		MarkTransactionBad(dbTransaction, hash, err.Error())
 		return err
 	}
 
 	if err = t.Check(time.Now().Unix(), true); err != nil {
+		MarkTransactionBad(dbTransaction, hash, err.Error())
 		return err
 	}
 
 	if t.TxKeyID == 0 {
 		errStr := "undefined keyID"
-		MarkTransactionBad(dbTransaction, t.TxHash, errStr)
+		MarkTransactionBad(dbTransaction, hash, errStr)
 		return errors.New(errStr)
 	}
 
 	tx := &model.Transaction{}
-	_, err = tx.Get(t.TxHash)
+	_, err = tx.Get(hash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction by hash")
 		return utils.ErrInfo(err)
 	}
 	counter := tx.Counter
 	counter++
-	_, err = model.DeleteTransactionByHash(t.TxHash)
+	_, err = model.DeleteTransactionByHash(hash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction by hash")
 		return utils.ErrInfo(err)
 	}
 
-	logExist, err := model.GetLogTransactionsCount(t.TxHash)
+	logExist, err := model.GetLogTransactionsCount(hash)
 	if err != nil {
 		return err
 	}
@@ -166,7 +168,7 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 	if logExist == 0 {
 		// put with verified=1
 		newTx := &model.Transaction{
-			Hash:     t.TxHash,
+			Hash:     hash,
 			Data:     binaryTx,
 			Type:     int8(t.TxType),
 			KeyID:    t.TxKeyID,
