@@ -65,7 +65,7 @@ func NodeDoneUpdatingBlockchain() {
 }
 
 func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant bool, err error) {
-	curBlock, _, found, err := blockchain.GetLastBlock()
+	curBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Error("retrieving last block from db")
 		return false, errors.Wrapf(err, "retrieving last block from db")

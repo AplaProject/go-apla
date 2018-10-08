@@ -111,7 +111,7 @@ func Type1(rw io.ReadWriter) error {
 }
 
 func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
-	lastBlock, _, found, err := blockchain.GetLastBlock()
+	lastBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur block ID")
 		return utils.ErrInfo(err)
@@ -154,7 +154,7 @@ func getUnknownTransactions(buf *bytes.Buffer) ([]byte, error) {
 		// check if we have such a transaction
 		// check log_transaction
 		tx := &blockchain.Transaction{}
-		found, err := tx.Get(hash)
+		found, err := tx.Get(nil, hash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err, "txHash": hash}).Error("Getting log tx count")
 			return nil, utils.ErrInfo(err)

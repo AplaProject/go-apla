@@ -18,7 +18,7 @@ func ProcessQueueTransaction(tx *blockchain.Transaction) error {
 		if err2 != nil {
 			return err
 		}
-		blockchain.SetTransactionError(hash, err.Error())
+		blockchain.SetTransactionError(nil, hash, err.Error())
 		return err
 	}
 
@@ -28,7 +28,7 @@ func ProcessQueueTransaction(tx *blockchain.Transaction) error {
 		if err != nil {
 			return err
 		}
-		blockchain.SetTransactionError(hash, errStr)
+		blockchain.SetTransactionError(nil, hash, errStr)
 		return errors.New(errStr)
 	}
 

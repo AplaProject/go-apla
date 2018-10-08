@@ -16,7 +16,7 @@ type getMaxBlockIDResult struct {
 }
 
 func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	block, hash, found, err := blockchain.GetLastBlock()
+	block, hash, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -44,7 +44,7 @@ type getBlockInfoResult struct {
 func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 	blockHash := converter.HexToBin(data.params["hash"].(string))
 	block := &blockchain.Block{}
-	found, err := block.Get(blockHash)
+	found, err := block.Get(nil, blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
 		return errorAPI(w, err, http.StatusInternalServerError)

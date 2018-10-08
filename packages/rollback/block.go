@@ -24,11 +24,17 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // BlockRollback is blocking rollback
 func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
-	b, err := block.FromBlockchainBlock(blockModel, hash)
+	ldbTx, err := blockchain.DB.OpenTransaction()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
+		return err
+	}
+	b, err := block.FromBlockchainBlock(blockModel, hash, ldbTx)
 	if err != nil {
 		return err
 	}
@@ -39,23 +45,26 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 		return err
 	}
 
-	err = rollbackBlock(dbTransaction, b)
+	err = rollbackBlock(dbTransaction, ldbTx, b)
 
 	if err != nil {
 		dbTransaction.Rollback()
+		ldbTx.Discard()
 		return err
 	}
 
 	err = dbTransaction.Commit()
+	err = ldbTx.Commit()
 	return err
 }
 
-func rollbackBlock(dbTransaction *model.DbTransaction, block *block.PlayableBlock) error {
+func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, block *block.PlayableBlock) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Transactions) - 1; i >= 0; i-- {
 		t := block.Transactions[i]
 		t.DbTransaction = dbTransaction
+		t.LdbTx = ldbTx
 
 		if t.TxContract != nil {
 			if _, err := t.CallContract(smart.CallInit | smart.CallRollback); err != nil {

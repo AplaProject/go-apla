@@ -12,17 +12,31 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/opt"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
-var db *leveldb.DB
+var DB *leveldb.DB
+
+type levelDBGetterPutterDeleter interface {
+	Get([]byte, *opt.ReadOptions) ([]byte, error)
+	Put([]byte, []byte, *opt.WriteOptions) error
+	Delete([]byte, *opt.WriteOptions) error
+}
+
+func GetDB(tx *leveldb.Transaction) levelDBGetterPutterDeleter {
+	if tx != nil {
+		return tx
+	}
+	return DB
+}
 
 var txPrefix func([]byte) []byte = prefixFunc("tx-")
 var txStatusPrefix func([]byte) []byte = prefixFunc("txstatus-")
 
 func Init(filename string) error {
 	var err error
-	db, err = leveldb.OpenFile(filename, nil)
+	DB, err = leveldb.OpenFile(filename, nil)
 	return err
 }
 
@@ -50,8 +64,8 @@ func (ts *TxStatus) Unmarshal(b []byte) error {
 	return err
 }
 
-func (ts *TxStatus) Get(hash []byte) (bool, error) {
-	val, err := db.Get(txStatusPrefix(hash), nil)
+func (ts *TxStatus) Get(tx *leveldb.Transaction, hash []byte) (bool, error) {
+	val, err := GetDB(tx).Get(txStatusPrefix(hash), nil)
 	if err == leveldb.ErrNotFound {
 		return false, nil
 	}
@@ -63,12 +77,12 @@ func (ts *TxStatus) Get(hash []byte) (bool, error) {
 	return true, err
 }
 
-func (ts TxStatus) Insert(hash []byte) error {
+func (ts TxStatus) Insert(tx *leveldb.Transaction, hash []byte) error {
 	val, err := ts.Marshal()
 	if err != nil {
 		return err
 	}
-	err = db.Put(txStatusPrefix(hash), val, nil)
+	err = GetDB(tx).Put(txStatusPrefix(hash), val, nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("level db error")
 		return err
@@ -133,8 +147,8 @@ func (t Transaction) Hash() ([]byte, error) {
 	return crypto.DoubleHash(b)
 }
 
-func (t *Transaction) Get(hash []byte) (bool, error) {
-	val, err := db.Get(txPrefix(hash), nil)
+func (t *Transaction) Get(tx *leveldb.Transaction, hash []byte) (bool, error) {
+	val, err := GetDB(tx).Get(txPrefix(hash), nil)
 	if err == leveldb.ErrNotFound {
 		return false, nil
 	}
@@ -149,7 +163,7 @@ func (t *Transaction) Get(hash []byte) (bool, error) {
 	return true, nil
 }
 
-func (t *Transaction) Insert() error {
+func (t *Transaction) Insert(tx *leveldb.Transaction) error {
 	hash, err := t.Hash()
 	if err != nil {
 		return err
@@ -159,7 +173,7 @@ func (t *Transaction) Insert() error {
 		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling transaction")
 		return err
 	}
-	err = db.Put(txPrefix(hash), val, nil)
+	err = GetDB(tx).Put(txPrefix(hash), val, nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting transaction")
 		return err
@@ -167,25 +181,25 @@ func (t *Transaction) Insert() error {
 	return nil
 }
 
-func SetTransactionError(hash []byte, errString string) error {
+func SetTransactionError(tx *leveldb.Transaction, hash []byte, errString string) error {
 	txWithError := &TxStatus{
 		Error: errString,
 	}
 	txStatus := &TxStatus{}
-	found, err := txStatus.Get(hash)
+	found, err := txStatus.Get(tx, hash)
 	if err != nil {
 		return err
 	}
 	if !found {
-		return txWithError.Insert(hash)
+		return txWithError.Insert(tx, hash)
 	}
 	txStatus.Error = errString
-	return txStatus.Insert(hash)
+	return txStatus.Insert(tx, hash)
 }
 
-func IncrementTxAttemptCount(hash []byte) error {
+func IncrementTxAttemptCount(tx *leveldb.Transaction, hash []byte) error {
 	ts := &TxStatus{}
-	found, err := ts.Get(hash)
+	found, err := ts.Get(tx, hash)
 	if err != nil {
 		return err
 	}
@@ -193,12 +207,12 @@ func IncrementTxAttemptCount(hash []byte) error {
 		return nil
 	}
 	ts.Attempts += 1
-	return ts.Insert(hash)
+	return ts.Insert(tx, hash)
 }
 
-func DecrementTxAttemptCount(hash []byte) error {
+func DecrementTxAttemptCount(tx *leveldb.Transaction, hash []byte) error {
 	ts := &TxStatus{}
-	found, err := ts.Get(hash)
+	found, err := ts.Get(tx, hash)
 	if err != nil {
 		return err
 	}
@@ -206,7 +220,7 @@ func DecrementTxAttemptCount(hash []byte) error {
 		return nil
 	}
 	ts.Attempts -= 1
-	return ts.Insert(hash)
+	return ts.Insert(tx, hash)
 }
 
 // BuildTransaction creates transaction

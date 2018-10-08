@@ -41,7 +41,7 @@ var rollbackCmd = &cobra.Command{
 			return
 		}
 		binBlockHash := converter.HexToBin(blockHash)
-		err := rollback.ToBlockID(binBlockHash, nil, log.WithFields(log.Fields{}))
+		err := rollback.ToBlockID(binBlockHash, nil, nil, log.WithFields(log.Fields{}))
 		if err != nil {
 			log.WithError(err).Fatal("rollback to block hash")
 			return

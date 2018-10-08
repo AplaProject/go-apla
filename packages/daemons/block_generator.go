@@ -86,7 +86,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	done := time.After(endTime.Sub(time.Now()))
-	prevBlock, _, found, err := blockchain.GetLastBlock()
+	prevBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err
@@ -174,7 +174,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*blockchai
 
 		go func() {
 			for badTxItem := range ch {
-				blockchain.SetTransactionError(badTxItem.hash, badTxItem.msg)
+				blockchain.SetTransactionError(nil, badTxItem.hash, badTxItem.msg)
 			}
 		}()
 
@@ -185,7 +185,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*blockchai
 		ch := make(chan []byte)
 		go func() {
 			for tx := range ch {
-				blockchain.IncrementTxAttemptCount(tx)
+				blockchain.IncrementTxAttemptCount(nil, tx)
 			}
 		}()
 

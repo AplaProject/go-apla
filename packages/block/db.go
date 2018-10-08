@@ -6,12 +6,13 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // GetBlockDataFromBlockChain is retrieving block data from blockchain
-func GetBlockDataFromBlockChain(hash []byte) (*blockchain.BlockHeader, error) {
+func GetBlockDataFromBlockChain(ldbtx *leveldb.Transaction, hash []byte) (*blockchain.BlockHeader, error) {
 	block := &blockchain.Block{}
-	found, err := block.Get(hash)
+	found, err := block.Get(ldbtx, hash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block by hash")
 		return nil, utils.ErrInfo(err)

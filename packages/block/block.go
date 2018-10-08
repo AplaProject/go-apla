@@ -18,6 +18,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // Block is storing block data
@@ -32,6 +33,7 @@ type PlayableBlock struct {
 	SysUpdate    bool
 	GenBlock     bool // it equals true when we are generating a new block
 	StopCount    int  // The count of good tx in the block
+	LDBTX        *leveldb.Transaction
 }
 
 func (b PlayableBlock) String() string {
@@ -52,8 +54,14 @@ func (b *PlayableBlock) PlaySafe() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
 		return err
 	}
+	ldbtx, err := blockchain.DB.OpenTransaction()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
+		return err
+	}
+	b.LDBTX = ldbtx
 
-	err = b.Play(dbTransaction)
+	err = b.Play(dbTransaction, ldbtx)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		transactions := []*blockchain.Transaction{}
@@ -82,6 +90,7 @@ func (b *PlayableBlock) PlaySafe() error {
 		err = nil
 	} else if err != nil {
 		dbTransaction.Rollback()
+		ldbtx.Discard()
 		if b.GenBlock && b.StopCount == 0 {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
@@ -94,7 +103,7 @@ func (b *PlayableBlock) PlaySafe() error {
 			if err != nil {
 				return err
 			}
-			blockchain.SetTransactionError(hash, err.Error())
+			blockchain.SetTransactionError(ldbtx, hash, err.Error())
 		}
 		return err
 	}
@@ -103,12 +112,15 @@ func (b *PlayableBlock) PlaySafe() error {
 	if err != nil {
 		return err
 	}
-	if err := bBlock.Insert(); err != nil {
+	if err := bBlock.Insert(ldbtx); err != nil {
 		dbTransaction.Rollback()
+		ldbtx.Discard()
 		return err
 	}
 
 	dbTransaction.Commit()
+	ldbtx.Commit()
+	b.LDBTX = nil
 	if b.SysUpdate {
 		b.SysUpdate = false
 		if err = syspar.SysUpdate(nil); err != nil {
@@ -126,14 +138,14 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	}
 
 	var err error
-	b.PrevHeader, err = GetBlockDataFromBlockChain(b.Hash)
+	b.PrevHeader, err = GetBlockDataFromBlockChain(nil, b.Hash)
 	if err != nil {
 		return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))
 	}
 	return nil
 }
 
-func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
+func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.Transaction) error {
 	logger := b.GetLogger()
 	limits := NewLimits(b)
 
@@ -155,7 +167,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
 
-		blockchain.IncrementTxAttemptCount(t.TxHash)
+		blockchain.IncrementTxAttemptCount(ldbtx, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
@@ -193,7 +205,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 			if err2 != nil {
 				return err
 			}
-			blockchain.SetTransactionError(hash, err.Error())
+			blockchain.SetTransactionError(ldbtx, hash, err.Error())
 			if t.SysUpdate {
 				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
@@ -207,7 +219,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
-		blockchain.DecrementTxAttemptCount(t.TxHash)
+		blockchain.DecrementTxAttemptCount(ldbtx, t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true
@@ -338,7 +350,7 @@ func (b PlayableBlock) ForSign() string {
 
 // InsertBlockWOForks is inserting blocks
 func InsertBlockWOForks(data []byte, genBlock, firstBlock bool) error {
-	block, err := ProcessBlockWherePrevFromBlockchainTable(data, !firstBlock)
+	block, err := ProcessBlockWherePrevFromBlockchainTable(data, !firstBlock, nil)
 	if err != nil {
 		return err
 	}
@@ -357,7 +369,7 @@ func InsertBlockWOForks(data []byte, genBlock, firstBlock bool) error {
 }
 
 // ProcessBlockWherePrevFromBlockchainTable is processing block with in table previous block
-func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*PlayableBlock, error) {
+func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool, ldbtx *leveldb.Transaction) (*PlayableBlock, error) {
 	if checkSize && int64(len(data)) > syspar.GetMaxBlockSize() {
 		log.WithFields(log.Fields{"check_size": checkSize, "size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
 		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
@@ -372,7 +384,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Pla
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("Hashing block data")
 		return nil, err
 	}
-	block, err := FromBlockchainBlock(blockModel, hash)
+	block, err := FromBlockchainBlock(blockModel, hash, ldbtx)
 	if err != nil {
 		return nil, err
 	}
@@ -385,13 +397,13 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Pla
 	return block, nil
 }
 
-func FromBlockchainBlock(b *blockchain.Block, hash []byte) (*PlayableBlock, error) {
+func FromBlockchainBlock(b *blockchain.Block, hash []byte, ldbtx *leveldb.Transaction) (*PlayableBlock, error) {
 	transactions := make([]*transaction.Transaction, 0)
 	for _, tx := range b.Transactions {
 		t, err := transaction.FromBlockchainTransaction(tx)
 		if err != nil {
 			if t != nil && t.TxHash != nil {
-				blockchain.SetTransactionError(t.TxHash, err.Error())
+				blockchain.SetTransactionError(ldbtx, t.TxHash, err.Error())
 			}
 			return nil, fmt.Errorf("parse transaction error(%s)", err)
 		}

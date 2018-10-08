@@ -32,7 +32,7 @@ func (btc *BlockTimeCounter) ValidateBlock(t time.Time, nodePosition int) bool {
 func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (bool, error) {
 	startInterval, endInterval := btc.RangesByTime(t)
 
-	blocks, err := blockchain.GetLastNBlocks(btc.numberNodes * 2)
+	blocks, err := blockchain.GetLastNBlocks(nil, btc.numberNodes*2)
 	if err != nil {
 		return false, err
 	}

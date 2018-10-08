@@ -46,7 +46,7 @@ func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstat
 		return nil, errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
 	tx := &blockchain.TxStatus{}
-	found, err := tx.Get(converter.HexToBin(hash))
+	found, err := tx.Get(nil, converter.HexToBin(hash))
 	if err != nil {
 		return nil, errorAPI(w, err, http.StatusInternalServerError)
 	}

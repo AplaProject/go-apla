@@ -29,7 +29,7 @@ import (
 func Type4(r *network.ConfirmRequest) (*network.ConfirmResponse, error) {
 	resp := &network.ConfirmResponse{}
 	block := &blockchain.Block{}
-	found, err := block.Get(r.BlockHash)
+	found, err := block.Get(nil, r.BlockHash)
 	if err != nil || !found {
 		hash := [32]byte{}
 		resp.Hash = hash[:]

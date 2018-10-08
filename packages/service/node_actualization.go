@@ -59,7 +59,7 @@ func (n *NodeActualizer) Run(ctx context.Context) {
 }
 
 func (n *NodeActualizer) checkBlockchainActuality(ctx context.Context) (bool, error) {
-	block, _, found, err := blockchain.GetLastBlock()
+	block, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		return false, err
 	}
@@ -80,7 +80,7 @@ func (n *NodeActualizer) checkBlockchainActuality(ctx context.Context) (bool, er
 		return false, nil
 	}
 
-	foreignBlock, found, err := blockchain.GetMaxForeignBlock(conf.Config.KeyID)
+	foreignBlock, found, err := blockchain.GetMaxForeignBlock(nil, conf.Config.KeyID)
 	if err != nil {
 		return false, errors.Wrapf(err, "retrieving last foreign block")
 	}

@@ -44,7 +44,7 @@ func Confirmations(ctx context.Context, d *daemon) error {
 		d.sleepTime = 10 * time.Second
 	}
 
-	blocks, err := blockchain.GetUnconfirmedBlocks(consts.MIN_CONFIRMED_NODES)
+	blocks, err := blockchain.GetUnconfirmedBlocks(nil, consts.MIN_CONFIRMED_NODES)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func confirmationsBlocks(ctx context.Context, d *daemon, blocks []*blockchain.Bl
 		confirmation.Good = st1
 		confirmation.Bad = st0
 		confirmation.Time = time.Now().Unix()
-		if err = confirmation.Insert(block.Hash); err != nil {
+		if err = confirmation.Insert(nil, block.Hash); err != nil {
 			d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving confirmation")
 			return err
 		}

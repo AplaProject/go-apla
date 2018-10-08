@@ -14,7 +14,7 @@ type blocksCounter struct {
 }
 
 func (bc *blocksCounter) count(state blockGenerationState) (int, error) {
-	blocks, err := blockchain.GetLastNBlocks(lastNBlocks)
+	blocks, err := blockchain.GetLastNBlocks(nil, lastNBlocks)
 	if err != nil {
 		return 0, err
 	}

@@ -81,7 +81,7 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 		return err
 	}
 
-	lastBlock, _, found, err := blockchain.GetLastBlock()
+	lastBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("Getting last block")
 		return err
@@ -114,7 +114,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	)
 
 	// get current block id from our blockchain
-	curBlock, curBlockHash, found, err := blockchain.GetLastBlock()
+	curBlock, curBlockHash, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting last block")
 		return err
@@ -127,7 +127,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	playRawBlock := func(rb []byte) error {
 
-		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(rb, true)
+		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(rb, true, nil)
 		defer func() {
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
@@ -156,7 +156,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			}
 		}
 
-		bl.PrevHeader, err = block.GetBlockDataFromBlockChain(bl.PrevHash)
+		bl.PrevHeader, err = block.GetBlockDataFromBlockChain(nil, bl.PrevHash)
 		if err != nil {
 			return utils.ErrInfo(fmt.Errorf("can't get block %d", bl.Header.BlockID-1))
 		}
@@ -177,7 +177,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	count = 0
 	curBlockID := curBlock.Header.BlockID + 1
-	nextBlock, found, err := blockchain.GetNextBlock(curBlockHash)
+	nextBlock, found, err := blockchain.GetNextBlock(nil, curBlockHash)
 	blockHash := nextBlock.Hash
 	if err != nil {
 		return err
@@ -201,7 +201,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			}
 			count++
 		}
-		blocks, err := blockchain.GetNBlocksFrom(blockHash, tcpserver.BlocksPerRequest, 1)
+		blocks, err := blockchain.GetNBlocksFrom(nil, blockHash, tcpserver.BlocksPerRequest, 1)
 		if err != nil {
 			return err
 		}
@@ -237,7 +237,7 @@ func firstLoad(logger *log.Entry) error {
 }
 
 func needLoad(logger *log.Entry) (bool, error) {
-	_, _, found, err := blockchain.GetLastBlock()
+	_, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting info block")
 		return false, err
@@ -315,7 +315,7 @@ func GetBlocks(ctx context.Context, blockHash []byte, host string) error {
 
 	// we have the slice of blocks for applying
 	// first of all we should rollback old blocks
-	myRollbackBlocks, err := blockchain.DeleteBlocksFrom(blockHash)
+	myRollbackBlocks, err := blockchain.DeleteBlocksFrom(nil, blockHash)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("getting rollback blocks from blockID")
 		return utils.ErrInfo(err)
@@ -348,7 +348,7 @@ func getBlocks(ctx context.Context, blockHash []byte, host string) ([]*block.Pla
 			break
 		}
 
-		block, err := block.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
+		block, err := block.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true, nil)
 		if err != nil {
 			return nil, utils.ErrInfo(err)
 		}
@@ -382,6 +382,11 @@ func getBlocks(ctx context.Context, blockHash []byte, host string) ([]*block.Pla
 }
 
 func processBlocks(blocks []*block.PlayableBlock) error {
+	ldbTx, err := blockchain.DB.OpenTransaction()
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("starting transaction")
+		return utils.ErrInfo(err)
+	}
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
@@ -410,11 +415,13 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		b.Hash = hash
 
 		if err := b.Check(); err != nil {
+			ldbTx.Discard()
 			dbTransaction.Rollback()
 			return err
 		}
 
-		if err := b.Play(dbTransaction); err != nil {
+		if err := b.Play(dbTransaction, ldbTx); err != nil {
+			ldbTx.Discard()
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
 		}
@@ -436,11 +443,14 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		if err != nil {
 			return err
 		}
-		if err := bBlock.Insert(); err != nil {
+		if err := bBlock.Insert(ldbTx); err != nil {
+			ldbTx.Discard()
 			dbTransaction.Rollback()
 			return err
 		}
 	}
 
-	return dbTransaction.Commit()
+	err = dbTransaction.Commit()
+	err = ldbTx.Commit()
+	return err
 }

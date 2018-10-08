@@ -19,6 +19,7 @@ import (
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // Transaction is a structure for parsing transactions
@@ -45,6 +46,7 @@ type Transaction struct {
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
 	SysUpdate     bool
+	LdbTx         *leveldb.Transaction
 
 	SmartContract smart.SmartContract
 }

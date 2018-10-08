@@ -22,11 +22,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // ToBlockID rollbacks blocks till blockID
-func ToBlockID(blockHash []byte, dbTransaction *model.DbTransaction, logger *log.Entry) error {
-	blocks, err := blockchain.DeleteBlocksFrom(blockHash)
+func ToBlockID(blockHash []byte, dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, logger *log.Entry) error {
+	blocks, err := blockchain.DeleteBlocksFrom(nil, blockHash)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting blocks")
 		return err

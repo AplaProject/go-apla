@@ -57,7 +57,7 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 		return false, err
 	}
 
-	blocks, err := blockchain.GetLastNBlocks(btc.numberNodes * 2)
+	blocks, err := blockchain.GetLastNBlocks(nil, btc.numberNodes*2)
 	if err != nil {
 		return false, err
 	}

@@ -1875,7 +1875,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 func GetBlock(hash []byte) (map[string]int64, error) {
 	block := &blockchain.Block{}
-	found, err := block.Get(hash)
+	found, err := block.Get(nil, hash)
 	if err != nil {
 		return nil, logErrorDB(err, "getting block")
 	}
@@ -2031,7 +2031,7 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 			prev[`block_id`] = converter.Int64ToStr(tx.BlockID)
 			prev[`id`] = converter.Int64ToStr(tx.ID)
 			block := &blockchain.Block{}
-			blockFound, err := block.Get(tx.BlockHash)
+			blockFound, err := block.Get(nil, tx.BlockHash)
 			if err != nil {
 				return nil, err
 			}

@@ -115,7 +115,7 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Fatal("first block contract execution")
 			return
 		}
-		_, found, err := blockchain.GetFirstBlock()
+		_, found, err := blockchain.GetFirstBlock(nil)
 		if err != nil {
 			return
 		}
