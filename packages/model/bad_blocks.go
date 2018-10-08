@@ -42,7 +42,7 @@ func (r *BadBlocks) GetNeedToBanNodes(now time.Time, blocksPerNode int) ([]BanRe
 				"1_bad_blocks"
 				WHERE
 					block_time > ?::date - interval '24 hours'
-					AND deleted = FALSE
+					AND deleted = 0
 				GROUP BY
 					producer_node_id,
 					consumer_node_id
