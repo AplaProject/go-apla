@@ -111,57 +111,53 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 	dtx.RunForBlockID(prevBlock.Header.BlockID + 1)
 
-	trs, err := processTransactions(d.logger, done)
+	err = transaction.ProcessTransactionsQueue()
 	if err != nil {
 		return err
 	}
+	queue.ProcessTxQueue.ProcessAllItems(func(trs []*blockchain.Transaction) error {
+		trs, err := processTransactions(trs, d.logger, done)
+		if err != nil {
+			return err
+		}
 
-	// Block generation will be started only if we have transactions
-	if len(trs) == 0 {
-		return nil
-	}
+		// Block generation will be started only if we have transactions
+		if len(trs) == 0 {
+			return nil
+		}
 
-	header := &blockchain.BlockHeader{
-		BlockID:      prevBlock.Header.BlockID + 1,
-		Time:         time.Now().Unix(),
-		EcosystemID:  0,
-		KeyID:        conf.Config.KeyID,
-		NodePosition: nodePosition,
-		Version:      consts.BLOCK_VERSION,
-	}
-	bBlock := blockchain.Block{
-		Header:       header,
-		Transactions: trs,
-	}
+		header := &blockchain.BlockHeader{
+			BlockID:      prevBlock.Header.BlockID + 1,
+			Time:         time.Now().Unix(),
+			EcosystemID:  0,
+			KeyID:        conf.Config.KeyID,
+			NodePosition: nodePosition,
+			Version:      consts.BLOCK_VERSION,
+		}
+		bBlock := blockchain.Block{
+			Header:       header,
+			Transactions: trs,
+		}
 
-	blockBin, err := bBlock.Marshal()
-	if err != nil {
-		return err
-	}
+		blockBin, err := bBlock.Marshal()
+		if err != nil {
+			return err
+		}
 
-	err = block.InsertBlockWOForks(blockBin, true, false)
-	if err != nil {
-		return err
-	}
-	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
-
-	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
-	return nil
-}
-
-func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*blockchain.Transaction, error) {
-	// verify transactions
-	err := transaction.ProcessTransactionsQueue()
-	if err != nil {
-		return nil, err
-	}
-
-	var trs []*blockchain.Transaction
-	queue.ProcessTxQueue.ProcessItems(func(tx *blockchain.Transaction) error {
-		trs = append(trs, tx)
+		err = block.InsertBlockWOForks(blockBin, true, false)
+		if err != nil {
+			return err
+		}
+		log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
+		go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 		return nil
 	})
 
+	return nil
+}
+
+func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done <-chan time.Time) ([]*blockchain.Transaction, error) {
+	// verify transactions
 	limits := block.NewLimits(nil)
 
 	type badTxStruct struct {
@@ -202,6 +198,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*blockchai
 
 	// Checks preprocessing count limits
 	txList := make([]*blockchain.Transaction, 0, len(trs))
+	var err error
 	for i, txItem := range trs {
 		select {
 		case <-done:

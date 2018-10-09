@@ -59,56 +59,48 @@ func Disseminator(ctx context.Context, d *daemon) error {
 func sendTransactions(ctx context.Context, logger *log.Entry) error {
 	// get unsent transactions
 	// form packet to send
-	var txs []*blockchain.Transaction
-	queue.SendTxQueue.ProcessItems(func(tx *blockchain.Transaction) error {
-		txs = append(txs, tx)
+	return queue.SendTxQueue.ProcessAllItems(func(txs []*blockchain.Transaction) error {
+		hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
+			return err
+		}
+
+		if err := tcpclient.SendTransacitionsToAll(ctx, hosts, txs); err != nil {
+			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
+			return err
+		}
 		return nil
 	})
-
-	hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
-	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
-		return err
-	}
-
-	if err := tcpclient.SendTransacitionsToAll(ctx, hosts, txs); err != nil {
-		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
-		return err
-	}
-	return nil
 }
 
 // send block and transactions hashes
 func sendBlockWithTxHashes(ctx context.Context, fullNodeID int64, logger *log.Entry) error {
-	block, isEmpty, err := queue.SendBlockQueue.Dequeue()
-	if err != nil {
-		return err
-	}
-	if isEmpty {
-		return nil
-	}
+	return queue.SendTxQueue.ProcessAllItems(func(trs []*blockchain.Transaction) error {
+		block, isEmpty, err := queue.SendBlockQueue.Dequeue()
+		if err != nil {
+			return err
+		}
+		if isEmpty {
+			return nil
+		}
+		if len(trs) == 0 && block == nil {
+			// it's nothing to send
+			logger.Debug("nothing to send")
+			return nil
+		}
 
-	var trs []*blockchain.Transaction
-	queue.SendTxQueue.ProcessItems(func(tx *blockchain.Transaction) error {
-		trs = append(trs, tx)
+		hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+		if err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
+			return err
+		}
+
+		if err := tcpclient.SendFullBlockToAll(ctx, hosts, block, trs, fullNodeID); err != nil {
+			log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Warn("on sending block with hashes to all")
+			return err
+		}
 		return nil
 	})
-	if len(trs) == 0 && block == nil {
-		// it's nothing to send
-		logger.Debug("nothing to send")
-		return nil
-	}
 
-	hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
-	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
-		return err
-	}
-
-	if err := tcpclient.SendFullBlockToAll(ctx, hosts, block, trs, fullNodeID); err != nil {
-		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Warn("on sending block with hashes to all")
-		return err
-	}
-
-	return nil
 }

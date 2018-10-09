@@ -85,6 +85,52 @@ func (tq *TransactionQueue) ProcessItems(processF func(tx *blockchain.Transactio
 	return nil
 }
 
+func (tq *TransactionQueue) peekAll() ([]*blockchain.Transaction, error) {
+	txs := []*blockchain.Transaction{}
+	var i uint64
+	for i = 0; i < tq.queue.Length(); i++ {
+		item, err := tq.queue.PeekByOffset(i)
+		if err == goque.ErrEmpty {
+			break
+		}
+		if err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("peeking tx from queue")
+			return nil, err
+		}
+		tx := &blockchain.Transaction{}
+		if err := tx.Unmarshal(item.Value); err != nil {
+			return nil, err
+		}
+		txs = append(txs, tx)
+	}
+	return txs, nil
+}
+
+func (tq *TransactionQueue) dequeueAll() error {
+	for tq.queue.Length() > 0 {
+		_, err := tq.queue.Dequeue()
+		if err == goque.ErrEmpty {
+			break
+		}
+		if err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("dequeueing tx from queue")
+			return err
+		}
+	}
+	return nil
+}
+
+func (tq *TransactionQueue) ProcessAllItems(processF func(tx []*blockchain.Transaction) error) error {
+	txs, err := tq.peekAll()
+	if err != nil {
+		return err
+	}
+	if err := processF(txs); err != nil {
+		return err
+	}
+	return tq.dequeueAll()
+}
+
 type BlockQueue struct {
 	queue *goque.Queue
 }
