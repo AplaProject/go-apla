@@ -40,7 +40,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
@@ -493,7 +492,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 				`sc`:                sc,
 				`original_contract`: ``,
 				`this_contract`:     ``,
-				`guest_key`:         vde.GuestKey,
+				`guest_key`:         consts.GuestKey,
 			}
 			if err := sc.AppendStack(name); err != nil {
 				return false, err
