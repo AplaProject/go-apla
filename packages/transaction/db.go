@@ -134,8 +134,9 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 	if err = t.Check(time.Now().Unix(), true); err != nil {
 		if err != ErrEarlyTime {
 			MarkTransactionBad(dbTransaction, hash, err.Error())
+			return err
 		}
-		return err
+		return nil
 	}
 
 	if t.TxKeyID == 0 {
