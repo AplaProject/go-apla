@@ -21,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.0.0"
+const VERSION = "1.0.1"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
@@ -48,7 +48,7 @@ const MIN_CONFIRMED_NODES = 0
 const DOWNLOAD_CHAIN_TRY_COUNT = 10
 
 // MAX_TX_FORW How fast could the time of transaction pass
-const MAX_TX_FORW = 0
+const MAX_TX_FORW = 600
 
 // MAX_TX_BACK transaction may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
