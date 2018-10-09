@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/shopspring/decimal"
@@ -150,7 +151,7 @@ func TestRoleAccess(t *testing.T) {
 	var ret listResult
 	assert.NoError(t, sendGet(`list/pages`, nil, &ret))
 	id := ret.Count
-	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess(2)`}}
+	form = url.Values{"Id": {id}, "Value": {"Div(){Ooops}"}, "Conditions": {`RoleAccess(65)`}}
 	assert.NoError(t, postTx(`EditPage`, &form))
 	form = url.Values{"Id": {id}, "Value": {"Div(){Update}"}}
 	assert.EqualError(t, postTx(`EditPage`, &form), `{"type":"panic","error":"Access denied"}`)
@@ -438,10 +439,10 @@ func TestUpdateSysParam(t *testing.T) {
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
 			var costlen int
-			costlen = SysParamInt("extend_cost_len") + 1
+			costlen = SysParamInt("price_exec_len") + 1
 			UpdateSysParam("Name,Value","max_columns","51")
-			DBUpdateSysParam("extend_cost_len", Str(costlen), "true" )
-			if SysParamInt("extend_cost_len") != costlen {
+			DBUpdateSysParam("price_exec_len", Str(costlen), "true" )
+			if SysParamInt("price_exec_len") != costlen {
 				error "Incorrect updated value"
 			}
 			DBUpdateSysParam("max_indexes", "4", "false" )
@@ -469,8 +470,8 @@ func TestUpdateSysParam(t *testing.T) {
 
 	notvalid := []invalidPar{
 		{`gap_between_blocks`, `100000`},
-		{`rb_blocks_1`, `-1`},
-		{`page_price`, `-20`},
+		{`rollback_blocks`, `-1`},
+		{`price_create_page`, `-20`},
 		{`max_block_size`, `0`},
 		{`max_fuel_tx`, `20string`},
 		{`fuel_rate`, `string`},
@@ -825,10 +826,10 @@ func TestBytesToString(t *testing.T) {
 	assert.NoError(t, postTx("NewContract", &url.Values{
 		"Value": {`contract ` + contract + ` {
 			data {
-				File bytes "file"
+				Data bytes
 			}
 			action {
-				$result = BytesToString($File)
+				$result = BytesToString($Data)
 			}
 		}`},
 		"Conditions":    {"true"},
@@ -836,16 +837,15 @@ func TestBytesToString(t *testing.T) {
 	}))
 
 	content := crypto.RandSeq(100)
-	_, res, err := postTxMultipart(contract, nil, map[string][]byte{"File": []byte(content)})
+	_, res, err := postTxResult(contract, &contractParams{
+		"Data": []byte(content),
+	})
 	assert.NoError(t, err)
 	assert.Equal(t, content, res)
 }
 
 func TestMoneyDigits(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
-
-	var v paramValue
-	assert.NoError(t, sendGet("/ecosystemparam/money_digit", &url.Values{}, &v))
 
 	contract := randName("MoneyDigits")
 	assert.NoError(t, postTx("NewContract", &url.Values{
@@ -866,7 +866,7 @@ func TestMoneyDigits(t *testing.T) {
 	})
 	assert.NoError(t, err)
 
-	d := decimal.New(1, int32(converter.StrToInt(v.Value)))
+	d := decimal.New(1, int32(consts.MoneyDigits))
 	assert.Equal(t, d.StringFixed(0), result)
 }
 

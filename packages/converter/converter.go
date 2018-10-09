@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"bytes"
 
@@ -160,7 +161,13 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 		log.WithFields(log.Fields{"data_length": buf.Len(), "length": int(length), "type": consts.UnmarshallingError}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`input slice has small size`)
 	}
-	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil
+
+	n := int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...)))
+	if n < 0 {
+		return 0, fmt.Errorf(`input slice has negative size`)
+	}
+
+	return n, nil
 }
 
 // BinMarshal converts v parameter to []byte slice.
@@ -787,7 +794,7 @@ func checkSum(val []byte) int {
 
 // EGSMoney converts qEGS to EGS. For example, 123455000000000000000 => 123.455
 func EGSMoney(money string) string {
-	digit := consts.EGS_DIGIT
+	digit := consts.MoneyDigits
 	if len(money) < digit+1 {
 		money = strings.Repeat(`0`, digit+1-len(money)) + money
 	}
@@ -913,11 +920,12 @@ func IsValidAddress(address string) bool {
 
 // Escape deletes unaccessable characters
 func Escape(data string) string {
-	out := make([]byte, 0, len(data)+2)
+	out := make([]rune, 0, len(data))
 	available := `_ ,=!-'()"?*$#{}<>: `
-	for _, ch := range []byte(data) {
+	for _, ch := range []rune(data) {
 		if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
+			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, byte(ch)) >= 0 ||
+			unicode.IsLetter(ch) {
 			out = append(out, ch)
 		}
 	}

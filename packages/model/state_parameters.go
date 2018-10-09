@@ -2,10 +2,6 @@ package model
 
 import "github.com/GenesisKernel/go-genesis/packages/converter"
 
-const (
-	ParamMoneyDigit = "money_digit"
-)
-
 // StateParameter is model
 type StateParameter struct {
 	ecosystem  int64

@@ -48,14 +48,15 @@ import (
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockID      int64
-	Time         int64
-	EcosystemID  int64
-	KeyID        int64
-	NodePosition int64
-	Sign         []byte
-	Hash         []byte
-	Version      int
+	BlockID           int64
+	Time              int64
+	EcosystemID       int64
+	KeyID             int64
+	NodePosition      int64
+	Sign              []byte
+	Hash              []byte
+	Version           int
+	PrivateBlockchain bool
 }
 
 func (b BlockData) String() string {
@@ -242,7 +243,7 @@ func CopyFileContents(src, dst string) error {
 }
 
 // CheckSign checks the signature
-func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
+func CheckSign(publicKeys [][]byte, forSign []byte, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r}).Error("recovered panic in check sign")
@@ -398,6 +399,20 @@ func GetNodeKeys() (string, string, error) {
 		return "", "", err
 	}
 	return string(nprivkey), hex.EncodeToString(npubkey), nil
+}
+
+func GetNodePrivateKey() ([]byte, error) {
+	data, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
+		return nil, err
+	}
+	privateKey, err := hex.DecodeString(string(data))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return nil, err
+	}
+	return privateKey, nil
 }
 
 func GetHostPort(h string) string {

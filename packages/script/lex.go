@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -124,13 +125,21 @@ var (
 		`action`: keyAction, `conditions`: keyCond,
 		`true`: keyTrue, `false`: keyFalse, `break`: keyBreak, `continue`: keyContinue,
 		`var`: keyVar, `...`: keyTail}
+
 	// list of available types
 	// The list of types which save the corresponding 'reflect' type
-	types = map[string]reflect.Type{`bool`: reflect.TypeOf(true), `bytes`: reflect.TypeOf([]byte{}),
-		`int`: reflect.TypeOf(int64(0)), `address`: reflect.TypeOf(uint64(0)),
-		`array`: reflect.TypeOf([]interface{}{}),
-		`map`:   reflect.TypeOf(map[string]interface{}{}), `money`: reflect.TypeOf(decimal.New(0, 0)),
-		`float`: reflect.TypeOf(float64(0.0)), `string`: reflect.TypeOf(``)}
+	typesMap = map[string]reflect.Type{
+		`bool`:    reflect.TypeOf(true),
+		`bytes`:   reflect.TypeOf([]byte{}),
+		`int`:     reflect.TypeOf(int64(0)),
+		`address`: reflect.TypeOf(uint64(0)),
+		`array`:   reflect.TypeOf([]interface{}{}),
+		`map`:     reflect.TypeOf(map[string]interface{}{}),
+		`money`:   reflect.TypeOf(decimal.New(0, 0)),
+		`float`:   reflect.TypeOf(float64(0.0)),
+		`string`:  reflect.TypeOf(``),
+		`file`:    reflect.TypeOf(types.File{}),
+	}
 )
 
 // Lexem contains information about language item
@@ -324,7 +333,7 @@ func lexParser(input []rune) (Lexems, error) {
 						lexID = lexKeyword | (keyID << 8)
 						value = keyID
 					}
-				} else if typeID, ok := types[name]; ok {
+				} else if typeID, ok := typesMap[name]; ok {
 					lexID = lexType
 					value = typeID
 				} else {

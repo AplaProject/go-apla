@@ -643,7 +643,7 @@ func TestContractList(t *testing.T) {
 		action {
 		}
 		func price() int {
-			return  SysParamInt("contract_price")
+			return  SysParamInt("price_create_contract")
 		}
 	}func MyFunc {}`,
 		`NewContract,MyFunc`},

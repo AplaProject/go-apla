@@ -11,6 +11,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/protocols"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
@@ -22,14 +23,15 @@ import (
 
 // Block is storing block data
 type Block struct {
-	Header       utils.BlockData
-	PrevHeader   *utils.BlockData
-	MrklRoot     []byte
-	BinData      []byte
-	Transactions []*transaction.Transaction
-	SysUpdate    bool
-	GenBlock     bool // it equals true when we are generating a new block
-	StopCount    int  // The count of good tx in the block
+	Header        utils.BlockData
+	PrevHeader    *utils.BlockData
+	MrklRoot      []byte
+	BinData       []byte
+	Transactions  []*transaction.Transaction
+	SysUpdate     bool
+	GenBlock      bool // it equals true when we are generating a new block
+	StopCount     int  // The count of good tx in the block
+	Notifications []smart.NotifyInfo
 }
 
 func (b Block) String() string {
@@ -108,6 +110,13 @@ func (b *Block) PlaySafe() error {
 		if err = syspar.SysUpdate(nil); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 			return err
+		}
+	}
+	for _, item := range b.Notifications {
+		if item.Roles {
+			notificator.UpdateRolesNotifications(item.EcosystemID, item.List)
+		} else {
+			notificator.UpdateNotifications(item.EcosystemID, item.List)
 		}
 	}
 	return nil
@@ -238,6 +247,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		if err := transaction.InsertInLogTx(t, b.Header.BlockID); err != nil {
 			return utils.ErrInfo(err)
 		}
+		b.Notifications = append(b.Notifications, t.Notifications...)
 	}
 	return nil
 }
@@ -336,7 +346,7 @@ func (b *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, b.ForSign(), b.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, []byte(b.ForSign()), b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))

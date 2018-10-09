@@ -31,6 +31,7 @@ import (
 type txstatusError struct {
 	Type  string `json:"type,omitempty"`
 	Error string `json:"error,omitempty"`
+	Id    string `json:"id,omitempty"`
 }
 
 type txstatusResult struct {
@@ -74,21 +75,14 @@ type multiTxStatusResult struct {
 	Results map[string]*txstatusResult `json:"results"`
 }
 
-func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	status, err := getTxStatus(data.params[`hash`].(string), w, logger)
-	if err != nil {
-		return err
-	}
-	data.result = &status
-	return nil
+type txstatusRequest struct {
+	Hashes []string `json:"hashes"`
 }
 
-func txstatusMulti(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	result := &multiTxStatusResult{}
 	result.Results = map[string]*txstatusResult{}
-	var request struct {
-		Hashes []string `json:"hashes"`
-	}
+	var request txstatusRequest
 	if err := json.Unmarshal([]byte(data.params["data"].(string)), &request); err != nil {
 		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
