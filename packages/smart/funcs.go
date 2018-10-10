@@ -547,8 +547,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 	return nil
 }
 
-func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string,
-	recipient int64, tokenID string) error {
+func UpdateContract(sc *SmartContract, id int64, value, conditions string, recipient int64, tokenID string) error {
 	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
 		return err
 	}
@@ -566,9 +565,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 	if len(conditions) > 0 {
 		pars["conditions"] = conditions
 	}
-	if len(walletID) > 0 {
-		pars["wallet_id"] = recipient
-	}
+
 	if len(pars) > 0 {
 		if !sc.VDE {
 			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
@@ -583,16 +580,11 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		if err := FlushContract(sc, root, id); err != nil {
 			return err
 		}
-	} else if len(walletID) > 0 {
-		if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
-			return err
-		}
 	}
 	return nil
 }
 
-func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem,
-	appID int64) (int64, error) {
+func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcosystem, appID int64) (int64, error) {
 	if err := validateAccess(`CreateContract`, sc, nNewContract, nImport); err != nil {
 		return 0, err
 	}
@@ -604,7 +596,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 			"tableId": isExists}).Error("create existing contract")
 		return 0, fmt.Errorf(eContractExist, name)
 	}
-	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
+	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, 0, tokenEcosystem)
 	if err != nil {
 		return 0, err
 	}
@@ -612,7 +604,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 		"name":       name,
 		"value":      value,
 		"conditions": conditions,
-		"wallet_id":  walletID,
+		"wallet_id":  0,
 		"token_id":   tokenEcosystem,
 		"app_id":     appID,
 		"ecosystem":  sc.TxSmart.EcosystemID,

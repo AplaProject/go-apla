@@ -5,10 +5,9 @@ contract EditContract {
         Id int
         Value string "optional"
         Conditions string "optional"
-        WalletId string "optional"
     }
     func onlyConditions() bool {
-        return $Conditions && !$Value && !$WalletId
+        return $Conditions && !$Value
     }
 
     conditions {
@@ -23,17 +22,11 @@ contract EditContract {
         if $Value {
             ValidateEditContractNewValue($Value, $cur["value"])
         }
-        if $WalletId != "" {
-            $recipient = AddressToId($WalletId)
-            if $recipient == 0 {
-                error Sprintf("New contract owner %s is invalid", $WalletId)
-            }
-        } else {
-            $recipient = Int($cur["wallet_id"])
-        }
+   
+        $recipient = Int($cur["wallet_id"])
     }
 
     action {
-        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["token_id"])
+        UpdateContract($Id, $Value, $Conditions, $recipient, $cur["token_id"])
     }
 }

@@ -181,10 +181,9 @@ VALUES
         Id int
         Value string "optional"
         Conditions string "optional"
-        WalletId string "optional"
     }
     func onlyConditions() bool {
-        return $Conditions && !$Value && !$WalletId
+        return $Conditions && !$Value
     }
 
     conditions {
@@ -199,18 +198,12 @@ VALUES
         if $Value {
             ValidateEditContractNewValue($Value, $cur["value"])
         }
-        if $WalletId != "" {
-            $recipient = AddressToId($WalletId)
-            if $recipient == 0 {
-                error Sprintf("New contract owner %%s is invalid", $WalletId)
-            }
-        } else {
-            $recipient = Int($cur["wallet_id"])
-        }
+   
+        $recipient = Int($cur["wallet_id"])
     }
 
     action {
-        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["token_id"])
+        UpdateContract($Id, $Value, $Conditions, $recipient, $cur["token_id"])
     }
 }
 ', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
@@ -699,7 +692,6 @@ VALUES
         ApplicationId int
         Value string
         Conditions string
-        Wallet string "optional"
         TokenEcosystem int "optional"
     }
 
@@ -708,14 +700,6 @@ VALUES
 
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
-        }
-
-        $walletContract = $key_id
-        if $Wallet {
-            $walletContract = AddressToId($Wallet)
-            if $walletContract == 0 {
-                error Sprintf("wrong wallet %%s", $Wallet)
-            }
         }
 
         $contract_name = ContractName($Value)
@@ -734,7 +718,7 @@ VALUES
     }
 
     action {
-        $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+        $result = CreateContract($contract_name, $Value, $Conditions, $TokenEcosystem, $ApplicationId)
     }
     func price() int {
         return SysParamInt("contract_price")
