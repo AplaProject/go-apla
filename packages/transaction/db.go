@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -14,6 +13,7 @@ import (
 )
 
 var ErrDuplicatedTx = errors.New("Duplicated transaction")
+var ErrEarlyTime = errors.New("Early transaction time")
 
 // InsertInLogTx is inserting tx in log
 func InsertInLogTx(t *Transaction, blockID int64) error {
@@ -27,26 +27,22 @@ func InsertInLogTx(t *Transaction, blockID int64) error {
 
 // CheckLogTx checks if this transaction exists
 // And it would have successfully passed a frontal test
-func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
-	searchedHash, err := crypto.DoubleHash(txBinary)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal(err)
-	}
+func CheckLogTx(txHash []byte, transactions, txQueue bool) error {
 	logTx := &model.LogTransaction{}
-	found, err := logTx.GetByHash(searchedHash)
+	found, err := logTx.GetByHash(txHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting log transaction by hash")
 		return utils.ErrInfo(err)
 	}
 	if found {
-		log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
+		log.WithFields(log.Fields{"tx_hash": txHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
 		return ErrDuplicatedTx
 	}
 
 	if transactions {
 		// check for duplicate transaction
 		tx := &model.Transaction{}
-		_, err := tx.GetVerified(searchedHash)
+		_, err := tx.GetVerified(txHash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting verified transaction")
 			return utils.ErrInfo(err)
@@ -60,9 +56,9 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if txQueue {
 		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
-		found, err := qtx.GetByHash(nil, searchedHash)
+		found, err := qtx.GetByHash(nil, txHash)
 		if found {
-			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
+			log.WithFields(log.Fields{"tx_hash": txHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return ErrDuplicatedTx
 		}
 		if err != nil {
@@ -136,8 +132,11 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 	}
 
 	if err = t.Check(time.Now().Unix(), true); err != nil {
-		MarkTransactionBad(dbTransaction, hash, err.Error())
-		return err
+		if err != ErrEarlyTime {
+			MarkTransactionBad(dbTransaction, hash, err.Error())
+			return err
+		}
+		return nil
 	}
 
 	if t.TxKeyID == 0 {
@@ -160,27 +159,20 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 		return utils.ErrInfo(err)
 	}
 
-	logExist, err := model.GetLogTransactionsCount(hash)
-	if err != nil {
-		return err
+	// put with verified=1
+	newTx := &model.Transaction{
+		Hash:     hash,
+		Data:     binaryTx,
+		Type:     int8(t.TxType),
+		KeyID:    t.TxKeyID,
+		Counter:  counter,
+		Verified: 1,
+		HighRate: tx.HighRate,
 	}
-
-	if logExist == 0 {
-		// put with verified=1
-		newTx := &model.Transaction{
-			Hash:     hash,
-			Data:     binaryTx,
-			Type:     int8(t.TxType),
-			KeyID:    t.TxKeyID,
-			Counter:  counter,
-			Verified: 1,
-			HighRate: tx.HighRate,
-		}
-		err = newTx.Create()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
-			return utils.ErrInfo(err)
-		}
+	err = newTx.Create()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
+		return utils.ErrInfo(err)
 	}
 
 	// remove transaction from the queue (with verified=0)
