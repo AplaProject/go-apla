@@ -1,10 +1,11 @@
 package transaction
 
 import (
+	"bytes"
 	"errors"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -12,6 +13,7 @@ import (
 )
 
 var ErrDuplicatedTx = errors.New("Duplicated transaction")
+var ErrEarlyTime = errors.New("Early transaction time")
 
 // InsertInLogTx is inserting tx in log
 func InsertInLogTx(t *Transaction, blockID int64) error {
@@ -25,26 +27,22 @@ func InsertInLogTx(t *Transaction, blockID int64) error {
 
 // CheckLogTx checks if this transaction exists
 // And it would have successfully passed a frontal test
-func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
-	searchedHash, err := crypto.DoubleHash(txBinary)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal(err)
-	}
+func CheckLogTx(txHash []byte, transactions, txQueue bool) error {
 	logTx := &model.LogTransaction{}
-	found, err := logTx.GetByHash(searchedHash)
+	found, err := logTx.GetByHash(txHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting log transaction by hash")
 		return utils.ErrInfo(err)
 	}
 	if found {
-		log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
+		log.WithFields(log.Fields{"tx_hash": txHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
 		return ErrDuplicatedTx
 	}
 
 	if transactions {
 		// check for duplicate transaction
 		tx := &model.Transaction{}
-		_, err := tx.GetVerified(searchedHash)
+		_, err := tx.GetVerified(txHash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting verified transaction")
 			return utils.ErrInfo(err)
@@ -58,9 +56,9 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if txQueue {
 		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
-		found, err := qtx.GetByHash(nil, searchedHash)
+		found, err := qtx.GetByHash(nil, txHash)
 		if found {
-			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
+			log.WithFields(log.Fields{"tx_hash": txHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return ErrDuplicatedTx
 		}
 		if err != nil {
@@ -99,7 +97,7 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 	}
 
 	// set loglevel as error because default level setups to "error"
-	log.WithFields(log.Fields{"type": consts.BadTxError, "tx_hash": string(hash), "error": errText}).Error("tx marked as bad")
+	log.WithFields(log.Fields{"type": consts.BadTxError, "tx_hash": hash, "error": errText}).Error("tx marked as bad")
 
 	// looks like there is not hash in queue_tx in this moment
 	qtx := &model.QueueTx{}
@@ -127,24 +125,21 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 
 // TxParser writes transactions into the queue
 func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx []byte, myTx bool) error {
-	// get parameters for "struct" transactions
-	txType, keyID := GetTxTypeAndUserID(binaryTx)
-
-	header, err := CheckTransaction(binaryTx)
+	t, err := UnmarshallTransaction(bytes.NewBuffer(binaryTx))
 	if err != nil {
 		MarkTransactionBad(dbTransaction, hash, err.Error())
 		return err
 	}
 
-	if !( /*txType > 127 ||*/ consts.IsStruct(txType)) {
-		if header == nil {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("tx header is nil")
-			return utils.ErrInfo(errors.New("header is nil"))
+	if err = t.Check(time.Now().Unix(), true); err != nil {
+		if err != ErrEarlyTime {
+			MarkTransactionBad(dbTransaction, hash, err.Error())
+			return err
 		}
-		keyID = header.KeyID
+		return nil
 	}
 
-	if keyID == 0 {
+	if t.TxKeyID == 0 {
 		errStr := "undefined keyID"
 		MarkTransactionBad(dbTransaction, hash, errStr)
 		return errors.New(errStr)
@@ -168,8 +163,8 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 	newTx := &model.Transaction{
 		Hash:     hash,
 		Data:     binaryTx,
-		Type:     int8(txType),
-		KeyID:    keyID,
+		Type:     int8(t.TxType),
+		KeyID:    t.TxKeyID,
 		Counter:  counter,
 		Verified: 1,
 		HighRate: tx.HighRate,

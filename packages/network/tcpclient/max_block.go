@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/network"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
@@ -42,14 +41,14 @@ func getMaxBlock(host string) (blockID int64, err error) {
 	}
 
 	// response
-	blockIDBin := make([]byte, 4)
-	_, err = con.Read(blockIDBin)
+	resp := network.MaxBlockResponse{}
+	err = resp.Read(con)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.ConnectionError, "host": host}).Error("reading max block id from host")
 		return -1, err
 	}
 
-	return converter.BinToDec(blockIDBin), nil
+	return resp.BlockID, nil
 }
 
 func hostWithMaxBlock(ctx context.Context, hosts []string) (bestHost string, maxBlockID int64, err error) {
