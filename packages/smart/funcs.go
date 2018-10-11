@@ -1607,15 +1607,6 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 	}
 	_, _, err = sc.insert([]string{`id`, `amount`, `ecosystem`}, []interface{}{id, amount,
 		sc.TxSmart.EcosystemID}, `1_keys`)
-	if err == nil {
-		var block int64
-		if sc.BlockData != nil {
-			block = sc.BlockData.BlockID
-		}
-		_, _, err = sc.insert([]string{`sender_id`, `recipient_id`, `amount`,
-			`comment`, `block_id`, `txhash`, `ecosystem`},
-			[]interface{}{0, id, amount, comment, block, sc.TxHash, sc.TxSmart.EcosystemID}, `1_history`)
-	}
 	return err
 }
 
