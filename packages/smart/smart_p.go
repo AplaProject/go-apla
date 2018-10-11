@@ -523,10 +523,12 @@ func Substr(s string, off int64, slen int64) string {
 // BndWallet sets wallet_id to current wallet and updates value in vm
 func BndWallet(sc *SmartContract, tblid int64, state int64) error {
 	if err := validateAccess(`BindWallet`, sc, nBindWallet); err != nil {
+		log.Error("BindWallet access denied")
 		return err
 	}
 
 	if _, err := DBUpdate(sc, "@1contracts", tblid, map[string]interface{}{"wallet_id": sc.TxSmart.KeyID}); err != nil {
+		log.WithFields(log.Fields{"error": err, "tbl": tblid}).Error("on updating contract wallet")
 		return err
 	}
 

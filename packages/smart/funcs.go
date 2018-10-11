@@ -1136,6 +1136,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 			return 0, nil, err
 		}
 		if !fltResult {
+			log.WithFields(log.Fields{"filter": perm["filter"]}).Error("Access denied")
 			return 0, nil, errAccessDenied
 		}
 	}
