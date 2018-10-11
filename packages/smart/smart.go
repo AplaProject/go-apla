@@ -318,7 +318,7 @@ func ActivateContract(tblid, state int64, active bool) {
 
 // SetContractWallet changes WalletID of the contract in smartVM
 func SetContractWallet(sc *SmartContract, tblid, state int64, wallet int64) error {
-	if err := validateAccess(`SetContractWallet`, sc, nEditContract); err != nil {
+	if err := validateAccess(`SetContractWallet`, sc, nBindWallet, nUnbindWallet); err != nil {
 		return err
 	}
 	for i, item := range smartVM.Block.Children {
@@ -668,6 +668,7 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil
 			}
+			log.WithFields(log.Fields{"txSmart.KeyID": sc.TxSmart.KeyID}).Error("ACCESS DENIED")
 			return errAccessDenied
 		}
 		return nil

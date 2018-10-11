@@ -10,7 +10,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
         '{    
             "name": "false",
             "value": "ContractAccess(\"@1EditContract\")",
-            "wallet_id": "ContractAccess(\"@1EditContract\")",
+            "wallet_id": "ContractAccess(\"@1BindWallet\", \"@1UnbindWallet\")",
             "token_id": "ContractAccess(\"@1EditContract\")",
             "active": "ContractAccess(\"@1ActivateContract\", \"@1DeactivateContract\",\"@1EditContract\")",
             "conditions": "ContractAccess(\"@1EditContract\")",
