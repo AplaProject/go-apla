@@ -6,7 +6,6 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 	"value": "ContractConditions(\"MainCondition\")",
 	  "wallet_id": "ContractConditions(\"MainCondition\")",
 	  "token_id": "ContractConditions(\"MainCondition\")",
-	  "active": "ContractConditions(\"MainCondition\")",
 	  "conditions": "ContractConditions(\"MainCondition\")"}', 'ContractAccess("@1EditTable")'),
 	(next_id('1_tables'), 'keys', 
 	'{"insert": "true", "update": "true", 
