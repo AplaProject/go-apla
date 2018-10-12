@@ -53,9 +53,9 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "value": "ContractAccess(\"@UpdateSysParam\")",
+            "value": "ContractAccess(\"@1UpdateSysParam\")",
 			"name": "false",
-			"conditions": "ContractAccess(\"@UpdateSysParam\")"
+			"conditions": "ContractAccess(\"@1UpdateSysParam\")"
         }',
         'ContractConditions("@1AdminCondition")'
     ),
