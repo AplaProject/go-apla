@@ -693,9 +693,8 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
 
-	// TODO access
-
 	if model.IsMetaRegistry(tblname) {
+		// TODO check access table rights
 		model, err := sc.MetaDb.CreateFromParams(tblname, values)
 		if err != nil {
 			err = logError(err, consts.ConversionError, "filling metaregistry model")

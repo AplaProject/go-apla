@@ -18,6 +18,7 @@ const (
 )
 
 type state struct {
+	Transaction  string `json:"t"`
 	Counter      uint64 `json:"c"`
 	RegistryName string `json:"r"`
 	Value        string `json:"v"`
@@ -54,7 +55,7 @@ func (mr *rollback) saveState(block, tx []byte, registry *types.Registry, pk, va
 
 	counter := mr.counter.increment(key)
 
-	s := state{Counter: counter, RegistryName: registry.Name, Key: pk, Ecosystem: registry.Ecosystem.Name, Value: value}
+	s := state{Transaction: string(tx), Counter: counter, RegistryName: registry.Name, Key: pk, Ecosystem: registry.Ecosystem.Name, Value: value}
 	jstate, err := json.Marshal(s)
 	if err != nil {
 		mr.counter.decrement(key)
@@ -111,7 +112,7 @@ func (mr *rollback) removeState(block []byte) error {
 	}
 
 	for _, tx := range txses {
-		key := fmt.Sprintf(keyConvention, tx.RegistryName, tx.Ecosystem, tx.Key)
+		key := fmt.Sprintf(writePrefix, string(block), tx.Counter, tx.Transaction)
 		if err := mr.tx.Delete(key); err != nil {
 			return errors.Wrapf(err, "removing block state %s", key)
 		}

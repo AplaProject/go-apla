@@ -19,7 +19,7 @@ type teststruct struct {
 	Value2 []byte
 }
 
-func TestMetadataRollbackSaveState(t *testing.T) {
+func TestRollbackSaveState(t *testing.T) {
 	txMock := &kv.MockTransaction{}
 	mr := rollback{tx: txMock, counter: counter{txCounter: make(map[string]uint64)}}
 
@@ -59,7 +59,7 @@ func TestMetadataRollbackSaveState(t *testing.T) {
 	require.Equal(t, mr.counter.txCounter[string(block)], uint64(2))
 }
 
-func TestMetadataRollbackSaveRollback(t *testing.T) {
+func TestRollbackSaveRollback(t *testing.T) {
 	mDb, err := memdb.OpenDB("", false)
 	require.Nil(t, err)
 	db := kv.DatabaseAdapter{Database: *mDb}

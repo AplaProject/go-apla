@@ -83,7 +83,6 @@ func setupGui() {
 	ui.Body.Align()
 
 	var last uint64
-	count := uint64(1000000000)
 
 	storage, ids := setupDB()
 
@@ -99,11 +98,7 @@ func setupGui() {
 			tx := storage.Begin()
 			lid := len(ids)
 			for pos, id := range ids {
-				if atomic.AddUint64(&last, 1) == count {
-					ui.StopLoop()
-					time.Sleep(time.Second)
-					os.Exit(1)
-				}
+				t.t = int64(atomic.AddUint64(&last, 1))
 
 				if pos == lid-1 {
 					break
@@ -115,7 +110,6 @@ func setupGui() {
 				rec2.Amount = rec1.Amount
 				rec1.Amount = "0"
 
-				t.t = int64(last)
 				checkErr(tx.Update(
 					t,
 					registry,
@@ -129,20 +123,29 @@ func setupGui() {
 					rec2,
 				))
 			}
+
+			t.b++
+			if t.b > 5 {
+				checkErr(tx.CleanBlockState([]byte(strconv.FormatInt(t.b-5, 10))))
+			}
 			checkErr(tx.Commit())
 		}
 	}()
 
 	go func() {
 		var buf uint64
-		retro := make([]int, 10)
+		retro := make([]int, 1)
 		start := time.Now()
 		for range time.NewTicker(time.Second).C {
 			l := atomic.LoadUint64(&last)
 			if l > 0 {
 				cur := l - buf
 				buf = l
-				retro = append(retro, int(cur))
+				if len(retro) < 30 {
+					retro = append(retro, int(cur))
+				} else {
+					retro = append(retro[1:], int(cur))
+				}
 
 				splM.Lines[0].Data = retro
 				hashrate.Text = fmt.Sprintf("%d tx/s", cur)
@@ -163,6 +166,8 @@ func setupGui() {
 
 func checkErr(err error) {
 	if err != nil {
+		ui.StopLoop()
+		ui.Close()
 		fmt.Println(err)
 		os.Exit(1)
 	}
@@ -170,7 +175,7 @@ func checkErr(err error) {
 
 func setupDB() (types.MetadataRegistryStorage, []int64) {
 	rollbacks := true
-	persist := false
+	persist := true
 	pricing := true
 
 	checkErr(os.RemoveAll("metabench.db"))

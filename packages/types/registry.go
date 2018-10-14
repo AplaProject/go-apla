@@ -40,11 +40,6 @@ type MetadataRegistryReader interface {
 	Walk(registry *Registry, field string, fn func(jsonRow string) bool) error
 }
 
-type BlockchainContext interface {
-	GetBlockHash() []byte
-	GetTransactionHash() []byte
-}
-
 type MetadataRegistryWriter interface {
 	Insert(ctx BlockchainContext, registry *Registry, pkValue string, value interface{}) error
 	Update(ctx BlockchainContext, registry *Registry, pkValue string, newValue interface{}) error
@@ -58,17 +53,31 @@ type MetadataRegistryReaderWriter interface {
 	MetadataRegistryWriter
 	Pricer
 	Filler
+	RegistryState
+}
+
+type BlockchainContext interface {
+	GetBlockHash() []byte
+	GetTransactionHash() []byte
+}
+
+type RegistryState interface {
+	// Rollback is rollback all block transactions
+	RollbackBlock(block []byte) error
+
+	// CleanBlockState is removing all rollbacks generated for block transactions
+	CleanBlockState(block []byte) error
 }
 
 // MetadataRegistryStorage provides a read or read-write transactions for metadata registry
 type MetadataRegistryStorage interface {
+	// Storage provides unpaid reading
 	MetadataRegistryReader
+
+	RegistryState
 
 	// Write/Read transaction. Must be closed by calling Commit() or Rollback() when done.
 	Begin() MetadataRegistryReaderWriter
-
-	// Rollback is rollback all block transactions
-	Rollback(block []byte) error
 }
 
 type Index struct {

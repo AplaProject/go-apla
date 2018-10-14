@@ -204,6 +204,22 @@ func (m *tx) Price() int64 {
 	return 0
 }
 
+func (m *tx) RollbackBlock(block []byte) error {
+	if !m.saveState {
+		return ErrRollbackDisabled
+	}
+
+	return m.rollback.rollbackState(block)
+}
+
+func (m *tx) CleanBlockState(block []byte) error {
+	if !m.saveState {
+		return ErrRollbackDisabled
+	}
+
+	return m.rollback.removeState(block)
+}
+
 func (m *tx) CreateFromParams(name string, params map[string]interface{}) (types.RegistryModel, error) {
 	return converter{}.createFromParams(name, params)
 }
@@ -263,6 +279,18 @@ func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool, pr
 		return nil, err
 	}
 
+	if ms.rollback {
+		if err := kvTx.AddIndex(kv.Index{
+			Name: "rollback_tx",
+			SortFn: func(a, b string) bool {
+				return true
+			},
+			Pattern: fmt.Sprintf(searchPrefix, "*", "*", "*"),
+		}); err != nil {
+			return nil, err
+		}
+	}
+
 	if err := kvTx.Commit(); err != nil {
 		return nil, err
 	}
@@ -305,22 +333,16 @@ func (m *storage) Get2(registry *types.Registry, pkValue string) (types.Registry
 	return tx.Get2(registry, pkValue)
 }
 
-func (m *storage) Rollback(block []byte) error {
-	if !m.rollback {
-		return ErrRollbackDisabled
-	}
-
-	databaseTx := m.db.Begin(true)
-	rollback := &rollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
-
-	err := rollback.rollbackState(block)
+func (m *storage) RollbackBlock(block []byte) error {
+	tx := m.Begin()
+	err := tx.RollbackBlock(block)
 	if err != nil {
-		rbErr := databaseTx.Rollback()
+		rbErr := tx.Rollback()
 		log.WithFields(log.Fields{"type": consts.DBError, "error": rbErr}).Error("rollback metadata db")
 		return err
 	}
 
-	err = databaseTx.Commit()
+	err = tx.Commit()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("commiting metadata db")
 		return err
@@ -329,6 +351,20 @@ func (m *storage) Rollback(block []byte) error {
 	return nil
 }
 
-func (m *storage) Reader() types.MetadataRegistryReader {
-	return &tx{db: m.db}
+func (m *storage) CleanBlockState(block []byte) error {
+	tx := m.Begin()
+	err := tx.CleanBlockState(block)
+	if err != nil {
+		rbErr := tx.Rollback()
+		log.WithFields(log.Fields{"type": consts.DBError, "error": rbErr}).Error("removing block rollback")
+		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("commiting metadata db")
+		return err
+	}
+
+	return nil
 }
