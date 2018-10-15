@@ -6,13 +6,17 @@
 // The contract requests the role ID from the ecosystem parameter and the contract checks the rights.
 
 contract AdminCondition {
-	conditions {
-		if EcosysParam("founder_account") != $key_id {
-			warning "Sorry, you do not have access to this action."
-		}
+    conditions {
+        if EcosysParam("founder_account") != $key_id {
+            warning "Sorry, you do not have access to this action."
+        } else {
+            return
+        }
 
-		// var role_id int
-		// role_id = EcosysParam("role_admin")
-		// RoleAccess(role_id)
-	}
+        var role_id int
+        role_id = EcosysParam("role_admin")
+        if !RoleAccess(role_id) {
+            warning "Sorry, you do not have access to this action."
+        }
+    }
 }

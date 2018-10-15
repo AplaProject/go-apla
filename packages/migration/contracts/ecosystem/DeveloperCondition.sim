@@ -9,10 +9,14 @@ contract DeveloperCondition {
 	conditions {
 		if EcosysParam("founder_account") != $key_id {
 			warning "Sorry, you do not have access to this action."
-		}
+		} else {
+			return
+		} 
 
-		// var role_id int
-		// role_id = EcosysParam("role_developer")
-		// RoleAccess(role_id)
+        var role_id int
+        role_id = EcosysParam("role_developer")
+        if !RoleAccess(role_id) {
+            warning "Sorry, you do not have access to this action."
+        }
 	}
 }
