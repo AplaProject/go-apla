@@ -527,8 +527,8 @@ func BndWallet(sc *SmartContract, tblid int64, state int64) error {
 		return err
 	}
 
-	if _, err := DBUpdate(sc, "@1contracts", tblid, map[string]interface{}{"wallet_id": sc.TxSmart.KeyID}); err != nil {
-		log.WithFields(log.Fields{"error": err, "tbl": tblid}).Error("on updating contract wallet")
+	if _, _, err := sc.update([]string{"wallet_id"}, []interface{}{sc.TxSmart.KeyID}, "@1contracts", "id", tblid); err != nil {
+		log.WithFields(log.Fields{"error": err, "contract_id": tblid}).Error("on updating contract wallet")
 		return err
 	}
 
@@ -541,7 +541,8 @@ func UnbndWallet(sc *SmartContract, tblid int64, state int64) error {
 		return err
 	}
 
-	if _, err := DBUpdate(sc, "@1contracts", tblid, map[string]interface{}{"wallet_id": 0}); err != nil {
+	if _, _, err := sc.update([]string{"wallet_id"}, []interface{}{0}, "@1contracts", "id", tblid); err != nil {
+		log.WithFields(log.Fields{"error": err, "contract_id": tblid}).Error("on updating contract wallet")
 		return err
 	}
 
