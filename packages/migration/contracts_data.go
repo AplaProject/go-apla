@@ -12,17 +12,22 @@ VALUES
 
 contract AdminCondition {
     conditions {
-        if EcosysParam("founder_account") != $key_id {
-            warning "Sorry, you do not have access to this action."
-        } else {
+        if EcosysParam("founder_account") == $key_id {
             return
         }
 
-        var role_id int
-        role_id = EcosysParam("role_admin")
-        if !RoleAccess(role_id) {
+        var role_id_param string
+        role_id_param = EcosysParam("role_admin")
+        if Size(role_id_param) == 0 {
             warning "Sorry, you do not have access to this action."
         }
+
+        var role_id int
+        role_id = Int(role_id_param)
+        
+        if !RoleAccess(role_id) {
+            warning "Sorry, you do not have access to this action."
+        }      
     }
 }
 ', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d'),
@@ -33,17 +38,22 @@ contract AdminCondition {
 
 contract DeveloperCondition {
 	conditions {
-		if EcosysParam("founder_account") != $key_id {
-			warning "Sorry, you do not have access to this action."
-		} else {
-			return
-		} 
+		if EcosysParam("founder_account") == $key_id {
+            return
+        }
 
-        var role_id int
-        role_id = EcosysParam("role_developer")
-        if !RoleAccess(role_id) {
+        var role_id_param string
+        role_id_param = EcosysParam("role_developer")
+        if Size(role_id_param) == 0 {
             warning "Sorry, you do not have access to this action."
         }
+
+        var role_id int
+        role_id = Int(role_id_param)
+        
+        if !RoleAccess(role_id) {
+            warning "Sorry, you do not have access to this action."
+        }      
 	}
 }
 ', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d'),
