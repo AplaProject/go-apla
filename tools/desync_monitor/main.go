@@ -94,8 +94,6 @@ func sendEmail(smtpConf *config.Smtp, alertConf *config.AlertMessage, message st
 }
 
 func monitor(conf *config.Config) {
-
-	log.Info("=====================")
 	maxBlockIDs, err := query.MaxBlockIDs(conf.NodesList)
 	if err != nil {
 		log.WithFields(log.Fields{"err": err}).Error("on sending max block request")
