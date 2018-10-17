@@ -1285,9 +1285,11 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	if err != nil {
 		return err
 	}
+
+	name = converter.EscapeSQL(strings.ToLower(name))
 	tbl := &model.Table{}
 	tbl.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
-	found, err := tbl.ExistsByName(sc.DbTransaction, strings.ToLower(name))
+	found, err := tbl.ExistsByName(sc.DbTransaction, name)
 	if err != nil {
 		return err
 	}
@@ -1615,7 +1617,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return err
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
-	tableName = strings.ToLower(tableName)
+	tableName = converter.EscapeSQL(strings.ToLower(tableName))
 	tables := `1_tables`
 	type cols struct {
 		Columns string
