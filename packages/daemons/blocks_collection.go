@@ -187,27 +187,34 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		curBlockID = curBlock.Header.BlockID
 	}
 	for blockID := curBlockID; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
-		var rawBlocksChan chan []byte
-		rawBlocksChan, err := tcpclient.GetBlocksBodies(ctx, host, blockHash, false)
-		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-			return err
-		}
+		ctxDone, cancel := context.WithCancel(ctx)
+		if loopErr := func() error {
+			defer func() {
+				cancel()
+				d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
+			}()
 
-		for rawBlock := range rawBlocksChan {
-			if err = playRawBlock(rawBlock); err != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+			rawBlocksChan, err := tcpclient.GetBlocksBodies(ctxDone, host, blockHash, false)
+			if err != nil {
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 				return err
 			}
-			count++
+			for rawBlock := range rawBlocksChan {
+				if err = playRawBlock(rawBlock); err != nil {
+					d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+					return err
+				}
+				count++
+			}
+			blocks, err := blockchain.GetNBlocksFrom(nil, blockHash, tcpserver.BlocksPerRequest, 1)
+			if err != nil {
+				return err
+			}
+			blockHash = blocks[len(blocks)-1].Hash
+			return nil
+		}(); loopErr != nil {
+			return loopErr
 		}
-		blocks, err := blockchain.GetNBlocksFrom(nil, blockHash, tcpserver.BlocksPerRequest, 1)
-		if err != nil {
-			return err
-		}
-		blockHash = blocks[len(blocks)-1].Hash
-
-		d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
 	}
 	return nil
 }
@@ -372,7 +379,7 @@ func getBlocks(ctx context.Context, blockHash []byte, host string) ([]*block.Pla
 		count++
 
 		// check the signature
-		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, block.ForSign(), block.Header.Sign, true)
+		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, []byte(block.ForSign()), block.Header.Sign, true)
 		if okSignErr == nil {
 			break
 		}

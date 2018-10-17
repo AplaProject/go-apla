@@ -147,7 +147,7 @@ func (b Block) ForSign() string {
 
 func (b *Block) GetSign(key string) ([]byte, error) {
 	forSign := b.ForSign()
-	signed, err := crypto.Sign(key, forSign)
+	signed, err := crypto.Sign([]byte(key), []byte(forSign))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing block")
 		return nil, err
@@ -266,7 +266,7 @@ func (b *Block) Insert(tx *leveldb.Transaction) error {
 		if err != nil {
 			return err
 		}
-		txStatus := TxStatus{BlockID: b.Header.BlockID}
+		txStatus := TxStatus{BlockID: b.Header.BlockID, BlockHash: hash}
 		if err := tr.Insert(tx); err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract StopVDE {
 		data {
@@ -9,6 +9,8 @@ contract StopVDE {
 		}
 	
 		action {
-			StopVDEProcess($VDEName)
+            $VDEName = ToLower($VDEName)
+            StopVDEProcess($VDEName)
+            $result = "VDE " + $VDEName + " stopped"
 		}
-	}
+}

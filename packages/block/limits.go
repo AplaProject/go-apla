@@ -215,7 +215,7 @@ func (bl *txUserEcosysLimit) check(t *transaction.Transaction, mode int) error {
 		limit := syspar.GetMaxBlockUserTx()
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
-		found, err := sp.Get(t.DbTransaction, `max_block_user_tx`)
+		found, err := sp.Get(t.DbTransaction, `max_tx_block_per_user`)
 		if err != nil {
 			return limitError(`txUserEcosysLimit`, err.Error())
 		}

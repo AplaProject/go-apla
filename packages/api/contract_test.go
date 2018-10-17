@@ -30,6 +30,21 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestUpdate_FullNodes(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	err := postTx("UpdateSysParam", &url.Values{
+		"Name":  {"full_nodes"},
+		"Value": {"[]"},
+	})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+}
 func TestHardContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -54,10 +69,23 @@ func TestHardContract(t *testing.T) {
 
 func TestExistContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
-	form := url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+	rnd := `cnt` + crypto.RandSeq(4)
+	form := url.Values{"Name": {rnd}, "Value": {`contract ` + rnd + ` {
+		data {
+			Name string
+		}
+		action {
+		Throw($Name, "Text of the error")
+	}}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
-	err := postTx(`NewContract`, &form)
-	assert.EqualError(t, err, `{"type":"panic","error":"Contract EditPage already exists"}`)
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.EqualError(t, postTx(rnd, &url.Values{"Name": {"1"}}),
+		`{"type":"exception","error":"Text of the error","id":"1"}`)
+	form = url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"Contract EditPage already exists"}`)
 }
 
 func TestNewContracts(t *testing.T) {
@@ -71,7 +99,7 @@ func TestNewContracts(t *testing.T) {
 	rnd := crypto.RandSeq(4)
 	for i, item := range contracts {
 		var ret getContractResult
-		if i > 20 {
+		if i > 100 {
 			break
 		}
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
@@ -115,6 +143,19 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`FmtMoney`, `contract FmtMoney {
+		action {
+			Test("result", FormatMoney("123456789", 0))
+			$num2 = "5500000"
+			Test("t1", FormatMoney($num1, -1))  //123456723720
+			Test("t2", FormatMoney($num1, 0)   //12345672372
+			Test("t3", FormatMoney($num1, 1)   //1234567237,2
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `0.000000000123456789`,
+			`t1`: `123456723720`, `t2`: `12345672372`, `t3`: `1234567237.2`}},
+	}},
+
 	{`StrNil`, `contract StrNil {
 		action {
 			Test("result", Sprintf("empty: %s", Str(nil)))
@@ -1389,4 +1430,81 @@ func TestLoopCondExt(t *testing.T) {
 		t.Error(err)
 		return
 	}
+}
+
+func TestBlockTransactions(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+
+	rnd := `rnd` + crypto.RandSeq(4)
+
+	form := url.Values{`Value`: {`contract ` + rnd + `1 {
+		conditions {
+	    
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	var ret getContractResult
+	require.NoError(t, sendGet(`contract/`+rnd+`1`, nil, &ret))
+
+	var result map[int64][]TxInfo
+	require.NoError(t, sendGet(`blocks?block_id=1&count=10`, nil, &result))
+
+	fmt.Printf("%+v", result)
+}
+
+func TestCost(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`cnt`)
+
+	form := url.Values{`Value`: {`contract ` + name + `1 {
+		func my() {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		conditions {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		action {
+			var i int
+			while i < 10000 {
+				i = i + 1
+			}
+			my()
+			$result = "OK"
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{`Value`: {`contract ` + name + `2 {
+		conditions {
+			var i int
+			while i < 1000 {
+				i = i + 1
+			}
+		}
+		action {
+			var i int
+			while i < 10000 {
+				i = i + 1
+			}
+			` + name + `1()
+			$result = "OK"
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	require.NoError(t, postTx(name+`1`, &url.Values{}))
+	require.NoError(t, postTx(name+`2`, &url.Values{}))
+	t.Error(`OK`)
+
 }

@@ -12,7 +12,9 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/protocols"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -23,17 +25,18 @@ import (
 
 // Block is storing block data
 type PlayableBlock struct {
-	Header       blockchain.BlockHeader
-	PrevHeader   *blockchain.BlockHeader
-	Hash         []byte
-	PrevHash     []byte
-	MrklRoot     []byte
-	BinData      []byte
-	Transactions []*transaction.Transaction
-	SysUpdate    bool
-	GenBlock     bool // it equals true when we are generating a new block
-	StopCount    int  // The count of good tx in the block
-	LDBTX        *leveldb.Transaction
+	Header        blockchain.BlockHeader
+	PrevHeader    *blockchain.BlockHeader
+	Hash          []byte
+	PrevHash      []byte
+	MrklRoot      []byte
+	BinData       []byte
+	Transactions  []*transaction.Transaction
+	SysUpdate     bool
+	GenBlock      bool // it equals true when we are generating a new block
+	StopCount     int  // The count of good tx in the block
+	Notifications []smart.NotifyInfo
+	LDBTX         *leveldb.Transaction
 }
 
 func (b PlayableBlock) String() string {
@@ -128,6 +131,13 @@ func (b *PlayableBlock) PlaySafe() error {
 			return err
 		}
 	}
+	for _, item := range b.Notifications {
+		if item.Roles {
+			notificator.UpdateRolesNotifications(item.EcosystemID, item.List)
+		} else {
+			notificator.UpdateNotifications(item.EcosystemID, item.List)
+		}
+	}
 	return nil
 }
 
@@ -173,11 +183,29 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
-		_, err = t.Play()
+		var flush []smart.FlushInfo
+		msg, flush, err := t.Play()
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}
 		if err != nil {
+			if flush != nil {
+				for i := len(flush) - 1; i >= 0; i-- {
+					finfo := flush[i]
+					if finfo.Prev == nil {
+						if finfo.ID != uint32(len(smart.GetVM().Children)-1) {
+							logger.WithFields(log.Fields{"type": consts.ContractError, "value": finfo.ID,
+								"len": len(smart.GetVM().Children) - 1}).Error("flush rollback")
+						} else {
+							smart.GetVM().Children = smart.GetVM().Children[:len(smart.GetVM().Children)-1]
+							delete(smart.GetVM().Objects, finfo.Name)
+						}
+					} else {
+						smart.GetVM().Children[finfo.ID] = finfo.Prev
+						smart.GetVM().Objects[finfo.Name] = finfo.Info
+					}
+				}
+			}
 			if err == custom.ErrNetworkStopping {
 				return err
 			}
@@ -212,6 +240,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.
 				}
 				t.SysUpdate = false
 			}
+			blockchain.SetTransactionError(ldbtx, hash, msg)
 			continue
 		}
 		err = dbTransaction.ReleaseSavepoint(curTx)
@@ -225,6 +254,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.
 			b.SysUpdate = true
 			t.SysUpdate = false
 		}
+		b.Notifications = append(b.Notifications, t.Notifications...)
 	}
 	return nil
 }
@@ -323,7 +353,7 @@ func (b *PlayableBlock) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, b.ForSign(), b.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, []byte(b.ForSign()), b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHash))

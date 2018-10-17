@@ -38,6 +38,6 @@ func Type10() (*network.MaxBlockResponse, error) {
 	}
 
 	return &network.MaxBlockResponse{
-		BlockID: uint32(lastBlock.Header.BlockID),
+		BlockID: lastBlock.Header.BlockID,
 	}, nil
 }

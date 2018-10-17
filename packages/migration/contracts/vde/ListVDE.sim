@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract ListVDE {
 		data {}
@@ -6,6 +6,6 @@ contract ListVDE {
 		conditions {}
 	
 		action {
-			return GetVDEList()
+			$result = GetVDEList()
 		}
 	}

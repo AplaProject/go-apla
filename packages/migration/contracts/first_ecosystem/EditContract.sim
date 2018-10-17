@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract EditContract {
     data {
@@ -38,8 +38,5 @@ contract EditContract {
 
     action {
         UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
-    }
-    func rollback() {
-        RollbackEditContract()
     }
 }

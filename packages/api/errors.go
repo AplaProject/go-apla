@@ -23,6 +23,7 @@ var (
 		`E_DELETEDKEY`:      `The key is deleted`,
 		`E_ECOSYSTEM`:       `Ecosystem %d doesn't exist`,
 		`E_EMPTYPUBLIC`:     `Public key is undefined`,
+		`E_KEYNOTFOUND`:     `Key has not been found`,
 		`E_EMPTYSIGN`:       `Signature is undefined`,
 		`E_HASHWRONG`:       `Hash is incorrect`,
 		`E_HASHNOTFOUND`:    `Hash has not been found`,
@@ -37,7 +38,6 @@ var (
 		`E_PERMISSION`:      `Permission denied`,
 		`E_QUERY`:           `DB query is wrong`,
 		`E_RECOVERED`:       `API recovered`,
-		`E_REFRESHTOKEN`:    `Refresh token is not valid`,
 		`E_SERVER`:          `Server error`,
 		`E_SIGNATURE`:       `Signature is incorrect`,
 		`E_UNKNOWNSIGN`:     `Unknown signature`,
@@ -53,5 +53,6 @@ var (
 		`E_REQUESTNOTFOUND`: `Request %s doesn't exist`,
 		`E_UPDATING`:        `Node is updating blockchain`,
 		`E_STOPPING`:        `Network is stopping`,
+		`E_NOTIMPLEMENTED`:  `Not implemented`,
 	}
 )

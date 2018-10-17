@@ -386,11 +386,9 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		}
 	}
 	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
-	appID := int(converter.StrToInt64((*workspace.Vars)[`app_id`]))
 	if (*workspace.Vars)[`_full`] != `1` {
 		for i, v := range pars {
-			pars[i] = language.LangMacro(v, state, appID, (*workspace.Vars)[`lang`],
-				workspace.SmartContract.VDE)
+			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`lang`])
 			if pars[i] != v {
 				if parFunc.RawPars == nil {
 					rawpars := make(map[string]string)
@@ -716,7 +714,6 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 			Header: blockchain.TxHeader{
 				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
 				KeyID:       converter.StrToInt64((*vars)[`key_id`]),
-				RoleID:      converter.StrToInt64((*vars)[`role_id`]),
 				NetworkID:   consts.NETWORK_ID,
 			},
 		},

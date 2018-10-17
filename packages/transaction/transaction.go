@@ -1,10 +1,8 @@
 package transaction
 
 import (
-	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
@@ -15,7 +13,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -31,6 +28,7 @@ type Transaction struct {
 	TxBinaryData  []byte // transaction binary data
 	TxFullData    []byte // full transaction, with type and data
 	TxHash        []byte
+	TxSignature   []byte
 	TxKeyID       int64
 	TxTime        int64
 	TxType        int64
@@ -47,6 +45,7 @@ type Transaction struct {
 	Rand          *rand.Rand
 	SysUpdate     bool
 	LdbTx         *leveldb.Transaction
+	Notifications []smart.NotifyInfo
 
 	SmartContract smart.SmartContract
 }
@@ -82,6 +81,8 @@ func FromBlockchainTransaction(tx *blockchain.Transaction) (*Transaction, error)
 	}
 
 	t := new(Transaction)
+	t.TxFullData = bytes
+	t.TxType = int64(tx.Header.Type)
 	t.TxHash = hash
 	t.TxUsedCost = decimal.New(0, 0)
 	t.TxFullData = bytes
@@ -105,75 +106,6 @@ func (t *Transaction) ToBlockchainTransaction() (*blockchain.Transaction, error)
 	return tx, nil
 }
 
-func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files map[string]*tx.File, forsign []string) error {
-	for _, fitem := range fieldInfos {
-		var err error
-		var v interface{}
-		var forv string
-		var isforv bool
-
-		if fitem.ContainsTag(script.TagFile) {
-			file, ok := files[fitem.Name]
-			if !ok {
-				return nil
-			}
-			t.TxData[fitem.Name] = file.Data
-			t.TxData[fitem.Name+"MimeType"] = file.MimeType
-
-			forsign = append(forsign, file.MimeType, file.Hash)
-			continue
-		}
-
-		switch fitem.Type.String() {
-		case `uint64`:
-			var val uint64
-			val = converter.StrToUint64(params[fitem.Name])
-			v = val
-		case `float64`:
-			var val float64
-			val = converter.StrToFloat64(params[fitem.Name])
-			v = val
-		case `int64`:
-			v = converter.StrToInt64(params[fitem.Name])
-		case script.Decimal:
-			v, err = decimal.NewFromString(params[fitem.Name])
-		case `string`:
-			v = params[fitem.Name]
-		case `[]uint8`:
-			v, err = hex.DecodeString(params[fitem.Name])
-		case `[]interface {}`:
-			var list []string
-			for key, value := range params {
-				if key == fitem.Name+`[]` && len(value) > 0 {
-					count := converter.StrToInt(value)
-					for i := 0; i < count; i++ {
-						list = append(list, params[fmt.Sprintf(`%s[%d]`, fitem.Name, i)])
-					}
-				}
-			}
-			if len(list) > 0 {
-				forv = strings.Join(list, `,`)
-			}
-			v = list
-		}
-		if t.TxData[fitem.Name] == nil {
-			t.TxData[fitem.Name] = v
-		}
-		if err != nil {
-			return err
-		}
-		if strings.Index(fitem.Tags, `image`) >= 0 {
-			continue
-		}
-		if isforv {
-			v = forv
-		}
-		forsign = append(forsign, fmt.Sprintf("%v", v))
-	}
-	t.TxData[`forsign`] = strings.Join(forsign, ",")
-	return nil
-}
-
 func (t *Transaction) parseFromContract(smartTx *blockchain.Transaction) error {
 	t.TxPtr = nil
 	t.TxSmart = smartTx
@@ -194,8 +126,12 @@ func (t *Transaction) parseFromContract(smartTx *blockchain.Transaction) error {
 	txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 
 	if txInfo != nil {
-		if err := t.fillTxData(*txInfo, smartTx.Params, smartTx.Files, forsign); err != nil {
+		params, err := smart.FillTxData(*txInfo, smartTx.Params, smartTx.Files, forsign)
+		if err != nil {
 			return err
+		}
+		for k, v := range params {
+			t.TxData[k] = v
 		}
 	}
 
@@ -243,9 +179,18 @@ func (t *Transaction) Check(checkTime int64) error {
 	return nil
 }
 
-func (t *Transaction) Play() (string, error) {
-	// check that there are enough money in CallContract
-	return t.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction)
+func (t *Transaction) Play() (string, []smart.FlushInfo, error) {
+	// smart-contract
+	if t.TxContract != nil {
+		// check that there are enough money in CallContract
+		return t.CallContract()
+	}
+
+	if t.tx == nil {
+		return "", nil, utils.ErrInfo(fmt.Errorf("can't find parser for %d", t.TxType))
+	}
+
+	return "", nil, t.tx.Action()
 }
 
 // AccessRights checks the access right by executing the condition value
@@ -280,7 +225,7 @@ func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 }
 
 // CallContract calls the contract functions according to the specified flags
-func (t *Transaction) CallContract(flags int) (resultContract string, err error) {
+func (t *Transaction) CallContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
 	sc := smart.SmartContract{
 		VDE:           false,
 		Rollback:      true,
@@ -293,11 +238,19 @@ func (t *Transaction) CallContract(flags int) (resultContract string, err error)
 		TxUsedCost:    t.TxUsedCost,
 		BlockData:     t.BlockData,
 		TxHash:        t.TxHash,
+		TxSignature:   t.TxSignature,
+		TxSize:        int64(len(t.TxBinaryData)),
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 	}
-	resultContract, err = sc.CallContract(flags)
+	resultContract, err = sc.CallContract()
+	t.TxFuel = sc.TxFuel
 	t.SysUpdate = sc.SysUpdate
+	t.Notifications = sc.Notifications
+	if sc.FlushRollback != nil {
+		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
+		copy(flushRollback, sc.FlushRollback)
+	}
 	return
 }
 

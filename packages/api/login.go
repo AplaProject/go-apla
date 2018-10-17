@@ -17,28 +17,25 @@
 package api
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
-	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
-
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
+	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-
-	"encoding/hex"
-	"encoding/json"
-
+	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -48,7 +45,6 @@ const nonceSalt = "LOGIN"
 
 type loginResult struct {
 	Token       string        `json:"token,omitempty"`
-	Refresh     string        `json:"refresh,omitempty"`
 	EcosystemID string        `json:"ecosystem_id,omitempty"`
 	KeyID       string        `json:"key_id,omitempty"`
 	Address     string        `json:"address,omitempty"`
@@ -112,48 +108,42 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		if account.Deleted == 1 {
 			return errorAPI(w, `E_DELETEDKEY`, http.StatusForbidden)
 		}
-	} else {
-		pubkey = data.params[`pubkey`].([]byte)
-		if len(pubkey) == 0 {
-			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
-		}
-		NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-		if err != nil || len(NodePrivateKey) < 1 {
-			if err == nil {
-				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+	} else if !conf.Config.IsSupportingVDE() {
+		if syspar.IsTestMode() {
+			pubkey = data.params[`pubkey`].([]byte)
+			if len(pubkey) == 0 {
+				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
+				return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
 			}
-			return err
-		}
 
-		pubkey = data.params[`pubkey`].([]byte)
-		hexPubKey := hex.EncodeToString(pubkey)
-		params := map[string]string{"NewPubkey": hexPubKey}
-		contract := smart.GetContract("NewUser", 1)
-		sc := blockchain.Transaction{
-			Header: blockchain.TxHeader{
-				Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
-				Time:        time.Now().Unix(),
-				EcosystemID: 1,
-				KeyID:       conf.Config.KeyID,
-				NetworkID:   consts.NETWORK_ID,
-				PublicKey:   pubkey,
-			},
-			SignedBy: smart.PubToID(NodePublicKey),
-			Params:   params,
-		}
-
-		if conf.Config.IsSupportingVDE() {
-
+			pubkey = data.params[`pubkey`].([]byte)
+			hexPubKey := hex.EncodeToString(pubkey)
+			params := map[string]string{"NewPubkey": hexPubKey}
+			contract := smart.GetContract("NewUser", 1)
+			NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
+			if err != nil {
+				return errorAPI(w, err, http.StatusInternalServerError)
+			}
+			sc := blockchain.Transaction{
+				Header: blockchain.TxHeader{
+					Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
+					Time:        time.Now().Unix(),
+					EcosystemID: 1,
+					KeyID:       conf.Config.KeyID,
+					NetworkID:   consts.NETWORK_ID,
+					PublicKey:   pubkey,
+				},
+				SignedBy: smart.PubToID(NodePublicKey),
+				Params:   params,
+			}
 			signPrms := []string{sc.ForSign()}
 			signPrms = append(signPrms, hexPubKey)
 			signData := strings.Join(signPrms, ",")
-			signature, err := crypto.Sign(NodePrivateKey, signData)
+			signature, err := crypto.Sign([]byte(NodePrivateKey), []byte(signData))
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 				return err
 			}
-
 			sc.Header.BinSignatures = converter.EncodeLengthPlusData(signature)
 
 			if sc.Header.PublicKey, err = hex.DecodeString(NodePublicKey); err != nil {
@@ -161,17 +151,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 				return err
 			}
 
-			serializedContract, err := msgpack.Marshal(sc)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-				return errorAPI(w, err, http.StatusInternalServerError)
-			}
-			ret, err := VDEContract(serializedContract, data)
-			if err != nil {
-				return errorAPI(w, err, http.StatusInternalServerError)
-			}
-			data.result = ret
-		} else {
 			smartTx, err := smart.CallContract("NewUser", 1, params, []string{hexPubKey})
 			if err != nil {
 				return errorAPI(w, err, http.StatusInternalServerError)
@@ -179,6 +158,8 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
 				return errorAPI(w, err, http.StatusInternalServerError)
 			}
+		} else {
+			return errorAPI(w, `E_KEYNOTFOUND`, http.StatusForbidden)
 		}
 	}
 
@@ -209,7 +190,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	}
 
-	verify, err := crypto.CheckSign(pubkey, nonceSalt+msg, data.params[`signature`].([]byte))
+	verify, err := crypto.CheckSign(pubkey, []byte(nonceSalt+msg), data.params[`signature`].([]byte))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "pubkey": pubkey, "msg": msg, "signature": string(data.params["signature"].([]byte))}).Error("checking signature")
 		return errorAPI(w, err, http.StatusBadRequest)
@@ -274,7 +255,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
-	result.Refresh, err = jwtGenerateToken(w, claims)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
 		return errorAPI(w, err, http.StatusInternalServerError)
@@ -283,8 +263,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-	notificator.AddUser(wallet, ecosystemID)
-	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	ra := &model.RolesParticipants{}
 	roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(wallet)
@@ -302,8 +280,6 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			result.Roles = append(result.Roles, rolesResult{RoleId: converter.StrToInt64(res["id"]), RoleName: res["name"]})
 		}
 	}
-	notificator.AddUser(wallet, ecosystemID)
-	notificator.UpdateNotifications(ecosystemID, []int64{wallet})
 
 	return nil
 }

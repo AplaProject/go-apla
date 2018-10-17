@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract RunVDE {
 		data {
@@ -9,6 +9,8 @@ contract RunVDE {
 		}
 	
 		action {
-			StartVDE($VDEName)
+            $VDEName = ToLower($VDEName)
+            StartVDE($VDEName)
+            $result = "VDE " + $VDEName + " running"
 		}
-	}
+}

@@ -20,7 +20,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -29,7 +28,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/template"
 
@@ -59,7 +57,7 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 		vars[name] = r.FormValue(name)
 	}
 	vars[`_full`] = `0`
-	vars[`guest_key`] = vde.GuestKey
+	vars[`guest_key`] = consts.GuestKey
 	if data.keyId != 0 {
 		vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
 		vars[`key_id`] = converter.Int64ToStr(data.keyId)
@@ -95,14 +93,12 @@ func initVars(r *http.Request, data *apiData) *map[string]string {
 	return &vars
 }
 
-func parseEcosystem(in string) (id, name string) {
-	re := regexp.MustCompile(`(?is)^@(\d+)(\D.*)$`)
-	ret := re.FindStringSubmatch(in)
-	if len(ret) == 3 {
-		id = ret[1]
-		name = ret[2]
+func parseEcosystem(in string) (string, string) {
+	ecosystem, name := converter.ParseName(in)
+	if ecosystem == 0 {
+		return ``, name
 	}
-	return
+	return converter.Int64ToStr(ecosystem), name
 }
 
 func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.Page, string, error) {

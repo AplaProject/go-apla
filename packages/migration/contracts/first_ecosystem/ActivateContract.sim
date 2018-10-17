@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract ActivateContract {
 	data {
@@ -21,8 +21,4 @@ contract ActivateContract {
 		DBUpdate("contracts", $Id, {"active": 1})
 		Activate($Id, $ecosystem_id)
 	}
-	func rollback() {
-		Deactivate($Id, $ecosystem_id)
-	}
-
 }

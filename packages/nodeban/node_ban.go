@@ -1,10 +1,9 @@
 package nodeban
 
 import (
+	"strconv"
 	"sync"
 	"time"
-
-	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -113,8 +112,8 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 }
 
 func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64, reason string) error {
-	NodePrivateKey, _, err := utils.GetNodeKeys()
-	if err != nil || len(NodePrivateKey) < 1 {
+	nodePrivateKey, err := utils.GetNodePrivateKey()
+	if err != nil || len(nodePrivateKey) < 1 {
 		if err == nil {
 			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		}
@@ -145,14 +144,9 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 	forSign := []string{strconv.FormatInt(producer.KeyID, 10), strconv.FormatInt(currentNode.KeyID, 10), strconv.FormatInt(blockId, 10), strconv.FormatInt(blockTime, 10), reason}
 	smartTx, err := smart.CallContract("NewBadBlock", 1, params, forSign)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return err
 	}
-	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
-		return err
-	}
-
-	return nil
+	return queue.ValidateTxQueue.Enqueue(smartTx)
 }
 
 func (nbs *NodesBanService) FilterBannedHosts(hosts []string) ([]string, error) {

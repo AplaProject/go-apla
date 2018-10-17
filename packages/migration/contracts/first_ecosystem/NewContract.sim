@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract NewContract {
     data {
@@ -41,9 +41,6 @@ contract NewContract {
 
     action {
         $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
-    }
-    func rollback() {
-        RollbackNewContract($Value)
     }
     func price() int {
         return SysParamInt("contract_price")

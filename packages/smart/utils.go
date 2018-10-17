@@ -17,6 +17,7 @@
 package smart
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -25,8 +26,12 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/shopspring/decimal"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -109,4 +114,95 @@ func CallContract(contractName string, ecosystemID int64, params map[string]stri
 		return nil, err
 	}
 	return smartTx, nil
+}
+
+func FillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files map[string]*tx.File, forsign []string) (map[string]interface{}, error) {
+	resultParams := map[string]interface{}{}
+	for _, fitem := range fieldInfos {
+		var err error
+		var v interface{}
+		var forv string
+		var isforv bool
+
+		if fitem.ContainsTag(script.TagFile) {
+			file, ok := files[fitem.Name]
+			if !ok {
+				return nil, nil
+			}
+			resultParams[fitem.Name] = file.Data
+			resultParams[fitem.Name+"MimeType"] = file.MimeType
+
+			forsign = append(forsign, file.MimeType, file.Hash)
+			continue
+		}
+
+		switch fitem.Type.String() {
+		case `uint64`:
+			var val uint64
+			val = converter.StrToUint64(params[fitem.Name])
+			v = val
+		case `float64`:
+			var val float64
+			val = converter.StrToFloat64(params[fitem.Name])
+			v = val
+		case `int64`:
+			v = converter.StrToInt64(params[fitem.Name])
+		case script.Decimal:
+			v, err = decimal.NewFromString(params[fitem.Name])
+		case `string`:
+			v = params[fitem.Name]
+		case `[]uint8`:
+			v, err = hex.DecodeString(params[fitem.Name])
+		case `[]interface {}`:
+			var list []string
+			for key, value := range params {
+				if key == fitem.Name+`[]` && len(value) > 0 {
+					count := converter.StrToInt(value)
+					for i := 0; i < count; i++ {
+						list = append(list, params[fmt.Sprintf(`%s[%d]`, fitem.Name, i)])
+					}
+				}
+			}
+			if len(list) > 0 {
+				forv = strings.Join(list, `,`)
+			}
+			v = list
+		}
+		if resultParams[fitem.Name] == nil {
+			resultParams[fitem.Name] = v
+		}
+		if err != nil {
+			return nil, err
+		}
+		if strings.Index(fitem.Tags, `image`) >= 0 {
+			continue
+		}
+		if isforv {
+			v = forv
+		}
+		forsign = append(forsign, fmt.Sprintf("%v", v))
+	}
+	return resultParams, nil
+}
+
+func getFieldDefaultValue(fieldType string) interface{} {
+	switch fieldType {
+	case "bool":
+		return false
+	case "float64":
+		return float64(0)
+	case "int64":
+		return int64(0)
+	case script.Decimal:
+		return decimal.New(0, consts.MoneyDigits)
+	case "string":
+		return ""
+	case "[]uint8":
+		return []byte{}
+	case "[]interface {}":
+		return []interface{}{}
+	case script.File:
+		return types.NewFile()
+	}
+	return nil
 }

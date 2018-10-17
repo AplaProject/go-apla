@@ -21,7 +21,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -67,9 +66,6 @@ func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transactio
 		t.LdbTx = ldbTx
 
 		if t.TxContract != nil {
-			if _, err := t.CallContract(smart.CallInit | smart.CallRollback); err != nil {
-				return err
-			}
 			if err := rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
 				return err
 			}

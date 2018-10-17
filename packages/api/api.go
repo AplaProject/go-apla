@@ -30,15 +30,14 @@ import (
 	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 )
 
 const (
@@ -132,33 +131,8 @@ func errorAPI(w http.ResponseWriter, err interface{}, code int, params ...interf
 	return fmt.Errorf(msg)
 }
 
-func getPrefix(data *apiData) (prefix string) {
-	prefix = converter.Int64ToStr(data.ecosystemId)
-	return
-}
-
-func getSignHeader(txName string, data *apiData) blockchain.TxHeader {
-	return blockchain.TxHeader{Type: int(utils.TypeInt(txName)), Time: time.Now().Unix(),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId, NetworkID: consts.NETWORK_ID}
-}
-
-func getHeader(txName string, data *apiData) (blockchain.TxHeader, error) {
-	publicKey := []byte("null")
-	if _, ok := data.params[`pubkey`]; ok && len(data.params[`pubkey`].([]byte)) > 0 {
-		publicKey = data.params[`pubkey`].([]byte)
-		lenpub := len(publicKey)
-		if lenpub > 64 {
-			publicKey = publicKey[lenpub-64:]
-		}
-	}
-	signature := data.params[`signature`].([]byte)
-	if len(signature) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject, "params": data.params}).Error("signature is empty")
-		return blockchain.TxHeader{}, fmt.Errorf("signature is empty")
-	}
-	return blockchain.TxHeader{Type: int(utils.TypeInt(txName)), Time: converter.StrToInt64(data.params[`time`].(string)),
-		EcosystemID: data.ecosystemId, KeyID: data.keyId, PublicKey: publicKey,
-		BinSignatures: converter.EncodeLengthPlusData(signature), NetworkID: consts.NETWORK_ID}, nil
+func getPrefix(data *apiData) string {
+	return converter.Int64ToStr(data.ecosystemId)
 }
 
 // DefaultHandler is a common handle function for api requests
@@ -316,4 +290,19 @@ func fillTokenData(data *apiData, claims *JWTClaims, logger *log.Entry) error {
 		data.ecosystemName = ecosystem.Name
 	}
 	return nil
+}
+
+func blockchainUpdatingState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	var reason string
+
+	switch service.NodePauseType() {
+	case service.NoPause:
+		return nil
+	case service.PauseTypeUpdatingBlockchain:
+		reason = "E_UPDATING"
+	case service.PauseTypeStopingNetwork:
+		reason = "E_STOPPING"
+	}
+
+	return errorAPI(w, reason, http.StatusServiceUnavailable)
 }

@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract NewTable {
     data {
@@ -16,9 +16,6 @@ contract NewTable {
     
     action {
         CreateTable($Name, $Columns, $Permissions, $ApplicationId)
-    }
-    func rollback() {
-        RollbackTable($Name)
     }
     func price() int {
         return SysParamInt("table_price")

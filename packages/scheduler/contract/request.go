@@ -64,7 +64,7 @@ func NodeContract(Name string) (result contractResult, err error) {
 		}
 		return
 	}
-	sign, err = crypto.Sign(NodePrivateKey, ret.UID)
+	sign, err = crypto.SignString(NodePrivateKey, ret.UID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing node uid")
 		return

@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
 	"net"
 	"sync"
 	"sync/atomic"
 
-	"github.com/GenesisKernel/go-genesis/packages/network"
-
 	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/network"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -177,7 +175,7 @@ func sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error
 	}
 
 	//response
-	return sendRequiredTransactions(con)
+	return resieveRequiredTransactions(con)
 }
 
 func prepareTxPacket(txes []*blockchain.Transaction) ([]byte, error) {
@@ -223,35 +221,19 @@ func prepareFullBlockRequest(block *blockchain.Block, trs []*blockchain.Transact
 	return buf.Bytes(), nil
 }
 
-func sendRequiredTransactions(con net.Conn) (response []byte, err error) {
-	buf := make([]byte, 4)
-
-	// read data size
-	_, err = io.ReadFull(con, buf)
-	if err != nil {
-		if err == io.EOF {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("connection closed unexpectedly")
-		} else {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data size")
+func resieveRequiredTransactions(con net.Conn) (response []byte, err error) {
+	needTxResp := network.DisHashResponse{}
+	if err := needTxResp.Read(con); err != nil {
+		if err == network.ErrMaxSize {
+			log.WithFields(log.Fields{"max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
+			return nil, nil
 		}
 
-		return nil, err
-	}
-
-	respSize := converter.BinToDec(buf)
-	if respSize > syspar.GetMaxTxSize() {
-		log.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
-		return nil, nil
-	}
-	// read the data
-	response = make([]byte, respSize)
-	_, err = io.ReadFull(con, response)
-	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data")
 		return nil, err
 	}
 
-	return response, err
+	return needTxResp.Data, err
 }
 
 func parseTxHashesFromResponse(resp []byte) (hashes [][]byte) {
@@ -271,26 +253,33 @@ func sendDisseminatorRequest(con net.Conn, requestType int, packet []byte) (err 
 		data  len bytes
 	*/
 	// type
-	_, err = con.Write(converter.DecToBin(requestType, 2))
+	rt := network.RequestType{
+		Type: uint16(requestType),
+	}
+	err = rt.Write(con)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing request type to host")
 		return err
 	}
 
 	// data size
-	size := converter.DecToBin(len(packet), 4)
-	_, err = con.Write(size)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data size to host")
-		return err
+	// size := converter.DecToBin(len(packet), 4)
+	// _, err = con.Write(size)
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data size to host")
+	// 	return err
+	// }
+
+	// // data
+	// _, err = con.Write(packet)
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data to host")
+	// 	return err
+	// }
+
+	req := network.DisRequest{
+		Data: packet,
 	}
 
-	// data
-	_, err = con.Write(packet)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data to host")
-		return err
-	}
-
-	return nil
+	return req.Write(con)
 }

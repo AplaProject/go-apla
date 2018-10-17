@@ -41,9 +41,10 @@ func Init(filename string) error {
 }
 
 type TxStatus struct {
-	BlockID  int64
-	Error    string
-	Attempts int64
+	BlockID   int64
+	BlockHash []byte
+	Error     string
+	Attempts  int64
 }
 
 func (ts TxStatus) Marshal() ([]byte, error) {
@@ -228,8 +229,8 @@ func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...str
 	signPrms := []string{smartTx.ForSign()}
 	signPrms = append(signPrms, params...)
 	signature, err := crypto.Sign(
-		privKey,
-		strings.Join(signPrms, ","),
+		[]byte(privKey),
+		[]byte(strings.Join(signPrms, ",")),
 	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")

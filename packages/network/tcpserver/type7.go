@@ -55,6 +55,15 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 		return err
 	}
 
+	l, err := lenOfBlockData(blocks)
+	if err != nil {
+		return err
+	}
+	if err := network.WriteInt(l, w); err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending requested blocks data length")
+		return err
+	}
+
 	for _, b := range blocks {
 		data, err := b.Block.Marshal()
 		if err != nil {
@@ -67,4 +76,17 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 	}
 
 	return nil
+}
+
+func lenOfBlockData(blocks []*blockchain.BlockWithHash) (int64, error) {
+	var length int64
+	for i := 0; i < len(blocks); i++ {
+		data, err := blocks[i].Block.Marshal()
+		if err != nil {
+			return 0, err
+		}
+		length += int64(len(data))
+	}
+
+	return length, nil
 }

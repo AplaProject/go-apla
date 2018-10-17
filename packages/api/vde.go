@@ -74,7 +74,7 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 	if sc.TxContract == nil {
 		return fmt.Errorf(`unknown contract %d`, sc.TxSmart.Header.Type)
 	}
-	forsign := sc.TxSmart.ForSign()
+	forsign := ""
 
 	params := sc.TxSmart.Params
 	sc.TxData = make(map[string]interface{})
@@ -160,7 +160,7 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 		}
 	}
 
-	if ret, err = sc.CallContract(smart.CallInit | smart.CallCondition | smart.CallAction); err == nil {
+	if ret, err = sc.CallContract(); err == nil {
 		result.Result = ret
 	} else {
 		if errResult := json.Unmarshal([]byte(err.Error()), &result.Message); errResult != nil {

@@ -23,6 +23,8 @@ import (
 )
 
 var stopNetworkBundleFilepath string
+var testBlockchain bool
+var privateBlockchain bool
 
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
@@ -68,8 +70,18 @@ var generateFirstBlockCmd = &cobra.Command{
 		if len(stopNetworkCert) == 0 {
 			log.Warn("the fullchain of certificates for a network stopping is not specified")
 		}
+		var tx []byte
+		var err error
+		var test int64
+		var pb uint64
+		if testBlockchain == true {
+			test = 1
+		}
+		if privateBlockchain == true {
+			pb = 1
+		}
 
-		tx, err := msgpack.Marshal(
+		tx, err = msgpack.Marshal(
 			&consts.FirstBlock{
 				TxHeader: consts.TxHeader{
 					Type:  consts.TxTypeFirstBlock,
@@ -79,6 +91,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
+				Test:              test,
+				PrivateBlockchain: pb,
 			},
 		)
 
@@ -146,4 +160,6 @@ var generateFirstBlockCmd = &cobra.Command{
 
 func init() {
 	generateFirstBlockCmd.Flags().StringVar(&stopNetworkBundleFilepath, "stopNetworkCert", "", "Filepath to the fullchain of certificates for network stopping")
+	generateFirstBlockCmd.Flags().BoolVar(&testBlockchain, "test", false, "if true - test blockchain")
+	generateFirstBlockCmd.Flags().BoolVar(&privateBlockchain, "private", false, "if true - all transactions will be free")
 }

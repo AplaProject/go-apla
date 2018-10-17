@@ -27,6 +27,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -36,6 +37,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 )
 
 const apiAddress = "http://localhost:7079"
@@ -139,7 +141,7 @@ func keyLogin(state int64) (err error) {
 
 	var pub string
 
-	sign, err = crypto.Sign(string(key), nonceSalt+ret.UID)
+	sign, err = crypto.SignString(string(key), nonceSalt+ret.UID)
 	if err != nil {
 		return
 	}
@@ -148,7 +150,7 @@ func keyLogin(state int64) (err error) {
 		return
 	}
 	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {converter.Int64ToStr(state)}}
+		`ecosystem`: {converter.Int64ToStr(state)}, "role_id": {"0"}}
 	if gMobile {
 		form[`mobile`] = []string{`true`}
 	}
@@ -168,7 +170,7 @@ func keyLogin(state int64) (err error) {
 }
 
 func getSign(forSign string) (string, error) {
-	sign, err := crypto.Sign(gPrivate, forSign)
+	sign, err := crypto.SignString(gPrivate, forSign)
 	if err != nil {
 		return ``, err
 	}
@@ -198,12 +200,24 @@ func appendSign(ret map[string]interface{}, form *url.Values) error {
 }
 
 func waitTx(hash string) (int64, error) {
+	data, err := json.Marshal(&txstatusRequest{
+		Hashes: []string{hash},
+	})
+	if err != nil {
+		return 0, err
+	}
+
 	for i := 0; i < 15; i++ {
-		var ret txstatusResult
-		err := sendGet(`txstatus/`+hash, nil, &ret)
+		var multiRet multiTxStatusResult
+		err := sendPost(`txstatus`, &url.Values{
+			"data": {string(data)},
+		}, &multiRet)
 		if err != nil {
 			return 0, err
 		}
+
+		ret := multiRet.Results[hash]
+
 		if len(ret.BlockID) > 0 {
 			return converter.StrToInt64(ret.BlockID), fmt.Errorf(ret.Result)
 		}
@@ -223,39 +237,100 @@ func randName(prefix string) string {
 	return fmt.Sprintf(`%s%d`, prefix, time.Now().Unix())
 }
 
-func postTxResult(txname string, form *url.Values) (id int64, msg string, err error) {
-	ret := make(map[string]interface{})
-	err = sendPost(`prepare/`+txname, form, &ret)
-	if err != nil {
+type getter interface {
+	Get(string) string
+}
+
+type contractParams map[string]interface{}
+
+func (cp *contractParams) Get(key string) string {
+	if _, ok := (*cp)[key]; !ok {
+		return ""
+	}
+	return fmt.Sprintf("%v", (*cp)[key])
+}
+
+func (cp *contractParams) GetRaw(key string) interface{} {
+	return (*cp)[key]
+}
+
+func postTxResult(name string, form getter) (id int64, msg string, err error) {
+	var contract getContractResult
+	if err = sendGet("contract/"+name, nil, &contract); err != nil {
 		return
 	}
 
-	form = &url.Values{}
-	if err = appendSign(ret, form); err != nil {
-		return
-	}
-	requestID := ret["request_id"].(string)
+	params := make(map[string]interface{})
+	for _, field := range contract.Fields {
+		name := field.Name
+		value := form.Get(name)
 
-	ret = map[string]interface{}{}
-	err = sendPost(`contract/`+requestID, form, &ret)
-	if err != nil {
-		return
-	}
-	if len((*form)[`vde`]) > 0 {
-		if ret[`result`] != nil {
-			msg = fmt.Sprint(ret[`result`])
-			id = converter.StrToInt64(msg)
+		if len(value) == 0 {
+			continue
 		}
+
+		switch field.Type {
+		case "bool":
+			params[name], err = strconv.ParseBool(value)
+		case "int":
+			params[name], err = strconv.ParseInt(value, 10, 64)
+		case "float":
+			params[name], err = strconv.ParseFloat(value, 64)
+		case "string", "money":
+			params[name] = value
+		case "file", "bytes":
+			if cp, ok := form.(*contractParams); !ok {
+				err = fmt.Errorf("Form is not *contractParams type")
+			} else {
+				params[name] = cp.GetRaw(name)
+			}
+		}
+
+		if err != nil {
+			err = fmt.Errorf("Parse param '%s': %s", name, err)
+			return
+		}
+	}
+
+	var privateKey, publicKey []byte
+	if privateKey, err = hex.DecodeString(gPrivate); err != nil {
 		return
 	}
-	if len((*form)[`nowait`]) > 0 {
+	if publicKey, err = crypto.PrivateToPublic(privateKey); err != nil {
 		return
 	}
-	id, err = waitTx(ret[`hash`].(string))
+
+	data, _, err := tx.NewTransaction(tx.SmartContract{
+		Header: tx.Header{
+			ID:          int(contract.ID),
+			Time:        time.Now().Unix(),
+			EcosystemID: 1,
+			KeyID:       crypto.Address(publicKey),
+			NetworkID:   consts.NETWORK_ID,
+		},
+		Params: params,
+	}, privateKey)
+	if err != nil {
+		return 0, "", err
+	}
+
+	ret := &sendTxResult{}
+	err = sendMultipart("sendTx", map[string][]byte{
+		"data": data,
+	}, &ret)
+	if err != nil {
+		return
+	}
+
+	if len(form.Get("nowait")) > 0 {
+		return
+	}
+	id, err = waitTx(ret.Hashes["data"])
 	if id != 0 && err != nil {
 		msg = err.Error()
 		err = nil
 	}
+
 	return
 }
 
@@ -300,34 +375,7 @@ func TestGetAvatar(t *testing.T) {
 	assert.Equal(t, expectedMime, mime, "content type must be a '%s' but returns '%s'", expectedMime, mime)
 }
 
-func postTxMultipart(txname string, params map[string]string, files map[string][]byte) (id int64, msg string, err error) {
-	ret := make(map[string]interface{})
-	if err = sendMultipart("/prepare/"+txname, params, files, &ret); err != nil {
-		return
-	}
-
-	form := url.Values{}
-	if err = appendSign(ret, &form); err != nil {
-		return
-	}
-	requestID := ret["request_id"].(string)
-
-	ret = make(map[string]interface{})
-	err = sendPost(`contract/`+requestID, &form, &ret)
-	if err != nil {
-		return
-	}
-
-	id, err = waitTx(ret[`hash`].(string))
-	if id != 0 && err != nil {
-		msg = err.Error()
-		err = nil
-	}
-
-	return
-}
-
-func sendMultipart(url string, params map[string]string, files map[string][]byte, v interface{}) error {
+func sendMultipart(url string, files map[string][]byte, v interface{}) error {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
@@ -337,12 +385,6 @@ func sendMultipart(url string, params map[string]string, files map[string][]byte
 			return err
 		}
 		if _, err := part.Write(data); err != nil {
-			return err
-		}
-	}
-
-	for key, value := range params {
-		if err := writer.WriteField(key, value); err != nil {
 			return err
 		}
 	}

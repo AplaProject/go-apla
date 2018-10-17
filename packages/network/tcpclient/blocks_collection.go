@@ -2,14 +2,25 @@ package tcpclient
 
 import (
 	"context"
+	"encoding/binary"
+	"errors"
+	"io"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/network"
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrorEmptyBlockBody = errors.New("block is empty")
+var ErrorWrongSizeBytes = errors.New("wrong size bytes")
+
+const hasVal = "has value"
+const hasntVal = "has not value"
+
+const sizeBytesLength = 4
+
 // GetBlocksBodies send GetBodiesRequest returns channel of binary blocks data
-func GetBlocksBodies(ctx context.Context, host string, blockHash []byte, reverseOrder bool) (chan []byte, error) {
+func GetBlocksBodies(ctx context.Context, host string, blockHash []byte, reverseOrder bool) (<-chan []byte, error) {
 	conn, err := newConnection(host)
 	if err != nil {
 		return nil, err
@@ -43,36 +54,73 @@ func GetBlocksBodies(ctx context.Context, host string, blockHash []byte, reverse
 		return nil, nil
 	}
 
+	blocksChan, errChan := GetBlockBodiesChan(ctx, conn, blocksCount)
+	go func() {
+		if err := <-errChan; err != nil {
+			log.WithFields(log.Fields{"type": "dbError", consts.NetworkError: err}).Error("on reading block bodies")
+		}
+	}()
+
+	return blocksChan, nil
+}
+
+func GetBlockBodiesChan(ctx context.Context, src io.ReadCloser, blocksCount int64) (<-chan []byte, <-chan error) {
 	rawBlocksCh := make(chan []byte, blocksCount)
+	errChan := make(chan error, 1)
+
+	sizeBuf := make([]byte, sizeBytesLength)
+	var bodyBuf []byte
+
+	afterBodyProcessed := func(done <-chan struct{}) {
+		<-done
+		BytesPool.Put(bodyBuf)
+	}
 
 	go func() {
 		defer func() {
 			close(rawBlocksCh)
-			conn.Close()
+			close(errChan)
+			src.Close()
+			go afterBodyProcessed(ctx.Done())
 		}()
 
+		dataSize, err := network.ReadInt(src)
+		if err != nil {
+			errChan <- err
+			return
+		}
+
+		bodyBuf = BytesPool.Get(dataSize)
+		var bodyStartIndx int64
+
 		for i := 0; i < int(blocksCount); i++ {
-			if err := ctx.Err(); err != nil {
-				log.Debug(err)
+
+			_, err := io.ReadFull(src, sizeBuf)
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading size of block data")
+				errChan <- err
 				return
 			}
 
-			// receive the data size as a response that server wants to transfer
-			resp := &network.GetBodyResponse{}
-			if err := resp.Read(conn); err != nil {
-				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err, "host": host}).Error("on reading block bodies")
+			size, intErr := binary.Uvarint(sizeBuf)
+			if intErr < 0 {
+				log.WithFields(log.Fields{"type": consts.ConversionError, "error": ErrorWrongSizeBytes}).Error("on convert size body")
+				errChan <- ErrorWrongSizeBytes
 				return
 			}
 
-			dataSize := len(resp.Data)
-			if dataSize == 0 {
-				log.Error("null block")
+			bodyEndIndx := bodyStartIndx + int64(size)
+			body := bodyBuf[bodyStartIndx:bodyEndIndx]
+			if readed, err := io.ReadFull(src, body); err != nil {
+				log.WithFields(log.Fields{"type": consts.IOError, "size": size, "readed": readed, "error": err}).Error("on reading block body")
+				errChan <- err
 				return
 			}
 
-			rawBlocksCh <- resp.Data
+			bodyStartIndx = bodyEndIndx
+			rawBlocksCh <- body
 		}
 	}()
-	return rawBlocksCh, nil
 
+	return rawBlocksCh, errChan
 }

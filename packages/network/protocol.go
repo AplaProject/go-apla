@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -30,6 +29,7 @@ const (
 )
 
 var ErrNotAccepted = errors.New("Not accepted")
+var ErrMaxSize = errors.New("Size greater than max size")
 
 // SelfReaderWriter read from Reader to himself and write to io.Writer from himself
 type SelfReaderWriter interface {
@@ -44,18 +44,11 @@ type RequestType struct {
 
 // Read read first 2 bytes to uint16
 func (rt *RequestType) Read(r io.Reader) error {
-	t, err := readUint(r, 2)
-	if err != nil {
-		return err
-	}
-
-	rt.Type = uint16(t)
-	return nil
+	return binary.Read(r, binary.LittleEndian, &rt.Type)
 }
 
 func (rt *RequestType) Write(w io.Writer) error {
-	_, err := w.Write(converter.DecToBin(int64(rt.Type), 2))
-	return err
+	return binary.Write(w, binary.LittleEndian, rt.Type)
 }
 
 // MaxBlockRequest is max block request
@@ -63,60 +56,52 @@ type MaxBlockRequest struct{}
 
 // MaxBlockResponse is max block response
 type MaxBlockResponse struct {
-	BlockID uint32
+	BlockID int64
 }
 
 func (resp *MaxBlockResponse) Read(r io.Reader) error {
-	t, err := readUint(r, 4)
-	if err != nil {
-		return err
-	}
-
-	resp.BlockID = uint32(t)
-	return nil
+	return binary.Read(r, binary.LittleEndian, &resp.BlockID)
 }
 
 func (resp *MaxBlockResponse) Write(w io.Writer) error {
-	_, err := w.Write(converter.DecToBin(int64(resp.BlockID), 4))
-	return err
+	return binary.Write(w, binary.LittleEndian, resp.BlockID)
 }
 
 // GetBodiesRequest contains BlockID
 type GetBodiesRequest struct {
-	BlockHash    []byte
+	BlockHash    []byte `size:"32"`
 	ReverseOrder bool
 }
 
 func (req *GetBodiesRequest) Read(r io.Reader) error {
-	t, err := readByteSlice(r, consts.HashSize)
+	h, err := readSliceWithSize(r, consts.HashSize)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading getBodiesRequest blockID")
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading GetBodiesRequest")
 		return err
 	}
+	req.BlockHash = h
 
-	req.BlockHash = t
-
-	req.ReverseOrder, err = readBool(r)
+	order, err := readBool(r)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading GetBodiesRequest reverse order")
 	}
+
+	req.ReverseOrder = order
 	return nil
 }
 
 func (req *GetBodiesRequest) Write(w io.Writer) error {
-	_, err := w.Write(req.BlockHash)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest blockID")
+	if err := writeSliceWithSize(w, req.BlockHash, consts.HashSize); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest")
 		return err
 	}
 
-	err = writeBool(w, req.ReverseOrder)
-	if err != nil {
+	if err := writeBool(w, req.ReverseOrder); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending GetBodiesRequest reverse order")
 		return err
 	}
 
-	return err
+	return nil
 }
 
 // GetBodyResponse is Data []bytes
@@ -125,7 +110,7 @@ type GetBodyResponse struct {
 }
 
 func (resp *GetBodyResponse) Read(r io.Reader) error {
-	slice, err := readByteSlice(r, -1)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on reading GetBodyResponse")
 		return err
@@ -136,29 +121,27 @@ func (resp *GetBodyResponse) Read(r io.Reader) error {
 }
 
 func (resp *GetBodyResponse) Write(w io.Writer) error {
-	return writeByteSlice(w, resp.Data, -1)
+	return writeSlice(w, resp.Data)
 }
 
 // ConfirmRequest contains request data
 type ConfirmRequest struct {
-	BlockHash []byte
+	BlockHash []byte `size:"32"`
 }
 
 func (req *ConfirmRequest) Read(r io.Reader) error {
-	t, err := readByteSlice(r, consts.HashSize)
+	h, err := readSliceWithSize(r, consts.HashSize)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading ConfirmRequest blockID")
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading ConfirmRequest")
 		return err
 	}
-
-	req.BlockHash = t
+	req.BlockHash = h
 	return nil
 }
 
 func (req *ConfirmRequest) Write(w io.Writer) error {
-	_, err := w.Write(req.BlockHash)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfirmRequest blockID")
+	if err := writeSliceWithSize(w, req.BlockHash, consts.HashSize); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfirmRequest")
 		return err
 	}
 
@@ -172,7 +155,7 @@ type ConfirmResponse struct {
 }
 
 func (resp *ConfirmResponse) Read(r io.Reader) error {
-	h, err := readByteSlice(r, consts.HashSize)
+	h, err := readSliceWithSize(r, consts.HashSize)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading ConfirmResponse reverse order")
 		return err
@@ -182,7 +165,7 @@ func (resp *ConfirmResponse) Read(r io.Reader) error {
 }
 
 func (resp *ConfirmResponse) Write(w io.Writer) error {
-	if err := writeByteSlice(w, resp.Hash, consts.HashSize); err != nil {
+	if err := writeSliceWithSize(w, resp.Hash, consts.HashSize); err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on sending ConfiremResponse hash")
 		return err
 	}
@@ -196,7 +179,7 @@ type DisRequest struct {
 }
 
 func (req *DisRequest) Read(r io.Reader) error {
-	slice, err := readByteSlice(r, -1)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on reading disseminator request")
 		return err
@@ -207,7 +190,7 @@ func (req *DisRequest) Read(r io.Reader) error {
 }
 
 func (req *DisRequest) Write(w io.Writer) error {
-	err := writeByteSlice(w, req.Data, -1)
+	err := writeSlice(w, req.Data)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on sending disseminator request")
 	}
@@ -224,7 +207,7 @@ type DisHashResponse struct {
 }
 
 func (resp *DisHashResponse) Read(r io.Reader) error {
-	slice, err := readByteSlice(r, -1)
+	slice, err := ReadSliceWithMaxSize(r, uint64(syspar.GetMaxTxSize()))
 	if err != nil {
 		return err
 	}
@@ -234,7 +217,7 @@ func (resp *DisHashResponse) Read(r io.Reader) error {
 }
 
 func (resp *DisHashResponse) Write(w io.Writer) error {
-	return writeByteSlice(w, resp.Data, -1)
+	return writeSlice(w, resp.Data)
 }
 
 type StopNetworkRequest struct {
@@ -242,7 +225,7 @@ type StopNetworkRequest struct {
 }
 
 func (req *StopNetworkRequest) Read(r io.Reader) error {
-	slice, err := readByteSlice(r, -1)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		return err
 	}
@@ -252,7 +235,7 @@ func (req *StopNetworkRequest) Read(r io.Reader) error {
 }
 
 func (req *StopNetworkRequest) Write(w io.Writer) error {
-	return writeByteSlice(w, req.Data, -1)
+	return writeSlice(w, req.Data)
 }
 
 type StopNetworkResponse struct {
@@ -260,7 +243,7 @@ type StopNetworkResponse struct {
 }
 
 func (resp *StopNetworkResponse) Read(r io.Reader) error {
-	slice, err := readByteSlice(r, -1)
+	slice, err := ReadSlice(r)
 	if err != nil {
 		return err
 	}
@@ -270,103 +253,120 @@ func (resp *StopNetworkResponse) Read(r io.Reader) error {
 }
 
 func (resp *StopNetworkResponse) Write(w io.Writer) error {
-	return writeByteSlice(w, resp.Hash, -1)
-}
-
-func readUint(r io.Reader, byteCount int) (uint64, error) {
-	buf, err := readBytes(r, uint64(byteCount))
-	if err != nil {
-		return 0, utils.ErrInfo(err)
-	}
-	return uint64(converter.BinToDec(buf)), nil
-}
-
-func readBytes(r io.Reader, size uint64) ([]byte, error) {
-	var maxSize uint64 = 10485760
-	if size > maxSize {
-		log.WithFields(log.Fields{"size": size, "max_size": maxSize, "type": consts.ParameterExceeded}).Error("bytes size to read exceeds max allowed size")
-		return nil, errors.New("bad size")
-	}
-	value := make([]byte, int(size))
-	_, err := io.ReadFull(r, value)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Warn("cannot read bytes")
-	}
-	return value, err
+	return writeSlice(w, resp.Hash)
 }
 
 func readBool(r io.Reader) (bool, error) {
-	boolByte, err := readBytes(r, 1)
-	if err != nil {
+	var val uint8
+	if err := binary.Read(r, binary.LittleEndian, &val); err != nil {
 		return false, err
 	}
 
-	return string(boolByte[0]) == "1", nil
+	return val > 0, nil
 }
 
 func writeBool(w io.Writer, val bool) error {
-	var bs []byte
+	var intVal int8
 	if val {
-		bs = []byte("1")
-	} else {
-		bs = []byte("0")
+		intVal = 1
 	}
-	_, err := w.Write(bs)
-	return err
+
+	return binary.Write(w, binary.LittleEndian, intVal)
 }
 
-func readSliceSizeFromTag(r io.Reader, tagSize string) (size uint64, err error) {
-	if len(tagSize) > 0 {
-		size, err = strconv.ParseUint(tagSize, 10, 0)
-		if err != nil {
-			log.WithFields(log.Fields{"value": tagSize, "type": consts.ConversionError, "error": err}).Error("parsing uint")
-		}
-		return
-	}
-	return readUint(r, 4)
-}
-
-// if bytesLen < 0 then slice length reads before reading slice body
-func readByteSlice(r io.Reader, bytesLen int) ([]byte, error) {
-	if bytesLen < 0 {
-		size, err := readUint(r, 4)
-		if err != nil && err == io.EOF {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("on reading slice size")
-			return nil, err
-		}
-		bytesLen = int(size)
-	}
-
-	slice, err := readBytes(r, uint64(bytesLen))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading slice")
+func ReadSlice(r io.Reader) ([]byte, error) {
+	sizeBuf := make([]byte, 4)
+	if _, err := io.ReadFull(r, sizeBuf); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading bytes slice size")
 		return nil, err
 	}
 
-	return slice, nil
-}
-
-func writeByteSlice(w io.Writer, value []byte, bytesLen int) error {
-	if bytesLen < 0 {
-		_, err := w.Write(converter.DecToBin(len(value), 4))
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on writing slice size")
-			return err
-		}
-	} else {
-		if bytesLen != len(value) {
-			log.WithFields(log.Fields{"size": bytesLen, "len": len(value), "type": consts.ProtocolError}).Error("bad slice len")
-			return fmt.Errorf("bug, bad slice len, want: %d, got %d", bytesLen, len(value))
-		}
+	size, errInt := binary.Uvarint(sizeBuf)
+	if errInt <= 0 {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convert sizeBuf to value")
+		return nil, fmt.Errorf("wrong sizebuf")
 	}
 
-	_, err := w.Write(value)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on writing slice data")
+	data := make([]byte, size)
+	if _, err := io.ReadFull(r, data); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading block body")
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func ReadSliceWithMaxSize(r io.Reader, maxSize uint64) ([]byte, error) {
+	sizeBuf := make([]byte, 4)
+	if _, err := io.ReadFull(r, sizeBuf); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading bytes slice size")
+		return nil, err
+	}
+
+	size, errInt := binary.Uvarint(sizeBuf)
+	if errInt <= 0 {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convert sizeBuf to value")
+		return nil, fmt.Errorf("wrong sizebuf")
+	}
+
+	if size > maxSize {
+		return nil, ErrMaxSize
+	}
+
+	data := make([]byte, size)
+	if _, err := io.ReadFull(r, data); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading block body")
+		return nil, err
+	}
+
+	return data, nil
+}
+
+func readSliceToBuf(r io.Reader, buf []byte) ([]byte, error) {
+	sizeBuf := make([]byte, 4)
+	if _, err := io.ReadFull(r, sizeBuf); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on reading bytes slice size")
+		return nil, err
+	}
+
+	size, errInt := binary.Uvarint(sizeBuf)
+	if errInt <= 0 {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "errInt": errInt}).Error("on convirt sizeBuf to value")
+		return nil, fmt.Errorf("wrong sizebuf")
+	}
+
+	if cap(buf) < int(size) {
+		buf = make([]byte, size)
+	}
+
+	_, err := io.ReadFull(r, buf[:size])
+	return buf, err
+}
+
+func writeSlice(w io.Writer, slice []byte) error {
+	byteSize := make([]byte, 4)
+	binary.PutUvarint(byteSize, uint64(len(slice)))
+
+	w.Write(byteSize)
+	_, err := w.Write(slice)
+	return err
+}
+
+// if bytesLen < 0 then slice length reads before reading slice body
+func readSliceWithSize(r io.Reader, size int) ([]byte, error) {
+	slice := make([]byte, size)
+	_, err := io.ReadFull(r, slice)
+	return slice, err
+}
+
+func writeSliceWithSize(w io.Writer, value []byte, size int32) error {
+	if err := binary.Write(w, binary.LittleEndian, size); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("on writing size")
 		return err
 	}
 
-	return nil
+	_, err := w.Write(value)
+	return err
 }
 func SendRequestType(reqType int64, w io.Writer) error {
 	_, err := w.Write(converter.DecToBin(reqType, 2))

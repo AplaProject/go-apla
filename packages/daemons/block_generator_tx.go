@@ -11,7 +11,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
-	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
 	log "github.com/sirupsen/logrus"
@@ -47,9 +46,8 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, callDelayedContract, uint32(firstEcosystemID))
-	info := contract.Block.Info.(*script.ContractInfo)
-
 	params := map[string]string{"Id": converter.Int64ToStr(delayedContractID)}
+	info := contract.Info()
 
 	smartTx := &blockchain.Transaction{
 		Header: blockchain.TxHeader{
@@ -64,8 +62,8 @@ func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 	}
 
 	signature, err := crypto.Sign(
-		dtx.privateKey,
-		fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContractID),
+		[]byte(dtx.privateKey),
+		[]byte(fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContractID)),
 	)
 	if err != nil {
 		dtx.logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
@@ -79,9 +77,8 @@ func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 	}
 
 	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
-		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("calculating hash of smart contract")
+		dtx.logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("calculating hash of smart contract")
 		return err
 	}
-
 	return nil
 }
