@@ -266,7 +266,7 @@ func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 
 	// time in transaction cannot be less than -24 of block time
 	if t.TxTime < checkTime-consts.MAX_TX_BACK {
-		logger.WithFields(log.Fields{"tx_max_back": consts.MAX_TX_BACK, "type": consts.ParameterExceeded}).Error("time in the tx cannot be less then -24 of block time")
+		logger.WithFields(log.Fields{"tx_max_back": consts.MAX_TX_BACK, "type": consts.ParameterExceeded, "tx_time": t.TxTime}).Error("time in the tx cannot be less then -24 of block time")
 		return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 	}
 
