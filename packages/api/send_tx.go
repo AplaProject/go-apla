@@ -18,6 +18,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/hex"
 	"io/ioutil"
 	"net/http"
 
@@ -34,6 +35,23 @@ type sendTxResult struct {
 	Hashes map[string]string `json:"hashes"`
 }
 
+func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, key string) ([]byte, error) {
+	file, _, err := r.FormFile(key)
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err}).Error("request.FormFile")
+		return nil, errorAPI(w, err, http.StatusInternalServerError)
+	}
+	defer file.Close()
+
+	var txData []byte
+	if txData, err = ioutil.ReadAll(file); err != nil {
+		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading multipart file")
+		return nil, err
+	}
+
+	return txData, nil
+}
+
 func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	err := r.ParseMultipartForm(multipartBuf)
 	if err != nil {
@@ -42,12 +60,31 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 
 	result := &sendTxResult{Hashes: make(map[string]string)}
 	for key := range r.MultipartForm.File {
-		hash, err := handlerTx(w, r, data, logger, key)
+		txData, err := getTxData(w, r, data, logger, key)
+		if err != nil {
+			return err
+		}
+
+		hash, err := handlerTx(w, r, data, logger, txData)
 		if err != nil {
 			return err
 		}
 		result.Hashes[key] = hash
 	}
+
+	for key := range r.Form {
+		txData, err := hex.DecodeString(r.FormValue(key))
+		if err != nil {
+			return err
+		}
+
+		hash, err := handlerTx(w, r, data, logger, txData)
+		if err != nil {
+			return err
+		}
+		result.Hashes[key] = hash
+	}
+
 	data.result = result
 
 	return nil
@@ -60,30 +97,18 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, key string) (string, error) {
-	file, _, err := r.FormFile(key)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("request.FormFile")
-		return "", errorAPI(w, err, http.StatusInternalServerError)
-	}
-	defer file.Close()
-	var txData []byte
-	if txData, err = ioutil.ReadAll(file); err != nil {
-		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading multipart file")
-		return "", err
-	}
-
+func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, txData []byte) (string, error) {
 	if int64(len(txData)) > syspar.GetMaxTxSize() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
 		return "", errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
 	}
 
 	rtx := &transaction.RawTransaction{}
-	if err = rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
+	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
 		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	if err = model.SendTx(rtx, data.keyId); err != nil {
+	if err := model.SendTx(rtx, data.keyId); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
