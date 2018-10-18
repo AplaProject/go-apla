@@ -15,6 +15,7 @@ func GetEcosystemScript() string {
 		membersDataSQL,
 		sectionsDataSQL,
 		tablesDataSQL,
+		keysDataSQL,
 	}
 
 	return strings.Join(scripts, "\r\n")
