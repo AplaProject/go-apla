@@ -46,7 +46,7 @@ func (pc *priceCounter) Add(operation operation, registry *types.Registry) error
 		panic(fmt.Sprintf("registry %s doesn't have any indexes", registry.Name))
 	}
 
-	rows, err := pc.countRows(registry, indexes[0].Field)
+	rows, err := pc.countRows(registry, indexes[0].Name)
 	if err != nil {
 		return err
 	}

@@ -47,7 +47,7 @@ func (sys Ecosystem) UpdateFromData(model types.RegistryModel, data map[string]i
 func (sys Ecosystem) GetIndexes() []types.Index {
 	return []types.Index{
 		{
-			Field:    "name",
+			Name:     "name",
 			Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
 			SortFn: func(a, b string) bool {
 				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)

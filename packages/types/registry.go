@@ -82,7 +82,7 @@ type MetadataRegistryStorage interface {
 
 type Index struct {
 	Registry *Registry
-	Field    string
+	Name     string
 	SortFn   func(a, b string) bool
 }
 

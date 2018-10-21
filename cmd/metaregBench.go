@@ -185,13 +185,13 @@ func setupDB() (types.MetadataRegistryStorage, []int64) {
 	storage, err := metadata.NewMetadataStorage(&kv.DatabaseAdapter{Database: *db}, []types.Index{
 		{
 			Registry: &types.Registry{Name: model.KeySchema{}.ModelName()},
-			Field:    "amount",
+			Name:     "amount",
 			SortFn: func(a, b string) bool {
 				return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
 			},
 		},
 		{
-			Field:    "name",
+			Name:     "name",
 			Registry: &types.Registry{Name: model.Ecosystem{}.ModelName(), Type: types.RegistryTypePrimary},
 			SortFn: func(a, b string) bool {
 				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)

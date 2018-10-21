@@ -9,10 +9,10 @@
 			"revisionTime": "2018-07-10T02:10:38Z"
 		},
 		{
-			"checksumSHA1": "b/4Gb+j82k/coZHzmFSjOhlemIU=",
+			"checksumSHA1": "Tc/NIIKZzejqhy3fjWl6KJd6Fd4=",
 			"path": "github.com/GenesisKernel/memdb",
-			"revision": "b2fb0d15d0d1f4f16079d0c1efffeabb7a6957eb",
-			"revisionTime": "2018-09-19T18:12:02Z"
+			"revision": "7b3f59052725ae466e240c2cbafca927b9790c06",
+			"revisionTime": "2018-10-21T22:48:48Z"
 		},
 		{
 			"checksumSHA1": "zgHK1vxUJDZTXAPCw+Bls7St0Ks=",
@@ -527,6 +527,12 @@
 			"path": "github.com/tidwall/resp",
 			"revision": "b2b1a7ca20e34ad839fdb81f78e67522c99959f0",
 			"revisionTime": "2016-09-08T23:10:31Z"
+		},
+		{
+			"checksumSHA1": "Y2UnijYbqYEP2V8cm4CHLA8kz1c=",
+			"path": "github.com/yddmat/memdb",
+			"revision": "dd1e258413ad1523cd69cd9bcc25581cd85ecfcc",
+			"revisionTime": "2018-09-11T03:58:25Z"
 		},
 		{
 			"checksumSHA1": "iNE2KX9BQzCptlQC2DdQEVmn4R4=",

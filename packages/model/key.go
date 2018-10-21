@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/GenesisKernel/memdb"
 	"github.com/mitchellh/mapstructure"
-	"github.com/tidwall/gjson"
+	"github.com/tidwall/buntdb"
 )
 
-// Key is model
-// TODO rename to Key
+// Key is model TODO rename to key
 type KeySchema struct {
 	ID        int64  `json:"id"`
 	PublicKey []byte `json:"public_key"`
@@ -27,11 +27,14 @@ func (ks KeySchema) GetIndexes() []types.Index {
 	registry := &types.Registry{Name: ks.ModelName()}
 	return []types.Index{
 		{
-			Field:    "amount",
 			Registry: registry,
-			SortFn: func(a, b string) bool {
-				return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
-			},
+			Name:     "amount",
+			SortFn:   buntdb.IndexJSON("amount"),
+		},
+		{
+			Registry: registry,
+			Name:     "amount+blocked",
+			SortFn:   memdb.СompositeIndex(buntdb.IndexJSON("amount"), buntdb.IndexJSON("blocked")),
 		},
 	}
 }

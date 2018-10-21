@@ -1,11 +1,14 @@
+// Metadata storage integration tests
 package metadata
 
 import (
+	"encoding/json"
 	"fmt"
-	"math/rand"
 	"os"
 	"strconv"
 	"testing"
+
+	"math/rand"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -14,6 +17,7 @@ import (
 	"github.com/GenesisKernel/memdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tidwall/buntdb"
 	"github.com/tidwall/gjson"
 )
 
@@ -84,13 +88,13 @@ func TestMetadataTx_RW(t *testing.T) {
 		reg, err := NewMetadataStorage(db, []types.Index{
 			{
 				Registry: &types.Registry{Name: "key"},
-				Field:    "amount",
+				Name:     "amount",
 				SortFn: func(a, b string) bool {
 					return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
 				},
 			},
 			{
-				Field:    "name",
+				Name:     "name",
 				Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
 				SortFn: func(a, b string) bool {
 					return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
@@ -123,6 +127,248 @@ func TestMetadataTx_RW(t *testing.T) {
 	}
 }
 
+func TestMetadataIndex(t *testing.T) {
+	db, err := newKvDB(false)
+	require.Nil(t, err)
+
+	tx := db.Begin(true)
+	require.Nil(t, tx.Set("key.aaa.1", "{\"amount\":10}"))
+	require.Nil(t, tx.Set("key.aaa.2", "{\"amount\":15}"))
+	require.Nil(t, tx.Set("key.bbb.3", "{\"amount\":20}"))
+
+	require.Nil(t, tx.Set("role.aaa.admin", "{\"name\":\"admin\"}"))
+	require.Nil(t, tx.Set("role.ccc.admin", "{\"name\":\"admin\"}"))
+	require.Nil(t, tx.Set("role.ccc.user", "{\"name\":\"user\"}"))
+	require.Nil(t, tx.Set("role.ccc.moderator", "{\"name\":\"moderator\"}"))
+	require.Nil(t, tx.Set("role.bbb.admin", "{\"name\":\"admin\"}"))
+	require.Nil(t, tx.Set("role.ddd.admin", "{\"name\":\"dddadmin\"}"))
+
+	require.Nil(t, tx.Set("ecosystem.aaa", "{\"name\":\"aaa\"}"))
+	require.Nil(t, tx.Set("ecosystem.bbb", "{\"name\":\"bbb\"}"))
+	require.Nil(t, tx.Set("ecosystem.ccc", "{\"name\":\"ccc\"}"))
+	require.Nil(t, tx.Commit())
+
+	idxs := []types.Index{
+		{
+			Name:     "amount",
+			Registry: &types.Registry{Name: "key"},
+			SortFn: func(a, b string) bool {
+				return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
+			},
+		},
+		{
+			Name:     "name",
+			Registry: &types.Registry{Name: "role"},
+			SortFn: func(a, b string) bool {
+				return gjson.Get(a, "role").Less(gjson.Get(b, "role"), false)
+			},
+		},
+		{
+			Name:     "name",
+			Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
+			SortFn: func(a, b string) bool {
+				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
+			},
+		},
+	}
+
+	msrw, err := NewMetadataStorage(db, idxs, false, true)
+	require.Nil(t, err)
+
+	mtx := msrw.Begin()
+
+	keys := make(map[string][]string, 0)
+	for _, ecosys := range []string{"aaa", "bbb", "ccc"} {
+		require.Nil(t, mtx.Walk(&types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: ecosys}}, "amount", func(jsonRow string) bool {
+			keys[ecosys] = append(keys[ecosys], jsonRow)
+			return true
+		}))
+	}
+	assert.Equal(t, map[string][]string{
+		"aaa": {"{\"amount\":10}", "{\"amount\":15}"},
+		"bbb": {"{\"amount\":20}"},
+	}, keys)
+
+	roles := make(map[string][]string, 0)
+	for _, ecosys := range []string{"aaa", "bbb", "ccc"} {
+		require.Nil(t, mtx.Walk(&types.Registry{Name: "role", Ecosystem: &types.Ecosystem{Name: ecosys}}, "name", func(jsonRow string) bool {
+			roles[ecosys] = append(roles[ecosys], jsonRow)
+			return true
+		}))
+	}
+	assert.Equal(t, map[string][]string{
+		"aaa": {"{\"name\":\"admin\"}"},
+		"bbb": {"{\"name\":\"admin\"}"},
+		"ccc": {"{\"name\":\"admin\"}", "{\"name\":\"moderator\"}", "{\"name\":\"user\"}"},
+	}, roles)
+
+	require.Error(t, mtx.Walk(&types.Registry{Name: "role", Ecosystem: &types.Ecosystem{Name: "ddd"}}, "name", func(jsonRow string) bool {
+		return true
+	}))
+
+	assert.Nil(t, mtx.Insert(nil, &types.Registry{
+		Name:      model.Ecosystem{}.ModelName(),
+		Ecosystem: &types.Ecosystem{Name: "ecosystem"},
+	}, "ddd", model.Ecosystem{Name: "ddd"}))
+
+	dddRoles := make([]string, 0)
+	require.Nil(t, mtx.Walk(&types.Registry{Name: "role", Ecosystem: &types.Ecosystem{Name: "ddd"}}, "name", func(jsonRow string) bool {
+		dddRoles = append(dddRoles, jsonRow)
+		return true
+	}))
+
+	assert.Equal(t, []string{"{\"name\":\"dddadmin\"}"}, dddRoles)
+}
+
+func TestMetadataMultipleIndex(t *testing.T) {
+	db, err := newKvDB(false)
+	require.Nil(t, err)
+
+	tx := db.Begin(true)
+	cases := []struct {
+		key string
+		model.KeySchema
+	}{
+		{key: "keys.aaa.1", KeySchema: model.KeySchema{ID: 1, Amount: "10"}},
+		{key: "keys.aaa.2", KeySchema: model.KeySchema{ID: 2, Amount: "20"}},
+		{key: "keys.aaa.3", KeySchema: model.KeySchema{ID: 3, Amount: "19"}},
+		{key: "keys.aaa.4", KeySchema: model.KeySchema{ID: 4, Amount: "20", Blocked: true}},
+		{key: "keys.aaa.5", KeySchema: model.KeySchema{ID: 5, Amount: "10", Blocked: true}},
+		{key: "keys.bbb.6", KeySchema: model.KeySchema{ID: 6, Amount: "10", Blocked: true}},
+	}
+
+	require.Nil(t, tx.Set("ecosystems.aaa", "{\"name\":\"aaa\"}"))
+	require.Nil(t, tx.Set("ecosystems.bbb", "{\"name\":\"bbb\"}"))
+
+	for _, c := range cases {
+		j, err := json.Marshal(c.KeySchema)
+		require.Nil(t, err)
+		require.Nil(t, tx.Set(c.key, string(j)))
+	}
+
+	require.Nil(t, tx.Commit())
+
+	idxs := []types.Index{
+		{
+			Name:     "amount_blocked",
+			Registry: &types.Registry{Name: model.KeySchema{}.ModelName()},
+			SortFn:   memdb.СompositeIndex(buntdb.IndexJSON("blocked"), buntdb.IndexJSON("amount")),
+		},
+		{
+			Name:     "amount",
+			Registry: &types.Registry{Name: model.KeySchema{}.ModelName()},
+			SortFn: func(a, b string) bool {
+				return gjson.Get(a, "amount").Less(gjson.Get(b, "amount"), false)
+			},
+		},
+		{
+			Name:     "name",
+			Registry: &types.Registry{Name: model.Ecosystem{}.ModelName(), Type: types.RegistryTypePrimary},
+			SortFn: func(a, b string) bool {
+				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
+			},
+		},
+	}
+
+	msrw, err := NewMetadataStorage(db, idxs, false, true)
+	require.Nil(t, err)
+
+	mtx := msrw.Begin()
+	got := make([]model.KeySchema, 0)
+	err = mtx.Walk(&types.Registry{Name: model.KeySchema{}.ModelName(), Ecosystem: &types.Ecosystem{Name: "aaa"}}, "amount_blocked", func(jsonRow string) bool {
+		k := model.KeySchema{}
+		require.Nil(t, json.Unmarshal([]byte(jsonRow), &k))
+		got = append(got, k)
+		return true
+	})
+	require.Nil(t, err)
+
+	assert.Equal(t, []model.KeySchema{
+		cases[0].KeySchema, cases[2].KeySchema, cases[1].KeySchema, cases[4].KeySchema, cases[3].KeySchema,
+	}, got)
+}
+
+func TestRollbackSaveRollback(t *testing.T) {
+	mDb, err := memdb.OpenDB("", false)
+	require.Nil(t, err)
+	db := kv.DatabaseAdapter{Database: *mDb}
+
+	dbTx := db.Begin(true)
+	mr := rollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
+
+	registry := &types.Registry{
+		Name:      "key",
+		Ecosystem: &types.Ecosystem{Name: "aaa"},
+	}
+
+	block := []byte("123")
+
+	mtx := tx{}
+	for key := range make([]int, 20) {
+		// Emulating new value in database
+		mtx.formatKey(registry, strconv.Itoa(key))
+		formatted, err := mtx.formatKey(registry, strconv.Itoa(key))
+		require.Nil(t, err)
+		dbTx.Set(formatted, "{\"result\":\"blah\"")
+
+		tx := []byte(strconv.Itoa(key))
+		tx = append(tx, []byte("blah")...)
+
+		value := teststruct{
+			Key:    key,
+			Value1: "stringvalue" + strconv.Itoa(key),
+			Value2: make([]byte, 20),
+		}
+
+		jsonValue, err := json.Marshal(value)
+		require.Nil(t, err)
+		// Save "old" state of record
+		require.Nil(t, mr.saveState(block, tx, registry, strconv.Itoa(key), string(jsonValue)))
+	}
+	require.Nil(t, dbTx.Commit())
+
+	dbTx = db.Begin(false)
+
+	// We need to check that all previous states was saved to db
+	for key := range make([]int, 20) {
+		tx := []byte(strconv.Itoa(key))
+		tx = append(tx, []byte("blah")...)
+
+		_, err := dbTx.Get(fmt.Sprintf(writePrefix, string(block), key+1, string(tx)))
+		require.Nil(t, err)
+	}
+	require.Nil(t, dbTx.Commit())
+
+	dbTx = db.Begin(true)
+	require.Nil(t, err)
+
+	dbTx.AddIndex(kv.Index{
+		Name: "rollback_tx",
+		SortFn: func(a, b string) bool {
+			return true
+		},
+		Pattern: fmt.Sprintf(searchPrefix, "*", "*", "*"),
+	})
+
+	mr = rollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
+	require.Nil(t, mr.rollbackState(block))
+
+	// We are checking that all values are now at the previous state
+	for key := range make([]int, 20) {
+		// Emulating new value in database
+		value, err := dbTx.Get(fmt.Sprintf(keyConvention, registry.Name, registry.Ecosystem.Name, strconv.Itoa(key)))
+		require.Nil(t, err)
+
+		got := teststruct{}
+		json.Unmarshal([]byte(value), &got)
+		require.Equal(t, teststruct{
+			Key:    key,
+			Value1: "stringvalue" + strconv.Itoa(key),
+			Value2: make([]byte, 20),
+		}, got)
+	}
+}
+
 func BenchmarkMetadataTx(b *testing.B) {
 	rollbacks := true
 	persist := true
@@ -134,13 +380,13 @@ func BenchmarkMetadataTx(b *testing.B) {
 	storage, err := NewMetadataStorage(db, []types.Index{
 		{
 			Registry: &types.Registry{Name: "keys"},
-			Field:    "amount",
+			Name:     "amount",
 			SortFn: func(a, b string) bool {
 				return gjson.Get(b, "amount").Less(gjson.Get(a, "amount"), false)
 			},
 		},
 		{
-			Field:    "name",
+			Name:     "name",
 			Registry: &types.Registry{Name: "ecosystems", Type: types.RegistryTypePrimary},
 			SortFn: func(a, b string) bool {
 				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)

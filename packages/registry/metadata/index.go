@@ -49,7 +49,7 @@ func (i *indexer) init(tx kv.Transaction) error {
 			}
 
 			if index.Registry.Type == types.RegistryTypePrimary {
-				i.primaryIndex = i.formatIndexName(index.Registry, index.Field)
+				i.primaryIndex = i.formatIndexName(index.Registry, index.Name)
 
 				err := i.writeIndex(tx, index)
 				if err != nil {
@@ -107,7 +107,7 @@ func (i *indexer) makeIndexesForValues(primaryValues ...string) ([]types.Index, 
 			}
 
 			for _, value := range primaryValues {
-				if index.Field == "" {
+				if index.Name == "" {
 					return nil, errors.New("unknown field")
 				}
 
@@ -115,7 +115,7 @@ func (i *indexer) makeIndexesForValues(primaryValues ...string) ([]types.Index, 
 				r.Ecosystem = &types.Ecosystem{Name: value}
 				prepeared = append(prepeared, types.Index{
 					Registry: &r,
-					Field:    index.Field,
+					Name:     index.Name,
 					SortFn:   index.SortFn,
 				})
 			}
@@ -145,7 +145,7 @@ func (i *indexer) removePrimaryValue(tx kv.Transaction, value string) error {
 	}
 
 	for _, index := range indexes {
-		if err := tx.RemoveIndex(i.formatIndexName(index.Registry, index.Field)); err != nil {
+		if err := tx.RemoveIndex(i.formatIndexName(index.Registry, index.Name)); err != nil {
 			return err
 		}
 	}
@@ -157,7 +157,7 @@ func (i *indexer) writeIndex(tx kv.Transaction, indexes ...types.Index) error {
 	kvIndexes := make([]kv.Index, 0)
 	for _, index := range indexes {
 		kvIndexes = append(kvIndexes, kv.Index{
-			Name:    i.formatIndexName(index.Registry, index.Field),
+			Name:    i.formatIndexName(index.Registry, index.Name),
 			SortFn:  index.SortFn,
 			Pattern: i.formatIndexPattern(index.Registry),
 		})

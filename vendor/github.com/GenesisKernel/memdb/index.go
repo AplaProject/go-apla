@@ -123,7 +123,7 @@ func (idxer *Indexes) Copy() *Indexes {
 	newIndexer := newIndexer()
 
 	for _, oldIdx := range idxer.storage {
-		newIdx := NewIndex(oldIdx.name, oldIdx.pattern, oldIdx.sortFn)
+		newIdx := &Index{name: oldIdx.name, pattern: oldIdx.pattern, sortFn: oldIdx.sortFn}
 		newIdx.tree = oldIdx.tree.Clone()
 
 		err := newIndexer.AddIndex(newIdx)
@@ -133,4 +133,26 @@ func (idxer *Indexes) Copy() *Indexes {
 	}
 
 	return newIndexer
+}
+
+func СompositeIndex(sorts ...func(a, b string) bool) (combined func(a, b string) bool) {
+	switch len(sorts) {
+	case 1:
+		combined = sorts[0]
+	default:
+		combined = func(a, b string) bool {
+			for _, f := range sorts {
+				if f(a, b) {
+					return true
+				}
+
+				if f(b, a) {
+					return false
+				}
+			}
+			return sorts[len(sorts)-1](a, b)
+		}
+	}
+
+	return
 }

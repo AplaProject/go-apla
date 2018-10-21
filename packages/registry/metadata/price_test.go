@@ -17,7 +17,7 @@ func TestPriceCounter(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		reg := &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: "abc"}}
 		idxer.On("getIndexes", reg).Return([]types.Index{
-			{Field: "amount"},
+			{Name: "amount"},
 		})
 		idxer.On("formatIndexName", reg, "amount").Return("blah")
 		txMock.On("Len", "blah").Return(10000, nil)

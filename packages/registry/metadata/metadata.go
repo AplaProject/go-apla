@@ -316,7 +316,7 @@ func (m *storage) Begin() types.MetadataRegistryReaderWriter {
 }
 
 func (m *storage) Walk(registry *types.Registry, field string, fn func(value string) bool) error {
-	tx := &tx{tx: m.db.Begin(false)}
+	tx := &tx{tx: m.db.Begin(false), indexer: m.indexer}
 	defer tx.Rollback()
 	return tx.Walk(registry, field, fn)
 }
