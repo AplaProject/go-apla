@@ -598,7 +598,7 @@ func TestVMCompile(t *testing.T) {
 				$result = $Name
 			}
 		}
-		`, `qqq3.action`, `expecting type of the data field [Ln:5 Col:5]`},
+		`, `qqq3.action`, `expecting type of the data field [Ln:5 Col:1]`},
 		{`contract qqq2 {
 			data {
 				Name string "aaq"
@@ -627,6 +627,26 @@ func TestVMCompile(t *testing.T) {
 			}
 		}
 		`, `qqq.action`, `expecting type of the data field [Ln:3 Col:11]`},
+		{`contract qq3 {
+			data {
+				Id uint
+			}
+			action {
+				$result = "OK"
+			}
+		}
+		`, `qq3.action`, `expecting type of the data field [Ln:3 Col:9]`},
+		{`contract qq2 {
+			data {
+				Id, ID2 int
+			}
+			action {
+				$result = str($Id) + str($ID2)
+			}
+		}
+		func getqq() string {
+			return qq2("Id,ID2", 10,20)
+		}`, `getqq`, `1020`},
 	}
 	vm := NewVM()
 	vm.Extern = true
