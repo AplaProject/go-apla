@@ -106,6 +106,7 @@ type Transaction struct {
 	DbTransaction *model.DbTransaction
 	SysUpdate     bool
 	Rand          *rand.Rand
+	Notifications []smart.NotifyInfo
 
 	SmartContract smart.SmartContract
 }
@@ -249,20 +250,23 @@ func CheckTransaction(data []byte) (*tx.Header, error) {
 }
 
 func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
-	err := CheckLogTx(t.TxFullData, checkForDupTr, false)
+	err := CheckLogTx(t.TxHash, checkForDupTr, false)
 	if err != nil {
 		return err
 	}
 	logger := log.WithFields(log.Fields{"tx_time": t.TxTime})
 	// time in the transaction cannot be more than MAX_TX_FORW seconds of block time
-	if t.TxTime-consts.MAX_TX_FORW > checkTime {
-		logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW, "type": consts.ParameterExceeded}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
-		return utils.ErrInfo(fmt.Errorf("transaction time is too big"))
+	if t.TxTime > checkTime {
+		if t.TxTime-consts.MAX_TX_FORW > checkTime {
+			logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW, "type": consts.ParameterExceeded}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
+			return utils.ErrInfo(fmt.Errorf("transaction time is too big"))
+		}
+		return ErrEarlyTime
 	}
 
 	// time in transaction cannot be less than -24 of block time
 	if t.TxTime < checkTime-consts.MAX_TX_BACK {
-		logger.WithFields(log.Fields{"tx_max_back": consts.MAX_TX_BACK, "type": consts.ParameterExceeded}).Error("time in the tx cannot be less then -24 of block time")
+		logger.WithFields(log.Fields{"tx_max_back": consts.MAX_TX_BACK, "type": consts.ParameterExceeded, "tx_time": t.TxTime}).Error("time in the tx cannot be less then -24 of block time")
 		return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
 	}
 
@@ -346,6 +350,7 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 	resultContract, err = sc.CallContract()
 	t.TxFuel = sc.TxFuel
 	t.SysUpdate = sc.SysUpdate
+	t.Notifications = sc.Notifications
 	if sc.FlushRollback != nil {
 		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
 		copy(flushRollback, sc.FlushRollback)

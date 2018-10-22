@@ -55,4 +55,14 @@ func TestList(t *testing.T) {
 			return
 		}
 	}
+	var sec listResult
+	err = sendGet(`sections`, nil, &sec)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if converter.StrToInt(sec.Count) == 0 {
+		t.Errorf(`section error`)
+		return
+	}
 }

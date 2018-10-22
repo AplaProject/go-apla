@@ -51,6 +51,11 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 		return err
 	}
 
+	if err := network.WriteInt(lenOfBlockData(blocks), w); err != nil {
+		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending requested blocks data length")
+		return err
+	}
+
 	for _, b := range blocks {
 		br := &network.GetBodyResponse{Data: b.Data}
 		if err := br.Write(w); err != nil {
@@ -59,4 +64,13 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 	}
 
 	return nil
+}
+
+func lenOfBlockData(blocks []model.Block) int64 {
+	var length int64
+	for i := 0; i < len(blocks); i++ {
+		length += int64(len(blocks[i].Data))
+	}
+
+	return length
 }

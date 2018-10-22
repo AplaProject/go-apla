@@ -19,6 +19,7 @@ package smart
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -29,7 +30,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -144,7 +144,7 @@ func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
 		return nil
 	}
 	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
-		`ContractAccess\(\s*\".*\"\s*\)`}
+		`ContractAccess\(\s*\".*\"\s*\)`, `RoleAccess\(\s*.*\s*\)`}
 	for _, v := range allowed {
 		re := regexp.MustCompile(`^` + v + `$`)
 		if re.Match([]byte(src)) {
@@ -557,7 +557,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`block_time`:        blockTime,
 		`original_contract`: ``,
 		`this_contract`:     ``,
-		`guest_key`:         vde.GuestKey,
+		`guest_key`:         consts.GuestKey,
 	}
 
 	for key, val := range sc.TxData {
@@ -926,7 +926,15 @@ func (sc *SmartContract) CallContract() (string, error) {
 	retError := func(err error) (string, error) {
 		eText := err.Error()
 		if !strings.HasPrefix(eText, `{`) {
-			err = script.SetVMError(`panic`, eText)
+			if throw, ok := err.(*ThrowError); ok {
+				out, errThrow := json.Marshal(throw)
+				if errThrow != nil {
+					out = []byte(`{"type": "panic", "error": "marshalling throw"}`)
+				}
+				err = errors.New(string(out))
+			} else {
+				err = script.SetVMError(`panic`, eText)
+			}
 		}
 		return ``, err
 	}
@@ -983,7 +991,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 		return retError(errIncorrectSign)
 	}
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain() {
 		fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
@@ -1039,15 +1047,6 @@ func (sc *SmartContract) CallContract() (string, error) {
 		if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
 			amount = maxpay
 		}
-		if priceName, ok := script.ContractPrices[sc.TxContract.Name]; ok {
-			price = SysParamInt(priceName)
-			if price > MaxPrice {
-				return retError(errMaxPrice)
-			}
-			if price < 0 {
-				return retError(errNegPrice)
-			}
-		}
 		sizeFuel = syspar.GetSizeFuel() * sc.TxSize / 1024
 		priceCost := decimal.New(price, 0)
 		if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
@@ -1096,7 +1095,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		}
 	}
 
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain() {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
 		}

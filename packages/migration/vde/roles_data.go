@@ -1,5 +1,7 @@
 package vde
 
+import "github.com/GenesisKernel/go-genesis/packages/consts"
+
 var rolesDataSQL = `
 INSERT INTO "1_roles" ("id", "default_page", "role_name", "deleted", "role_type",
 	"date_created","creator","roles_access", "ecosystem") VALUES
@@ -16,6 +18,6 @@ INSERT INTO "1_roles" ("id", "default_page", "role_name", "deleted", "role_type"
 	(next_id('1_roles_participants'), '{"id": "2", "type": "3", "name": "Developer", "image_id":"0"}', '{"member_id": "%[2]d", "member_name": "founder", "image_id": "0"}', NOW(), '%[1]d');
 
 	INSERT INTO "1_members" ("id", "member_name", "ecosystem") VALUES('%[2]d', 'founder', '%[1]d'),
-	('` + GuestKey + `', 'guest', '%[1]d');
+	('` + consts.GuestKey + `', 'guest', '%[1]d');
 
 `

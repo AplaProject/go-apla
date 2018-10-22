@@ -69,10 +69,23 @@ func TestHardContract(t *testing.T) {
 
 func TestExistContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
-	form := url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+	rnd := `cnt` + crypto.RandSeq(4)
+	form := url.Values{"Name": {rnd}, "Value": {`contract ` + rnd + ` {
+		data {
+			Name string
+		}
+		action {
+		Throw($Name, "Text of the error")
+	}}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
-	err := postTx(`NewContract`, &form)
-	assert.EqualError(t, err, `{"type":"panic","error":"Contract EditPage already exists"}`)
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.EqualError(t, postTx(rnd, &url.Values{"Name": {"1"}}),
+		`{"type":"exception","error":"Text of the error","id":"1"}`)
+	form = url.Values{"Name": {`EditPage`}, "Value": {`contract EditPage {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"Contract EditPage already exists"}`)
 }
 
 func TestDataContract(t *testing.T) {

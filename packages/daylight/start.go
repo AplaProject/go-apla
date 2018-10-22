@@ -131,6 +131,7 @@ func initLogs() error {
 	}
 
 	log.AddHook(logtools.ContextHook{})
+	log.AddHook(logtools.HexHook{})
 
 	return nil
 }
@@ -161,7 +162,7 @@ func initRoutes(listenHost string) {
 	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
 
-	handler := httpserver.NewMaxBodyReader(route, consts.HTTPServerMaxBodySize)
+	handler := httpserver.NewMaxBodyReader(route, conf.Config.HTTPServerMaxBodySize)
 
 	if conf.Config.TLS {
 		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
@@ -216,7 +217,7 @@ func Start() {
 		}
 	}
 
-	log.WithFields(log.Fields{"mode": conf.Config.RunningMode}).Info("Node running mode")
+	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()

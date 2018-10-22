@@ -51,6 +51,11 @@ var (
 	modes = [][]rune{{'(', ')'}, {'{', '}'}, {'[', ']'}}
 )
 
+const (
+	columnNameKey = "column_name"
+	dataTypeKey   = "data_type"
+)
+
 func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTailTag, defaultTailTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
@@ -116,6 +121,8 @@ func init() {
 		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
+		`ErrorRedirect`: {tplFunc{errredirTag, defaultTailFull, `errorredirect`,
+			`ErrorID,PageName,PageParams`}, false},
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -624,7 +631,7 @@ func dbfindTag(par parFunc) string {
 	}
 	columnTypes := make(map[string]string, len(rows))
 	for _, row := range rows {
-		columnTypes[row["column_name"]] = row["data_type"]
+		columnTypes[row[columnNameKey]] = row[dataTypeKey]
 	}
 	columnNames := make([]string, 0)
 
@@ -635,8 +642,8 @@ func dbfindTag(par parFunc) string {
 
 	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
-			queryColumns = append(queryColumns, col["column_name"])
-			columnNames = append(columnNames, col["column_name"])
+			queryColumns = append(queryColumns, col[columnNameKey])
+			columnNames = append(columnNames, col[columnNameKey])
 		}
 	} else {
 		if !utils.StringInSlice(columns, `id`) {
@@ -819,6 +826,19 @@ func compositeTag(par parFunc) string {
 		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	par.Owner.Attr[`compositedata`] = append(par.Owner.Attr[`compositedata`].([]string),
 		macro((*par.Pars)[`Data`], par.Workspace.Vars))
+	return ``
+}
+
+func errredirTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`ErrorID`]) == 0 {
+		return ``
+	}
+	if par.Owner.Attr[`errredirect`] == nil {
+		par.Owner.Attr[`errredirect`] = make(map[string]map[string]interface{})
+	}
+	par.Owner.Attr[`errredirect`].(map[string]map[string]interface{})[(*par.Pars)[`ErrorID`]] =
+		par.Node.Attr
 	return ``
 }
 
@@ -1358,18 +1378,25 @@ func getHistoryTag(par parFunc) string {
 	if err != nil {
 		return err.Error()
 	}
+
+	colsList, err := model.GetAllColumnTypes((*par.Workspace.Vars)[`ecosystem_id`] + "_" + table)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
+		return err.Error()
+	}
+
+	cols := make([]string, 0, len(colsList))
+	types := make([]string, 0, len(colsList))
+	for _, v := range colsList {
+
+		cols = append(cols, v[columnNameKey])
+		types = append(types, `text`)
+	}
+
 	data := make([][]string, 0)
-	cols := make([]string, 0, 8)
-	types := make([]string, 0, 8)
 	if len(list) > 0 {
 		for i := range list {
 			item := list[i].(map[string]string)
-			if i == 0 {
-				for key := range item {
-					cols = append(cols, key)
-					types = append(types, `text`)
-				}
-			}
 			items := make([]string, len(cols))
 			for ind, key := range cols {
 				val := item[key]
