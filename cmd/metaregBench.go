@@ -182,7 +182,7 @@ func setupDB() (types.MetadataRegistryStorage, []int64) {
 	db, err := memdb.OpenDB("metabench.db", persist)
 	checkErr(err)
 
-	storage, err := metadata.NewMetadataStorage(&kv.DatabaseAdapter{Database: *db}, []types.Index{
+	storage, err := metadata.NewStorage(&kv.DatabaseAdapter{Database: *db}, []types.Index{
 		{
 			Registry: &types.Registry{Name: model.KeySchema{}.ModelName()},
 			Name:     "amount",

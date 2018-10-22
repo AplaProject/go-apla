@@ -6,6 +6,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/memdb"
+	"github.com/fatih/structs"
 	"github.com/mitchellh/mapstructure"
 	"github.com/tidwall/buntdb"
 )
@@ -48,6 +49,10 @@ func (ks KeySchema) CreateFromData(data map[string]interface{}) (types.RegistryM
 func (ks KeySchema) UpdateFromData(model types.RegistryModel, data map[string]interface{}) error {
 	oldStruct := model.(*KeySchema)
 	return mapstructure.Decode(data, oldStruct)
+}
+
+func (ks KeySchema) GetData() map[string]interface{} {
+	return structs.Map(ks)
 }
 
 func (ks KeySchema) GetPrimaryKey() string {

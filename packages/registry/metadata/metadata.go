@@ -266,7 +266,7 @@ type storage struct {
 	pricing  bool
 }
 
-func NewMetadataStorage(db kv.Database, indexes []types.Index, rollback bool, pricing bool) (types.MetadataRegistryStorage, error) {
+func NewStorage(db kv.Database, indexes []types.Index, rollback bool, pricing bool) (types.MetadataRegistryStorage, error) {
 	ms := &storage{
 		db:       db,
 		indexer:  newIndexer(indexes),

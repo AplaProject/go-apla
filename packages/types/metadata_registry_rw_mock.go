@@ -59,7 +59,7 @@ func (_m *MockMetadataRegistryReaderWriter) Get(registry *Registry, pkValue stri
 	return r0
 }
 
-// Get2 provides a mock function with given fields: registry, pkValue
+// GetModel provides a mock function with given fields: registry, pkValue
 func (_m *MockMetadataRegistryReaderWriter) Get2(registry *Registry, pkValue string) (RegistryModel, error) {
 	ret := _m.Called(registry, pkValue)
 

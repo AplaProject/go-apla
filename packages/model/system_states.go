@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/fatih/structs"
 	"github.com/mitchellh/mapstructure"
 	"github.com/tidwall/gjson"
 )
@@ -42,6 +43,10 @@ func (sys Ecosystem) CreateFromData(data map[string]interface{}) (types.Registry
 func (sys Ecosystem) UpdateFromData(model types.RegistryModel, data map[string]interface{}) error {
 	oldStruct := model.(*Ecosystem)
 	return mapstructure.Decode(data, oldStruct)
+}
+
+func (ks Ecosystem) GetData() map[string]interface{} {
+	return structs.Map(ks)
 }
 
 func (sys Ecosystem) GetIndexes() []types.Index {

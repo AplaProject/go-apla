@@ -85,7 +85,7 @@ func TestMetadataTx_RW(t *testing.T) {
 		db, err := newKvDB(false)
 		require.Nil(t, err)
 
-		reg, err := NewMetadataStorage(db, []types.Index{
+		reg, err := NewStorage(db, []types.Index{
 			{
 				Registry: &types.Registry{Name: "key"},
 				Name:     "amount",
@@ -172,7 +172,7 @@ func TestMetadataIndex(t *testing.T) {
 		},
 	}
 
-	msrw, err := NewMetadataStorage(db, idxs, false, true)
+	msrw, err := NewStorage(db, idxs, false, true)
 	require.Nil(t, err)
 
 	mtx := msrw.Begin()
@@ -270,7 +270,7 @@ func TestMetadataMultipleIndex(t *testing.T) {
 		},
 	}
 
-	msrw, err := NewMetadataStorage(db, idxs, false, true)
+	msrw, err := NewStorage(db, idxs, false, true)
 	require.Nil(t, err)
 
 	mtx := msrw.Begin()
@@ -377,7 +377,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 	fmt.Println("Database persistence:", persist)
 	fmt.Println("Rollbacks:", rollbacks)
 
-	storage, err := NewMetadataStorage(db, []types.Index{
+	storage, err := NewStorage(db, []types.Index{
 		{
 			Registry: &types.Registry{Name: "keys"},
 			Name:     "amount",

@@ -22,6 +22,7 @@ type RegistryModel interface {
 	GetPrimaryKey() string
 	CreateFromData(data map[string]interface{}) (RegistryModel, error)
 	UpdateFromData(model RegistryModel, data map[string]interface{}) error
+	GetData() map[string]interface{}
 	json.Unmarshaler
 }
 
@@ -29,14 +30,14 @@ type Pricer interface {
 	Price() int64
 }
 
-type Filler interface {
+type Converter interface {
 	CreateFromParams(name string, params map[string]interface{}) (RegistryModel, error)
 	UpdateFromParams(name string, value RegistryModel, params map[string]interface{}) error
 }
 
 type MetadataRegistryReader interface {
 	Get(registry *Registry, pkValue string, out interface{}) error
-	Get2(registry *Registry, pkValue string) (RegistryModel, error)
+	GetModel(registry *Registry, pkValue string) (RegistryModel, error)
 	Walk(registry *Registry, field string, fn func(jsonRow string) bool) error
 }
 
@@ -52,7 +53,7 @@ type MetadataRegistryReaderWriter interface {
 	MetadataRegistryReader
 	MetadataRegistryWriter
 	Pricer
-	Filler
+	Converter
 	RegistryState
 }
 

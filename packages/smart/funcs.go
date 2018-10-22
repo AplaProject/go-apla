@@ -1043,21 +1043,26 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if ecosystem == 0 {
 		ecosystem = sc.TxSmart.EcosystemID
 	}
-	tblname = GetTableName(sc, tblname, ecosystem)
+	ecosysTblName := GetTableName(sc, tblname, ecosystem)
 
-	perm, err = sc.AccessTablePerm(tblname, `read`)
+	perm, err = sc.AccessTablePerm(ecosysTblName, `read`)
 	if err != nil {
 		return 0, nil, err
 	}
-	if err = sc.AccessColumns(tblname, &columns, false); err != nil {
+	if err = sc.AccessColumns(ecosysTblName, &columns, false); err != nil {
 		return 0, nil, err
 	}
-	rows, err = model.GetDB(sc.DbTransaction).Table(tblname).Select(PrepareColumns(columns)).
+
+	if model.IsMetaRegistry(tblname) {
+		return metadbSelect(sc, tblname, columns, id, order, offset, limit, ecosystem, inWhere)
+	}
+
+	rows, err = model.GetDB(sc.DbTransaction).Table(ecosysTblName).Select(PrepareColumns(columns)).
 		Where(where).Order(order).Offset(offset).Limit(limit).Rows()
 	if err != nil {
 		logErrorDB(err, fmt.Sprintf("Contract %s %v %v", sc.TxContract.Name, sc.TxContract.StackCont, sc.TxData))
 		return 0, nil, logErrorDB(err, fmt.Sprintf("selecting rows from table %s %s where %s order %s",
-			tblname, PrepareColumns(columns), where, order))
+			ecosysTblName, PrepareColumns(columns), where, order))
 	}
 	defer rows.Close()
 	cols, err := rows.Columns()
@@ -1103,6 +1108,50 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	return 0, result, nil
 }
 
+func metadbSelect(sc *SmartContract, tblname string, inColumns []string, id int64, inOrder interface{},
+	offset, limit, ecosystem int64,
+	inWhere map[string]interface{}) (int64, []interface{}, error) {
+
+	filterColumns := func(model types.RegistryModel, columns []string) map[string]interface{} {
+		data := model.GetData()
+		filtered := make(map[string]interface{}, 0)
+
+		for key, value := range data {
+			lowerKey := strings.ToLower(key)
+			var required bool
+			for _, column := range columns {
+				if lowerKey == column {
+					required = true
+					break
+				}
+			}
+
+			if required {
+				filtered[lowerKey] = value
+			}
+		}
+
+		return filtered
+	}
+
+	// Get one row from database
+	if id != 0 {
+		model, err := sc.MetaDb.GetModel(
+			&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
+			strconv.FormatInt(id, 10),
+		)
+
+		if err != nil {
+			err = logError(err, consts.DBError, "retrieving model from database")
+			return 0, nil, err
+		}
+
+		return 1, []interface{}{filterColumns(model, inColumns)}, nil
+	}
+	// TODO
+	return 0, nil, nil
+}
+
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
 func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
 	values map[string]interface{}) (qcost int64, err error) {
@@ -1115,7 +1164,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if model.IsMetaRegistry(tblname) {
 		registry := &types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}}
 
-		model, err := sc.MetaDb.Get2(registry, value.(string))
+		model, err := sc.MetaDb.GetModel(registry, value.(string))
 		if err != nil {
 			return 0, err
 		}
