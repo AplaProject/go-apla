@@ -38,7 +38,7 @@ var (
 )
 
 // IsBanned returns true if the key has been banned
-func IsBanned(keyID int64) bool {
+func IsKeyBanned(keyID int64) bool {
 	mutex.RLock()
 	if ban, ok := banList[keyID]; ok {
 		mutex.RUnlock()

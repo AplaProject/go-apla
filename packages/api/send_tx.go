@@ -56,7 +56,7 @@ func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 }
 
 func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if block.IsBanned(data.keyId) {
+	if block.IsKeyBanned(data.keyId) {
 		return errorAPI(w, "E_BANNED", http.StatusBadRequest, block.BannedTill(data.keyId))
 	}
 
