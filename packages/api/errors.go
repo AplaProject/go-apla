@@ -55,5 +55,6 @@ var (
 		`E_STOPPING`:        `Network is stopping`,
 		`E_NOTIMPLEMENTED`:  `Not implemented`,
 		`E_DIFKEY`:          `Sender's key is different from tx key`,
+		`E_BANNED`:          `The key is banned till %s`,
 	}
 )

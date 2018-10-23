@@ -89,6 +89,7 @@ func (b *Block) PlaySafe() error {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
 			}
+			BadTxForBan(b.Transactions[0].TxHeader.KeyID)
 			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
 		}
 		return err

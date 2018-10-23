@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -55,6 +56,10 @@ func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 }
 
 func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	if block.IsBanned(data.keyId) {
+		return errorAPI(w, "E_BANNED", http.StatusBadRequest, block.BannedTill(data.keyId))
+	}
+
 	err := r.ParseMultipartForm(multipartBuf)
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
@@ -102,6 +107,7 @@ type contractResult struct {
 func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, txData []byte) (string, error) {
 	if int64(len(txData)) > syspar.GetMaxTxSize() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
+		block.BadTxForBan(data.keyId)
 		return "", errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
 	}
 
