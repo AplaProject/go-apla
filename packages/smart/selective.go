@@ -73,10 +73,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	sqlBuilder := CreateQueryBuilder(table, fields, whereFields, whereValues, ivalues)
+	sqlBuilder := CreateQueryBuilder(sc, table, fields, whereFields, whereValues, ivalues)
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
 
-	if err := normalizeValues(fields, ivalues); err != nil {
+	if err := sqlBuilder.normalizeValues(fields, ivalues); err != nil {
 		return 0, "", err
 	}
 
@@ -118,6 +118,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		}
 
 		updateExpr, err := sqlBuilder.getSQLUpdateExpr(fields, values, logData)
+		if err != nil {
+			return 0, "", err
+		}
 
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + sqlBuilder.table + `" SET ` + updateExpr + " " + whereExpr
@@ -137,30 +140,31 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		sqlBuilder.tableID = logData[`id`]
 	} else {
 
+		insertQuery, err := sqlBuilder.getSQLInsertQuery(fields, values, whereFields, whereValues)
+		if err != nil {
+
+		}
+
 		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
-			return 0, tableID, err
+			return 0, "", err
 		}
+
 		cost += insertCost
 		err = model.GetDB(sc.DbTransaction).Exec(insertQuery).Error
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("executing insert query")
+			return 0, "", err
 		}
-	}
-	if err != nil {
-		return 0, tableID, err
 	}
 
 	if generalRollback {
-		if isKeyTable {
-			table = keyEcosystem + `_` + keyName
-		}
-		if err = addRollback(sc, table, tableID, rollbackInfoStr); err != nil {
-			return 0, tableID, err
+		if err := addRollback(sc, sqlBuilder.table, sqlBuilder.tableID, rollbackInfoStr); err != nil {
+			return 0, sqlBuilder.tableID, err
 		}
 	}
-	return cost, tableID, nil
+	return cost, sqlBuilder.tableID, nil
 }
 
 func escapeSingleQuotes(val string) string {

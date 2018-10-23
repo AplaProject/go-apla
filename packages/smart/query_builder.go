@@ -14,14 +14,19 @@ import (
 )
 
 type smartQueryBuilder struct {
+	logger                *log.Entry
+	dbTx                  *model.DbTransaction
 	tableID               string
 	table                 string
 	isKeyTable            bool
 	keyEcosystem, keyName string
 }
 
-func CreateQueryBuilder(table string, fields, whereFields, whereValues []string, ivalues []interface{}) smartQueryBuilder {
-	builder := smartQueryBuilder{}
+func CreateQueryBuilder(sc *SmartContract, table string, fields, whereFields, whereValues []string, ivalues []interface{}) smartQueryBuilder {
+	builder := smartQueryBuilder{
+		logger: sc.GetLogger(),
+		dbTx:   sc.DbTransaction,
+	}
 
 	idNames := strings.SplitN(table, `_`, 2)
 	if len(idNames) == 2 {
@@ -144,7 +149,7 @@ func (b smartQueryBuilder) getSQLUpdateExpr(fields, values []string, logData map
 	return strings.Join(expressions, ","), nil
 }
 
-func (b smartQueryBuilder) getSQLInsertStatement(fields, values, whereFields []string) (string, error) {
+func (b smartQueryBuilder) getSQLInsertQuery(fields, values, whereFields, whereValues []string) (string, error) {
 	isID := false
 	insFields := []string{}
 	insValues := []string{}
@@ -193,26 +198,29 @@ func (b smartQueryBuilder) getSQLInsertStatement(fields, values, whereFields []s
 		}
 	}
 	if !isID {
-		id, err := model.GetNextID(sc.DbTransaction, b.table)
+		id, err := model.GetNextID(b.dbTx, b.table)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
-			return 0, ``, err
+			b.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
+			return "", err
 		}
-		tableID = converter.Int64ToStr(id)
-		addSQLIns0 = append(addSQLIns0, `id`)
-		addSQLIns1 = append(addSQLIns1, `'`+tableID+`'`)
+		b.tableID = converter.Int64ToStr(id)
+		insFields = append(insFields, `id`)
+		insValues = append(insValues, wrapString(b.tableID, "'"))
 	}
-	insertQuery := `INSERT INTO "` + table + `" (` + strings.Join(addSQLIns0, ",") +
-		`) VALUES (` + strings.Join(addSQLIns1, ",") + `)`
+
+	flds := strings.Join(insFields, ",")
+	vls := strings.Join(insValues, ",")
+
+	return fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES (%s)`, b.table, flds, vls), nil
 }
 
 func (b smartQueryBuilder) generateRollBackInfoString(logData map[string]string) (string, error) {
 	rollbackInfo := make(map[string]string)
 	for k, v := range logData {
-		if k == `id` || (isKeyTable && k == "ecosystem") {
+		if k == `id` || (b.isKeyTable && k == "ecosystem") {
 			continue
 		}
-		if converter.IsByteColumn(table, k) && v != "" {
+		if converter.IsByteColumn(b.table, k) && v != "" {
 			rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
 		} else {
 			rollbackInfo[k] = v
@@ -221,43 +229,34 @@ func (b smartQueryBuilder) generateRollBackInfoString(logData map[string]string)
 
 	jsonRollbackInfo, err := json.Marshal(rollbackInfo)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
+		b.logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
 		return "", err
 	}
 
-	return string(jsonRollbackInfo)
+	return string(jsonRollbackInfo), nil
 }
 
 func (b smartQueryBuilder) toSQLValue(rawValue, rawField string) string {
 	if converter.IsByteColumn(b.table, rawField) && len(rawValue) != 0 {
-		return toSQLHexExpr(values[i])
+		return toSQLHexExpr(rawValue)
 	}
 
-	if values[i] == `NULL` {
+	if rawValue == `NULL` {
 		return `NULL`
 	}
 
-	if strings.HasPrefix(fields[i], prefTimestamp) {
-		return toWrapedTimestamp(values[i])
+	if strings.HasPrefix(rawField, prefTimestamp) {
+		return toWrapedTimestamp(rawValue)
 	}
 
-	if strings.HasPrefix(values[i], prefTimestamp) {
-		return toTimestamp(values[i])
+	if strings.HasPrefix(rawValue, prefTimestamp) {
+		return toTimestamp(rawValue)
 	}
 
-	return wrapString(escapeSingleQuotes(values[i]), "'")
+	return wrapString(escapeSingleQuotes(rawValue), "'")
 }
 
-func isParamsContainsEcosystem(fields []string, ivalues []interface{}) (bool, int) {
-	ecosysIndx := getFieldIndex(fields, `ecosystem`)
-	if ecosysIndx >= 0 && len(ivalues) > ecosysIndx && converter.StrToInt64(fmt.Sprint(ivalues[ecosysIndx])) > 0 {
-		return true, ecosysIndx
-	}
-
-	return false, -1
-}
-
-func normalizeValues(fields []string, values []interface{}) error {
+func (b smartQueryBuilder) normalizeValues(fields []string, values []interface{}) error {
 	for i, v := range values {
 		switch val := v.(type) {
 		case string:
@@ -267,13 +266,24 @@ func normalizeValues(fields []string, values []interface{}) error {
 				}
 			}
 
-			if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
+			if len(fields) > i && converter.IsByteColumn(b.table, fields[i]) {
 				if vbyte, err := hex.DecodeString(val); err == nil {
 					values[i] = vbyte
 				}
 			}
 		}
 	}
+
+	return nil
+}
+
+func isParamsContainsEcosystem(fields []string, ivalues []interface{}) (bool, int) {
+	ecosysIndx := getFieldIndex(fields, `ecosystem`)
+	if ecosysIndx >= 0 && len(ivalues) > ecosysIndx && converter.StrToInt64(fmt.Sprint(ivalues[ecosysIndx])) > 0 {
+		return true, ecosysIndx
+	}
+
+	return false, -1
 }
 
 func toSQLHexExpr(value string) string {
@@ -293,7 +303,7 @@ func toWrapedTimestamp(value string) string {
 }
 
 func toTimestamp(value string) string {
-	return prefTimestampSpace + wrapString(escapeSingleQuotes(values[i][len(prefTimestampSpace):]), "'")
+	return prefTimestampSpace + wrapString(escapeSingleQuotes(value[len(prefTimestampSpace):]), "'")
 }
 
 func toSQLField(rawField string) string {
