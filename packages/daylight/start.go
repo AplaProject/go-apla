@@ -251,6 +251,10 @@ func Start() {
 	defer delPidFile()
 
 	if model.DBConn != nil {
+		if err := model.UpdateSchema(); err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("on running update migrations")
+		}
+
 		ctx, cancel := context.WithCancel(context.Background())
 		utils.CancelFunc = cancel
 		utils.ReturnCh = make(chan string)
