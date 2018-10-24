@@ -1,7 +1,7 @@
 package custom
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 )
 
 // TransactionInterface is parsing transactions
@@ -10,5 +10,5 @@ type TransactionInterface interface {
 	Validate() error
 	Action() error
 	Rollback() error
-	Header() *tx.Header
+	Header() *blockchain.TxHeader
 }

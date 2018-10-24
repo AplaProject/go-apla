@@ -1,71 +1,75 @@
 package migration
 
-var pagesDataSQL = `INSERT INTO "%[1]d_pages" (id, name, value, menu, conditions) VALUES
-	(2, 'admin_index', '', 'admin_menu','ContractAccess("@1EditPage")'),
-	(3, 'notifications', '', 'default_menu','ContractAccess("@1EditPage")'),
-	(4, 'import_app', 'Div(content-wrapper){
-	DBFind(buffer_data, src_buffer).Columns("id,value->name,value->data").Where({key:import,member_id:#key_id#}).Vars(hash00001)
-	DBFind(buffer_data, src_buffer).Columns("value->app_name,value->pages,value->pages_count,value->blocks,value->blocks_count,value->menu,value->menu_count,value->parameters,value->parameters_count,value->languages,value->languages_count,value->contracts,value->contracts_count,value->tables,value->tables_count").Where({key:import_info,member_id:#key_id#}).Vars(hash00002)
+var pagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, conditions, ecosystem) VALUES
+	(next_id('1_pages'), 'admin_index', '', 'admin_menu','ContractAccess("@1EditPage")', '%[1]d'),
+	(next_id('1_pages'), 'notifications', '', 'default_menu','ContractAccess("@1EditPage")', '%[1]d'),
+	(next_id('1_pages'), 'import_app', 'Div(content-wrapper){
+    DBFind(@1buffer_data).Columns("id,value->name,value->data").Where({key:import, member_id:#key_id#, ecosystem:#ecosystem_id#}).Vars(import)
+    DBFind(@1buffer_data).Columns("value->app_name,value->pages,value->pages_count,value->blocks,value->blocks_count,value->menu,value->menu_count,value->parameters,value->parameters_count,value->languages,value->languages_count,value->contracts,value->contracts_count,value->tables,value->tables_count").Where({key:import_info, member_id:#key_id#, ecosystem:#ecosystem_id#}).Vars(info)
 
-	SetTitle("Import - #hash00002_value_app_name#")
-	Data(data_info, "hash00003_name,hash00003_count,hash00003_info"){
-		Pages,"#hash00002_value_pages_count#","#hash00002_value_pages#"
-		Blocks,"#hash00002_value_blocks_count#","#hash00002_value_blocks#"
-		Menu,"#hash00002_value_menu_count#","#hash00002_value_menu#"
-		Parameters,"#hash00002_value_parameters_count#","#hash00002_value_parameters#"
-		Language resources,"#hash00002_value_languages_count#","#hash00002_value_languages#"
-		Contracts,"#hash00002_value_contracts_count#","#hash00002_value_contracts#"
-		Tables,"#hash00002_value_tables_count#","#hash00002_value_tables#"
-	}
-	Div(breadcrumb){
-		Span(Class: text-muted, Body: "Your data that you can import")
-	}
+    SetTitle("Import - #info_value_app_name#")
+    Data(data_info, "DataName,DataCount,DataInfo"){
+        Pages,"#info_value_pages_count#","#info_value_pages#"
+        Blocks,"#info_value_blocks_count#","#info_value_blocks#"
+        Menu,"#info_value_menu_count#","#info_value_menu#"
+        Parameters,"#info_value_parameters_count#","#info_value_parameters#"
+        Language resources,"#info_value_languages_count#","#info_value_languages#"
+        Contracts,"#info_value_contracts_count#","#info_value_contracts#"
+        Tables,"#info_value_tables_count#","#info_value_tables#"
+    }
+    Div(breadcrumb){
+        Span(Class: text-muted, Body: "Your data that you can import")
+    }
 
-	Div(panel panel-primary){
-		ForList(data_info){
-			Div(list-group-item){
-				Div(row){
-					Div(col-md-10 mc-sm text-left){
-						Span(Class: text-bold, Body: "#hash00003_name#")
-					}
-					Div(col-md-2 mc-sm text-right){
-						If(#hash00003_count# > 0){
-							Span(Class: text-bold, Body: "(#hash00003_count#)")
-						}.Else{
-							Span(Class: text-muted, Body: "(0)")
-						}
-					}
-				}
-				Div(row){
-					Div(col-md-12 mc-sm text-left){
-						If(#hash00003_count# > 0){
-							Span(Class: h6, Body: "#hash00003_info#")
-						}.Else{
-							Span(Class: text-muted h6, Body: "Nothing selected")
-						}
-					}
-				}
-			}
-		}
-		If(#hash00001_id# > 0){
-			Div(list-group-item text-right){
-				Button(Body: "Import", Class: btn btn-primary, Page: apps_list).CompositeContract(@1Import, "#hash00001_value_data#")
-			}
-		}
-	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")'),
-	(5, 'import_upload', 'Div(content-wrapper){
-	SetTitle("Import")
-	Div(breadcrumb){
-		Span(Class: text-muted, Body: "Select payload that you want to import")
-	}
-	Form(panel panel-primary){
-		Div(list-group-item){
-			Input(Name: input_file, Type: file)
-		}
-		Div(list-group-item text-right){
-			Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: import_app)
-		}
-	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")');
+    Div(panel panel-primary){
+        ForList(data_info){
+            Div(list-group-item){
+                Div(row){
+                    Div(col-md-10 mc-sm text-left){
+                        Span(Class: text-bold, Body: "#DataName#")
+                    }
+                    Div(col-md-2 mc-sm text-right){
+                        If(#DataCount# > 0){
+                            Span(Class: text-bold, Body: "(#DataCount#)")
+                        }.Else{
+                            Span(Class: text-muted, Body: "(0)")
+                        }
+                    }
+                }
+                Div(row){
+                    Div(col-md-12 mc-sm text-left){
+                        If(#DataCount# > 0){
+                            Span(Class: h6, Body: "#DataInfo#")
+                        }.Else{
+                            Span(Class: text-muted h6, Body: "Nothing selected")
+                        }
+                    }
+                }
+            }
+        }
+        If(#import_id# > 0){
+            Div(list-group-item text-right){
+                Button(Body: "Import", Class: btn btn-primary, Page: @1apps_list).CompositeContract(@1Import, "#import_value_data#")
+            }
+        }
+    }
+}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d'),
+	(next_id('1_pages'), 'import_upload', 'Div(content-wrapper){
+    SetTitle("Import")
+    Div(breadcrumb){
+        Span(Class: text-muted, Body: "Select payload that you want to import")
+    }
+    If(#ecosystem_id#>1){
+        AddToolButton(Title: "Install platform apps", Page: @1platform_apps, Icon: icon-cloud-upload)
+    }
+
+    Form(panel panel-primary){
+        Div(list-group-item){
+            Input(Name: input_file, Type: file)
+        }
+        Div(list-group-item text-right){
+            Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: @1import_app)
+        }
+    }
+}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d');
 `

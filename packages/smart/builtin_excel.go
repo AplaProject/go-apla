@@ -48,7 +48,7 @@ func GetRowsCountXLSX(sc *SmartContract, binaryID, sheetNum int64) (int64, error
 
 func excelBookFromStoredBinary(sc *SmartContract, binaryID int64) (*xl.File, error) {
 	bin := &model.Binary{}
-	bin.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	bin.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.Header.EcosystemID))
 	found, err := bin.GetByID(binaryID)
 	if err != nil {
 		return nil, err

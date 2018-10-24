@@ -5,16 +5,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -44,16 +43,14 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 	}
 }
 
-func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
+func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
 	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, callDelayedContract, uint32(firstEcosystemID))
-	info := contract.Block.Info.(*script.ContractInfo)
+	params := map[string]string{"Id": converter.Int64ToStr(delayedContractID)}
+	info := contract.Info()
 
-	params := make([]byte, 0)
-	converter.EncodeLenInt64(&params, delayedContactID)
-
-	smartTx := tx.SmartContract{
-		Header: tx.Header{
+	smartTx := &blockchain.Transaction{
+		Header: blockchain.TxHeader{
 			Type:        int(info.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: firstEcosystemID,
@@ -61,48 +58,27 @@ func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
 			NetworkID:   consts.NETWORK_ID,
 		},
 		SignedBy: smart.PubToID(dtx.publicKey),
-		Data:     params,
+		Params:   params,
 	}
 
 	signature, err := crypto.Sign(
-		dtx.privateKey,
-		fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContactID),
+		[]byte(dtx.privateKey),
+		[]byte(fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContractID)),
 	)
 	if err != nil {
 		dtx.logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 		return err
 	}
-	smartTx.BinSignatures = converter.EncodeLengthPlusData(signature)
+	smartTx.Header.BinSignatures = converter.EncodeLengthPlusData(signature)
 
-	if smartTx.PublicKey, err = hex.DecodeString(dtx.publicKey); err != nil {
+	if smartTx.Header.PublicKey, err = hex.DecodeString(dtx.publicKey); err != nil {
 		dtx.logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
 		return err
 	}
 
-	data, err := msgpack.Marshal(smartTx)
-	if err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
+	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
+		dtx.logger.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("calculating hash of smart contract")
 		return err
 	}
-	data = append([]byte{128}, data...)
-
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of smart contract")
-		return err
-	}
-
-	tx := &model.Transaction{
-		Hash:     hash,
-		Data:     data[:],
-		Type:     int8(converter.BinToDecBytesShift(&data, 1)),
-		KeyID:    keyID,
-		HighRate: model.TransactionRateOnBlock,
-	}
-	if err = tx.Create(); err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
-		return err
-	}
-
 	return nil
 }

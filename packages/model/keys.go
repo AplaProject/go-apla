@@ -2,11 +2,9 @@ package model
 
 import "fmt"
 
-const keyTableSuffix = "_keys"
-
 // Key is model
 type Key struct {
-	tableName string
+	ecosystem int64
 	ID        int64  `gorm:"primary_key;not null"`
 	PublicKey []byte `gorm:"column:pub;not null"`
 	Amount    string `gorm:"not null"`
@@ -17,21 +15,24 @@ type Key struct {
 
 // SetTablePrefix is setting table prefix
 func (m *Key) SetTablePrefix(prefix int64) *Key {
-	m.tableName = KeyTableName(prefix)
+	m.ecosystem = prefix
 	return m
 }
 
 // TableName returns name of table
 func (m Key) TableName() string {
-	return m.tableName
+	if m.ecosystem == 0 {
+		m.ecosystem = 1
+	}
+	return `1_keys`
 }
 
 // Get is retrieving model from database
 func (m *Key) Get(wallet int64) (bool, error) {
-	return isFound(DBConn.Where("id = ?", wallet).First(m))
+	return isFound(DBConn.Where("id = ? and ecosystem = ?", wallet, m.ecosystem).First(m))
 }
 
-// KeyTableName returns name of keys table
+// KeyTableName returns name of key table
 func KeyTableName(prefix int64) string {
-	return fmt.Sprintf("%d%s", prefix, keyTableSuffix)
+	return fmt.Sprintf("%d_keys", prefix)
 }

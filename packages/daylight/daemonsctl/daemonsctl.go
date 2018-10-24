@@ -3,7 +3,6 @@ package daemonsctl
 import (
 	"context"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
@@ -26,10 +25,7 @@ func RunAllDaemons(ctx context.Context) error {
 			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
 			return err
 		}
-
-		if data, ok := block.GetDataFromFirstBlock(); ok {
-			syspar.SetFirstBlockData(data)
-		}
+		syspar.SetFirstBlockData()
 	} else {
 		err := syspar.SysUpdate(nil)
 		if err != nil {

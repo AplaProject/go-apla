@@ -7,9 +7,9 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 )
 
@@ -65,11 +65,14 @@ func NodeDoneUpdatingBlockchain() {
 }
 
 func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant bool, err error) {
-	curBlock := &model.InfoBlock{}
-	_, err = curBlock.Get()
+	curBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Error("retrieving info block from db")
-		return false, errors.Wrapf(err, "retrieving info block from db")
+		log.WithFields(log.Fields{"type": consts.DBError, "err": err}).Error("retrieving last block from db")
+		return false, errors.Wrapf(err, "retrieving last block from db")
+	}
+
+	if !found {
+		return true, nil
 	}
 
 	remoteHosts := syspar.GetRemoteHosts()
@@ -93,8 +96,8 @@ func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant
 	}
 
 	// Node blockchain is stale
-	if curBlock.BlockID+n.availableBlockchainGap < maxBlockID {
-		log.WithFields(log.Fields{"maxBlockID": maxBlockID, "curBlockID": curBlock.BlockID, "Gap": n.availableBlockchainGap}).Info("blockchain is stale, stopping node relevance")
+	if curBlock.Header.BlockID+n.availableBlockchainGap < maxBlockID {
+		log.WithFields(log.Fields{"maxBlockID": maxBlockID, "curBlockID": curBlock.Header.BlockID, "Gap": n.availableBlockchainGap}).Info("blockchain is stale, stopping node relevance")
 		return false, nil
 	}
 

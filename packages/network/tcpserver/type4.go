@@ -17,8 +17,8 @@
 package tcpserver
 
 import (
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/network"
 
 	log "github.com/sirupsen/logrus"
@@ -28,18 +28,18 @@ import (
 // The request is sent by 'confirmations' daemon
 func Type4(r *network.ConfirmRequest) (*network.ConfirmResponse, error) {
 	resp := &network.ConfirmResponse{}
-	block := &model.Block{}
-	found, err := block.Get(int64(r.BlockID))
+	block := &blockchain.Block{}
+	found, err := block.Get(nil, r.BlockHash)
 	if err != nil || !found {
 		hash := [32]byte{}
 		resp.Hash = hash[:]
 	} else {
-		resp.Hash = block.Hash // can we send binary data ?
+		resp.Hash = r.BlockHash // can we send binary data ?
 	}
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_id": r.BlockID}).Error("Getting block")
-	} else if len(block.Hash) == 0 {
-		log.WithFields(log.Fields{"type": consts.DBError, "block_id": r.BlockID}).Warning("Block not found")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_hash": r.BlockHash}).Error("Getting block")
+	} else if !found {
+		log.WithFields(log.Fields{"type": consts.DBError, "block_hash": r.BlockHash}).Warning("Block not found")
 	}
 	return resp, nil
 }

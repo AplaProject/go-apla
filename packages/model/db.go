@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
 	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -32,6 +32,27 @@ var (
 
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("Database connection error")
+
+	FirstEcosystemTables = map[string]bool{
+		`keys`:               false,
+		`menu`:               true,
+		`pages`:              true,
+		`blocks`:             true,
+		`languages`:          true,
+		`contracts`:          true,
+		`tables`:             true,
+		`parameters`:         true,
+		`history`:            true,
+		`sections`:           true,
+		`members`:            false,
+		`roles`:              true,
+		`roles_participants`: true,
+		`notifications`:      true,
+		`applications`:       true,
+		`binaries`:           true,
+		`buffer_data`:        true,
+		`app_params`:         true,
+	}
 )
 
 func isFound(db *gorm.DB) (bool, error) {
@@ -136,15 +157,26 @@ func DropTables() error {
 }
 
 // GetRecordsCountTx is counting all records of table in transaction
-func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
+func GetRecordsCountTx(db *DbTransaction, tableName, where string) (int64, error) {
 	var count int64
-	err := GetDB(db).Table(tableName).Count(&count).Error
+	dbQuery := GetDB(db).Table(tableName)
+	if len(where) > 0 {
+		dbQuery = dbQuery.Where(where)
+	}
+	err := dbQuery.Count(&count).Error
 	return count, err
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(db *DbTransaction, metaWriter types.MetadataRegistryReaderWriter, id int, wallet int64, name string, founder int64) error {
-	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder, appID int64) error {
+	if id == 1 {
+		q := fmt.Sprintf(migration.GetCommonEcosystemScript())
+		if err := GetDB(db).Exec(q).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing comma ecosystem schema")
+			return err
+		}
+	}
+	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder, appID)
 	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
@@ -154,16 +186,7 @@ func ExecSchemaEcosystem(db *DbTransaction, metaWriter types.MetadataRegistryRea
 		if err := GetDB(db).Exec(q).Error; err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
 		}
-
-		// TODO
-		for _, value := range migration.GetNewFirstEcosystemData() {
-			if err := metaWriter.Insert(nil, value.Registry, value.PrimaryKey, value.Data); err != nil {
-				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem data")
-				return err
-			}
-		}
 	}
-
 	return nil
 }
 
@@ -180,6 +203,23 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 // ExecSchema is executing schema
 func ExecSchema() error {
 	return migration.Migrate(&MigrationHistory{})
+}
+
+func ExecSystemContractsData(wallet int64) error {
+	q := fmt.Sprintf(migration.GetSystemContractsScript(), "", wallet)
+	if err := DBConn.Exec(q).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing system contracts script")
+		return err
+	}
+	return nil
+}
+
+func ExecSystemParametersData() error {
+	if err := DBConn.Exec(migration.GetSystemParametersScript()).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing comma ecosystem schema")
+		return err
+	}
+	return nil
 }
 
 // Update is updating table rows
@@ -206,30 +246,23 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
+type RawTransaction interface {
+	Bytes() []byte
+	Hash() []byte
+	Type() int64
+}
+
 // SendTx is creates transaction
-func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
-	hash, err := crypto.Hash(data)
+func SendTx(tx *blockchain.Transaction) ([]byte, error) {
+	hash, err := tx.Hash()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing data")
 		return nil, err
 	}
-	ts := &TransactionStatus{
-		Hash:     hash,
-		Time:     time.Now().Unix(),
-		Type:     txType,
-		WalletID: adminWallet,
-	}
-	err = ts.Create()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("transaction status create")
+	if err := queue.ValidateTxQueue.Enqueue(tx); err != nil {
+		log.WithFields(log.Fields{"type": consts.QueueError, "err": err}).Error("enqueueing transaction in validation queue")
 		return nil, err
 	}
-	qtx := &QueueTx{
-		Hash: hash,
-		Data: data,
-	}
-	err = qtx.Create()
-	return hash, err
+	return hash, nil
 }
 
 // AlterTableAddColumn is adding column to table
@@ -262,6 +295,27 @@ func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
 		ORDER BY ordinal_position ASC`, -1, tblname)
 }
 
+func DataTypeToColumnType(dataType string) string {
+	var itype string
+	switch {
+	case dataType == "character varying":
+		itype = `varchar`
+	case dataType == `bigint`:
+		itype = "number"
+	case dataType == `jsonb`:
+		itype = "json"
+	case strings.HasPrefix(dataType, `timestamp`):
+		itype = "datetime"
+	case strings.HasPrefix(dataType, `numeric`):
+		itype = "money"
+	case strings.HasPrefix(dataType, `double`):
+		itype = "double"
+	default:
+		itype = dataType
+	}
+	return itype
+}
+
 // GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
@@ -269,22 +323,7 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 		return
 	}
 	if dataType, ok := coltype["data_type"]; ok {
-		switch {
-		case dataType == "character varying":
-			itype = `varchar`
-		case dataType == `bigint`:
-			itype = "number"
-		case dataType == `jsonb`:
-			itype = "json"
-		case strings.HasPrefix(dataType, `timestamp`):
-			itype = "datetime"
-		case strings.HasPrefix(dataType, `numeric`):
-			itype = "money"
-		case strings.HasPrefix(dataType, `double`):
-			itype = "double"
-		default:
-			itype = dataType
-		}
+		itype = DataTypeToColumnType(dataType)
 	}
 	return
 }
@@ -381,8 +420,7 @@ func GetColumnByID(table, column, id string) (result string, err error) {
 }
 
 // InitDB drop all tables and exec db schema
-func InitDB(cfg conf.DBConfig) error {
-
+func InitDB(cfg conf.DBConfig, keyID int64) error {
 	err := GormInit(cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Name)
 	if err != nil || DBConn == nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("initializing DB")
@@ -394,6 +432,14 @@ func InitDB(cfg conf.DBConfig) error {
 	}
 	if err = ExecSchema(); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing db schema")
+		return err
+	}
+	if err = ExecSystemContractsData(keyID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing sys contracts")
+		return err
+	}
+	if err = ExecSystemParametersData(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing sys parameters")
 		return err
 	}
 

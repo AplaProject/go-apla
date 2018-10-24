@@ -3,15 +3,12 @@ package tcpserver
 import (
 	"errors"
 	"net"
-	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -57,38 +54,16 @@ func processStopNetwork(b []byte) ([]byte, error) {
 		log.WithFields(log.Fields{"error": err, "type": consts.InvalidObject}).Error("validating cert")
 		return nil, err
 	}
-
-	var data []byte
-	_, err = converter.BinMarshal(&data,
-		&consts.StopNetwork{
-			TxHeader: consts.TxHeader{
-				Type:  consts.TxTypeStopNetwork,
-				Time:  uint32(time.Now().Unix()),
-				KeyID: conf.Config.KeyID,
-			},
-			StopNetworkCert: b,
-		},
-	)
+	smartTx, err := smart.CallContract("StopNetwork", 1, map[string]string{"Cert": string(b)}, []string{string(b)})
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.MarshallingError}).Error("binary marshaling")
+		log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return nil, err
 	}
-
-	hash, err := crypto.Hash(data)
+	hash, err := smartTx.Hash()
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("hashing data")
 		return nil, err
 	}
-
-	tx := &model.Transaction{
-		Hash:     hash,
-		Data:     data,
-		Type:     consts.TxTypeStopNetwork,
-		KeyID:    conf.Config.KeyID,
-		HighRate: model.TransactionRateStopNetwork,
-	}
-	if err = tx.Create(); err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("inserting tx to database")
+	if err := queue.ValidateTxQueue.Enqueue(smartTx); err != nil {
 		return nil, err
 	}
 

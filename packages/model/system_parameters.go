@@ -37,7 +37,7 @@ func (sp *SystemParameter) GetJSONField(jsonField string, name string) (string, 
 // GetValueParameterByName returns value parameter by name
 func (sp *SystemParameter) GetValueParameterByName(name, value string) (*string, error) {
 	var result *string
-	err := DBConn.Raw(`SELECT value->'`+value+`' FROM 1_system_parameters WHERE name = ?`, name).Row().Scan(&result)
+	err := DBConn.Raw(`SELECT value->'`+value+`' FROM "1_system_parameters" WHERE name = ?`, name).Row().Scan(&result)
 	if err != nil {
 		return nil, err
 	}
@@ -63,15 +63,15 @@ func (sp *SystemParameter) ToMap() map[string]string {
 }
 
 // Update is update model
-func (sp SystemParameter) Update(value string) error {
-	return DBConn.Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
+func (sp SystemParameter) Update(transaction *DbTransaction, value string) error {
+	return GetDB(transaction).Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
 }
 
 // SaveArray is saving array
-func (sp *SystemParameter) SaveArray(list [][]string) error {
+func (sp *SystemParameter) SaveArray(transaction *DbTransaction, list [][]string) error {
 	ret, err := json.Marshal(list)
 	if err != nil {
 		return err
 	}
-	return sp.Update(string(ret))
+	return sp.Update(transaction, string(ret))
 }

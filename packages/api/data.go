@@ -17,6 +17,7 @@
 package api
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"net/http"
@@ -34,6 +35,27 @@ import (
 const binaryColumn = "data"
 
 var errWrongHash = errors.New("Wrong hash")
+
+func compareHash(w http.ResponseWriter, bin *model.Binary, data []byte, ps hr.Params) bool {
+	urlHash := strings.ToLower(ps.ByName(`hash`))
+	if len(urlHash) == 32 && fmt.Sprintf(`%x`, md5.Sum(data)) == urlHash {
+		return true
+	}
+	if len(urlHash) == 64 {
+		var hashData string
+		if bin == nil {
+			hash, _ := crypto.Hash([]byte(data))
+			hashData = fmt.Sprintf(`%x`, hash)
+		} else {
+			hashData = bin.Hash
+		}
+		if hashData == urlHash {
+			return true
+		}
+	}
+	errorAPI(w, errWrongHash, http.StatusNotFound)
+	return false
+}
 
 func dataHandler() hr.Handle {
 	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
@@ -53,10 +75,7 @@ func dataHandler() hr.Handle {
 			return
 		}
 
-		hash, _ := crypto.Hash([]byte(data))
-		if fmt.Sprintf(`%x`, hash) != strings.ToLower(ps.ByName(`hash`)) {
-			log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		if !compareHash(w, nil, []byte(data), ps) {
 			return
 		}
 
@@ -84,9 +103,7 @@ func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
 		return
 	}
 
-	if bin.Hash != strings.ToLower(ps.ByName("hash")) {
-		log.WithFields(log.Fields{"type": consts.InvalidObject, "error": errWrongHash}).Error("wrong hash")
-		errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+	if !compareHash(w, &bin, bin.Data, ps) {
 		return
 	}
 

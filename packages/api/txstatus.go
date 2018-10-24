@@ -21,9 +21,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -31,6 +31,7 @@ import (
 type txstatusError struct {
 	Type  string `json:"type,omitempty"`
 	Error string `json:"error,omitempty"`
+	Id    string `json:"id,omitempty"`
 }
 
 type txstatusResult struct {
@@ -45,25 +46,27 @@ func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstat
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding tx hash from hex")
 		return nil, errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}
-	ts := &model.TransactionStatus{}
-	found, err := ts.Get([]byte(converter.HexToBin(hash)))
+	tx := &blockchain.TxStatus{}
+	found, err := tx.Get(nil, converter.HexToBin(hash))
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("getting transaction status by hash")
 		return nil, errorAPI(w, err, http.StatusInternalServerError)
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": []byte(converter.HexToBin(hash))}).Error("getting transaction status by hash")
 		return nil, errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
 	}
-	if ts.BlockID > 0 {
-		status.BlockID = converter.Int64ToStr(ts.BlockID)
-		status.Result = ts.Error
-	} else if len(ts.Error) > 0 {
-		if err := json.Unmarshal([]byte(ts.Error), &status.Message); err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": ts.Error, "error": err}).Warn("unmarshalling txstatus error")
+	if err != nil {
+		return nil, errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if tx.BlockID > 0 {
+		status.BlockID = converter.Int64ToStr(tx.BlockID)
+		status.Result = tx.Error
+	} else if len(tx.Error) > 0 {
+		if err := json.Unmarshal([]byte(tx.Error), &status.Message); err != nil {
+			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "text": tx.Error, "error": err}).Warn("unmarshalling txstatus error")
 			status.Message = &txstatusError{
 				Type:  "txError",
-				Error: ts.Error,
+				Error: tx.Error,
 			}
 		}
 	}
@@ -74,21 +77,14 @@ type multiTxStatusResult struct {
 	Results map[string]*txstatusResult `json:"results"`
 }
 
-func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	status, err := getTxStatus(data.params[`hash`].(string), w, logger)
-	if err != nil {
-		return err
-	}
-	data.result = &status
-	return nil
+type txstatusRequest struct {
+	Hashes []string `json:"hashes"`
 }
 
-func txstatusMulti(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	result := &multiTxStatusResult{}
 	result.Results = map[string]*txstatusResult{}
-	var request struct {
-		Hashes []string `json:"hashes"`
-	}
+	var request txstatusRequest
 	if err := json.Unmarshal([]byte(data.params["data"].(string)), &request); err != nil {
 		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
 	}

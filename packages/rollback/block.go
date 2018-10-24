@@ -17,27 +17,23 @@
 package rollback
 
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // BlockRollback is blocking rollback
-func RollbackBlock(data []byte, deleteBlock bool) error {
-	buf := bytes.NewBuffer(data)
-	if buf.Len() == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty buffer")
-		return fmt.Errorf("empty buffer")
+func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
+	ldbTx, err := blockchain.DB.OpenTransaction()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
+		return err
 	}
-
-	block, err := block.UnmarshallBlock(buf, false)
+	b, err := block.FromBlockchainBlock(blockModel, hash, ldbTx)
 	if err != nil {
 		return err
 	}
@@ -48,75 +44,30 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 		return err
 	}
 
-	err = rollbackBlock(dbTransaction, block)
+	err = rollbackBlock(dbTransaction, ldbTx, b)
 
 	if err != nil {
 		dbTransaction.Rollback()
+		ldbTx.Discard()
 		return err
 	}
 
-	if deleteBlock {
-		b := &model.Block{}
-		err = b.DeleteById(dbTransaction, block.Header.BlockID)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
-			dbTransaction.Rollback()
-			return err
-		}
-	}
-
 	err = dbTransaction.Commit()
+	err = ldbTx.Commit()
 	return err
 }
 
-func rollbackBlock(dbTransaction *model.DbTransaction, block *block.Block) error {
+func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, block *block.PlayableBlock) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Transactions) - 1; i >= 0; i-- {
 		t := block.Transactions[i]
 		t.DbTransaction = dbTransaction
-
-		_, err := model.MarkTransactionUnusedAndUnverified(dbTransaction, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
-			return err
-		}
-		_, err = model.DeleteLogTransactionsByHash(dbTransaction, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting log transactions by hash")
-			return err
-		}
-
-		ts := &model.TransactionStatus{}
-		err = ts.UpdateBlockID(dbTransaction, 0, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating block id in transaction status")
-			return err
-		}
-
-		_, err = model.DeleteQueueTxByHash(dbTransaction, t.TxHash)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transacion from queue by hash")
-			return err
-		}
+		t.LdbTx = ldbTx
 
 		if t.TxContract != nil {
-			if err = rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
+			if err := rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
 				return err
-			}
-		} else {
-			MethodName := consts.TxTypes[int(t.TxType)]
-			txParser, err := transaction.GetTransaction(t, MethodName)
-			if err != nil {
-				return utils.ErrInfo(err)
-			}
-			result := txParser.Init()
-			if _, ok := result.(error); ok {
-				return utils.ErrInfo(result.(error))
-			}
-			result = txParser.Rollback()
-			if _, ok := result.(error); ok {
-				return utils.ErrInfo(result.(error))
 			}
 		}
 	}

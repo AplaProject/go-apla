@@ -1,4 +1,4 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract NewLang {
     data {
@@ -20,6 +20,6 @@ contract NewLang {
     }
 
     action {
-        CreateLanguage($Name, $Trans, $ApplicationId)
+        CreateLanguage($Name, $Trans)
     }
 }

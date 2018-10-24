@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 )
@@ -57,13 +57,20 @@ func (btc *BlockTimeCounter) BlockForTimeExists(t time.Time, nodePosition int) (
 		return false, err
 	}
 
-	b := &model.Block{}
-	blocks, err := b.GetNodeBlocksAtTime(startInterval, endInterval, int64(nodePosition))
+	blocks, err := blockchain.GetLastNBlocks(nil, btc.numberNodes*2)
 	if err != nil {
 		return false, err
 	}
 
-	return len(blocks) > 0, nil
+	for _, b := range blocks {
+		blockTime := b.Header.Time
+		if blockTime >= startInterval.Unix() && blockTime < endInterval.Unix() {
+			if b.Header.NodePosition == int64(nodePosition) {
+				return true, DuplicateBlockError
+			}
+		}
+	}
+	return false, nil
 }
 
 // NextTime returns next generation time for node position at time

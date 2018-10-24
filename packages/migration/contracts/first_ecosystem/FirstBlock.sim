@@ -1,0 +1,14 @@
+// +prop AppID = '1'
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract FirstBlock {
+    data {
+        Data string
+    }
+
+    conditions {
+    }
+
+    action {
+        InitFirstEcosystem($Data)
+    }
+}

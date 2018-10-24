@@ -17,17 +17,17 @@
 package daemons
 
 import (
-	"bytes"
 	"context"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/protocols"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -86,11 +86,14 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	}
 
 	done := time.After(endTime.Sub(time.Now()))
-	prevBlock := &model.InfoBlock{}
-	_, err = prevBlock.Get()
+	prevBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting previous block")
 		return err
+	}
+	if !found {
+		d.logger.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("previous block not found")
+		return nil
 	}
 
 	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
@@ -106,67 +109,55 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		publicKey:  NodePublicKey,
 		logger:     d.logger,
 	}
+	dtx.RunForBlockID(prevBlock.Header.BlockID + 1)
 
-	dtx.RunForBlockID(prevBlock.BlockID + 1)
-
-	trs, err := processTransactions(d.logger, done)
+	err = transaction.ProcessTransactionsQueue()
 	if err != nil {
 		return err
 	}
+	queue.ProcessTxQueue.ProcessAllItems(func(trs []*blockchain.Transaction) error {
+		trs, err := processTransactions(trs, d.logger, done)
+		if err != nil {
+			return err
+		}
 
-	// Block generation will be started only if we have transactions
-	if len(trs) == 0 {
+		// Block generation will be started only if we have transactions
+		if len(trs) == 0 {
+			return nil
+		}
+
+		header := &blockchain.BlockHeader{
+			BlockID:      prevBlock.Header.BlockID + 1,
+			Time:         time.Now().Unix(),
+			EcosystemID:  0,
+			KeyID:        conf.Config.KeyID,
+			NodePosition: nodePosition,
+			Version:      consts.BLOCK_VERSION,
+		}
+		bBlock := blockchain.Block{
+			Header:       header,
+			Transactions: trs,
+		}
+
+		blockBin, err := bBlock.Marshal()
+		if err != nil {
+			return err
+		}
+
+		err = block.InsertBlockWOForks(blockBin, true, false)
+		if err != nil {
+			return err
+		}
+		log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
+		go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 		return nil
-	}
+	})
 
-	header := &utils.BlockData{
-		BlockID:      prevBlock.BlockID + 1,
-		Time:         time.Now().Unix(),
-		EcosystemID:  0,
-		KeyID:        conf.Config.KeyID,
-		NodePosition: nodePosition,
-		Version:      consts.BLOCK_VERSION,
-	}
-
-	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
-	if err != nil {
-		return err
-	}
-
-	err = block.InsertBlockWOForks(blockBin, true, false)
-	if err != nil {
-		return err
-	}
-	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
-
-	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 	return nil
 }
 
-func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, key string, prevBlockHash []byte) ([]byte, error) {
-	trData := make([][]byte, 0, len(trs))
-	for _, tr := range trs {
-		trData = append(trData, tr.Data)
-	}
-
-	return block.MarshallBlock(blockHeader, trData, prevBlockHash, key)
-}
-
-func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Transaction, error) {
-	p := new(transaction.Transaction)
-
+func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done <-chan time.Time) ([]*blockchain.Transaction, error) {
 	// verify transactions
-	err := transaction.ProcessTransactionsQueue(p.DbTransaction)
-	if err != nil {
-		return nil, err
-	}
-
-	trs, err := model.GetAllUnusedTransactions(syspar.GetMaxTxCount())
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all unused transactions")
-		return nil, err
-	}
-
 	limits := block.NewLimits(nil)
 
 	type badTxStruct struct {
@@ -174,12 +165,12 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 		msg  string
 	}
 
-	processBadTx := func(dbTx *model.DbTransaction) chan badTxStruct {
+	processBadTx := func() chan badTxStruct {
 		ch := make(chan badTxStruct)
 
 		go func() {
 			for badTxItem := range ch {
-				transaction.MarkTransactionBad(p.DbTransaction, badTxItem.hash, badTxItem.msg)
+				blockchain.SetTransactionError(nil, badTxItem.hash, badTxItem.msg)
 			}
 		}()
 
@@ -190,14 +181,14 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 		ch := make(chan []byte)
 		go func() {
 			for tx := range ch {
-				model.IncrementTxAttemptCount(nil, tx)
+				blockchain.IncrementTxAttemptCount(nil, tx)
 			}
 		}()
 
 		return ch
 	}
 
-	txBadChan := processBadTx(p.DbTransaction)
+	txBadChan := processBadTx()
 	attemptCountChan := processIncAttemptCnt()
 
 	defer func() {
@@ -206,14 +197,14 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 	}()
 
 	// Checks preprocessing count limits
-	txList := make([]*model.Transaction, 0, len(trs))
+	txList := make([]*blockchain.Transaction, 0, len(trs))
+	var err error
 	for i, txItem := range trs {
 		select {
 		case <-done:
 			return txList, err
 		default:
-			bufTransaction := bytes.NewBuffer(txItem.Data)
-			p, err := transaction.UnmarshallTransaction(bufTransaction)
+			p, err := transaction.FromBlockchainTransaction(txItem)
 			if err != nil {
 				if p != nil {
 					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
@@ -221,7 +212,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 				continue
 			}
 
-			if err := p.Check(time.Now().Unix(), false); err != nil {
+			if err := p.Check(time.Now().Unix()); err != nil {
 				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
 				continue
 			}

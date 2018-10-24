@@ -36,20 +36,18 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
-	"github.com/satori/go.uuid"
 
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/shopspring/decimal"
@@ -61,7 +59,14 @@ const (
 	nodeBanNotificationHeader = "Your node was banned"
 	historyLimit              = 250
 	dateTimeFormat            = "2006-01-02 15:04:05"
+	contractTxType            = 128
 )
+
+type ThrowError struct {
+	Type    string `json:"type"`
+	Code    string `json:"id"`
+	ErrText string `json:"error"`
+}
 
 var BOM = []byte{0xEF, 0xBB, 0xBF}
 
@@ -79,9 +84,28 @@ type permColumn struct {
 }
 
 type TxInfo struct {
-	Block    string                 `json:"block"`
-	Contract string                 `json:"contract"`
+	Block    string                 `json:"block,omitempty"`
+	Contract string                 `json:"contract,omitempty"`
 	Params   map[string]interface{} `json:"params,omitempty"`
+}
+
+type TableInfo struct {
+	Columns map[string]string
+	Table   *model.Table
+}
+
+type FlushInfo struct {
+	ID   uint32        // id
+	Prev *script.Block // previous item, nil if the new item has been appended
+	Info *script.ObjInfo
+	Name string // the name
+}
+
+// NotifyInfo is used for sending delayed notifications
+type NotifyInfo struct {
+	Roles       bool // if true then UpdateRolesNotifications, otherwise UpdateNotifications
+	EcosystemID int64
+	List        []int64
 }
 
 // SmartContract is storing smart contract data
@@ -91,36 +115,54 @@ type SmartContract struct {
 	FullAccess    bool
 	SysUpdate     bool
 	VM            *script.VM
-	TxSmart       tx.SmartContract
+	TxSmart       blockchain.Transaction
 	TxData        map[string]interface{}
 	TxContract    *Contract
 	TxFuel        int64           // The fuel of executing contract
 	TxCost        int64           // Maximum cost of executing contract
 	TxUsedCost    decimal.Decimal // Used cost of CPU resources
-	BlockData     *utils.BlockData
+	BlockData     *blockchain.BlockHeader
 	Loop          map[string]bool
 	TxHash        []byte
+	TxSignature   []byte
+	TxSize        int64
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
 	MetaDb        types.MetadataRegistryReaderWriter
 	Rand          *rand.Rand
+	FlushRollback []FlushInfo
+	Notifications []NotifyInfo
 }
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
-func (sc *SmartContract) AppendStack(contract string) error {
-	cont := sc.TxContract
-	if len(contract) > 0 {
+func (sc *SmartContract) AppendStack(fn string) error {
+	if sc.isAllowStack(fn) {
+		cont := sc.TxContract
 		for _, item := range cont.StackCont {
-			if item == contract {
-				return fmt.Errorf(eContractLoop, contract)
+			if item == fn {
+				return fmt.Errorf(eContractLoop, fn)
 			}
 		}
-		cont.StackCont = append(cont.StackCont, contract)
-	} else {
-		cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+		cont.StackCont = append(cont.StackCont, fn)
+		(*sc.TxContract.Extend)["stack"] = cont.StackCont
 	}
-	(*sc.TxContract.Extend)["stack"] = cont.StackCont
 	return nil
+}
+
+func (sc *SmartContract) PopStack(fn string) {
+	if sc.isAllowStack(fn) {
+		cont := sc.TxContract
+		if len(cont.StackCont) > 0 {
+			cont.StackCont = cont.StackCont[:len(cont.StackCont)-1]
+			(*sc.TxContract.Extend)["stack"] = cont.StackCont
+		}
+	}
+}
+
+func (sc *SmartContract) isAllowStack(fn string) bool {
+	// Stack contains only contracts
+	c := VMGetContract(sc.VM, fn, uint32(sc.TxSmart.Header.EcosystemID))
+	return c != nil
 }
 
 var (
@@ -140,6 +182,7 @@ var (
 		"ContractConditions":           50,
 		"ContractName":                 10,
 		"CreateColumn":                 50,
+		"StopNet":                      100,
 		"CreateTable":                  100,
 		"CreateLanguage":               50,
 		"EditLanguage":                 50,
@@ -170,6 +213,8 @@ var (
 		"ValidateCondition":            30,
 		"ValidateEditContractNewValue": 10,
 		"TransactionInfo":              100,
+		"DelTable":                     100,
+		"DelColumn":                    100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -212,6 +257,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"ContractName":                 contractName,
 		"ValidateEditContractNewValue": ValidateEditContractNewValue,
 		"CreateColumn":                 CreateColumn,
+		"StopNet":                      StopNetwork,
+		"InitFirstEcosystem":           InitFirstEcosystem,
 		"CreateTable":                  CreateTable,
 		"DBInsert":                     DBInsert,
 		"DBSelect":                     DBSelect,
@@ -238,6 +285,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Int":                          Int,
 		"Len":                          Len,
 		"Money":                        Money,
+		"FormatMoney":                  FormatMoney,
 		"PermColumn":                   PermColumn,
 		"PermTable":                    PermTable,
 		"Random":                       Random,
@@ -265,7 +313,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Deactivate":                   Deactivate,
 		"check_signature":              CheckSignature,
 		"RowConditions":                RowConditions,
-		"UUID":                         UUID,
 		"DecodeBase64":                 DecodeBase64,
 		"EncodeBase64":                 EncodeBase64,
 		"Hash":                         Hash,
@@ -291,6 +338,9 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UpdateNotifications":          UpdateNotifications,
 		"UpdateRolesNotifications":     UpdateRolesNotifications,
 		"TransactionInfo":              TransactionInfo,
+		"DelTable":                     DelTable,
+		"DelColumn":                    DelColumn,
+		"Throw":                        Throw,
 	}
 
 	switch vt {
@@ -329,19 +379,40 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 	}
 
 	vmExtend(vm, &script.ExtendData{Objects: f, AutoPars: map[string]string{
-		`*smart.SmartContract`: `sc`,
-	}})
-}
-
-func GetTableName(sc *SmartContract, tblname string, ecosystem int64) string {
-	if len(tblname) > 0 && tblname[0] == '@' {
-		return strings.ToLower(tblname[1:])
-	}
-	return strings.ToLower(fmt.Sprintf(`%s_%s`, converter.Int64ToStr(ecosystem), tblname))
+		`*smart.SmartContract`: `sc`},
+		WriteFuncs: map[string]struct{}{
+			"CreateColumn":     {},
+			"CreateTable":      {},
+			"DBInsert":         {},
+			"DBUpdate":         {},
+			"DBUpdateSysParam": {},
+			"DBUpdateExt":      {},
+			"CreateEcosystem":  {},
+			"CreateContract":   {},
+			"UpdateContract":   {},
+			"CreateLanguage":   {},
+			"EditLanguage":     {},
+			"Activate":         {},
+			"Deactivate":       {},
+			"EditEcosysName":   {},
+			"SetPubKey":        {},
+			"NewMoney":         {},
+			"UpdateNodesBan":   {},
+			"UpdateCron":       {},
+			"CreateVDE":        {},
+			"DeleteVDE":        {},
+			"DelColumn":        {},
+			"DelTable":         {},
+		},
+	})
 }
 
 func getDefTableName(sc *SmartContract, tblname string) string {
-	return converter.EscapeSQL(GetTableName(sc, tblname, sc.TxSmart.EcosystemID))
+	return converter.EscapeSQL(GetTableName(sc, tblname))
+}
+
+func GetTableName(sc *SmartContract, tblname string) string {
+	return converter.ParseTable(tblname, sc.TxSmart.Header.EcosystemID)
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
@@ -368,7 +439,7 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 		case string:
 			if len(name) > 0 {
 				if name[0] != '@' {
-					name = fmt.Sprintf(`@%d`, sc.TxSmart.EcosystemID) + name
+					name = fmt.Sprintf(`@%d`, sc.TxSmart.Header.EcosystemID) + name
 				}
 				for i := len(sc.TxContract.StackCont) - 1; i >= 0; i-- {
 					contName := sc.TxContract.StackCont[i].(string)
@@ -387,11 +458,20 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 
 // RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
 func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
+	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.Header.EcosystemID, sc.TxSmart.Header.KeyID)
+	if err != nil {
+		return false, err
+	}
+
+	rolesIndex := make(map[int64]bool)
+	for _, id := range rolesList {
+		rolesIndex[id] = true
+	}
 
 	for _, id := range ids {
 		switch v := id.(type) {
 		case int64:
-			if sc.TxSmart.RoleID == v {
+			if rolesIndex[v] {
 				return true, nil
 			}
 			break
@@ -405,7 +485,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 	for _, iname := range names {
 		name := iname.(string)
 		if len(name) > 0 {
-			contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.EcosystemID))
+			contract := VMGetContract(sc.VM, name, uint32(sc.TxSmart.Header.EcosystemID))
 			if contract == nil {
 				contract = VMGetContract(sc.VM, name, 0)
 				if contract == nil {
@@ -416,8 +496,14 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if block == nil {
 				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
 			}
-			vars := map[string]interface{}{`ecosystem_id`: int64(sc.TxSmart.EcosystemID),
-				`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``, `role_id`: sc.TxSmart.RoleID, `guest_key`: vde.GuestKey}
+			vars := map[string]interface{}{
+				`ecosystem_id`:      int64(sc.TxSmart.Header.EcosystemID),
+				`key_id`:            sc.TxSmart.Header.KeyID,
+				`sc`:                sc,
+				`original_contract`: ``,
+				`this_contract`:     ``,
+				`guest_key`:         consts.GuestKey,
+			}
 			if err := sc.AppendStack(name); err != nil {
 				return false, err
 			}
@@ -425,7 +511,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if err != nil {
 				return false, err
 			}
-			sc.AppendStack(``)
+			sc.PopStack(name)
 		} else {
 			return false, logError(errEmptyContract, consts.EmptyObject, "ContractConditions")
 		}
@@ -476,7 +562,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		return err
 	}
 	pars := make(map[string]interface{})
-	ecosystemID := sc.TxSmart.EcosystemID
+	ecosystemID := sc.TxSmart.Header.EcosystemID
 	var root interface{}
 	if len(value) > 0 {
 		var err error
@@ -493,13 +579,13 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		pars["wallet_id"] = recipient
 	}
 	if len(pars) > 0 {
-		if _, err := DBUpdate(sc, "contracts", id, pars); err != nil {
-			return err
-		}
 		if !sc.VDE {
 			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
 				return err
 			}
+		}
+		if _, err := DBUpdate(sc, "@1contracts", id, pars); err != nil {
+			return err
 		}
 	}
 	if len(value) > 0 {
@@ -514,6 +600,109 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 	return nil
 }
 
+func StopNetwork(sc *SmartContract, stopNetworkCert string) error {
+	cert, err := utils.ParseCert([]byte(stopNetworkCert))
+	if err != nil {
+		return err
+	}
+
+	fbdata, err := syspar.GetFirstBlockData()
+	if err != nil {
+		return err
+	}
+
+	if err = cert.Validate(fbdata.StopNetworkCertBundle); err != nil {
+		return err
+	}
+
+	if cert.EqualBytes(consts.UsedStopNetworkCerts...) {
+		return nil
+	}
+
+	// Set the node in a pause state
+	service.PauseNodeActivity(service.PauseTypeStopingNetwork)
+
+	return nil
+}
+
+func InitFirstEcosystem(sc *SmartContract, data string) error {
+	var err error
+	fbData := &consts.FirstBlock{}
+	if err := msgpack.Unmarshal([]byte(data), fbData); err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("json unmarshal error")
+		return err
+	}
+	keyID := crypto.Address(fbData.PublicKey)
+	var firstEcosystemID int = 1
+	var firstAppID int64 = 1
+	if err := model.ExecSchemaEcosystem(sc.DbTransaction, firstEcosystemID, keyID, ``, keyID, firstAppID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
+		return utils.ErrInfo(err)
+	}
+	amount := decimal.New(consts.FounderAmount, consts.MoneyDigits).String()
+	commission := &model.SystemParameter{Name: `commission_wallet`}
+	if err := commission.SaveArray(sc.DbTransaction, [][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
+		return err
+	}
+	sysParam := &model.SystemParameter{}
+	sysParam.Name = "test"
+	if fbData.Test == 1 {
+		sysParam.Update(sc.DbTransaction, "1")
+	} else {
+		sysParam.Update(sc.DbTransaction, "0")
+	}
+	sysParam2 := &model.SystemParameter{}
+	sysParam2.Name = "private_blockchain"
+	if fbData.PrivateBlockchain == 1 {
+		sysParam2.Update(sc.DbTransaction, "1")
+	} else {
+		sysParam2.Update(sc.DbTransaction, "0")
+	}
+	spFirstBlockData := &model.SystemParameter{Name: "first_block_data"}
+	var jsonFBData []byte
+	jsonFBData, err = json.Marshal(fbData)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("Marshalling fb data to json")
+		return err
+	}
+	if err := spFirstBlockData.Update(sc.DbTransaction, string(jsonFBData)); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Updating first block data")
+		return err
+	}
+	syspar.SetFirstBlockData()
+	if err := syspar.SysUpdate(sc.DbTransaction); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+		return err
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
+		keyID, fbData.PublicKey, amount).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return err
+	}
+	id, err := model.GetNextID(sc.DbTransaction, "1_pages")
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values(?, 'default_page',
+			  'default_menu', ?, 'ContractAccess("@1EditPage")')`, id, syspar.SysString(`default_ecosystem_page`)).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return err
+	}
+	id, err = model.GetNextID(sc.DbTransaction, "1_menu")
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values(?, 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`, id, syspar.SysString(`default_ecosystem_menu`), `default`).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
+		return err
+	}
+	return nil
+}
+
 func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem,
 	appID int64) (int64, error) {
 	if err := validateAccess(`CreateContract`, sc, nNewContract, nImport); err != nil {
@@ -521,21 +710,24 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	}
 	var id int64
 	var err error
-
-	if GetContractByName(sc, name) != 0 {
+	isExists := GetContractByName(sc, name)
+	if isExists != 0 {
+		log.WithFields(log.Fields{"type": consts.ContractError, "name": name,
+			"tableId": isExists}).Error("create existing contract")
 		return 0, fmt.Errorf(eContractExist, name)
 	}
-	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
+	root, err := CompileContract(sc, value, sc.TxSmart.Header.EcosystemID, walletID, tokenEcosystem)
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "contracts", map[string]interface{}{
+	_, id, err = DBInsert(sc, "@1contracts", map[string]interface{}{
 		"name":       name,
 		"value":      value,
 		"conditions": conditions,
 		"wallet_id":  walletID,
 		"token_id":   tokenEcosystem,
 		"app_id":     appID,
+		"ecosystem":  sc.TxSmart.Header.EcosystemID,
 	})
 	if err != nil {
 		return 0, err
@@ -620,7 +812,11 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return fmt.Errorf(eLatin, name)
 	}
 
-	tableName := getDefTableName(sc, name)
+	if (name[0] >= '0' && name[0] <= '9') || name[0] == '@' {
+		return errTableName
+	}
+
+	tableName := GetTableName(sc, name)
 	if model.IsTable(tableName) {
 		return fmt.Errorf(eTableExists, name)
 	}
@@ -643,23 +839,12 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 		return err
 	}
 	prefix, name := PrefixName(tableName)
-	id, err := model.GetNextID(sc.DbTransaction, getDefTableName(sc, `tables`))
-	if err != nil {
-		return logErrorDB(err, "getting next ID")
-	}
 
-	t := &model.TableVDE{
-		ID:          id,
-		Name:        name,
-		Columns:     string(colout),
-		Permissions: string(permout),
-		Conditions:  `ContractAccess("@1EditTable")`,
-		AppID:       applicationID,
-	}
-	t.SetTablePrefix(prefix)
-	err = t.Create(sc.DbTransaction)
+	_, _, err = sc.insert([]string{`name`, `columns`, `permissions`, `conditions`, `app_id`,
+		`ecosystem`}, []interface{}{name, string(colout), string(permout),
+		`ContractAccess("@1EditTable")`, applicationID, prefix}, `1_tables`)
 	if err != nil {
-		return logErrorDB(err, "insert vde table info")
+		return logErrorDB(err, "insert table info")
 	}
 	if !sc.VDE {
 		if err = SysRollback(sc, SysRollData{Type: "NewTable", TableName: tableName}); err != nil {
@@ -693,6 +878,7 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
 
+	tblname = GetTableName(sc, tblname)
 	if model.IsMetaRegistry(tblname) {
 		// TODO check access table rights
 		model, err := sc.MetaDb.CreateFromParams(tblname, values)
@@ -701,7 +887,7 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		}
 		if err = sc.MetaDb.Insert(
 			nil, // TODO
-			&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
+			&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.Header.EcosystemID, 10)}},
 			model.GetPrimaryKey(),
 			model,
 		); err != nil {
@@ -713,7 +899,6 @@ func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) 
 		return sc.MetaDb.Price(), 0, nil
 	}
 
-	tblname = getDefTableName(sc, tblname)
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -1008,8 +1193,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, inOrder interface{},
-	offset, limit, ecosystem int64,
-	inWhere map[string]interface{}) (int64, []interface{}, error) {
+	offset, limit int64, inWhere map[string]interface{}) (int64, []interface{}, error) {
 
 	var (
 		err     error
@@ -1040,11 +1224,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if limit < 0 || limit > 250 {
 		limit = 250
 	}
-	if ecosystem == 0 {
-		ecosystem = sc.TxSmart.EcosystemID
-	}
-	ecosysTblName := GetTableName(sc, tblname, ecosystem)
-
+	ecosysTblName := GetTableName(sc, tblname)
 	perm, err = sc.AccessTablePerm(ecosysTblName, `read`)
 	if err != nil {
 		return 0, nil, err
@@ -1054,7 +1234,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	}
 
 	if model.IsMetaRegistry(tblname) {
-		return metadbSelect(sc, tblname, columns, id, order, offset, limit, ecosystem, inWhere)
+		return metadbSelect(sc, tblname, columns, id, order, offset, limit, sc.TxSmart.Header.EcosystemID, inWhere)
 	}
 
 	rows, err = model.GetDB(sc.DbTransaction).Table(ecosysTblName).Select(PrepareColumns(columns)).
@@ -1092,12 +1272,12 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 		result = append(result, reflect.ValueOf(row).Interface())
 	}
 	if perm != nil && len(perm[`filter`]) > 0 {
-		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
+		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.Header.EcosystemID),
 			&map[string]interface{}{
 				`data`: result, `original_contract`: ``, `this_contract`: ``,
-				`ecosystem_id`: sc.TxSmart.EcosystemID,
-				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
-				`block_time`: 0, `time`: sc.TxSmart.Time})
+				`ecosystem_id`: sc.TxSmart.Header.EcosystemID,
+				`key_id`:       sc.TxSmart.Header.KeyID, `sc`: sc,
+				`block_time`: 0, `time`: sc.TxSmart.Header.Time})
 		if err != nil {
 			return 0, nil, err
 		}
@@ -1137,7 +1317,7 @@ func metadbSelect(sc *SmartContract, tblname string, inColumns []string, id int6
 	// Get one row from database
 	if id != 0 {
 		model, err := sc.MetaDb.GetModel(
-			&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
+			&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.Header.EcosystemID, 10)}},
 			strconv.FormatInt(id, 10),
 		)
 
@@ -1158,11 +1338,22 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
 	}
+	ecosysTableName := GetTableName(sc, tblname)
 
 	// TODO Check Access
+	if err = sc.AccessTable(ecosysTableName, "update"); err != nil {
+		return
+	}
+	columns, val, err := mapToParams(values)
+	if err != nil {
+		return
+	}
+	if err = sc.AccessColumns(ecosysTableName, &columns, true); err != nil {
+		return
+	}
 
 	if model.IsMetaRegistry(tblname) {
-		registry := &types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}}
+		registry := &types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.Header.EcosystemID, 10)}}
 
 		model, err := sc.MetaDb.GetModel(registry, value.(string))
 		if err != nil {
@@ -1189,18 +1380,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 		return sc.MetaDb.Price(), nil
 	}
 
-	tblname = getDefTableName(sc, tblname)
-	if err = sc.AccessTable(tblname, "update"); err != nil {
-		return
-	}
-	columns, val, err := mapToParams(values)
-	if err != nil {
-		return
-	}
-	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
-		return
-	}
-	qcost, _, err = sc.update(columns, val, tblname, column, fmt.Sprint(value))
+	qcost, _, err = sc.update(columns, val, ecosysTableName, column, fmt.Sprint(value))
 	return
 }
 
@@ -1212,7 +1392,7 @@ func DBUpdate(sc *SmartContract, tblname string, id int64, values map[string]int
 // EcosysParam returns the value of the specified parameter for the ecosystem
 func EcosysParam(sc *SmartContract, name string) string {
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.Header.EcosystemID))
 	_, err := sp.Get(nil, name)
 	if err != nil {
 		return logErrorDB(err, "getting ecosystem param").Error()
@@ -1221,9 +1401,9 @@ func EcosysParam(sc *SmartContract, name string) string {
 }
 
 // AppParam returns the value of the specified app parameter for the ecosystem
-func AppParam(sc *SmartContract, app int64, name string) (string, error) {
+func AppParam(sc *SmartContract, app int64, name string, ecosystem int64) (string, error) {
 	ap := &model.AppParam{}
-	ap.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	ap.SetTablePrefix(converter.Int64ToStr(ecosystem))
 	_, err := ap.Get(sc.DbTransaction, app, name)
 	if err != nil {
 		return ``, logErrorDB(err, "getting app param")
@@ -1263,6 +1443,31 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 			root.Children[i].Info.(*script.ContractInfo).Owner.Active = active
 		}
 	}
+	for key, item := range root.Objects {
+		if cur, ok := sc.VM.Objects[key]; ok {
+			var id uint32
+			switch item.Type {
+			case script.ObjContract:
+				id = cur.Value.(*script.Block).Info.(*script.ContractInfo).ID
+			case script.ObjFunc:
+				id = cur.Value.(*script.Block).Info.(*script.FuncInfo).ID
+			}
+			sc.FlushRollback = append(sc.FlushRollback, FlushInfo{
+				ID:   id,
+				Prev: sc.VM.Children[id],
+				Info: cur,
+				Name: key,
+			})
+		} else {
+			sc.FlushRollback = append(sc.FlushRollback, FlushInfo{
+				ID:   uint32(len(sc.VM.Children)),
+				Prev: nil,
+				Info: nil,
+				Name: key,
+			})
+		}
+
+	}
 	VMFlushBlock(sc.VM, root)
 	return nil
 }
@@ -1293,8 +1498,17 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	if err != nil {
 		return err
 	}
+	tbl := &model.Table{}
+	tbl.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.Header.EcosystemID))
+	found, err := tbl.ExistsByName(sc.DbTransaction, strings.ToLower(name))
+	if err != nil {
+		return err
+	}
+	if !found {
+		return fmt.Errorf(eTableNotFound, name)
+	}
 	_, _, err = sc.update([]string{`permissions`}, []interface{}{string(permout)},
-		getDefTableName(sc, `tables`), `name`, strings.ToLower(name))
+		`1_tables`, `id`, tbl.ID)
 	return err
 }
 
@@ -1343,11 +1557,11 @@ func columnConditions(sc *SmartContract, columns string) (err error) {
 		if len(perm.Update) == 0 {
 			return logErrorShort(errConditionEmpty, consts.EmptyObject)
 		}
-		if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
+		if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.Header.EcosystemID)); err != nil {
 			return logError(err, consts.EvalError, "compile update conditions")
 		}
 		if len(perm.Read) > 0 {
-			if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
+			if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.Header.EcosystemID)); err != nil {
 				return logError(err, consts.EvalError, "compile read conditions")
 			}
 		}
@@ -1367,7 +1581,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		return err
 	}
 
-	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	prefix := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
 
 	t := &model.Table{}
 	t.SetTablePrefix(prefix)
@@ -1394,7 +1608,7 @@ func TableConditions(sc *SmartContract, name, columns, permissions string) (err 
 		if len(cond) == 0 && name != `Read` && name != `Filter` {
 			return logErrorfShort(eEmptyCond, name, consts.EmptyObject)
 		}
-		if err = VMCompileEval(sc.VM, cond, uint32(sc.TxSmart.EcosystemID)); err != nil {
+		if err = VMCompileEval(sc.VM, cond, uint32(sc.TxSmart.Header.EcosystemID)); err != nil {
 			return logError(err, consts.EvalError, "compile evaluating permissions")
 		}
 	}
@@ -1435,7 +1649,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 
 	isExist := strings.HasSuffix(sc.TxContract.Name, nEditColumn)
 	tEx := &model.Table{}
-	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
+	prefix := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
 	tEx.SetTablePrefix(prefix)
 
 	exists, err := tEx.IsExistsByPermissionsAndTableName(sc.DbTransaction, name, tableName)
@@ -1453,15 +1667,15 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		return logErrorShort(errPermEmpty, consts.EmptyObject)
 	}
 	perm, err := getPermColumns(permissions)
-	if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.EcosystemID)); err != nil {
+	if err = VMCompileEval(sc.VM, perm.Update, uint32(sc.TxSmart.Header.EcosystemID)); err != nil {
 		return err
 	}
 	if len(perm.Read) > 0 {
-		if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.EcosystemID)); err != nil {
+		if err = VMCompileEval(sc.VM, perm.Read, uint32(sc.TxSmart.Header.EcosystemID)); err != nil {
 			return err
 		}
 	}
-	tblName := getDefTableName(sc, tableName)
+	tblName := GetTableName(sc, tableName)
 	if isExist {
 		return sc.AccessTable(tblName, `update`)
 	}
@@ -1489,8 +1703,8 @@ func AllowChangeCondition(sc *SmartContract, tblname string) error {
 
 // RowConditions checks conditions for table row by id
 func RowConditions(sc *SmartContract, tblname string, id int64, conditionOnly bool) error {
-	escapedTableName := converter.EscapeName(getDefTableName(sc, tblname))
-	condition, err := model.GetRowConditionsByTableNameAndID(escapedTableName, id)
+	condition, err := model.GetRowConditionsByTableNameAndID(sc.DbTransaction,
+		GetTableName(sc, tblname), id)
 	if err != nil {
 		return logErrorDB(err, "executing row condition query")
 	}
@@ -1543,10 +1757,10 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return
 	}
 
-	tableName = strings.ToLower(tableName)
-	tblname := getDefTableName(sc, tableName)
+	tblname := GetTableName(sc, tableName)
 
 	sqlColType, err = columnType(colType)
+
 	if err != nil {
 		return
 	}
@@ -1556,12 +1770,14 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return logErrorDB(err, "adding column to the table")
 	}
 
-	tables := getDefTableName(sc, `tables`)
 	type cols struct {
+		ID      int64
 		Columns string
 	}
 	temp := &cols{}
-	err = model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	err = model.GetDB(sc.DbTransaction).Table(`1_tables`).Where("name = ? and ecosystem = ?",
+		tableName, sc.TxSmart.Header.EcosystemID).Select("id,columns").Find(temp).Error
+
 	if err != nil {
 		return
 	}
@@ -1575,7 +1791,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
-		tables, `name`, tableName)
+		`1_tables`, `id`, temp.ID)
 	if !sc.VDE {
 		return SysRollback(sc, SysRollData{Type: "NewColumn", TableName: tblname, Data: name})
 	}
@@ -1593,10 +1809,8 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
 		}
 	}
-	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey},
-		getDefTableName(sc, `keys`), `id`, id)
-
-	registry := &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}}
+	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey}, `1_keys`, `id`, id)
+	registry := &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: "1"}}
 
 	key := &model.KeySchema{}
 	err = sc.MetaDb.Get(
@@ -1619,17 +1833,16 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
 		return err
 	}
-
-	_, _, err = sc.insert([]string{`id`, `amount`}, []interface{}{id, amount},
-		getDefTableName(sc, `keys`))
+	_, _, err = sc.insert([]string{`id`, `amount`, `ecosystem`}, []interface{}{id, amount,
+		sc.TxSmart.Header.EcosystemID}, `1_keys`)
 	if err == nil {
 		var block int64
 		if sc.BlockData != nil {
 			block = sc.BlockData.BlockID
 		}
 		_, _, err = sc.insert([]string{`sender_id`, `recipient_id`, `amount`,
-			`comment`, `block_id`, `txhash`},
-			[]interface{}{0, id, amount, comment, block, sc.TxHash}, getDefTableName(sc, `history`))
+			`comment`, `block_id`, `txhash`, `ecosystem`},
+			[]interface{}{0, id, amount, comment, block, sc.TxHash, sc.TxSmart.Header.EcosystemID}, `1_history`)
 	}
 
 	if err != nil {
@@ -1637,7 +1850,7 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 	}
 
 	// TODO remove old version, Ecosystem name to id
-	err = sc.MetaDb.Insert(nil, &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.EcosystemID, 10)}},
+	err = sc.MetaDb.Insert(nil, &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: "1"}},
 		strconv.FormatInt(id, 10),
 		model.KeySchema{ID: id, Amount: amount},
 	)
@@ -1657,7 +1870,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = strings.ToLower(tableName)
-	tables := getDefTableName(sc, `tables`)
+	tables := `1_tables`
 	type cols struct {
 		Columns string
 	}
@@ -1818,7 +2031,7 @@ func ValidateCron(cronSpec string) (err error) {
 
 func UpdateCron(sc *SmartContract, id int64) error {
 	cronTask := &model.Cron{}
-	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+	cronTask.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.Header.EcosystemID))
 
 	ok, err := cronTask.Get(id)
 	if err != nil {
@@ -1870,7 +2083,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				}
 
 				for _, b := range blocks {
-					if _, err := DBUpdate(smartContract, "@1_bad_blocks", b.ID,
+					if _, err := DBUpdate(smartContract, "@1bad_blocks", b.ID,
 						map[string]interface{}{"deleted": "1"}); err != nil {
 						return logErrorValue(err, consts.DBError, "deleting bad block",
 							converter.Int64ToStr(b.ID))
@@ -1886,7 +2099,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				_, _, err = DBInsert(
 					smartContract,
-					"@1_node_ban_logs",
+					"@1node_ban_logs",
 					map[string]interface{}{
 						"node_id":   fullNode.KeyID,
 						"banned_at": now.Format(time.RFC3339),
@@ -1901,7 +2114,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				_, _, err = DBInsert(
 					smartContract,
-					"notifications",
+					"@1notifications",
 					map[string]interface{}{
 						"recipient->member_id": fullNode.KeyID,
 						"notification->type":   model.NotificationTypeSingle,
@@ -1936,26 +2149,21 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	return nil
 }
 
-func GetBlock(blockID int64) (map[string]int64, error) {
-	block := model.Block{}
-	ok, err := block.Get(blockID)
+func GetBlock(hash []byte) (map[string]int64, error) {
+	block := &blockchain.Block{}
+	found, err := block.Get(nil, hash)
 	if err != nil {
 		return nil, logErrorDB(err, "getting block")
 	}
-	if !ok {
+	if !found {
 		return nil, nil
 	}
 
 	return map[string]int64{
-		"id":     block.ID,
-		"time":   block.Time,
-		"key_id": block.KeyID,
+		"id":     block.Header.BlockID,
+		"time":   block.Header.Time,
+		"key_id": block.Header.KeyID,
 	}, nil
-}
-
-// UUID returns new uuid
-func UUID(sc *SmartContract) string {
-	return uuid.Must(uuid.NewV4()).String()
 }
 
 // DecodeBase64 decodes base64 string
@@ -1996,7 +2204,7 @@ func Hash(data interface{}) (string, error) {
 
 // GetColumnType returns the type of the column
 func GetColumnType(sc *SmartContract, tableName, columnName string) (string, error) {
-	return model.GetColumnType(getDefTableName(sc, tableName), columnName)
+	return model.GetColumnType(GetTableName(sc, tableName), columnName)
 }
 
 // GetType returns the name of the type of the value
@@ -2097,12 +2305,13 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 			prev := rollbackList[len(rollbackList)-1].(map[string]string)
 			prev[`block_id`] = converter.Int64ToStr(tx.BlockID)
 			prev[`id`] = converter.Int64ToStr(tx.ID)
-			block := model.Block{}
-			if ok, err := block.Get(tx.BlockID); ok {
-				prev[`block_time`] = time.Unix(block.Time, 0).Format(`2006-01-02 15:04:05`)
-			} else if err != nil {
-				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block time")
+			block := &blockchain.Block{}
+			blockFound, err := block.Get(nil, tx.BlockHash)
+			if err != nil {
 				return nil, err
+			}
+			if blockFound {
+				prev[`block_time`] = time.Unix(block.Header.Time, 0).Format(`2006-01-02 15:04:05`)
 			}
 			if idRollback == tx.ID {
 				return rollbackList[len(rollbackList)-1 : len(rollbackList)], nil
@@ -2129,12 +2338,12 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 }
 
 func GetHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, error) {
-	return GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, 0)
+	return GetHistoryRaw(sc.DbTransaction, sc.TxSmart.Header.EcosystemID, tableName, id, 0)
 }
 
 func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (map[string]interface{},
 	error) {
-	list, err := GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, idRollback)
+	list, err := GetHistoryRaw(sc.DbTransaction, sc.TxSmart.Header.EcosystemID, tableName, id, idRollback)
 	if err != nil {
 		return nil, err
 	}
@@ -2174,7 +2383,7 @@ func UnixDateTime(value string) int64 {
 	return t.Unix()
 }
 
-func UpdateNotifications(ecosystemID int64, users ...interface{}) {
+func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interface{}) {
 	userList := make([]int64, 0, len(users))
 	for i, userID := range users {
 		switch v := userID.(type) {
@@ -2184,15 +2393,15 @@ func UpdateNotifications(ecosystemID int64, users ...interface{}) {
 			userList = append(userList, converter.StrToInt64(v))
 		case []interface{}:
 			if i == 0 {
-				UpdateNotifications(ecosystemID, v...)
+				UpdateNotifications(sc, ecosystemID, v...)
 				return
 			}
 		}
 	}
-	notificator.UpdateNotifications(ecosystemID, userList)
+	sc.Notifications = append(sc.Notifications, NotifyInfo{false, ecosystemID, userList})
 }
 
-func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
+func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...interface{}) {
 	rolesList := make([]int64, 0, len(roles))
 	for i, roleID := range roles {
 		switch v := roleID.(type) {
@@ -2202,12 +2411,46 @@ func UpdateRolesNotifications(ecosystemID int64, roles ...interface{}) {
 			rolesList = append(rolesList, converter.StrToInt64(v))
 		case []interface{}:
 			if i == 0 {
-				UpdateRolesNotifications(ecosystemID, v...)
+				UpdateRolesNotifications(sc, ecosystemID, v...)
 				return
 			}
 		}
 	}
-	notificator.UpdateRolesNotifications(ecosystemID, rolesList)
+	sc.Notifications = append(sc.Notifications, NotifyInfo{true, ecosystemID, rolesList})
+}
+
+func TransactionData(blockHash []byte, hash []byte) (data *TxInfo, err error) {
+	var found bool
+	var txHash []byte
+	blockOwner := blockchain.Block{}
+	found, err = blockOwner.Get(nil, blockHash)
+	if err != nil || !found {
+		return
+	}
+	data = &TxInfo{}
+	data.Block = converter.Int64ToStr(blockOwner.Header.BlockID)
+	for _, tx := range blockOwner.Transactions {
+		txHash, err = tx.Hash()
+		if err != nil {
+			return
+		}
+		if bytes.Equal(txHash, hash) {
+			contract := GetContractByID(int32(tx.Header.Type))
+			if contract == nil {
+				err = errParseTransaction
+				return
+			}
+			data.Contract = contract.Name
+			txInfo := contract.Block.Info.(*script.ContractInfo).Tx
+			if txInfo != nil {
+				if data.Params, err = FillTxData(*txInfo, tx.Params, tx.Files, []string{}); err != nil {
+					return
+				}
+			}
+			break
+		}
+	}
+	return
 }
 
 func TransactionInfo(txHash string) (string, error) {
@@ -2216,69 +2459,189 @@ func TransactionInfo(txHash string) (string, error) {
 	if err != nil {
 		return ``, err
 	}
-	ltx := &model.LogTransaction{Hash: hash}
-	found, err := ltx.GetByHash(hash)
+	btx := blockchain.TxStatus{}
+	found, err := btx.Get(nil, hash)
 	if err != nil {
 		return ``, err
 	}
 	if !found {
 		return ``, nil
 	}
-	var blockOwner model.Block
-	var data TxInfo
-	found, err = blockOwner.Get(ltx.Block)
+	data, err := TransactionData(btx.BlockHash, hash)
 	if err != nil {
 		return ``, err
-	}
-	if !found {
-		return ``, nil
-	}
-	data.Block = converter.Int64ToStr(ltx.Block)
-	blockBuffer := bytes.NewBuffer(blockOwner.Data)
-	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
-	if err != nil {
-		return ``, err
-	}
-	for blockBuffer.Len() > 0 {
-		transactionSize, err := converter.DecodeLengthBuf(blockBuffer)
-		if err != nil {
-			return ``, err
-		}
-		if blockBuffer.Len() < int(transactionSize) || transactionSize == 0 {
-			return ``, errParseTransaction
-		}
-		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		if bufTransaction.Len() == 0 {
-			return ``, errParseTransaction
-		}
-		txhash, err := crypto.Hash(bufTransaction.Bytes())
-		if err != nil {
-			return ``, err
-		}
-		if bytes.Equal(txhash, hash) {
-			if int64(bufTransaction.Bytes()[0]) > 127 {
-				bufTransaction.Next(1)
-				smartTx := tx.SmartContract{}
-				if err := msgpack.Unmarshal(bufTransaction.Bytes(), &smartTx); err != nil {
-					return ``, err
-				}
-				contract := GetContractByID(int32(smartTx.Type))
-				if contract == nil {
-					return ``, errParseTransaction
-				}
-				data.Contract = contract.Name
-				txInfo := contract.Block.Info.(*script.ContractInfo).Tx
-				if txInfo != nil {
-					if data.Params, err = FillTxData(*txInfo, smartTx.Data, nil); err != nil {
-						return ``, err
-					}
-				}
-			} else {
-				return ``, nil
-			}
-			break
-		}
 	}
 	out, err = json.Marshal(data)
 	return string(out), err
+}
+
+func DelColumn(sc *SmartContract, tableName, name string) (err error) {
+	var (
+		count   int64
+		permout []byte
+	)
+	name = converter.EscapeSQL(strings.ToLower(name))
+	tblname := GetTableName(sc, strings.ToLower(tableName))
+
+	t := model.Table{}
+	prefix := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
+	t.SetTablePrefix(prefix)
+	TableName := tblname
+	if strings.HasPrefix(TableName, prefix) {
+		TableName = TableName[len(prefix)+1:]
+	}
+	found, err := t.Get(sc.DbTransaction, TableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+		return fmt.Errorf(eTableNotFound, tblname)
+	}
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname, ``)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+	colType, err := model.GetColumnType(tblname, name)
+	if err != nil {
+		return err
+	}
+	if len(colType) == 0 {
+		return fmt.Errorf(eColumnNotExist, name)
+	}
+	var perm map[string]string
+	if err = unmarshalJSON([]byte(t.Columns), &perm, `columns from the table`); err != nil {
+		return err
+	}
+	if _, ok := perm[name]; !ok {
+		return fmt.Errorf(eColumnNotDeleted, name)
+	}
+	delete(perm, name)
+	permout, err = marshalJSON(perm, `permissions to json`)
+	if err != nil {
+		return
+	}
+	if err = model.AlterTableDropColumn(sc.DbTransaction, tblname, name); err != nil {
+		return
+	}
+	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
+		`1_tables`, `id`, t.ID)
+	if !sc.VDE {
+		data := map[string]string{"name": name, "type": colType}
+		out, err := marshalJSON(data, `marshalling column info`)
+		if err != nil {
+			return err
+		}
+		return SysRollback(sc, SysRollData{Type: "DeleteColumn", TableName: tblname,
+			Data: string(out)})
+	}
+	return
+}
+
+func DelTable(sc *SmartContract, tableName string) (err error) {
+	var (
+		count int64
+	)
+	tblname := GetTableName(sc, strings.ToLower(tableName))
+
+	t := model.Table{}
+	prefix := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
+	t.SetTablePrefix(prefix)
+	TableName := tblname
+	if strings.HasPrefix(TableName, prefix) {
+		TableName = TableName[len(prefix)+1:]
+	}
+	found, err := t.Get(sc.DbTransaction, TableName)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting table info")
+		return err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("not found table info")
+		return fmt.Errorf(eTableNotFound, tblname)
+	}
+
+	count, err = model.GetRecordsCountTx(sc.DbTransaction, tblname, ``)
+	if err != nil {
+		return
+	}
+	if count > 0 {
+		return fmt.Errorf(eTableNotEmpty, tblname)
+	}
+	if err = t.Delete(sc.DbTransaction); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting table")
+		return err
+	}
+
+	if err = model.DropTable(sc.DbTransaction, tblname); err != nil {
+		return
+	}
+	if !sc.VDE {
+		var (
+			out []byte
+		)
+		cols, err := model.GetAllColumnTypes(tblname)
+		if err != nil {
+			return err
+		}
+		tinfo := TableInfo{Table: &t, Columns: make(map[string]string)}
+		for _, item := range cols {
+			if item["column_name"] == `id` {
+				continue
+			}
+			tinfo.Columns[item["column_name"]] = model.DataTypeToColumnType(item["data_type"])
+		}
+		out, err = marshalJSON(tinfo, `marshalling table info`)
+		if err != nil {
+			return err
+		}
+		return SysRollback(sc, SysRollData{Type: "DeleteTable", TableName: tblname, Data: string(out)})
+	}
+	return
+}
+
+func FormatMoney(sc *SmartContract, exp string, digit int64) (string, error) {
+	var (
+		cents int64
+	)
+	if len(exp) == 0 {
+		return `0`, nil
+	}
+	if strings.IndexByte(exp, '.') >= 0 {
+		return ``, errInvalidValue
+	}
+	if digit != 0 {
+		cents = digit
+	} else {
+		sp := &model.StateParameter{}
+		sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.Header.EcosystemID))
+		_, err := sp.Get(sc.DbTransaction, `money_digit`)
+		if err != nil {
+			return ``, logErrorDB(err, "getting money_digit param")
+		}
+		cents = converter.StrToInt64(sp.Value)
+	}
+	if len(exp) > consts.MoneyLength {
+		return ``, errInvalidValue
+	}
+	if cents != 0 {
+		retDec, err := decimal.NewFromString(exp)
+		if err != nil {
+			return ``, logError(err, consts.ConversionError, "converting money")
+		}
+		exp = retDec.Shift(int32(-cents)).String()
+	}
+	return exp, nil
+}
+
+func (throw *ThrowError) Error() string {
+	return throw.ErrText
+}
+
+func Throw(code, errText string) error {
+	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
 }

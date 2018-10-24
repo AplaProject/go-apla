@@ -1,15 +1,10 @@
 package block
 
+/*
 import (
-	"bytes"
-	"fmt"
-
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 // MarshallBlock is marshalling block
@@ -39,7 +34,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
 
 		var err error
-		signed, err = crypto.Sign(key, forSign)
+		signed, err = crypto.SignString(key, forSign)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing blocko")
 			return nil, err
@@ -55,6 +50,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
 	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
+
 	// data
 	buf.Write(blockDataTx)
 
@@ -124,3 +120,4 @@ func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error)
 		MrklRoot:     utils.MerkleTreeRoot(mrklSlice),
 	}, nil
 }
+*/

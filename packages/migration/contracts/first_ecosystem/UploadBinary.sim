@@ -1,25 +1,25 @@
-// +prop AppID = 1
+// +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 contract UploadBinary {
     data {
         ApplicationId int
         Name string
-        Data bytes "file"
+        Data bytes
         DataMimeType string "optional"
     }
 
     conditions {
-        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
-            member_id: $key_id, name: $Name}).One("id"))
+        $Id = Int(DBFind("@1binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name, ecosystem: $ecosystem_id}).One("id"))
 
         if $Id == 0 {
             if $ApplicationId == 0 {
-                warning "Application id cannot equal 0"
+                warning LangRes("@1aid_cannot_zero", "en")
             }
         }
     }
     action {
-        var hash string
+        var hash  string
         hash = Hash($Data)
 
         if $DataMimeType == "" {
@@ -27,10 +27,10 @@ contract UploadBinary {
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
+            DBUpdate("@1binaries", $Id, {"data":$Data, "hash":hash, "mime_type":$DataMimeType})
         } else {
-            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
-               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
+            $Id = DBInsert("@1binaries", {"app_id":$ApplicationId, "member_id":$key_id,
+               "name":$Name, "data":$Data, "hash":hash, "mime_type":$DataMimeType, "ecosystem":$ecosystem_id})
         }
 
         $result = $Id

@@ -40,13 +40,13 @@ const (
 // Limits is used for saving current limit information
 type Limits struct {
 	Mode     int
-	Block    *Block    // it equals nil if checking before generatin block
-	Limiters []Limiter // the list of limiters
+	Block    *PlayableBlock // it equals nil if checking before generatin block
+	Limiters []Limiter      // the list of limiters
 }
 
 // Limiter describes interface functions for limits
 type Limiter interface {
-	init(*Block)
+	init(*PlayableBlock)
 	check(*transaction.Transaction, int) error
 }
 
@@ -65,7 +65,7 @@ var (
 )
 
 // NewLimits initializes Limits structure.
-func NewLimits(b *Block) (limits *Limits) {
+func NewLimits(b *PlayableBlock) (limits *Limits) {
 	limits = &Limits{Block: b, Limiters: make([]Limiter, 0, 8)}
 	if b == nil {
 		limits.Mode = letPreprocess
@@ -114,7 +114,7 @@ type txMaxLimit struct {
 	Limit int // max count of tx in the block
 }
 
-func (bl *txMaxLimit) init(b *Block) {
+func (bl *txMaxLimit) init(b *PlayableBlock) {
 	bl.Limit = syspar.GetMaxTxCount()
 }
 
@@ -135,7 +135,7 @@ type timeBlockLimit struct {
 	Limit time.Duration // the maximum time
 }
 
-func (bl *timeBlockLimit) init(b *Block) {
+func (bl *timeBlockLimit) init(b *PlayableBlock) {
 	bl.Start = time.Now()
 	bl.Limit = time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
 }
@@ -158,7 +158,7 @@ type txUserLimit struct {
 	Limit   int           // the value of max tx from one user
 }
 
-func (bl *txUserLimit) init(b *Block) {
+func (bl *txUserLimit) init(b *PlayableBlock) {
 	bl.TxUsers = make(map[int64]int)
 	bl.Limit = syspar.GetMaxBlockUserTx()
 }
@@ -168,7 +168,7 @@ func (bl *txUserLimit) check(t *transaction.Transaction, mode int) error {
 		count int
 		ok    bool
 	)
-	keyID := t.TxSmart.KeyID
+	keyID := t.TxSmart.Header.KeyID
 	if count, ok = bl.TxUsers[keyID]; ok {
 		if count+1 > bl.Limit {
 			if mode == letPreprocess {
@@ -191,13 +191,13 @@ type txUserEcosysLimit struct {
 	TxEcosys map[int64]ecosysLimit // the counter of tx from one user in ecosystems
 }
 
-func (bl *txUserEcosysLimit) init(b *Block) {
+func (bl *txUserEcosysLimit) init(b *PlayableBlock) {
 	bl.TxEcosys = make(map[int64]ecosysLimit)
 }
 
 func (bl *txUserEcosysLimit) check(t *transaction.Transaction, mode int) error {
-	keyID := t.TxSmart.KeyID
-	ecosystemID := t.TxSmart.EcosystemID
+	keyID := t.TxSmart.Header.KeyID
+	ecosystemID := t.TxSmart.Header.EcosystemID
 	if val, ok := bl.TxEcosys[ecosystemID]; ok {
 		if user, ok := val.TxUsers[keyID]; ok {
 			if user+1 > val.Limit {
@@ -215,7 +215,7 @@ func (bl *txUserEcosysLimit) check(t *transaction.Transaction, mode int) error {
 		limit := syspar.GetMaxBlockUserTx()
 		sp := &model.StateParameter{}
 		sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
-		found, err := sp.Get(t.DbTransaction, `max_block_user_tx`)
+		found, err := sp.Get(t.DbTransaction, `max_tx_block_per_user`)
 		if err != nil {
 			return limitError(`txUserEcosysLimit`, err.Error())
 		}
@@ -235,7 +235,7 @@ type txMaxSize struct {
 	LimitTx    int64 // max size of tx
 }
 
-func (bl *txMaxSize) init(b *Block) {
+func (bl *txMaxSize) init(b *PlayableBlock) {
 	bl.LimitBlock = syspar.GetMaxBlockSize()
 	bl.LimitTx = syspar.GetMaxTxSize()
 }
@@ -262,7 +262,7 @@ type txMaxFuel struct {
 	LimitTx    int64 // max fuel of tx
 }
 
-func (bl *txMaxFuel) init(b *Block) {
+func (bl *txMaxFuel) init(b *PlayableBlock) {
 	bl.LimitBlock = syspar.GetMaxBlockFuel()
 	bl.LimitTx = syspar.GetMaxTxFuel()
 }

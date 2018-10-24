@@ -1,7 +1,7 @@
 package vde
 
-var blocksDataSQL = `INSERT INTO "%[1]d_blocks" (id, name, value, conditions) VALUES
-		(1, 'admin_link', 'If(#sort#==1){
+var blocksDataSQL = `INSERT INTO "1_blocks" (id, name, value, conditions, ecosystem) VALUES
+		(next_id('1_blocks'), 'admin_link', 'If(#sort#==1){
 	SetVar(sort_name, "id asc")
 }.ElseIf(#sort#==2){
 	SetVar(sort_name, "id desc")
@@ -60,13 +60,13 @@ Form(){
 			}
 		}
 	}
-}', 'ContractConditions("MainCondition")'),
-		(2, 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
+}', 'ContractConditions("MainCondition")', '%[1]d'),
+		(next_id('1_blocks'), 'export_info', 'DBFind(Name: buffer_data, Source: src_buffer).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 If(#buffer_value_app_id# > 0){
 	DBFind(pages, src_pages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_pages)
 	DBFind(blocks, src_blocks).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_blocks)
 	DBFind(app_params, src_parameters).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_parameters)
-	DBFind(languages, src_languages).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_languages)
+	DBFind(languages, src_languages).Limit(250).Order("name").Count(count_languages)
 	DBFind(contracts, src_contracts).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_contracts)
 	DBFind(tables, src_tables).Where("app_id=#buffer_value_app_id#").Limit(250).Order("name").Count(count_tables)
 }
@@ -261,8 +261,8 @@ Div(panel panel-primary){
 			}
 		}
 	}
-}', 'ContractConditions("MainCondition")'),
-		(3, 'export_link', 'If(And(#res_type#!="pages",#res_type#!="blocks",#res_type#!="menu",#res_type#!="parameters",#res_type#!="languages",#res_type#!="contracts",#res_type#!="tables")){
+}', 'ContractConditions("MainCondition")', '%[1]d'),
+		(next_id('1_blocks'), 'export_link', 'If(And(#res_type#!="pages",#res_type#!="blocks",#res_type#!="menu",#res_type#!="parameters",#res_type#!="languages",#res_type#!="contracts",#res_type#!="tables")){
 	SetVar(res_type, "pages")
 }
 Div(breadcrumb){
@@ -307,8 +307,8 @@ Div(breadcrumb){
 	}.Else{
 	   LinkPage(Body: "Tables", Page: export_resources,, "res_type=tables")
 	}
-}', 'ContractConditions("MainCondition")'),
-		(4, 'pager', 'DBFind(#pager_table#, src_records).Where(#pager_where#).Count(records_count)
+}', 'ContractConditions("MainCondition")', '%[1]d'),
+		(next_id('1_blocks'), 'pager', 'DBFind(#pager_table#, src_records).Where(#pager_where#).Count(records_count)
 	
 SetVar(previous_page, Calculate(Exp: #current_page# - 1, Type: int))
 SetVar(next_page, Calculate(Exp: #current_page# + 1, Type: int))
@@ -378,10 +378,10 @@ Div(){
 			Button(Body: Em(Class: fa fa-angle-double-right), Class: btn btn-default, Page: #pager_page#, PageParams: "current_page=#last_page#,sort=#sort#,width=#width#")
 		}
 	}
-}.Style("div {display:inline-block;}")', 'ContractConditions("MainCondition")'),
-		(5, 'pager_header', 'If(#current_page# > 0){}.Else{
+}.Style("div {display:inline-block;}")', 'ContractConditions("MainCondition")', '%[1]d'),
+		(next_id('1_blocks'), 'pager_header', 'If(#current_page# > 0){}.Else{
 	SetVar(current_page, 1)
 }
 SetVar(pager_offset, Calculate(Exp: (#current_page# - 1) * #pager_limit#, Type: int))
-SetVar(current_page, #current_page#)', 'ContractConditions("MainCondition")');
+SetVar(current_page, #current_page#)', 'ContractConditions("MainCondition")', '%[1]d');
 `

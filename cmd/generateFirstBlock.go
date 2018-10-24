@@ -10,14 +10,21 @@ import (
 	"path/filepath"
 
 	"github.com/GenesisKernel/go-genesis/packages/block"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
+
 	log "github.com/sirupsen/logrus"
+	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 var stopNetworkBundleFilepath string
+var testBlockchain bool
+var privateBlockchain bool
 
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
@@ -27,7 +34,7 @@ var generateFirstBlockCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now().Unix()
 
-		header := &utils.BlockData{
+		header := &blockchain.BlockHeader{
 			BlockID:      1,
 			Time:         now,
 			EcosystemID:  0,
@@ -63,9 +70,18 @@ var generateFirstBlockCmd = &cobra.Command{
 		if len(stopNetworkCert) == 0 {
 			log.Warn("the fullchain of certificates for a network stopping is not specified")
 		}
-
 		var tx []byte
-		_, err := converter.BinMarshal(&tx,
+		var err error
+		var test int64
+		var pb uint64
+		if testBlockchain == true {
+			test = 1
+		}
+		if privateBlockchain == true {
+			pb = 1
+		}
+
+		tx, err = msgpack.Marshal(
 			&consts.FirstBlock{
 				TxHeader: consts.TxHeader{
 					Type:  consts.TxTypeFirstBlock,
@@ -75,6 +91,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
+				Test:              test,
+				PrivateBlockchain: pb,
 			},
 		)
 
@@ -82,18 +100,66 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block body bin marshalling")
 			return
 		}
+		dbCfg := conf.Config.DB
+		err = model.GormInit(dbCfg.Host, dbCfg.Port, dbCfg.User, dbCfg.Password, dbCfg.Name)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"db_user": dbCfg.User, "db_password": dbCfg.Password, "db_name": dbCfg.Name, "type": consts.DBError,
+			}).Error("can't init gorm")
+			return
+		}
+		err = queue.Init()
+		if err != nil {
+			return
+		}
+		if err := smart.LoadSysContract(nil); err != nil {
+			return
+		}
+		if err := blockchain.Init("blockchain"); err != nil {
+			log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
+			return
+		}
+		if err := syspar.SysUpdate(nil); err != nil {
+			log.WithError(err).Error("updating sys parameters")
+			return
+		}
 
-		block, err := block.MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
+		smartTx, err := smart.CallContract("FirstBlock", 1, map[string]string{"Data": string(tx)}, []string{string(tx)})
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Fatal("first block contract execution")
+			return
+		}
+		_, found, err := blockchain.GetFirstBlock(nil)
+		if err != nil {
+			return
+		}
+
+		if found {
+			log.WithFields(log.Fields{"type": consts.DuplicateObject}).Info("first block already exists")
+			return
+		}
+
+		b := &blockchain.Block{
+			Header:       header,
+			Transactions: []*blockchain.Transaction{smartTx},
+		}
+		blockBin, err := b.Marshal()
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return
 		}
+		err = block.InsertBlockWOForks(blockBin, true, false)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Fatal("inserting first block")
+			return
+		}
 
-		ioutil.WriteFile(conf.Config.FirstBlockPath, block, 0644)
 		log.Info("first block generated")
 	},
 }
 
 func init() {
 	generateFirstBlockCmd.Flags().StringVar(&stopNetworkBundleFilepath, "stopNetworkCert", "", "Filepath to the fullchain of certificates for network stopping")
+	generateFirstBlockCmd.Flags().BoolVar(&testBlockchain, "test", false, "if true - test blockchain")
+	generateFirstBlockCmd.Flags().BoolVar(&privateBlockchain, "private", false, "if true - all transactions will be free")
 }

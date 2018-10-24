@@ -23,11 +23,12 @@ import (
 	"encoding/pem"
 	"io"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -57,24 +58,13 @@ func Type2(rw io.ReadWriter) (*network.DisTrResponse, error) {
 		log.WithFields(log.Fields{"type": consts.ProtocolError, "len": len(binaryData), "should_be_equal": 5}).Error("binary data slice has incorrect length")
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
-
-	decryptedBinDataFull := decryptedBinData
-	hash, err := crypto.Hash(decryptedBinDataFull)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": decryptedBinDataFull}).Fatal("cannot hash tx bindata")
+	tx := &blockchain.Transaction{}
+	if err := tx.Unmarshal(decryptedBinData); err != nil {
+		return nil, err
 	}
 
-	_, err = model.DeleteQueueTxByHash(nil, hash)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": hash}).Error("Deleting queue_tx with hash")
-		return nil, utils.ErrInfo(err)
-	}
-
-	//hexBinData := converter.BinToHex(decryptedBinDataFull)
-	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
-	err = queueTx.Create()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating queue_tx")
+	if err := queue.ValidateTxQueue.Enqueue(tx); err != nil {
+		log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("enqueueing in validation queue")
 		return nil, utils.ErrInfo(err)
 	}
 

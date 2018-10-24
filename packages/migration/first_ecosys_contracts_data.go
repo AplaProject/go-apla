@@ -3,7 +3,7 @@
 package migration
 
 var firstEcosystemContractsSQL = `
-INSERT INTO "1_contracts" (id, name, value, conditions, app_id, wallet_id)
+INSERT INTO "1_contracts" (id, name, value, conditions, app_id, wallet_id, ecosystem)
 VALUES
 	(next_id('1_contracts'), 'ActivateContract', 'contract ActivateContract {
 	data {
@@ -27,19 +27,21 @@ VALUES
 		Activate($Id, $ecosystem_id)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'CallDelayedContract', 'contract CallDelayedContract {
 	data {
 		Id int
 	}
 	conditions {
 		var rows array
-		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: "false"} )
+		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: 0} )
 
 		if !Len(rows) {
 			error Sprintf("Delayed contract %%d does not exist", $Id)
 		}
 		$cur = rows[0]
+		$limit = Int($cur["limit"])
+		$counter = Int($cur["counter"])
 
 		if $key_id != Int($cur["key_id"]) {
 			error "Access denied"
@@ -48,30 +50,33 @@ VALUES
 		if $block < Int($cur["block_id"]) {
 			error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
 		}
+
+		if $limit > 0 && $counter >= $limit {
+			error Sprintf("Delayed contract %%d is limited by number of launches", $Id)
+		}
 	}
 	action {
-		var limit, counter, block_id int
+		$counter = $counter + 1
 
-		limit = Int($cur["limit"])
-		counter = Int($cur["counter"])+1
+		var block_id int
 		block_id = $block
-
-		if limit == 0 || limit > counter {
+		if $limit == 0 || $limit > $counter {
 			block_id = block_id + Int($cur["every_block"])
 		}
-		DBUpdate("delayed_contracts", $Id, {"counter": counter, "block_id": block_id})
+
+		DBUpdate("delayed_contracts", $Id, {"counter": $counter, "block_id": block_id})
 
 		var params map
 		CallContract($cur["contract"], params)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'CheckNodesBan', 'contract CheckNodesBan {
 	action {
 		UpdateNodesBan($block_time)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'DeactivateContract', 'contract DeactivateContract {
 	data {
 		Id         int
@@ -94,7 +99,7 @@ VALUES
 		Deactivate($Id, $ecosystem_id)
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditAppParam', 'contract EditAppParam {
     data {
         Id int
@@ -125,7 +130,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditApplication', 'contract EditApplication {
     data {
         ApplicationId int
@@ -152,7 +157,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditBlock', 'contract EditBlock {
     data {
         Id int
@@ -183,7 +188,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditColumn', 'contract EditColumn {
     data {
         TableName string
@@ -199,7 +204,7 @@ VALUES
         PermColumn($TableName, $Name, $Permissions)
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditContract', 'contract EditContract {
     data {
         Id int
@@ -240,7 +245,7 @@ VALUES
         UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditLang', 'contract EditLang {
     data {
         Id int
@@ -253,10 +258,10 @@ VALUES
     }
 
     action {
-        EditLanguage($Id, $lang["name"], $Trans, Int($lang["app_id"]))
+        EditLanguage($Id, $lang["name"], $Trans)
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditMenu', 'contract EditMenu {
     data {
         Id int
@@ -291,7 +296,7 @@ VALUES
         }            
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditPage', 'contract EditPage {
     data {
         Id int
@@ -351,7 +356,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'EditTable', 'contract EditTable {
     data {
         Name string
@@ -387,34 +392,49 @@ VALUES
         PermTable($Name, JSONEncode($Permissions))
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+	(next_id('1_contracts'), 'FirstBlock', 'contract FirstBlock {
+    data {
+        Data string
+    }
+
+    conditions {
+    }
+
+    action {
+        InitFirstEcosystem($Data)
+    }
+}
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'Import', 'contract Import {
     data {
         Data string
     }
-    func ReplaceValue(s string) string {
-        s = Replace(s, "#IMPORT_ECOSYSTEM_ID#", "#ecosystem_id#")
-        s = Replace(s, "#IMPORT_KEY_ID#", "#key_id#")
-        s = Replace(s, "#IMPORT_ISMOBILE#", "#isMobile#")
-        s = Replace(s, "#IMPORT_ROLE_ID#", "#role_id#")
-        s = Replace(s, "#IMPORT_ECOSYSTEM_NAME#", "#ecosystem_name#")
-        s = Replace(s, "#IMPORT_APP_ID#", "#app_id#")
+    func decodeGlobals(s string) string {
+        var globs array i lenGlobs int r map prefix from to string
+        prefix = "import_"
+        globs = ["guest_key", "ecosystem_id", "key_id", "isMobile", "role_id", "ecosystem_name", "app_id", "info_value_pages_count", "info_value_pages", "info_value_blocks_count", "info_value_blocks","info_value_menu_count", "info_value_menu", "info_value_parameters_count", "info_value_parameters","info_value_languages_count", "info_value_languages", "info_value_contracts_count", "info_value_contracts", "info_value_tables_count", "info_value_tables", "DataName", "DataCount", "DataInfo", "info_value_app_name", "import_id"]
+        lenGlobs = Len(globs)
+        while i < lenGlobs{
+            r = globs[i]
+            from = ToUpper("#" + prefix + r + "#")
+            to = "#" + r + "#"
+            s = Replace(s, from, to)
+            i = i + 1
+        }
         return s
     }
 
     conditions {
-        $Data = ReplaceValue($Data)
-
+        $Data = decodeGlobals($Data)
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("buffer_data").Columns("value->app_name").Where({key: "import_info",
-          member_id: $key_id}).Row()
+        app_map = DBFind("@1buffer_data").Columns("value->app_name").Where({key: "import_info", member_id: $key_id, ecosystem: $ecosystem_id}).Row()
 
         if app_map{
-            var app_id int
-            var ival string
+            var app_id int ival string
             ival = Str(app_map["value.app_name"])
-            app_id = DBFind("applications").Columns("id").Where({name: ival}).One("id")
+            app_id = DBFind("@1applications").Columns("id").Where({name: ival, ecosystem: $ecosystem_id}).One("id")
             if app_id {
                 $ApplicationId = Int(app_id)
             }
@@ -442,22 +462,28 @@ VALUES
         var dataImport array
         dataImport = JSONDecode($Data)
         var i int
-        while i<Len(dataImport){
-            var item, cdata map
+        while i < Len(dataImport){
+            var item cdata map type name string
             cdata = dataImport[i]
             if cdata {
                 cdata["ApplicationId"] = $ApplicationId
-                $Type = cdata["Type"]
-                $Name = cdata["Name"]
+                type = cdata["Type"]
+                name = cdata["Name"]
+                // Println(Sprintf("import %%v: %%v", type, cdata["Name"]))
 
-                // Println(Sprintf("import %%v: %%v", $Type, cdata["Name"]))
-
-                item = DBFind($Type).Where({name: $Name}).Row()
+                var tbl string
+                tbl = "@1" + Str(type)
+                item = DBFind(tbl).Where({name: name, ecosystem: $ecosystem_id}).Row()
                 var contractName string
                 if item {
-                    contractName = editors[$Type]
+                    contractName = editors[type]
                     cdata["Id"] = Int(item["id"])
-                    if $Type == "menu"{
+                    if type == "contracts" {
+                        if item["conditions"] == "false"{
+                            // ignore updating impossibled
+                            contractName = ""
+                        }
+                    } elif type == "menu"{
                         var menu menuItem string
                         menu = Replace(item["value"], " ", "")
                         menu = Replace(menu, "\n", "")
@@ -473,139 +499,134 @@ VALUES
                         }
                     }
                 } else {
-                    contractName = creators[$Type]
+                    contractName = creators[type]
                 }
 
                 if contractName != ""{
                     CallContract(contractName, cdata)
                 }
             }
-            i=i+1
+            i = i + 1
         }
         // Println(Sprintf("> time: %%v", $time))
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'ImportUpload', 'contract ImportUpload {
     data {
-        input_file string "file"
+        input_file file
     }
-    func ReplaceValue(s string) string {
-        s = Replace(s, "#ecosystem_id#", "#IMPORT_ECOSYSTEM_ID#")
-        s = Replace(s, "#key_id#", "#IMPORT_KEY_ID#")
-        s = Replace(s, "#isMobile#", "#IMPORT_ISMOBILE#")
-        s = Replace(s, "#role_id#", "#IMPORT_ROLE_ID#")
-        s = Replace(s, "#ecosystem_name#", "#IMPORT_ECOSYSTEM_NAME#")
-        s = Replace(s, "#app_id#", "#IMPORT_APP_ID#")
+    func encodeGlobals(s string) string {
+        var globs array i lenGlobs int r map prefix from to string
+        prefix = "import_"
+        globs = ["guest_key", "ecosystem_id", "key_id", "isMobile", "role_id", "ecosystem_name", "app_id", "info_value_pages_count", "info_value_pages", "info_value_blocks_count", "info_value_blocks","info_value_menu_count", "info_value_menu", "info_value_parameters_count", "info_value_parameters","info_value_languages_count", "info_value_languages", "info_value_contracts_count", "info_value_contracts", "info_value_tables_count", "info_value_tables", "DataName", "DataCount", "DataInfo", "info_value_app_name", "import_id"]
+        lenGlobs = Len(globs)
+        while i < lenGlobs{
+            r = globs[i]
+            from = "#" + r + "#"
+            to = ToUpper("#" + prefix + r + "#")
+            s = Replace(s, from, to)
+            i = i + 1
+        }
         return s
     }
 
     conditions {
-        $input_file = BytesToString($input_file)
-        $input_file = ReplaceValue($input_file)
-        $limit = 5 // data piece size of import
-
-        // init buffer_data, cleaning old buffer
-        var initJson map
-        $import_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import"}).One("id")
-        if $import_id {
-            $import_id = Int($import_id)
-            DBUpdate("buffer_data", $import_id, {"value": initJson})
-        } else {
-            $import_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import",
-                 "value": initJson})
-        }
-
-        $info_id = DBFind("buffer_data").Where({member_id:$key_id, key: "import_info"}).One("id")
-        if $info_id {
-            $info_id = Int($info_id)
-            DBUpdate("buffer_data", $info_id, {"value": initJson})
-        } else {
-            $info_id = DBInsert("buffer_data", {"member_id":$key_id,"key": "import_info",
-            "value": initJson})
-        }
+        $input_file = BytesToString($input_file["Body"])
+        $input_file = encodeGlobals($input_file)
+        $limit = 10 // data piece size of import
     }
 
     action {
-        var input map
-        input = JSONDecode($input_file)
-        var arr_data array
-        arr_data = input["data"]
+        // init buffer_data, cleaning old buffer
+        var initJson map
+        $import_id = DBFind("@1buffer_data").Where({member_id:$key_id, key: "import", ecosystem: $ecosystem_id}).One("id")
+        if $import_id {
+            $import_id = Int($import_id)
+            DBUpdate("@1buffer_data", $import_id, {"value": initJson})
+        } else {
+            $import_id = DBInsert("@1buffer_data", {"member_id":$key_id,"key": "import", "value": initJson,"ecosystem": $ecosystem_id})
+        }
 
-        var pages_arr, blocks_arr, menu_arr, parameters_arr, languages_arr, contracts_arr, tables_arr array
+        $info_id = DBFind("@1buffer_data").Where({member_id:$key_id, key: "import_info", ecosystem: $ecosystem_id}).One("id")
+        if $info_id {
+            $info_id = Int($info_id)
+            DBUpdate("@1buffer_data", $info_id, {"value": initJson})
+        } else {
+            $info_id = DBInsert("@1buffer_data", {"member_id":$key_id,"key": "import_info", "value": initJson,"ecosystem": $ecosystem_id})
+        }
+        
+        var input map arrData array
+        input = JSONDecode($input_file)
+        arrData = input["data"]
+
+        var pages_arr blocks_arr menu_arr parameters_arr languages_arr contracts_arr tables_arr array
 
         // import info
-        var i int
-        while i<Len(arr_data){
-            var tmp_object map
-            tmp_object = arr_data[i]
+        var i lenArrData int item map
+        lenArrData = Len(arrData)
+        while i < lenArrData{
+            item = arrData[i]
 
-            if tmp_object["Type"] == "pages" {
-                pages_arr = Append(pages_arr, Str(tmp_object["Name"]))
-            }
-            if tmp_object["Type"] == "blocks" {
-                blocks_arr = Append(blocks_arr, Str(tmp_object["Name"]))
-            }
-            if tmp_object["Type"] == "menu" {
-                menu_arr = Append(menu_arr, Str(tmp_object["Name"]))
-            }
-            if tmp_object["Type"] == "app_params" {
-                parameters_arr = Append(parameters_arr, Str(tmp_object["Name"]))
-            }
-            if tmp_object["Type"] == "languages" {
-                languages_arr = Append(languages_arr, Str(tmp_object["Name"]))
-            }
-            if tmp_object["Type"] == "contracts" {
-                contracts_arr = Append(contracts_arr, Str(tmp_object["Name"]))
-            }
-            if tmp_object["Type"] == "tables" {
-                tables_arr = Append(tables_arr, Str(tmp_object["Name"]))
+            if item["Type"] == "pages" {
+                pages_arr = Append(pages_arr, item["Name"])
+            }elif item["Type"] == "blocks" {
+                blocks_arr = Append(blocks_arr, item["Name"])
+            }elif item["Type"] == "menu" {
+                menu_arr = Append(menu_arr, item["Name"])
+            }elif item["Type"] == "app_params" {
+                parameters_arr = Append(parameters_arr, item["Name"])
+            }elif item["Type"] == "languages" {
+                languages_arr = Append(languages_arr, item["Name"])
+            }elif item["Type"] == "contracts" {
+                contracts_arr = Append(contracts_arr, item["Name"])
+            }elif item["Type"] == "tables" {
+                tables_arr = Append(tables_arr, item["Name"])
             }
 
             i = i + 1
         }
 
-        var info_map map
-        info_map["app_name"] = input["name"]
-        info_map["pages"] = Join(pages_arr, ", ")
-        info_map["pages_count"] = Len(pages_arr)
-        info_map["blocks"] = Join(blocks_arr, ", ")
-        info_map["blocks_count"] = Len(blocks_arr)
-        info_map["menu"] = Join(menu_arr, ", ")
-        info_map["menu_count"] = Len(menu_arr)
-        info_map["parameters"] = Join(parameters_arr, ", ")
-        info_map["parameters_count"] = Len(parameters_arr)
-        info_map["languages"] = Join(languages_arr, ", ")
-        info_map["languages_count"] = Len(languages_arr)
-        info_map["contracts"] = Join(contracts_arr, ", ")
-        info_map["contracts_count"] = Len(contracts_arr)
-        info_map["tables"] = Join(tables_arr, ", ")
-        info_map["tables_count"] = Len(tables_arr)
+        var inf map
+        inf["app_name"] = input["name"]
+        inf["pages"] = Join(pages_arr, ", ")
+        inf["pages_count"] = Len(pages_arr)
+        inf["blocks"] = Join(blocks_arr, ", ")
+        inf["blocks_count"] = Len(blocks_arr)
+        inf["menu"] = Join(menu_arr, ", ")
+        inf["menu_count"] = Len(menu_arr)
+        inf["parameters"] = Join(parameters_arr, ", ")
+        inf["parameters_count"] = Len(parameters_arr)
+        inf["languages"] = Join(languages_arr, ", ")
+        inf["languages_count"] = Len(languages_arr)
+        inf["contracts"] = Join(contracts_arr, ", ")
+        inf["contracts_count"] = Len(contracts_arr)
+        inf["tables"] = Join(tables_arr, ", ")
+        inf["tables_count"] = Len(tables_arr)
 
-        if 0 == Len(pages_arr) + Len(blocks_arr) + Len(menu_arr) + Len(parameters_arr) + Len(languages_arr) + Len(contracts_arr) + Len(tables_arr) {
+        if 0 == inf["pages_count"] + inf["blocks_count"] + inf["menu_count"] + inf["parameters_count"] + inf["languages_count"] + inf["contracts_count"] + inf["tables_count"] {
             warning "Invalid or empty import file"
         }
 
         // import data
         // the contracts is imported in one piece, the rest is cut under the $limit, a crutch to bypass the error when you import dependent contracts in different pieces
-        i=0
-        var sliced contracts array, arr_data_len int
-        arr_data_len = Len(arr_data)
-        while i <arr_data_len{
-            var part array, l int, tmp map
-            while l < $limit && (i+l < arr_data_len) {
-                tmp = arr_data[i+l]
-                if tmp["Type"] == "contracts" {
-                    contracts = Append(contracts, tmp)
+        var sliced contracts array
+        i = 0
+        while i <lenArrData{
+            var items array l int item map
+            while l < $limit && (i + l < lenArrData) {
+                item = arrData[i + l]
+                if item["Type"] == "contracts" {
+                    contracts = Append(contracts, item)
                 }else{
-                    part = Append(part, tmp)
+                    items = Append(items, item)
                 }
-                l=l+1
+                l = l + 1
             }
             var batch map
-            batch["Data"] = JSONEncode(part)
+            batch["Data"] = JSONEncode(items)
             sliced = Append(sliced, batch)
-            i=i+$limit
+            i = i + $limit
         }
         if Len(contracts) > 0{
             var batch map
@@ -615,64 +636,20 @@ VALUES
         input["data"] = sliced
 
         // storing
-        DBUpdate("buffer_data", $import_id, {"value": input})
-        DBUpdate("buffer_data", $info_id, {"value": info_map})
+        DBUpdate("@1buffer_data", $import_id, {"value": input})
+        DBUpdate("@1buffer_data", $info_id, {"value": inf})
 
-        var app_id int
-        var ival string
-        ival =  Str(input["name"])
-        app_id = DBFind("applications").Columns("id").Where({name:ival}).One("id")
+        var name string
+        name = Str(input["name"])
+        var cndns string
+        cndns = Str(input["conditions"])
 
-        if !app_id {
-            var val string
-            val = Str(input["name"])
-            DBInsert("applications", {"name": val, "conditions": "true"})
+        if !DBFind("@1applications").Columns("id").Where({name:name, ecosystem: $ecosystem_id}).One("id") {
+            DBInsert("@1applications", {"name": name, "conditions": cndns,"ecosystem": $ecosystem_id})
         }
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
-	(next_id('1_contracts'), 'MoneyTransfer', 'contract MoneyTransfer {
-	data {
-		Recipient string
-		Amount    string
-		Comment     string "optional"
-	}
-	conditions {
-		$recipient = AddressToId($Recipient)
-		if $recipient == 0 {
-			error Sprintf("Recipient %%s is invalid", $Recipient)
-		}
-		var total money
-		$amount = Money($Amount) 
-		if $amount <= 0 {
-			error "Amount must be greater then zero"
-		}
-
-        var key map
-        var req money
-		key = GetKey($key_id)
-        total = Money($key["amount"])
-        req = $amount + Money(100000000000000000) 
-        if req > total {
-			error Sprintf("Money is not enough. You have got %%v but you should reserve %%v", total, req)
-		}
-	}
-	action {
-		EditKey($key_id, $key["amount"]-$amount)
-
-		var recipientKey map
-		$recipientKey = GetKey($recipient)
-		if $recipientKey == nil {
-			CreateKey($recipient, $amount, "")
-		} else {
-			UpdateKey($recipient, $recipientKey["amount"]+$amount)
-		}
-
-        DBInsert("history", {sender_id: $key_id,recipient_id: $recipient,
-             amount:$amount,comment: $Comment,block_id: $block,txhash: $txhash})
-	}
-}
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewAppParam', 'contract NewAppParam {
     data {
         ApplicationId int
@@ -698,7 +675,7 @@ VALUES
               conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewApplication', 'contract NewApplication {
     data {
         Name string
@@ -721,7 +698,7 @@ VALUES
         $result = DBInsert("applications", {name: $Name,conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewBadBlock', 'contract NewBadBlock {
 	data {
 		ProducerNodeID int
@@ -731,11 +708,11 @@ VALUES
 		Reason string
 	}
 	action {
-        DBInsert("@1_bad_blocks", {producer_node_id: $ProducerNodeID,consumer_node_id: $ConsumerNodeID,
+        DBInsert("@1bad_blocks", {producer_node_id: $ProducerNodeID,consumer_node_id: $ConsumerNodeID,
             block_id: $BlockID, "timestamp block_time": $Timestamp, reason: $Reason})
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int
@@ -761,7 +738,7 @@ VALUES
               app_id: $ApplicationId})
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewContract', 'contract NewContract {
     data {
         ApplicationId int
@@ -808,7 +785,16 @@ VALUES
         return SysParamInt("contract_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+	(next_id('1_contracts'), 'NewEcosystem', 'contract NewEcosystem {
+	data {
+		Name  string
+	}
+	action {
+		$result = CreateEcosystem($key_id, $Name)
+	}
+}
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewLang', 'contract NewLang {
     data {
         ApplicationId int
@@ -829,10 +815,10 @@ VALUES
     }
 
     action {
-        CreateLanguage($Name, $Trans, $ApplicationId)
+        CreateLanguage($Name, $Trans)
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewMenu', 'contract NewMenu {
     data {
         Name string
@@ -856,7 +842,7 @@ VALUES
         return SysParamInt("menu_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewPage', 'contract NewPage {
     data {
         ApplicationId int
@@ -911,7 +897,7 @@ VALUES
         return SysParamInt("page_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewTable', 'contract NewTable {
     data {
         ApplicationId int
@@ -933,7 +919,7 @@ VALUES
         return SysParamInt("table_price")
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NewUser', 'contract NewUser {
 	data {
 		NewPubkey string
@@ -954,7 +940,7 @@ VALUES
         SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }
-', 'ContractConditions("NodeOwnerCondition")', 1, %[1]d),
+', 'ContractConditions("NodeOwnerCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
         $raw_full_nodes = SysParamString("full_nodes")
@@ -974,7 +960,20 @@ VALUES
         }
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+	(next_id('1_contracts'), 'StopNetwork', 'contract StopNetwork {
+    data {
+        Cert string
+    }
+
+    conditions {
+    }
+
+    action {
+        StopNet($Cert)
+    }
+}
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {
 	conditions {
 		ContractConditions("MainCondition")
@@ -1006,27 +1005,47 @@ VALUES
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d),
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+	(next_id('1_contracts'), 'UpdateSysParam', 'contract UpdateSysParam {
+     data {
+        Name string
+        Value string
+        Conditions string "optional"
+     }
+     conditions {
+         if !GetContractByName($Name){
+            warning "System parameter not found"
+         }
+     }
+     action {
+        var params map
+        params["Value"] = $Value
+        CallContract($Name, params)
+        
+        DBUpdateSysParam($Name, $Value, $Conditions)
+     }
+}
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
 	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
         Name string
-        Data bytes "file"
+        Data bytes
         DataMimeType string "optional"
     }
 
     conditions {
-        $Id = Int(DBFind("binaries").Columns("id").Where({app_id: $ApplicationId,
-            member_id: $key_id, name: $Name}).One("id"))
+        $Id = Int(DBFind("@1binaries").Columns("id").Where({app_id: $ApplicationId,
+            member_id: $key_id, name: $Name, ecosystem: $ecosystem_id}).One("id"))
 
         if $Id == 0 {
             if $ApplicationId == 0 {
-                warning "Application id cannot equal 0"
+                warning LangRes("@1aid_cannot_zero", "en")
             }
         }
     }
     action {
-        var hash string
+        var hash  string
         hash = Hash($Data)
 
         if $DataMimeType == "" {
@@ -1034,14 +1053,35 @@ VALUES
         }
 
         if $Id != 0 {
-            DBUpdate("binaries", $Id, {"data": $Data,"hash": hash,"mime_type": $DataMimeType})
+            DBUpdate("@1binaries", $Id, {"data":$Data, "hash":hash, "mime_type":$DataMimeType})
         } else {
-            $Id = DBInsert("binaries", {"app_id": $ApplicationId,"member_id": $key_id,
-               "name": $Name,"data": $Data,"hash": hash, "mime_type": $DataMimeType})
+            $Id = DBInsert("@1binaries", {"app_id":$ApplicationId, "member_id":$key_id,
+               "name":$Name, "data":$Data, "hash":hash, "mime_type":$DataMimeType, "ecosystem":$ecosystem_id})
         }
 
         $result = $Id
     }
 }
-', 'ContractConditions("MainCondition")', 1, %[1]d);
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+	(next_id('1_contracts'), 'UploadFile', 'contract UploadFile {
+    data {
+        ApplicationId int
+        Data file
+        Name string "optional"
+    }
+
+    conditions {
+        if $Name == "" {
+            $Name = $Data["Name"]
+        }
+        $Body = $Data["Body"]
+        $DataMimeType = $Data["MimeType"] 
+    }
+    
+    action {
+        $Id = @1UploadBinary("ApplicationId,Name,Data,DataMimeType", $ApplicationId, $Name, $Body, $DataMimeType)
+        $result = $Id
+    }
+}
+', 'ContractConditions("MainCondition")', '1', %[1]d, '1');
 `

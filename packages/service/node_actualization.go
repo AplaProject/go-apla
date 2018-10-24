@@ -7,10 +7,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
 )
 
@@ -59,10 +59,9 @@ func (n *NodeActualizer) Run(ctx context.Context) {
 }
 
 func (n *NodeActualizer) checkBlockchainActuality(ctx context.Context) (bool, error) {
-	curBlock := &model.InfoBlock{}
-	_, err := curBlock.Get()
+	block, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
-		return false, errors.Wrapf(err, "retrieving info block")
+		return false, err
 	}
 
 	remoteHosts := syspar.GetRemoteHosts()
@@ -71,20 +70,27 @@ func (n *NodeActualizer) checkBlockchainActuality(ctx context.Context) (bool, er
 	if err != nil {
 		return false, errors.Wrapf(err, "choosing best host")
 	}
+	var curBlockID int64
+	if found {
+		curBlockID = block.Header.BlockID
+	}
 
 	// Currently this node is downloading blockchain
-	if curBlock.BlockID == 0 || curBlock.BlockID+n.availableBlockchainGap < maxBlockID {
+	if curBlockID == 0 || curBlockID+n.availableBlockchainGap < maxBlockID {
 		return false, nil
 	}
 
-	foreignBlock := &model.Block{}
-	_, err = foreignBlock.GetMaxForeignBlock(conf.Config.KeyID)
+	foreignBlock, found, err := blockchain.GetMaxForeignBlock(nil, conf.Config.KeyID)
 	if err != nil {
 		return false, errors.Wrapf(err, "retrieving last foreign block")
 	}
 
+	if !found {
+		return false, nil
+	}
+
 	// Node did not accept any blocks for an hour
-	t := time.Unix(foreignBlock.Time, 0)
+	t := time.Unix(foreignBlock.Header.Time, 0)
 	if time.Since(t).Minutes() > 30 && len(remoteHosts) > 1 {
 		return false, nil
 	}

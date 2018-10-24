@@ -1,0 +1,14 @@
+// +prop AppID = '1'
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract StopNetwork {
+    data {
+        Cert string
+    }
+
+    conditions {
+    }
+
+    action {
+        StopNet($Cert)
+    }
+}

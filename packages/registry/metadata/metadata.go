@@ -126,7 +126,7 @@ func (m *tx) Get(registry *types.Registry, pkValue string, out interface{}) erro
 	return nil
 }
 
-func (m *tx) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
+func (m *tx) GetModel(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
 	key, err := m.formatKey(registry, pkValue)
 	if err != nil {
 		return nil, err
@@ -327,10 +327,10 @@ func (m *storage) Get(registry *types.Registry, pkValue string, out interface{})
 	return tx.Get(registry, pkValue, out)
 }
 
-func (m *storage) Get2(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
+func (m *storage) GetModel(registry *types.Registry, pkValue string) (types.RegistryModel, error) {
 	tx := &tx{tx: m.db.Begin(false)}
 	defer tx.Rollback()
-	return tx.Get2(registry, pkValue)
+	return tx.GetModel(registry, pkValue)
 }
 
 func (m *storage) RollbackBlock(block []byte) error {

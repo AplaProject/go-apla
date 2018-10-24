@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/api"
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -36,7 +37,10 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/network/httpserver"
+	"github.com/GenesisKernel/go-genesis/packages/nodeban"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
+	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/registry/metadata"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -133,6 +137,7 @@ func initLogs() error {
 	}
 
 	log.AddHook(logtools.ContextHook{})
+	log.AddHook(logtools.HexHook{})
 
 	return nil
 }
@@ -160,8 +165,10 @@ func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWr
 
 func initRoutes(listenHost string) {
 	route := httprouter.New()
-	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
 	api.Route(route)
+
+	handler := httpserver.NewMaxBodyReader(route, conf.Config.HTTPServerMaxBodySize)
+
 	if conf.Config.TLS {
 		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
 			log.Fatal("-tls-cert/TLSCert and -tls-key/TLSKey must be specified with -tls/TLS")
@@ -173,7 +180,7 @@ func initRoutes(listenHost string) {
 			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
 		}
 		go func() {
-			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, route)
+			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, handler)
 			if err != nil {
 				log.WithFields(log.Fields{"host": listenHost, "error": err, "type": consts.NetworkError}).Fatal("Listening TLS server")
 			}
@@ -184,7 +191,7 @@ func initRoutes(listenHost string) {
 		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
 	}
 
-	httpListener(listenHost, route)
+	httpListener(listenHost, handler)
 }
 
 // Start starts the main code of the program
@@ -215,13 +222,18 @@ func Start() {
 		}
 	}
 
-	log.WithFields(log.Fields{"mode": conf.Config.RunningMode}).Info("Node running mode")
+	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
 
 	if err := utils.MakeDirectory(conf.Config.TempDir); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "dir": conf.Config.TempDir}).Error("can't create temporary directory")
+		Exit(1)
+	}
+
+	if err := utils.MakeDirectory("queues"); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "dir": "queues"}).Error("can't create directory for queues")
 		Exit(1)
 	}
 
@@ -247,6 +259,15 @@ func Start() {
 	err = initLogs()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "logs init failed: %v\n", utils.ErrInfo(err))
+		Exit(1)
+	}
+	if err := queue.Init(); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.QueueError}).Error("can't init queues")
+		Exit(1)
+	}
+
+	if err := blockchain.Init("blockchain"); err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
 		Exit(1)
 	}
 
@@ -285,7 +306,7 @@ func Start() {
 			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
 			na.Run(ctx)
 
-			err = service.InitNodesBanService()
+			err = nodeban.InitNodesBanService()
 			if err != nil {
 				log.WithError(err).Fatal("Can't init ban service")
 			}
