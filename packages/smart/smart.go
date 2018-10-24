@@ -463,6 +463,36 @@ func ConditionById(table string, validate bool) {
 	return vmCompile(vm, code, &script.OwnerInfo{StateID: uint32(state)})
 }
 
+// LoadSysContract reads and compiles contract of new state
+func LoadSysContract(transaction *model.DbTransaction) (err error) {
+	var state uint32 = 1
+	var contracts []map[string]string
+	contracts, err = model.GetAllTransaction(transaction, `select * from "system_contracts" order by id`, -1)
+	if err != nil {
+		return logErrorDB(err, "selecting all transactions from contracts")
+	}
+	LoadSysFuncs(smartVM, int(state))
+	for _, item := range contracts {
+		list, err := script.ContractsList(item[`value`])
+		if err != nil {
+			return err
+		}
+		names := strings.Join(list, `,`)
+		owner := script.OwnerInfo{
+			StateID:  state,
+			Active:   item[`active`] == `1`,
+			TableID:  converter.StrToInt64(item[`id`]),
+			WalletID: converter.StrToInt64(item[`wallet_id`]),
+			TokenID:  converter.StrToInt64(item[`token_id`]),
+		}
+		if err = Compile(item[`value`], &owner); err != nil {
+			logErrorValue(err, consts.EvalError, "Load Contract", names)
+		}
+	}
+
+	return
+}
+
 // LoadContract reads and compiles contract of new state
 func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
 	var contracts []map[string]string
@@ -959,21 +989,23 @@ func (sc *SmartContract) CallContract() (string, error) {
 		public = sc.TxSmart.Header.PublicKey
 	}
 	wallet := &model.Key{}
-	wallet.SetTablePrefix(sc.TxSmart.Header.EcosystemID)
-	signedBy, err := sc.GetSignedBy(public)
-	if err != nil {
-		return retError(err)
-	}
-	_, err = wallet.Get(signedBy)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
-		return retError(err)
-	}
-	if wallet.Deleted == 1 {
-		return retError(errDeletedKey)
-	}
-	if len(wallet.PublicKey) > 0 {
-		public = wallet.PublicKey
+	if !isFree {
+		wallet.SetTablePrefix(sc.TxSmart.Header.EcosystemID)
+		signedBy, err := sc.GetSignedBy(public)
+		if err != nil {
+			return retError(err)
+		}
+		_, err = wallet.Get(signedBy)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+			return retError(err)
+		}
+		if wallet.Deleted == 1 {
+			return retError(errDeletedKey)
+		}
+		if len(wallet.PublicKey) > 0 {
+			public = wallet.PublicKey
+		}
 	}
 	if sc.TxSmart.Header.Type == 258 { // UpdFullNodes
 		node := syspar.GetNode(sc.TxSmart.Header.KeyID)

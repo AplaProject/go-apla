@@ -201,6 +201,23 @@ func ExecSchema() error {
 	return migration.Migrate(&MigrationHistory{})
 }
 
+func ExecSystemContractsData(wallet int64) error {
+	q := fmt.Sprintf(migration.GetSystemContractsScript(), "", wallet)
+	if err := DBConn.Exec(q).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing system contracts script")
+		return err
+	}
+	return nil
+}
+
+func ExecSystemParametersData() error {
+	if err := DBConn.Exec(migration.GetSystemParametersScript()).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing comma ecosystem schema")
+		return err
+	}
+	return nil
+}
+
 // Update is updating table rows
 func Update(transaction *DbTransaction, tblname, set, where string) error {
 	return GetDB(transaction).Exec(`UPDATE "` + strings.Trim(tblname, `"`) + `" SET ` + set + " " + where).Error
@@ -411,6 +428,14 @@ func InitDB(cfg conf.DBConfig, keyID int64) error {
 	}
 	if err = ExecSchema(); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing db schema")
+		return err
+	}
+	if err = ExecSystemContractsData(keyID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing sys contracts")
+		return err
+	}
+	if err = ExecSystemParametersData(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing sys parameters")
 		return err
 	}
 

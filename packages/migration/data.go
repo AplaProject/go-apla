@@ -33,6 +33,16 @@ var (
 		"time" int  NOT NULL DEFAULT '0'
 		);
 		ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (block_id);
+
+		DROP TABLE IF EXISTS "1_system_parameters";
+		CREATE TABLE "1_system_parameters" (
+		"id" bigint NOT NULL DEFAULT '0',
+		"name" varchar(255)  NOT NULL DEFAULT '',
+		"value" text NOT NULL DEFAULT '',
+		"conditions" text  NOT NULL DEFAULT ''
+		);
+		ALTER TABLE ONLY "1_system_parameters" ADD CONSTRAINT "1_system_parameters_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_system_parameters_index_name" ON "1_system_parameters" (name);
 		
 		DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
 		"id" int NOT NULL DEFAULT '0',
@@ -62,6 +72,7 @@ var (
 		
 		CREATE TABLE "system_contracts" (
 		"id" bigint NOT NULL  DEFAULT '0',
+		"name" varchar(100)  NOT NULL DEFAULT '',
 		"value" text  NOT NULL DEFAULT '',
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '0',

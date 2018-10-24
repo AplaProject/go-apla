@@ -89,6 +89,7 @@ func FromBlockchainTransaction(tx *blockchain.Transaction) (*Transaction, error)
 
 	// skip byte with transaction type
 	t.TxBinaryData = bytes
+	t.TxSignature = tx.Header.BinSignatures
 	if err := t.parseFromContract(tx); err != nil {
 		return nil, err
 	}

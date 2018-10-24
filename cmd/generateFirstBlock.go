@@ -112,15 +112,15 @@ var generateFirstBlockCmd = &cobra.Command{
 		if err != nil {
 			return
 		}
-		if err := syspar.SysUpdate(nil); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
-			return
-		}
-		if err := smart.LoadContract(nil, "1"); err != nil {
+		if err := smart.LoadSysContract(nil); err != nil {
 			return
 		}
 		if err := blockchain.Init("blockchain"); err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
+			return
+		}
+		if err := syspar.SysUpdate(nil); err != nil {
+			log.WithError(err).Error("updating sys parameters")
 			return
 		}
 

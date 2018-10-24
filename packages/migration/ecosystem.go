@@ -27,7 +27,6 @@ func GetFirstEcosystemScript() string {
 		firstDelayedContractsDataSQL,
 		firstEcosystemContractsSQL,
 		firstEcosystemDataSQL,
-		firstSystemParametersDataSQL,
 		firstTablesDataSQL,
 		firstKeysDataSQL,
 	}
@@ -41,4 +40,12 @@ func GetCommonEcosystemScript() string {
 		firstEcosystemCommon,
 	}
 	return strings.Join(scripts, "\r\n")
+}
+
+func GetSystemContractsScript() string {
+	return systemContractsDataSQL
+}
+
+func GetSystemParametersScript() string {
+	return firstSystemParametersDataSQL
 }

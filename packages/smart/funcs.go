@@ -631,41 +631,31 @@ func InitFirstEcosystem(sc *SmartContract, data string) error {
 		return err
 	}
 	keyID := crypto.Address(fbData.PublicKey)
+	var firstEcosystemID int = 1
+	var firstAppID int64 = 1
+	if err := model.ExecSchemaEcosystem(sc.DbTransaction, firstEcosystemID, keyID, ``, keyID, firstAppID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
+		return utils.ErrInfo(err)
+	}
 	amount := decimal.New(consts.FounderAmount, consts.MoneyDigits).String()
 	commission := &model.SystemParameter{Name: `commission_wallet`}
-	if err := commission.SaveArray([][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
+	if err := commission.SaveArray(sc.DbTransaction, [][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
-		return err
-	}
-	if err := syspar.SysUpdate(nil); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
-		return err
-	}
-
-	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
-		keyID, fbData.PublicKey, amount).Error
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return err
-	}
-	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values('1', 'default_page',
-		  'default_menu', ?, 'ContractAccess("@1EditPage")')`, syspar.SysString(`default_ecosystem_page`)).Error
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
-		return err
-	}
-	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values('1', 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`,
-		syspar.SysString(`default_ecosystem_menu`), `default`).Error
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
 		return err
 	}
 	sysParam := &model.SystemParameter{}
 	sysParam.Name = "test"
 	if fbData.Test == 1 {
-		sysParam.Update("1")
+		sysParam.Update(sc.DbTransaction, "1")
 	} else {
-		sysParam.Update("0")
+		sysParam.Update(sc.DbTransaction, "0")
+	}
+	sysParam2 := &model.SystemParameter{}
+	sysParam2.Name = "private_blockchain"
+	if fbData.PrivateBlockchain == 1 {
+		sysParam2.Update(sc.DbTransaction, "1")
+	} else {
+		sysParam2.Update(sc.DbTransaction, "0")
 	}
 	spFirstBlockData := &model.SystemParameter{Name: "first_block_data"}
 	var jsonFBData []byte
@@ -674,11 +664,40 @@ func InitFirstEcosystem(sc *SmartContract, data string) error {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("Marshalling fb data to json")
 		return err
 	}
-	if err := spFirstBlockData.Update(string(jsonFBData)); err != nil {
+	if err := spFirstBlockData.Update(sc.DbTransaction, string(jsonFBData)); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Updating first block data")
 		return err
 	}
 	syspar.SetFirstBlockData()
+	if err := syspar.SysUpdate(sc.DbTransaction); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+		return err
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
+		keyID, fbData.PublicKey, amount).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return err
+	}
+	id, err := model.GetNextID(sc.DbTransaction, "1_pages")
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values(?, 'default_page',
+			  'default_menu', ?, 'ContractAccess("@1EditPage")')`, id, syspar.SysString(`default_ecosystem_page`)).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		return err
+	}
+	id, err = model.GetNextID(sc.DbTransaction, "1_menu")
+	if err != nil {
+		return utils.ErrInfo(err)
+	}
+	err = model.GetDB(sc.DbTransaction).Exec(`insert into "1_menu" (id,name,value,title,conditions) values(?, 'default_menu', ?, ?, 'ContractAccess("@1EditMenu")')`, id, syspar.SysString(`default_ecosystem_menu`), `default`).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
+		return err
+	}
 	return nil
 }
 

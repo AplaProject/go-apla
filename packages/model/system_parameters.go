@@ -63,15 +63,15 @@ func (sp *SystemParameter) ToMap() map[string]string {
 }
 
 // Update is update model
-func (sp SystemParameter) Update(value string) error {
-	return DBConn.Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
+func (sp SystemParameter) Update(transaction *DbTransaction, value string) error {
+	return GetDB(transaction).Model(sp).Where("name = ?", sp.Name).Update(`value`, value).Error
 }
 
 // SaveArray is saving array
-func (sp *SystemParameter) SaveArray(list [][]string) error {
+func (sp *SystemParameter) SaveArray(transaction *DbTransaction, list [][]string) error {
 	ret, err := json.Marshal(list)
 	if err != nil {
 		return err
 	}
-	return sp.Update(string(ret))
+	return sp.Update(transaction, string(ret))
 }

@@ -23,17 +23,22 @@ var (
 		{
 			[]string{"./contracts/ecosystem"},
 			"./contracts_data.go",
-			"contractsDataSQL", "%[1]d", "%[2]d",
+			"contractsDataSQL", "%[1]d", "%[2]d", "1_contracts", true,
+		},
+		{
+			[]string{"./contracts/system"},
+			"./system_contracts_data.go",
+			"systemContractsDataSQL", "", "%[2]d", "system_contracts", false,
 		},
 		{
 			[]string{"./contracts/common", "./contracts/first_ecosystem"},
 			"./first_ecosys_contracts_data.go",
-			"firstEcosystemContractsSQL", "1", "%[1]d",
+			"firstEcosystemContractsSQL", "1", "%[1]d", "1_contracts", true,
 		},
 		{
 			[]string{"./contracts/common", "./contracts/first_ecosystem", "./contracts/vde"},
 			"./vde/vde_data_contracts.go",
-			"contractsDataSQL", "%[1]d", "",
+			"contractsDataSQL", "%[1]d", "", "1_contracts", true,
 		},
 	}
 
@@ -46,6 +51,8 @@ type scenario struct {
 	Variable  string
 	Ecosystem string
 	Owner     string
+	Table     string
+	HasAppID  bool
 }
 
 type contract struct {
@@ -71,11 +78,11 @@ var contractsTemplate = template.Must(template.New("").Funcs(fns).Parse(`// Code
 package {{ .Package }}
 
 var {{ .Variable }} = ` + "`" + `
-INSERT INTO "1_contracts" (id, name, value, conditions, app_id{{if .Owner }}, wallet_id{{end}}, ecosystem)
+INSERT INTO "{{$.Table}}" (id, name, value, conditions{{if $.HasAppID}}, app_id{{end}}{{if $.Owner }}, wallet_id{{end}}{{if $.Ecosystem}}, ecosystem{{end}})
 VALUES
 {{- $last := add (len .Contracts) -1}}
 {{- range $i, $item := .Contracts}}
-	(next_id('1_contracts'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}', '{{ $item.AppID }}'{{if $.Owner }}, {{ $.Owner }}{{end}}, '{{ $.Ecosystem }}'){{if eq $last $i}};{{else}},{{end}}
+	(next_id('{{$.Table}}'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}'{{ if $.HasAppID}}, '{{ $item.AppID }}'{{end}}{{if $.Owner }}, {{ $.Owner }}{{end}}{{if $.Ecosystem}}, '{{ $.Ecosystem }}'{{end}}){{if eq $last $i}};{{else}},{{end}}
 {{- end}}
 ` + "`"))
 
@@ -181,6 +188,8 @@ func generate(s scenario) error {
 		"Variable":  s.Variable,
 		"Ecosystem": s.Ecosystem,
 		"Owner":     s.Owner,
+		"Table":     s.Table,
+		"HasAppID":  s.HasAppID,
 		"Contracts": sources,
 	})
 }

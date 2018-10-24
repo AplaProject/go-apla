@@ -3,7 +3,6 @@ package blockchain
 import (
 	"encoding/hex"
 	"fmt"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -141,10 +140,13 @@ func (t *Transaction) Unmarshal(b []byte) error {
 }
 
 func (t Transaction) Hash() ([]byte, error) {
+	sign := t.Header.BinSignatures
+	t.Header.BinSignatures = nil
 	b, err := t.Marshal()
 	if err != nil {
 		return nil, err
 	}
+	t.Header.BinSignatures = sign
 	return crypto.DoubleHash(b)
 }
 
@@ -226,22 +228,29 @@ func DecrementTxAttemptCount(tx *leveldb.Transaction, hash []byte) error {
 
 // BuildTransaction creates transaction
 func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...string) (*Transaction, error) {
-	signPrms := []string{smartTx.ForSign()}
-	signPrms = append(signPrms, params...)
+	bytePrivKey, err := hex.DecodeString(privKey)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return nil, err
+	}
+
+	if smartTx.Header.PublicKey, err = hex.DecodeString(pubKey); err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
+		return nil, err
+	}
+	txHash, err := smartTx.Hash()
+	if err != nil {
+		return nil, err
+	}
 	signature, err := crypto.Sign(
-		[]byte(privKey),
-		[]byte(strings.Join(signPrms, ",")),
+		[]byte(bytePrivKey),
+		txHash,
 	)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
 		return nil, err
 	}
 	smartTx.Header.BinSignatures = converter.EncodeLengthPlusData(signature)
-
-	if smartTx.Header.PublicKey, err = hex.DecodeString(pubKey); err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
-		return nil, err
-	}
 
 	return &smartTx, err
 }
