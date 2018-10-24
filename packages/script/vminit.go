@@ -466,7 +466,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 }
 
 // ExContract executes the name contract in the state with specified parameters
-func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) (interface{}, error) {
+func ExContract(rt *RunTime, state uint32, name string, params *Map) (interface{}, error) {
 
 	name = StateName(state, name)
 	contract, ok := rt.vm.Objects[name]
@@ -475,7 +475,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 		return nil, fmt.Errorf(eUnknownContract, name)
 	}
 	if params == nil {
-		params = make(map[string]interface{})
+		params = NewMap()
 	}
 	logger := log.WithFields(log.Fields{"contract_name": name, "type": consts.ContractError})
 	names := make([]string, 0)
@@ -483,7 +483,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 	cblock := contract.Value.(*Block)
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
-			val, ok := params[tx.Name]
+			val, ok := params.Get(tx.Name)
 			if !ok {
 				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")

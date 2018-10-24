@@ -134,7 +134,7 @@ var (
 		`int`:     reflect.TypeOf(int64(0)),
 		`address`: reflect.TypeOf(uint64(0)),
 		`array`:   reflect.TypeOf([]interface{}{}),
-		`map`:     reflect.TypeOf(map[string]interface{}{}),
+		`map`:     reflect.TypeOf(&Map{}),
 		`money`:   reflect.TypeOf(decimal.New(0, 0)),
 		`float`:   reflect.TypeOf(float64(0.0)),
 		`string`:  reflect.TypeOf(``),

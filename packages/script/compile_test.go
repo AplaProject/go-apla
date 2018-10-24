@@ -18,7 +18,6 @@ package script
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"testing"
 
@@ -46,12 +45,18 @@ func (block *Block) String() (ret string) {
 	return
 }
 
-func getMap() map[string]interface{} {
-	return map[string]interface{}{`par0`: `Parameter 0`, `par1`: `Parameter 1`}
+func getMap() *Map {
+	myMap := NewMap()
+	myMap.Set(`par0`, `Parameter 0`)
+	myMap.Set(`par1`, `Parameter 1`)
+	return myMap
 }
 
 func getArray() []interface{} {
-	return []interface{}{map[string]interface{}{`par0`: `Parameter 0`, `par1`: `Parameter 1`},
+	myMap := NewMap()
+	myMap.Set(`par0`, `Parameter 0`)
+	myMap.Set(`par1`, `Parameter 1`)
+	return []interface{}{myMap,
 		"The second string", int64(2000)}
 }
 
@@ -69,22 +74,8 @@ func Money(v interface{}) (ret decimal.Decimal) {
 	return ret
 }
 
-func outMap(v map[string]interface{}) string {
-	keys := make([]string, 0)
-	for key := range v {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	values := make([]string, 0, len(keys))
-	for _, key := range keys {
-		switch val := v[key].(type) {
-		case map[string]interface{}:
-			values = append(values, fmt.Sprintf(`"%v":%v`, key, outMap(val)))
-		default:
-			values = append(values, fmt.Sprintf(`"%v":%v`, key, val))
-		}
-	}
-	return `{` + strings.Join(values, ` `) + `}`
+func outMap(v *Map) string {
+	return fmt.Sprint(v)
 }
 
 func TestVMCompile(t *testing.T) {
@@ -533,7 +524,7 @@ func TestVMCompile(t *testing.T) {
 			"in": true, "var": i, sub: sub, "Company": {"Name": "Ltd", Country: s, 
 				Arr: [s, 20, "finish"]}}
 			return outMap(my) + Sprintf("%v", list)
-		}`, `initmap`, `{"22":MY STRING "Company":{"Arr":[Spain 20 finish] "Country":Spain "Name":Ltd} "ext":Ooops "float":1.2 "in":true "qqq":10 "sub":{"lastname":Smith "myarr":[] "name":John} "var":256}[0 256 map[item:256] [Ooops]]`},
+		}`, `initmap`, `map[qqq:10 22:MY STRING float:1.2 ext:Ooops in:true var:256 sub:map[name:John lastname:Smith myarr:[]] Company:map[Name:Ltd Country:Spain Arr:[Spain 20 finish]]][0 256 map[item:256] [Ooops]]`},
 		{`func test() string {
 			var where map
 			where["name"] = {"$in": "menus_names"}
@@ -589,6 +580,18 @@ func TestVMCompile(t *testing.T) {
 			myExec()
 			return "COND"
 		}`, `result`, `'conditions' cannot call contracts or functions which can modify the blockchain database.`},
+		{`func test string {
+			var s string
+			var m map
+			m = {f: 5, b: 2, a: 1, d: 3, c: 0, e: 4}
+			var i int
+			while i<3{
+				s = s + Sprintf("%v", m)
+				i = i + 1
+			}
+			return s
+		}
+		`, `test`, `map[f:5 b:2 a:1 d:3 c:0 e:4]map[f:5 b:2 a:1 d:3 c:0 e:4]map[f:5 b:2 a:1 d:3 c:0 e:4]`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -608,10 +611,13 @@ func TestVMCompile(t *testing.T) {
 				break
 			}
 		} else {
+			glob := NewMap()
+			glob.Set(`test`, `String value`)
+			glob.Set(`number`, 1001)
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
 				`rt_state`: uint32(ikey) + 22, `data`: make([]interface{}, 0),
 				`test1`: 101, `test2`: `test 2`,
-				"glob": map[string]interface{}{`test`: `String value`, `number`: 1001},
+				"glob": glob,
 				`test3`: func(param int64) string {
 					return fmt.Sprintf("test=%d=test", param)
 				},

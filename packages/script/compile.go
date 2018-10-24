@@ -869,7 +869,7 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value mapItem, err error) {
 	var (
 		subArr []mapItem
-		subMap map[string]mapItem
+		subMap *Map
 	)
 	i := *ind
 	lexem := (*lexems)[i]
@@ -903,10 +903,10 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 	return
 }
 
-func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (map[string]mapItem, error) {
+func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (*Map, error) {
 	i := *ind + 1
 	key := ``
-	ret := make(map[string]mapItem)
+	ret := NewMap()
 	state := mustKey
 main:
 	for ; i < len(*lexems); i++ {
@@ -953,7 +953,7 @@ main:
 			if err != nil {
 				return nil, err
 			}
-			ret[key] = mapi
+			ret.Set(key, mapi)
 			state = mustComma
 		}
 	}
