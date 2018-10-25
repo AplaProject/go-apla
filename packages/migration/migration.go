@@ -2,6 +2,7 @@ package migration
 
 import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/migration/updates"
 
 	version "github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
@@ -16,7 +17,7 @@ var migrations = []*migration{
 }
 
 var updateMigrations = []*migration{
-	&migration{"1.0.7", m1O7},
+	&migration{"1.0.7", updates.M1O7},
 }
 
 type migration struct {
