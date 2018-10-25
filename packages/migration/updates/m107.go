@@ -18,7 +18,7 @@ ALTER TABLE "1_history"
 DROP COLUMN created;
 --===============================================
 
-LTER TABLE "1_roles" 
+ALTER TABLE "1_roles" 
 ADD COLUMN created bigint,
 ADD COLUMN deleted_dt bigint;
 
@@ -31,6 +31,6 @@ ALTER COLUMN date_deleted TYPE bigint USING (deleted_dt),
 ALTER COLUMN date_created TYPE bigint USING (created);
 
 ALTER TABLE "1_roles"
-DROP COLUMN deleted,
+DROP COLUMN deleted_dt,
 DROP COLUMN created;
 `
