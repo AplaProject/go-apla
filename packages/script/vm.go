@@ -44,7 +44,7 @@ const (
 	Decimal = `decimal.Decimal`
 	// Interface is the constant string for interface type
 	Interface = `interface`
-	File      = `types.File`
+	File      = `*types.Map`
 
 	brackets = `[]`
 
