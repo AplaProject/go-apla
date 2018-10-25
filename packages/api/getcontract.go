@@ -86,7 +86,6 @@ func getFieldTypeAlias(t string) string {
 		"decimal.Decimal": "money",
 		"[]uint8":         "bytes",
 		"[]interface {}":  "array",
-		"types.File":      "file",
 		"*types.Map":      "file",
 	}
 
