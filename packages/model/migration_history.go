@@ -35,10 +35,18 @@ func (mh *MigrationHistory) CurrentVersion() (string, error) {
 
 // ApplyMigration executes database schema and writes migration history
 func (mh *MigrationHistory) ApplyMigration(version, query string) error {
-	err := DBConn.Exec(query).Error
+	tx := DBConn.Begin()
+	err := tx.Exec(query).Error
 	if err != nil {
+		tx.Rollback()
 		return err
 	}
 
-	return DBConn.Create(&MigrationHistory{Version: version, DateApplied: time.Now().Unix()}).Error
+	if err := tx.Create(&MigrationHistory{Version: version, DateApplied: time.Now().Unix()}).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
 }
