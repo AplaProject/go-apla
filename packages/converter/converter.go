@@ -582,7 +582,8 @@ func InterfaceToStr(v interface{}) (string, error) {
 	case []byte:
 		str = string(v.([]byte))
 	default:
-		if reflect.TypeOf(v).String() == `map[string]interface {}` {
+		if reflect.TypeOf(v).String() == `map[string]interface {}` ||
+			reflect.TypeOf(v).String() == `*types.Map` {
 			if out, err := json.Marshal(v); err != nil {
 				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling map for jsonb")
 				return ``, err
