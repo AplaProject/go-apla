@@ -28,6 +28,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -389,7 +390,7 @@ func valueToBool(v interface{}) bool {
 		return val != nil && len(val) > 0
 	case map[string]string:
 		return val != nil && len(val) > 0
-	case *Map:
+	case *types.Map:
 		return val != nil && val.Size() > 0
 	default:
 		dec, _ := decimal.NewFromString(fmt.Sprintf(`%v`, val))
@@ -485,7 +486,7 @@ func (rt *RunTime) getResultValue(item mapItem) (value interface{}, err error) {
 			err = fmt.Errorf(eWrongVar, ivar.Obj.Value)
 		}
 	case mapMap:
-		value, err = rt.getResultMap(item.Value.(*Map))
+		value, err = rt.getResultMap(item.Value.(*types.Map))
 	case mapArray:
 		value, err = rt.getResultArray(item.Value.([]mapItem))
 	}
@@ -504,8 +505,8 @@ func (rt *RunTime) getResultArray(cmd []mapItem) ([]interface{}, error) {
 	return initArr, nil
 }
 
-func (rt *RunTime) getResultMap(cmd *Map) (*Map, error) {
-	initMap := NewMap()
+func (rt *RunTime) getResultMap(cmd *types.Map) (*types.Map, error) {
+	initMap := types.NewMap()
 	for _, key := range cmd.Keys() {
 		val, _ := cmd.Get(key)
 		value, err := rt.getResultValue(val.(mapItem))
@@ -537,8 +538,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
 		} else {
 			value = reflect.New(vpar).Elem().Interface()
-			if vpar == reflect.TypeOf(&Map{}) {
-				value = NewMap()
+			if vpar == reflect.TypeOf(&types.Map{}) {
+				value = types.NewMap()
 			} else if vpar == reflect.TypeOf([]interface{}{}) {
 				value = make([]interface{}, 0, len(rt.vars)+1)
 			}
@@ -750,12 +751,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			itype := reflect.TypeOf(rt.stack[size-2]).String()
 
 			switch {
-			case itype == `*script.Map`:
+			case itype == `*types.Map`:
 				if reflect.TypeOf(rt.stack[size-1]).String() != `string` {
 					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-1]).String())
 					break
 				}
-				v, found := rt.stack[size-2].(*Map).Get(rt.stack[size-1].(string))
+				v, found := rt.stack[size-2].(*types.Map).Get(rt.stack[size-1].(string))
 				if found {
 					rt.stack[size-2] = v
 				} else {
@@ -775,6 +776,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 				rt.stack = rt.stack[:size-1]
 			default:
+				fmt.Println(`GET`, rt.stack[size-2])
 				itype := reflect.TypeOf(rt.stack[size-2]).String()
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)
@@ -793,8 +795,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 
 			switch {
-			case itype == `*script.Map`:
-				if rt.stack[size-3].(*Map).Size() > maxMapCount {
+			case itype == `*types.Map`:
+				if rt.stack[size-3].(*types.Map).Size() > maxMapCount {
 					err = errMaxMapCount
 					break
 				}
@@ -802,7 +804,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-2]).String())
 					break
 				}
-				rt.stack[size-3].(*Map).Set(rt.stack[size-2].(string),
+				rt.stack[size-3].(*types.Map).Set(rt.stack[size-2].(string),
 					reflect.ValueOf(rt.stack[size-1]).Interface())
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == brackets:
@@ -1169,7 +1171,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			rt.stack = append(rt.stack, initArray)
 		case cmdMapInit:
-			initMap, err := rt.getResultMap(cmd.Value.(*Map))
+			initMap, err := rt.getResultMap(cmd.Value.(*types.Map))
 			if err != nil {
 				return 0, err
 			}

@@ -316,7 +316,7 @@ var contracts = []smartContract{
 		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
 	}
 }`, []smartParams{
-		{nil, map[string]string{`result`: `*script.Map*script.Map System 2`}},
+		{nil, map[string]string{`result`: `*types.Map*types.Map System 2`}},
 	}},
 	{`StackType`, `contract StackType {
 		action {

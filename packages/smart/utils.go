@@ -82,7 +82,7 @@ func validateAccess(funcName string, sc *SmartContract, contracts ...string) err
 
 func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (map[string]interface{}, error) {
 	txData := make(map[string]interface{})
-
+	fmt.Println("FillTxData 0")
 	for _, fitem := range fieldInfos {
 		var (
 			v     interface{}

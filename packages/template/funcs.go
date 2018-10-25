@@ -32,8 +32,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/shopspring/decimal"
@@ -577,7 +577,7 @@ func dbfindTag(par parFunc) string {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
 			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
-			where, err = smart.GetWhere(script.LoadMap(inWhere.(map[string]interface{})))
+			where, err = smart.GetWhere(types.LoadMap(inWhere.(map[string]interface{})))
 			if err != nil {
 				return err.Error()
 			}
@@ -1387,17 +1387,17 @@ func getHistoryTag(par parFunc) string {
 	}
 
 	cols := make([]string, 0, len(colsList))
-	types := make([]string, 0, len(colsList))
+	typesCol := make([]string, 0, len(colsList))
 	for _, v := range colsList {
 
 		cols = append(cols, v[columnNameKey])
-		types = append(types, `text`)
+		typesCol = append(typesCol, `text`)
 	}
 
 	data := make([][]string, 0)
 	if len(list) > 0 {
 		for i := range list {
-			item := list[i].(*script.Map)
+			item := list[i].(*types.Map)
 			items := make([]string, len(cols))
 			for ind, key := range cols {
 				var val string
@@ -1413,7 +1413,7 @@ func getHistoryTag(par parFunc) string {
 		}
 	}
 	par.Node.Attr[`columns`] = &cols
-	par.Node.Attr[`types`] = &types
+	par.Node.Attr[`types`] = &typesCol
 	par.Node.Attr[`data`] = &data
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
