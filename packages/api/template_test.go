@@ -320,7 +320,7 @@ func TestBinary(t *testing.T) {
 	assert.NoError(t, err)
 
 	file := types.NewFile()
-	file["Body"] = data
+	file.Set("Body", data)
 
 	params := contractParams{
 		"ApplicationId": "1",

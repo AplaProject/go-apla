@@ -776,7 +776,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 				rt.stack = rt.stack[:size-1]
 			default:
-				fmt.Println(`GET`, rt.stack[size-2])
 				itype := reflect.TypeOf(rt.stack[size-2]).String()
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "vm_type": itype}).Error("type does not support indexing")
 				err = fmt.Errorf(`Type %s doesn't support indexing`, itype)

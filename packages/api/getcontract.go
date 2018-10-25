@@ -87,6 +87,7 @@ func getFieldTypeAlias(t string) string {
 		"[]uint8":         "bytes",
 		"[]interface {}":  "array",
 		"types.File":      "file",
+		"*types.Map":      "file",
 	}
 
 	if v, ok := fieldTypeAliases[t]; ok {
