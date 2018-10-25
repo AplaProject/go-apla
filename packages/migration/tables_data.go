@@ -37,7 +37,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
     ),
     (next_id('1_tables'), 'history',
         '{
-            "insert": "ContractConditions(\"@1NodeOwnerCondition\")",
+            "insert": "ContractAccess(\"@1TokensTransfer\")",
             "update": "ContractConditions(\"@1AdminCondition\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
