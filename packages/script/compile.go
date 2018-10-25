@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 
@@ -645,9 +646,9 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
-	if name[0] != '@' {
+	if !strings.HasPrefix(name, `@`) {
 		return fmt.Sprintf(`@%d%s`, state, name)
-	} else if name[1] < '0' || name[1] > '9' {
+	} else if len(name) > 1 && (name[1] < '0' || name[1] > '9') {
 		name = `@1` + name[1:]
 	}
 	return name

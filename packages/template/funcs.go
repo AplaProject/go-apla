@@ -32,6 +32,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -576,7 +577,7 @@ func dbfindTag(par parFunc) string {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
 			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
-			where, err = smart.GetWhere(inWhere.(map[string]interface{}))
+			where, err = smart.GetWhere(script.LoadMap(inWhere.(map[string]interface{})))
 			if err != nil {
 				return err.Error()
 			}
@@ -1396,10 +1397,13 @@ func getHistoryTag(par parFunc) string {
 	data := make([][]string, 0)
 	if len(list) > 0 {
 		for i := range list {
-			item := list[i].(map[string]string)
+			item := list[i].(*script.Map)
 			items := make([]string, len(cols))
 			for ind, key := range cols {
-				val := item[key]
+				var val string
+				if v, found := item.Get(key); found {
+					val = v.(string)
+				}
 				if val == `NULL` {
 					val = ``
 				}

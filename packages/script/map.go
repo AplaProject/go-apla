@@ -17,6 +17,7 @@
 package script
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -44,9 +45,34 @@ func newLink(key string, value interface{}) *Link {
 	return &Link{key: key, value: value, next: nil, prev: nil}
 }
 
-// New instantiates a linked hash map.
+// NewMap instantiates a linked hash map.
 func NewMap() *Map {
 	return &Map{m: make(map[string]*Link), head: nil, tail: nil}
+}
+
+func ConvertMap(in interface{}) interface{} {
+	switch v := in.(type) {
+	case map[string]interface{}:
+		out := NewMap()
+		for key, item := range v {
+			out.Set(key, ConvertMap(item))
+		}
+		return out
+	case []interface{}:
+		for i, item := range v {
+			v[i] = ConvertMap(item)
+		}
+	}
+	return in
+}
+
+// LoadMap instantiates a linked hash map and initializing it from map[string]interface{}.
+func LoadMap(init map[string]interface{}) (ret *Map) {
+	ret = NewMap()
+	for key, val := range init {
+		ret.Set(key, ConvertMap(val))
+	}
+	return
 }
 
 // Put inserts an element into the map.
@@ -148,4 +174,24 @@ func (m *Map) String() string {
 		str += fmt.Sprintf("%v:%v ", current.key, current.value)
 	}
 	return strings.TrimRight(str, " ") + "]"
+}
+
+func (m *Map) MarshalJSON() ([]byte, error) {
+	s := "{"
+	for current := m.head; current != nil; current = current.next {
+		k := current.key
+		escaped := strings.Replace(k, `"`, `\"`, -1)
+		s = s + `"` + escaped + `":`
+		v := current.value
+		vBytes, err := json.Marshal(v)
+		if err != nil {
+			return []byte{}, err
+		}
+		s = s + string(vBytes) + ","
+	}
+	if len(s) > 1 {
+		s = s[0 : len(s)-1]
+	}
+	s = s + "}"
+	return []byte(s), nil
 }

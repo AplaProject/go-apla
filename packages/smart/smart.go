@@ -197,6 +197,9 @@ func VMRun(vm *script.VM, block *script.Block, params []interface{}, extend *map
 }
 
 func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
+	if len(name) == 0 {
+		return nil
+	}
 	name = script.StateName(state, name)
 	obj, ok := vm.Objects[name]
 

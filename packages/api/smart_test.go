@@ -797,7 +797,7 @@ func TestJSON(t *testing.T) {
 				Input string
 			}
 			action {
-				info Sprintf("%#v", JSONDecode($Input))
+				info Sprintf("%v", JSONDecode($Input))
 			}
 		}`}, "ApplicationId": {"1"},
 		"Conditions": {"true"},
@@ -807,10 +807,10 @@ func TestJSON(t *testing.T) {
 		source string
 		result string
 	}{
-		{`"test"`, `{"type":"info","error":"\"test\""}`},
-		{`["test"]`, `{"type":"info","error":"[]interface {}{\"test\"}"}`},
-		{`{"test":1}`, `{"type":"info","error":"map[string]interface {}{\"test\":1}"}`},
-		{`[{"test":1}]`, `{"type":"info","error":"[]interface {}{map[string]interface {}{\"test\":1}}"}`},
+		{`"test"`, `{"type":"info","error":"test"}`},
+		{`["test"]`, `{"type":"info","error":"[test]"}`},
+		{`{"test":1}`, `{"type":"info","error":"map[test:1]"}`},
+		{`[{"test":1}]`, `{"type":"info","error":"[map[test:1]]"}`},
 		{`{"test":1`, `{"type":"panic","error":"unexpected end of JSON input"}`},
 	}
 

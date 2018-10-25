@@ -147,12 +147,13 @@ var contracts = []smartContract{
 		action {
 			Test("result", FormatMoney("123456789", 0))
 			$num2 = "5500000"
+			$num1 = "12345672372"
 			Test("t1", FormatMoney($num1, -1))  //123456723720
-			Test("t2", FormatMoney($num1, 0)   //12345672372
-			Test("t3", FormatMoney($num1, 1)   //1234567237,2
+			Test("t2", FormatMoney($num1, 0))   //12345672372
+			Test("t3", FormatMoney($num1, 1))   //1234567237,2
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`result`: `0.000000000123456789`,
+		{nil, map[string]string{`result`: `123456789`,
 			`t1`: `123456723720`, `t2`: `12345672372`, `t3`: `1234567237.2`}},
 	}},
 
@@ -174,8 +175,8 @@ var contracts = []smartContract{
 		   Test("ok", JSONEncodeIndent(a, "\t"))
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`ok`: "{\n\t\"arr\": [\n\t\t\"first\",\n\t\t\"<second>\"\n\t],\n\t\"ok\": 10\n}",
-			`json`: "{\"arr\":[\"first\",\"<second>\"],\"ok\":10}"}},
+		{nil, map[string]string{`ok`: "{\n\t\"ok\": 10,\n\t\"arr\": [\n\t\t\"first\",\n\t\t\"<second>\"\n\t]\n}",
+			`json`: "{\"ok\":10,\"arr\":[\"first\",\"<second>\"]}"}},
 	}},
 	{`GuestKey`, `contract GuestKey {
 		action {
@@ -205,7 +206,7 @@ var contracts = []smartContract{
 			Test("end", Len(list))
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`size`: `2`, `end`: `1`}},
+		{nil, map[string]string{`size`: `4`, `end`: `1`}},
 	}},
 	{`TestDBFindOK`, `
 			contract TestDBFindOK {
@@ -315,7 +316,7 @@ var contracts = []smartContract{
 		Test("result", Sprintf("%s %s %d", result, app["name"], app["app_id"]))
 	}
 }`, []smartParams{
-		{nil, map[string]string{`result`: `map[string]interface {}map[string]interface {} System 2`}},
+		{nil, map[string]string{`result`: `*script.Map*script.Map System 2`}},
 	}},
 	{`StackType`, `contract StackType {
 		action {
@@ -426,7 +427,7 @@ var contracts = []smartContract{
 			{ $result=DBUpdate("menu", 1, {"value": "updated"}) }
 			}`,
 		[]smartParams{
-			{nil, map[string]string{`error`: `{"type":"panic","error":"runtime panic error"}`}},
+			{nil, map[string]string{`error`: `{"type":"panic","error":"Access denied"}`}},
 		}},
 	{`TestOneInput`, `contract TestOneInput {
 			data {
@@ -528,8 +529,8 @@ var contracts = []smartContract{
 			action { Test("ByName", GetContractByName(""), GetContractByName("ActivateContract"))
 				Test("ById", GetContractById(10000000), GetContractById(16))}}`,
 		[]smartParams{
-			{nil, map[string]string{`ByName`: `0 2`,
-				`ById`: `EditLang`}},
+			{nil, map[string]string{`ByName`: `0 4`,
+				`ById`: `EditTable`}},
 		}},
 	{
 		`testDateTime`, `contract testDateTime {
