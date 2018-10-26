@@ -206,7 +206,7 @@ var contracts = []smartContract{
 			Test("end", Len(list))
 		}
 	}`, []smartParams{
-		{nil, map[string]string{`size`: `4`, `end`: `1`}},
+		{nil, map[string]string{`size`: `4`, `end`: `2`}},
 	}},
 	{`TestDBFindOK`, `
 			contract TestDBFindOK {

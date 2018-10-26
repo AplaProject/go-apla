@@ -19,6 +19,7 @@ package types
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -54,8 +55,13 @@ func ConvertMap(in interface{}) interface{} {
 	switch v := in.(type) {
 	case map[string]interface{}:
 		out := NewMap()
-		for key, item := range v {
-			out.Set(key, ConvertMap(item))
+		keys := make([]string, 0, len(v))
+		for key := range v {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+		for _, key := range keys {
+			out.Set(key, ConvertMap(v[key]))
 		}
 		return out
 	case []interface{}:
