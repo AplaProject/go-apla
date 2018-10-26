@@ -49,6 +49,9 @@ func systemParams(w http.ResponseWriter, r *http.Request, data *apiData, logger 
 		result.List = append(result.List, paramValue{Name: item.Name, Value: item.Value,
 			Conditions: item.Conditions})
 	}
+	if len(result.List) == 0 {
+		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusBadRequest, data.params[`names`].(string))
+	}
 	data.result = &result
 	return
 }
