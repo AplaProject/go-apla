@@ -30,7 +30,6 @@ func GetFirstEcosystemScript() string {
 		firstEcosystemDataSQL,
 		firstSystemParametersDataSQL,
 		firstTablesDataSQL,
-		firstKeysDataSQL,
 	}
 
 	return strings.Join(scripts, "\r\n")
