@@ -3,7 +3,7 @@
 package migration
 
 var contractsDataSQL = `
-INSERT INTO "1_contracts" (id, name, value, conditions, app_id, wallet_id, ecosystem)
+INSERT INTO "1_contracts" (id, name, value, conditions, app_id, ecosystem)
 VALUES
 	(next_id('1_contracts'), 'AdminCondition', '// This contract is used to set "admin" rights.
 // Usually the "admin" role is used for this.
@@ -30,7 +30,7 @@ contract AdminCondition {
         }      
     }
 }
-', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d'),
+', 'ContractConditions("MainCondition")', '%[5]d', '%[1]d'),
 	(next_id('1_contracts'), 'DeveloperCondition', '// This contract is used to set "developer" rights.
 // Usually the "developer" role is used for this.
 // The role ID is written to the ecosystem parameter and can be changed.
@@ -56,7 +56,7 @@ contract DeveloperCondition {
         }      
 	}
 }
-', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d'),
+', 'ContractConditions("MainCondition")', '%[5]d', '%[1]d'),
 	(next_id('1_contracts'), 'MainCondition', 'contract MainCondition {
 	conditions {
 		if EcosysParam("founder_account")!=$key_id
@@ -65,5 +65,5 @@ contract DeveloperCondition {
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', '%[5]d', %[2]d, '%[1]d');
+', 'ContractConditions("MainCondition")', '%[5]d', '%[1]d');
 `

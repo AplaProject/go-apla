@@ -303,8 +303,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"TableConditions":              TableConditions,
 		"CreateLanguage":               CreateLanguage,
 		"EditLanguage":                 EditLanguage,
-		"Activate":                     Activate,
-		"Deactivate":                   Deactivate,
+		"BndWallet":                    BndWallet,
+		"UnbndWallet":                  UnbndWallet,
 		"check_signature":              CheckSignature,
 		"RowConditions":                RowConditions,
 		"DecodeBase64":                 DecodeBase64,
@@ -386,8 +386,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 			"UpdateContract":   {},
 			"CreateLanguage":   {},
 			"EditLanguage":     {},
-			"Activate":         {},
-			"Deactivate":       {},
+			"BindWallet":       {},
+			"UnbindWallet":     {},
 			"EditEcosysName":   {},
 			"SetPubKey":        {},
 			"NewMoney":         {},
@@ -546,8 +546,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 	return nil
 }
 
-func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID string,
-	recipient int64, active, tokenID string) error {
+func UpdateContract(sc *SmartContract, id int64, value, conditions string, recipient int64, tokenID string) error {
 	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
 		return err
 	}
@@ -565,9 +564,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 	if len(conditions) > 0 {
 		pars["conditions"] = conditions
 	}
-	if len(walletID) > 0 {
-		pars["wallet_id"] = recipient
-	}
+
 	if len(pars) > 0 {
 		if !sc.VDE {
 			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
@@ -579,19 +576,14 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions, walletID str
 		}
 	}
 	if len(value) > 0 {
-		if err := FlushContract(sc, root, id, converter.StrToInt64(active) == 1); err != nil {
-			return err
-		}
-	} else if len(walletID) > 0 {
-		if err := SetContractWallet(sc, id, ecosystemID, recipient); err != nil {
+		if err := FlushContract(sc, root, id); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func CreateContract(sc *SmartContract, name, value, conditions string, walletID, tokenEcosystem,
-	appID int64) (int64, error) {
+func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcosystem, appID int64) (int64, error) {
 	if err := validateAccess(`CreateContract`, sc, nNewContract, nImport); err != nil {
 		return 0, err
 	}
@@ -603,7 +595,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 			"tableId": isExists}).Error("create existing contract")
 		return 0, fmt.Errorf(eContractExist, name)
 	}
-	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, walletID, tokenEcosystem)
+	root, err := CompileContract(sc, value, sc.TxSmart.EcosystemID, 0, tokenEcosystem)
 	if err != nil {
 		return 0, err
 	}
@@ -611,7 +603,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 		"name":       name,
 		"value":      value,
 		"conditions": conditions,
-		"wallet_id":  walletID,
+		"wallet_id":  0,
 		"token_id":   tokenEcosystem,
 		"app_id":     appID,
 		"ecosystem":  sc.TxSmart.EcosystemID,
@@ -619,7 +611,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, walletID,
 	if err != nil {
 		return 0, err
 	}
-	if err = FlushContract(sc, root, id, false); err != nil {
+	if err = FlushContract(sc, root, id); err != nil {
 		return 0, err
 	}
 	if !sc.VDE {
@@ -1144,6 +1136,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 			return 0, nil, err
 		}
 		if !fltResult {
+			log.WithFields(log.Fields{"filter": perm["filter"]}).Error("Access denied")
 			return 0, nil, errAccessDenied
 		}
 	}
@@ -1214,7 +1207,7 @@ func Eval(sc *SmartContract, condition string) error {
 }
 
 // FlushContract is flushing contract
-func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) error {
+func FlushContract(sc *SmartContract, iroot interface{}, id int64) error {
 	if err := validateAccess(`FlushContract`, sc, nNewContract, nEditContract, nImport); err != nil {
 		return err
 	}
@@ -1227,7 +1220,6 @@ func FlushContract(sc *SmartContract, iroot interface{}, id int64, active bool) 
 	for i, item := range root.Children {
 		if item.Type == script.ObjContract {
 			root.Children[i].Info.(*script.ContractInfo).Owner.TableID = id
-			root.Children[i].Info.(*script.ContractInfo).Owner.Active = active
 		}
 	}
 	for key, item := range root.Objects {

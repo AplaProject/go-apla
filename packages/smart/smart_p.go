@@ -89,23 +89,23 @@ var (
 )
 
 const (
-	nActivateContract   = "ActivateContract"
-	nDeactivateContract = "DeactivateContract"
-	nEditColumn         = "EditColumn"
-	nEditContract       = "EditContract"
-	nEditEcosystemName  = "EditEcosystemName"
-	nEditLang           = "EditLang"
-	nEditLangJoint      = "EditLangJoint"
-	nEditTable          = "EditTable"
-	nImport             = "Import"
-	nNewColumn          = "NewColumn"
-	nNewContract        = "NewContract"
-	nNewEcosystem       = "NewEcosystem"
-	nNewLang            = "NewLang"
-	nNewLangJoint       = "NewLangJoint"
-	nNewTable           = "NewTable"
-	nNewTableJoint      = "NewTableJoint"
-	nNewUser            = "NewUser"
+	nBindWallet        = "BindWallet"
+	nUnbindWallet      = "UnbindWallet"
+	nEditColumn        = "EditColumn"
+	nEditContract      = "EditContract"
+	nEditEcosystemName = "EditEcosystemName"
+	nEditLang          = "EditLang"
+	nEditLangJoint     = "EditLangJoint"
+	nEditTable         = "EditTable"
+	nImport            = "Import"
+	nNewColumn         = "NewColumn"
+	nNewContract       = "NewContract"
+	nNewEcosystem      = "NewEcosystem"
+	nNewLang           = "NewLang"
+	nNewLangJoint      = "NewLangJoint"
+	nNewTable          = "NewTable"
+	nNewTableJoint     = "NewTableJoint"
+	nNewUser           = "NewUser"
 )
 
 //SignRes contains the data of the signature
@@ -448,9 +448,9 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 	sc.FullAccess = true
 	if _, _, err = DBInsert(sc, "@1applications", map[string]interface{}{
-		"name":      "System",
+		"name":       "System",
 		"conditions": `ContractConditions("MainCondition")`,
-		"ecosystem": id,
+		"ecosystem":  id,
 	}); err != nil {
 		return 0, logErrorDB(err, "inserting application")
 	}
@@ -520,34 +520,33 @@ func Substr(s string, off int64, slen int64) string {
 	return s[off : off+slen]
 }
 
-// Activate sets Active status of the contract in smartVM
-func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Activate`, sc, nActivateContract); err != nil {
+// BndWallet sets wallet_id to current wallet and updates value in vm
+func BndWallet(sc *SmartContract, tblid int64, state int64) error {
+	if err := validateAccess(`BindWallet`, sc, nBindWallet); err != nil {
+		log.Error("BindWallet access denied")
 		return err
 	}
-	ActivateContract(tblid, state, true)
-	if !sc.VDE {
-		if err := SysRollback(sc, SysRollData{Type: "ActivateContract",
-			EcosystemID: state, ID: tblid}); err != nil {
-			return err
-		}
+
+	if _, _, err := sc.update([]string{"wallet_id"}, []interface{}{sc.TxSmart.KeyID}, "1_contracts", "id", tblid); err != nil {
+		log.WithFields(log.Fields{"error": err, "contract_id": tblid}).Error("on updating contract wallet")
+		return err
 	}
-	return nil
+
+	return SetContractWallet(sc, tblid, state, sc.TxSmart.KeyID)
 }
 
-// Deactivate sets Active status of the contract in smartVM
-func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Deactivate`, sc, nDeactivateContract); err != nil {
+// UnbndWallet sets Active status of the contract in smartVM
+func UnbndWallet(sc *SmartContract, tblid int64, state int64) error {
+	if err := validateAccess(`UnbindWallet`, sc, nUnbindWallet); err != nil {
 		return err
 	}
-	ActivateContract(tblid, state, false)
-	if !sc.VDE {
-		if err := SysRollback(sc, SysRollData{Type: "DeactivateContract",
-			EcosystemID: state, ID: tblid}); err != nil {
-			return err
-		}
+
+	if _, _, err := sc.update([]string{"wallet_id"}, []interface{}{0}, "1_contracts", "id", tblid); err != nil {
+		log.WithFields(log.Fields{"error": err, "contract_id": tblid}).Error("on updating contract wallet")
+		return err
 	}
-	return nil
+
+	return SetContractWallet(sc, tblid, state, 0)
 }
 
 // CheckSignature checks the additional signatures for the contract
