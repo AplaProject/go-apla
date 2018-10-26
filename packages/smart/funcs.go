@@ -1921,7 +1921,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	return nil
 }
 
-func GetBlock(blockID int64) (map[string]int64, error) {
+func GetBlock(blockID int64) (*types.Map, error) {
 	block := model.Block{}
 	ok, err := block.Get(blockID)
 	if err != nil {
@@ -1931,11 +1931,11 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 		return nil, nil
 	}
 
-	return map[string]int64{
+	return types.LoadMap(map[string]interface{}{
 		"id":     block.ID,
 		"time":   block.Time,
 		"key_id": block.KeyID,
-	}, nil
+	}), nil
 }
 
 // DecodeBase64 decodes base64 string
