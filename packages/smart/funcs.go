@@ -2074,12 +2074,12 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 	}
 	for _, tx := range *txs {
 		if len(rollbackList) > 0 {
-			prev := rollbackList[len(rollbackList)-1].(map[string]string)
-			prev[`block_id`] = converter.Int64ToStr(tx.BlockID)
-			prev[`id`] = converter.Int64ToStr(tx.ID)
+			prev := rollbackList[len(rollbackList)-1].(*types.Map)
+			prev.Set(`block_id`, converter.Int64ToStr(tx.BlockID))
+			prev.Set(`id`, converter.Int64ToStr(tx.ID))
 			block := model.Block{}
 			if ok, err := block.Get(tx.BlockID); ok {
-				prev[`block_time`] = time.Unix(block.Time, 0).Format(`2006-01-02 15:04:05`)
+				prev.Set(`block_time`, time.Unix(block.Time, 0).Format(`2006-01-02 15:04:05`))
 			} else if err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block time")
 				return nil, err
