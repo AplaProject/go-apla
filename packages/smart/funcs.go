@@ -2096,9 +2096,15 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 			v, _ := curVal.Get(k)
 			rollback.Set(k, v)
 		}
-		if err := json.Unmarshal([]byte(tx.Data), &rollback); err != nil {
+		var updValues map[string]interface{}
+		if err := json.Unmarshal([]byte(tx.Data), &updValues); err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
 			return nil, err
+		}
+		updMap := types.LoadMap(updValues)
+		for _, k := range updMap.Keys() {
+			v, _ := updMap.Get(k)
+			rollback.Set(k, v)
 		}
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
