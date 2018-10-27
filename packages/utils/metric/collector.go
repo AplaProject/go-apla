@@ -1,7 +1,7 @@
 package metric
 
 // CollectorFunc represents function for collects values of metrics
-type CollectorFunc func() ([]*Value, error)
+type CollectorFunc func(int64) ([]*Value, error)
 
 // Value represents value of metrics
 type Value struct {
@@ -27,10 +27,10 @@ type Collector struct {
 }
 
 // Values returns values of all metrics
-func (c *Collector) Values() []interface{} {
+func (c *Collector) Values(timeBlock int64) []interface{} {
 	values := make([]interface{}, 0)
 	for _, fn := range c.funcs {
-		result, err := fn()
+		result, err := fn(timeBlock)
 		if err != nil {
 			continue
 		}
