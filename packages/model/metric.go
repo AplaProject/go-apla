@@ -1,6 +1,8 @@
 package model
 
-import "time"
+import (
+	"time"
+)
 
 const tableNameMetrics = "1_metrics"
 
@@ -50,8 +52,8 @@ func GetEcosystemTxPerDay(timeBlock int64) ([]*EcosystemTx, error) {
 // GetMetricValues returns aggregated metric values in the time interval
 func GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock string) ([]interface{}, error) {
 	rows, err := DBConn.Table(tableNameMetrics).Select("key,"+aggregateFunc+"(value)").
-		Where("metric = ? AND time >= EXTRACT(EPOCH FROM TIMESTAMP ? - CAST(? AS INTERVAL))",
-			metric, timeBlock, timeInterval).
+		Where("metric = ? AND time >= EXTRACT(EPOCH FROM TIMESTAMP '"+timeBlock+"' - CAST(? AS INTERVAL))",
+			metric, timeInterval).
 		Group("key").Rows()
 	if err != nil {
 		return nil, err
