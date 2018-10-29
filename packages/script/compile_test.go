@@ -592,6 +592,64 @@ func TestVMCompile(t *testing.T) {
 			return s
 		}
 		`, `test`, `map[f:5 b:2 a:1 d:3 c:0 e:4]map[f:5 b:2 a:1 d:3 c:0 e:4]map[f:5 b:2 a:1 d:3 c:0 e:4]`},
+		{`contract qqq3 {
+			data {
+				Name string "aaq"
+				Temp
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq3.action`, `expecting type of the data field [Ln:5 Col:1]`},
+		{`contract qqq2 {
+			data {
+				Name string "aaq"
+				"awede"
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq2.action`, `unexpected tag [Ln:4 Col:6]`},
+		{`contract qqq1 {
+			data {
+				string Name qwerty
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq1.action`, `expecting name of the data field [Ln:3 Col:6]`},
+		{`contract qqq {
+			data {
+				Name qwerty
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq.action`, `expecting type of the data field [Ln:3 Col:11]`},
+		{`contract qq3 {
+			data {
+				Id uint
+			}
+			action {
+				$result = "OK"
+			}
+		}
+		`, `qq3.action`, `expecting type of the data field [Ln:3 Col:9]`},
+		{`contract qq2 {
+			data {
+				Id, ID2 int
+			}
+			action {
+				$result = str($Id) + str($ID2)
+			}
+		}
+		func getqq() string {
+			return qq2("Id,ID2", 10,20)
+		}`, `getqq`, `1020`},
 	}
 	vm := NewVM()
 	vm.Extern = true

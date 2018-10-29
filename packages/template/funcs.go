@@ -638,6 +638,7 @@ func dbfindTag(par parFunc) string {
 
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
+		log.WithFields(log.Fields{"table": tblname, "columns": columns}).Error("ACCESS DENIED")
 		return `Access denied`
 	}
 

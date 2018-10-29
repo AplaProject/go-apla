@@ -13,7 +13,7 @@ If(GetVar(block)){
 	SetTitle(Dashboard)
 	DBFind(buffer_data).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 	Data(tables, "Table,Cols,Page"){
-		contracts,"id,app_id,name,active",editor
+		contracts,"id,app_id,name",editor
 		pages,"id,app_id,name",editor
 		blocks,"id,app_id,name",editor
 		tables,"id,app_id,name",table_create
