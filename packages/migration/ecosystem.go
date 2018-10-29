@@ -15,6 +15,7 @@ func GetEcosystemScript() string {
 		membersDataSQL,
 		sectionsDataSQL,
 		tablesDataSQL,
+		keysDataSQL,
 	}
 
 	return strings.Join(scripts, "\r\n")
@@ -29,7 +30,6 @@ func GetFirstEcosystemScript() string {
 		firstEcosystemDataSQL,
 		firstSystemParametersDataSQL,
 		firstTablesDataSQL,
-		firstKeysDataSQL,
 	}
 
 	return strings.Join(scripts, "\r\n")
