@@ -65,6 +65,7 @@ func GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock string) ([]i
 		key    string
 		value  string
 	)
+	defer rows.Close()
 	for rows.Next() {
 		if err := rows.Scan(&key, &value); err != nil {
 			return nil, err
