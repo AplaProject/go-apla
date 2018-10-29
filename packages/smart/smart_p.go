@@ -23,6 +23,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -601,7 +602,8 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
-	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
+	timeBlock := time.Unix(sc.TxSmart.Time, 0).Format(`2006-01-02 15:04:05`)
+	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock)
 	if err != nil {
 		return nil, logErrorDB(err, "get values of metric")
 	}
@@ -610,12 +612,12 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 
 // DBCollectMetrics returns actual values of all metrics
 // This function used to further store these values
-func DBCollectMetrics() []interface{} {
+func DBCollectMetrics(sc *SmartContract) []interface{} {
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,
 		metric.CollectMetricDataForEcosystemTx,
 	)
-	return c.Values()
+	return c.Values(sc.TxSmart.Time)
 }
 
 // JSONDecode converts json string to object
