@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -845,8 +846,26 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 		}
 
 		_, _, err = sc.insert(
-			[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash", "ecosystem", "created_at"},
-			[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash, sc.TxSmart.TokenEcosystem, sc.BlockData.Time},
+			[]string{
+				"sender_id",
+				"recipient_id",
+				"amount",
+				"comment",
+				"block_id",
+				"txhash",
+				"ecosystem",
+				"created_at",
+			},
+			[]interface{}{
+				fromIDString,
+				toID,
+				sum,
+				comment,
+				sc.BlockData.BlockID,
+				sc.TxHash,
+				sc.TxSmart.TokenEcosystem,
+				time.Unix(sc.BlockData.Time, 0),
+			},
 			`1_history`)
 		if err != nil {
 			return err
