@@ -2,7 +2,7 @@ package migration
 
 import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-
+	"github.com/GenesisKernel/go-genesis/packages/migration/updates"
 	version "github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
 )
@@ -13,6 +13,10 @@ var migrations = []*migration{
 
 	// Initial schema
 	&migration{"0.1.6b9", migrationInitialSchema},
+}
+
+var updateMigrations = []*migration{
+	&migration{"1.0.7", updates.M1O7},
 }
 
 type migration struct {
@@ -65,13 +69,22 @@ func migrate(db database, appVer *version.Version, migrations []*migration) erro
 	return nil
 }
 
-// Migrate applies migrations
-func Migrate(db database) error {
+func runMigrations(db database, migrationList []*migration) error {
 	appVer, err := version.NewVersion(consts.VERSION)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.MigrationError, "err": err}).Errorf("parse version")
 		return err
 	}
 
-	return migrate(db, appVer, migrations)
+	return migrate(db, appVer, migrationList)
+}
+
+// InitMigrate applies initial migrations
+func InitMigrate(db database) error {
+	return runMigrations(db, migrations)
+}
+
+// UpdateMigrate applies update migrations
+func UpdateMigrate(db database) error {
+	return runMigrations(db, updateMigrations)
 }
