@@ -88,6 +88,33 @@ func TestExistContract(t *testing.T) {
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"Contract EditPage already exists"}`)
 }
 
+func TestDataContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := `cnt` + crypto.RandSeq(4)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + `1 {
+		data {Name int
+			string qwerty}
+		action {}
+		}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting name of the data field [Ln:3 Col:5]"}`)
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {MyApp qwerty}
+		action {}
+		}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting type of the data field [Ln:2 Col:16]"}`)
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {MyApp int
+		    Qwert}
+		action {}
+		}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting type of the data field [Ln:3 Col:13]"}`)
+}
+
 func TestNewContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
