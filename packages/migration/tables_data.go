@@ -49,7 +49,8 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "comment": "false",
             "block_id":  "false",
             "txhash": "false",
-            "ecosystem": "false"
+            "ecosystem": "false",
+            "type": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),
