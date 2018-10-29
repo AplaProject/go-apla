@@ -44,6 +44,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
@@ -571,7 +572,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions string, recip
 				return err
 			}
 		}
-		if _, err := DBUpdate(sc, "@1contracts", id, pars); err != nil {
+		if _, err := DBUpdate(sc, "@1contracts", id, types.LoadMap(pars)); err != nil {
 			return err
 		}
 	}
@@ -599,7 +600,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcos
 	if err != nil {
 		return 0, err
 	}
-	_, id, err = DBInsert(sc, "@1contracts", map[string]interface{}{
+	_, id, err = DBInsert(sc, "@1contracts", types.LoadMap(map[string]interface{}{
 		"name":       name,
 		"value":      value,
 		"conditions": conditions,
@@ -607,7 +608,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcos
 		"token_id":   tokenEcosystem,
 		"app_id":     appID,
 		"ecosystem":  sc.TxSmart.EcosystemID,
-	})
+	}))
 	if err != nil {
 		return 0, err
 	}
@@ -740,8 +741,9 @@ func columnType(colType string) (string, error) {
 	return ``, fmt.Errorf(eColumnType, colType)
 }
 
-func mapToParams(values map[string]interface{}) (params []string, val []interface{}, err error) {
-	for key, v := range values {
+func mapToParams(values *types.Map) (params []string, val []interface{}, err error) {
+	for _, key := range values.Keys() {
+		v, _ := values.Get(key)
 		params = append(params, converter.Sanitize(key, ` ->+`))
 		val = append(val, v)
 	}
@@ -752,7 +754,7 @@ func mapToParams(values map[string]interface{}) (params []string, val []interfac
 }
 
 // DBInsert inserts a record into the specified database table
-func DBInsert(sc *SmartContract, tblname string, values map[string]interface{}) (qcost int64, ret int64, err error) {
+func DBInsert(sc *SmartContract, tblname string, values *types.Map) (qcost int64, ret int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, 0, fmt.Errorf("system parameters access denied")
 	}
@@ -895,6 +897,11 @@ func GetOrder(inOrder interface{}) (string, error) {
 	switch v := inOrder.(type) {
 	case string:
 		sanitize(v, nil)
+	case *types.Map:
+		for _, ikey := range v.Keys() {
+			item, _ := v.Get(ikey)
+			sanitize(ikey, item)
+		}
 	case map[string]interface{}:
 		for ikey, item := range v {
 			sanitize(ikey, item)
@@ -904,6 +911,11 @@ func GetOrder(inOrder interface{}) (string, error) {
 			switch param := item.(type) {
 			case string:
 				sanitize(param, nil)
+			case *types.Map:
+				for _, ikey := range param.Keys() {
+					item, _ := param.Get(ikey)
+					sanitize(ikey, item)
+				}
 			case map[string]interface{}:
 				for key, value := range param {
 					sanitize(key, value)
@@ -920,11 +932,14 @@ func GetOrder(inOrder interface{}) (string, error) {
 	return strings.Join(orders, `,`), nil
 }
 
-func GetWhere(inWhere map[string]interface{}) (string, error) {
+func GetWhere(inWhere *types.Map) (string, error) {
 	var (
 		where string
 		cond  []string
 	)
+	if inWhere == nil {
+		inWhere = types.NewMap()
+	}
 	escape := func(value interface{}) string {
 		return strings.Replace(fmt.Sprint(value), `'`, `''`, -1)
 	}
@@ -959,7 +974,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 			var list []string
 			for _, ival := range value {
 				switch avalue := ival.(type) {
-				case map[string]interface{}:
+				case *types.Map:
 					where, err := GetWhere(avalue)
 					if err != nil {
 						return ``, err
@@ -973,7 +988,8 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 		}
 		return
 	}
-	for key, v := range inWhere {
+	for _, key := range inWhere.Keys() {
+		v, _ := inWhere.Get(key)
 		key = PrepareWhere(converter.Sanitize(strings.ToLower(key), `->$`))
 		switch key {
 		case `$like`:
@@ -1011,7 +1027,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 				var acond []string
 				for _, iarr := range value {
 					switch avalue := iarr.(type) {
-					case map[string]interface{}:
+					case *types.Map:
 						ret, err := GetWhere(avalue)
 						if err != nil {
 							return ``, err
@@ -1024,7 +1040,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 				if len(acond) > 0 {
 					cond = append(cond, fmt.Sprintf(`(%s)`, strings.Join(acond, ` and `)))
 				}
-			case map[string]interface{}:
+			case *types.Map:
 				ret, err := GetWhere(value)
 				if err != nil {
 					return ``, err
@@ -1052,7 +1068,7 @@ func GetWhere(inWhere map[string]interface{}) (string, error) {
 
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, inOrder interface{},
-	offset, limit int64, inWhere map[string]interface{}) (int64, []interface{}, error) {
+	offset, limit int64, inWhere *types.Map) (int64, []interface{}, error) {
 
 	var (
 		err     error
@@ -1115,13 +1131,13 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 		if err != nil {
 			return 0, nil, logErrorDB(err, "scanning next row")
 		}
-		row := make(map[string]interface{})
+		row := types.NewMap()
 		for i, col := range values {
 			var value string
 			if col != nil {
 				value = string(col)
 			}
-			row[cols[i]] = value
+			row.Set(cols[i], value)
 		}
 		result = append(result, reflect.ValueOf(row).Interface())
 	}
@@ -1145,7 +1161,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
 func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
-	values map[string]interface{}) (qcost int64, err error) {
+	values *types.Map) (qcost int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
 	}
@@ -1165,7 +1181,7 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 }
 
 // DBUpdate updates the item with the specified id in the table
-func DBUpdate(sc *SmartContract, tblname string, id int64, values map[string]interface{}) (qcost int64, err error) {
+func DBUpdate(sc *SmartContract, tblname string, id int64, values *types.Map) (qcost int64, err error) {
 	return DBUpdateExt(sc, tblname, `id`, id, values)
 }
 
@@ -1673,18 +1689,18 @@ func HMac(key, data string, raw_output bool) (ret string, err error) {
 }
 
 // GetMapKeys returns the array of keys of the map
-func GetMapKeys(in map[string]interface{}) []interface{} {
-	keys := make([]interface{}, 0, len(in))
-	for k := range in {
+func GetMapKeys(in *types.Map) []interface{} {
+	keys := make([]interface{}, 0, in.Size())
+	for _, k := range in.Keys() {
 		keys = append(keys, k)
 	}
 	return keys
 }
 
 // SortedKeys returns the sorted array of keys of the map
-func SortedKeys(m map[string]interface{}) []interface{} {
-	i, sorted := 0, make([]string, len(m))
-	for k := range m {
+func SortedKeys(m *types.Map) []interface{} {
+	i, sorted := 0, make([]string, m.Size())
+	for _, k := range m.Keys() {
 		sorted[i] = k
 		i++
 	}
@@ -1725,13 +1741,18 @@ func httpRequest(req *http.Request, headers map[string]interface{}) (string, err
 }
 
 // HTTPRequest sends http request
-func HTTPRequest(requrl, method string, headers map[string]interface{},
-	params map[string]interface{}) (string, error) {
+func HTTPRequest(requrl, method string, head *types.Map, params *types.Map) (string, error) {
 
 	var ioform io.Reader
 
+	headers := make(map[string]interface{})
+	for _, key := range head.Keys() {
+		v, _ := head.Get(key)
+		headers[key] = v
+	}
 	form := &url.Values{}
-	for key, v := range params {
+	for _, key := range params.Keys() {
+		v, _ := params.Get(key)
 		form.Set(key, fmt.Sprint(v))
 	}
 	if len(*form) > 0 {
@@ -1746,10 +1767,15 @@ func HTTPRequest(requrl, method string, headers map[string]interface{},
 }
 
 // HTTPPostJSON sends post http request with json
-func HTTPPostJSON(requrl string, headers map[string]interface{}, json_str string) (string, error) {
+func HTTPPostJSON(requrl string, head *types.Map, json_str string) (string, error) {
 	req, err := http.NewRequest("POST", requrl, bytes.NewBuffer([]byte(json_str)))
 	if err != nil {
 		return ``, logError(err, consts.NetworkError, "new http request")
+	}
+	headers := make(map[string]interface{})
+	for _, key := range head.Keys() {
+		v, _ := head.Get(key)
+		headers[key] = v
 	}
 	return httpRequest(req, headers)
 }
@@ -1822,7 +1848,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 
 				for _, b := range blocks {
 					if _, err := DBUpdate(smartContract, "@1bad_blocks", b.ID,
-						map[string]interface{}{"deleted": "1"}); err != nil {
+						types.LoadMap(map[string]interface{}{"deleted": "1"})); err != nil {
 						return logErrorValue(err, consts.DBError, "deleting bad block",
 							converter.Int64ToStr(b.ID))
 					}
@@ -1838,12 +1864,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"@1node_ban_logs",
-					map[string]interface{}{
+					types.LoadMap(map[string]interface{}{
 						"node_id":   fullNode.KeyID,
 						"banned_at": now.Format(time.RFC3339),
 						"ban_time":  int64(syspar.GetNodeBanTime() / time.Millisecond), // in ms
 						"reason":    banMessage,
-					})
+					}))
 
 				if err != nil {
 					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
@@ -1853,12 +1879,12 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 				_, _, err = DBInsert(
 					smartContract,
 					"@1notifications",
-					map[string]interface{}{
+					types.LoadMap(map[string]interface{}{
 						"recipient->member_id": fullNode.KeyID,
 						"notification->type":   model.NotificationTypeSingle,
 						"notification->header": nodeBanNotificationHeader,
 						"notification->body":   banMessage,
-					})
+					}))
 
 				if err != nil {
 					return logErrorValue(err, consts.DBError, "inserting log to node_ban_log",
@@ -1887,7 +1913,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 	return nil
 }
 
-func GetBlock(blockID int64) (map[string]int64, error) {
+func GetBlock(blockID int64) (*types.Map, error) {
 	block := model.Block{}
 	ok, err := block.Get(blockID)
 	if err != nil {
@@ -1897,11 +1923,11 @@ func GetBlock(blockID int64) (map[string]int64, error) {
 		return nil, nil
 	}
 
-	return map[string]int64{
+	return types.LoadMap(map[string]interface{}{
 		"id":     block.ID,
 		"time":   block.Time,
 		"key_id": block.KeyID,
-	}, nil
+	}), nil
 }
 
 // DecodeBase64 decodes base64 string
@@ -2021,14 +2047,14 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		return nil, err
 	}
 	var value string
-	curVal := make(map[string]string)
+	curVal := types.NewMap()
 	for i, col := range values {
 		if col == nil {
 			value = "NULL"
 		} else {
 			value = string(col)
 		}
-		curVal[columns[i]] = value
+		curVal.Set(columns[i], value)
 	}
 	rollbackList := []interface{}{}
 	rollbackTx := &model.RollbackTx{}
@@ -2040,12 +2066,12 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 	}
 	for _, tx := range *txs {
 		if len(rollbackList) > 0 {
-			prev := rollbackList[len(rollbackList)-1].(map[string]string)
-			prev[`block_id`] = converter.Int64ToStr(tx.BlockID)
-			prev[`id`] = converter.Int64ToStr(tx.ID)
+			prev := rollbackList[len(rollbackList)-1].(*types.Map)
+			prev.Set(`block_id`, converter.Int64ToStr(tx.BlockID))
+			prev.Set(`id`, converter.Int64ToStr(tx.ID))
 			block := model.Block{}
 			if ok, err := block.Get(tx.BlockID); ok {
-				prev[`block_time`] = time.Unix(block.Time, 0).Format(`2006-01-02 15:04:05`)
+				prev.Set(`block_time`, time.Unix(block.Time, 0).Format(`2006-01-02 15:04:05`))
 			} else if err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block time")
 				return nil, err
@@ -2057,13 +2083,20 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		if tx.Data == "" {
 			continue
 		}
-		rollback := make(map[string]string)
-		for k, v := range curVal {
-			rollback[k] = v
+		rollback := types.NewMap()
+		for _, k := range curVal.Keys() {
+			v, _ := curVal.Get(k)
+			rollback.Set(k, v)
 		}
-		if err := json.Unmarshal([]byte(tx.Data), &rollback); err != nil {
+		var updValues map[string]interface{}
+		if err := json.Unmarshal([]byte(tx.Data), &updValues); err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
 			return nil, err
+		}
+		updMap := types.LoadMap(updValues)
+		for _, k := range updMap.Keys() {
+			v, _ := updMap.Get(k)
+			rollback.Set(k, v)
 		}
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
@@ -2078,16 +2111,17 @@ func GetHistory(sc *SmartContract, tableName string, id int64) ([]interface{}, e
 	return GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, 0)
 }
 
-func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (map[string]interface{},
+func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (*types.Map,
 	error) {
 	list, err := GetHistoryRaw(sc.DbTransaction, sc.TxSmart.EcosystemID, tableName, id, idRollback)
 	if err != nil {
 		return nil, err
 	}
-	result := map[string]interface{}{}
+	result := types.NewMap()
 	if len(list) > 0 {
-		for key, val := range list[0].(map[string]string) {
-			result[key] = val
+		for _, key := range list[0].(*types.Map).Keys() {
+			val, _ := list[0].(*types.Map).Get(key)
+			result.Set(key, val)
 		}
 	}
 	return result, nil

@@ -31,6 +31,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/metric"
 
@@ -334,8 +335,8 @@ func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error)
 		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
-	if _, id, err = DBInsert(sc, `@1languages`, map[string]interface{}{"name": name,
-		"ecosystem": idStr, "res": trans}); err != nil {
+	if _, id, err = DBInsert(sc, `@1languages`, types.LoadMap(map[string]interface{}{"name": name,
+		"ecosystem": idStr, "res": trans})); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
 	}
@@ -349,7 +350,7 @@ func EditLanguage(sc *SmartContract, id int64, name, trans string) error {
 		return err
 	}
 	if _, err := DBUpdate(sc, `@1languages`, id,
-		map[string]interface{}{"name": name, "res": trans}); err != nil {
+		types.LoadMap(map[string]interface{}{"name": name, "res": trans})); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
 	}
@@ -379,7 +380,11 @@ func GetContractById(sc *SmartContract, id int64) string {
 	}
 
 	re := regexp.MustCompile(`(?is)^\s*contract\s+([\d\w_]+)\s*{`)
-	names := re.FindStringSubmatch(ret[0].(map[string]interface{})["value"].(string))
+	var val string
+	if v, found := ret[0].(*types.Map).Get("value"); found {
+		val = v.(string)
+	}
+	names := re.FindStringSubmatch(val)
 	if len(names) != 2 {
 		return ``
 	}
@@ -447,20 +452,20 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	sc.FullAccess = true
-	if _, _, err = DBInsert(sc, "@1applications", map[string]interface{}{
+	if _, _, err = DBInsert(sc, "@1applications", types.LoadMap(map[string]interface{}{
 		"name":       "System",
 		"conditions": `ContractConditions("MainCondition")`,
 		"ecosystem":  id,
-	}); err != nil {
+	})); err != nil {
 		return 0, logErrorDB(err, "inserting application")
 	}
-	if _, _, err = DBInsert(sc, `@1pages`, map[string]interface{}{"ecosystem": idStr,
+	if _, _, err = DBInsert(sc, `@1pages`, types.LoadMap(map[string]interface{}{"ecosystem": idStr,
 		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
-		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
+		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`})); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
-	if _, _, err = DBInsert(sc, `@1menu`, map[string]interface{}{"ecosystem": idStr,
-		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
+	if _, _, err = DBInsert(sc, `@1menu`, types.LoadMap(map[string]interface{}{"ecosystem": idStr,
+		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`})); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
 
@@ -474,20 +479,22 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	if Len(ret) > 0 {
-		pub = ret[0].(map[string]interface{})[`pub`].(string)
+		if v, found := ret[0].(*types.Map).Get("pub"); found {
+			pub = v.(string)
+		}
 	}
-	if _, _, err := DBInsert(sc, `@1keys`,
-		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr}); err != nil {
+	if _, _, err := DBInsert(sc, `@1keys`, types.LoadMap(
+		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr})); err != nil {
 		return 0, logErrorDB(err, "inserting key")
 	}
 
 	sc.FullAccess = false
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
-	if _, _, err := DBInsert(sc, "@1ecosystems", map[string]interface{}{
+	if _, _, err := DBInsert(sc, "@1ecosystems", types.LoadMap(map[string]interface{}{
 		"id":   id,
 		"name": name,
-	}); err != nil {
+	})); err != nil {
 		return 0, logErrorDB(err, "insert new ecosystem to stat table")
 	}
 	return id, err
@@ -499,7 +506,8 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 		return err
 	}
 
-	_, err := DBUpdate(sc, "@1ecosystems", sysID, map[string]interface{}{"name": newName})
+	_, err := DBUpdate(sc, "@1ecosystems", sysID,
+		types.LoadMap(map[string]interface{}{"name": newName}))
 	return err
 }
 
@@ -613,6 +621,7 @@ func DBCollectMetrics() []interface{} {
 // JSONDecode converts json string to object
 func JSONDecode(input string) (ret interface{}, err error) {
 	err = unmarshalJSON([]byte(input), &ret, "unmarshalling json")
+	ret = types.ConvertMap(ret)
 	return
 }
 
@@ -622,7 +631,7 @@ func JSONEncodeIndent(input interface{}, indent string) (string, error) {
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
-	if rv.Kind() == reflect.Struct {
+	if rv.Kind() == reflect.Struct && reflect.TypeOf(input).String() != `*types.Map` {
 		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
 	var (

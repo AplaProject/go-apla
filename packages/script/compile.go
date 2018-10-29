@@ -20,8 +20,10 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -690,9 +692,9 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
-	if name[0] != '@' {
+	if !strings.HasPrefix(name, `@`) {
 		return fmt.Sprintf(`@%d%s`, state, name)
-	} else if name[1] < '0' || name[1] > '9' {
+	} else if len(name) > 1 && (name[1] < '0' || name[1] > '9') {
 		name = `@1` + name[1:]
 	}
 	return name
@@ -914,7 +916,7 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value mapItem, err error) {
 	var (
 		subArr []mapItem
-		subMap map[string]mapItem
+		subMap *types.Map
 	)
 	i := *ind
 	lexem := (*lexems)[i]
@@ -948,10 +950,10 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 	return
 }
 
-func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (map[string]mapItem, error) {
+func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (*types.Map, error) {
 	i := *ind + 1
 	key := ``
-	ret := make(map[string]mapItem)
+	ret := types.NewMap()
 	state := mustKey
 main:
 	for ; i < len(*lexems); i++ {
@@ -998,7 +1000,7 @@ main:
 			if err != nil {
 				return nil, err
 			}
-			ret[key] = mapi
+			ret.Set(key, mapi)
 			state = mustComma
 		}
 	}
