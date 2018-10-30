@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"bytes"
@@ -1029,4 +1030,9 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 			"value": fmt.Sprint(v)}).Error("converting value to int")
 	}
 	return
+}
+
+func Int64ToDateStr(date int64, format string) string {
+	t := time.Unix(date, 0)
+	return t.Format(format)
 }
