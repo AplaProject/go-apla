@@ -39,7 +39,7 @@ func GetEcosystemTxPerDay(timeBlock int64) ([]*EcosystemTx, error) {
 	FROM rollback_tx rtx
 		INNER JOIN block_chain bc ON bc.id = rtx.block_id
 	WHERE to_timestamp(bc.time)::date >= (DATE('` + curDate + `') - interval '1' day)::date
-	GROUP BY unix_time, ecosystem`
+	GROUP BY unix_time, ecosystem ORDER BY unix_time, ecosystem`
 
 	var ecosystemTx []*EcosystemTx
 	err := DBConn.Raw(sql).Scan(&ecosystemTx).Error
