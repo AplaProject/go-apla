@@ -22,6 +22,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -44,11 +45,13 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 		return err
 	}
 
-	err = rollbackBlock(dbTransaction, ldbTx, b)
+	metadb := model.MetadataRegistry.Begin()
 
+	err = rollbackBlock(dbTransaction, ldbTx, metadb, b)
 	if err != nil {
 		dbTransaction.Rollback()
 		ldbTx.Discard()
+		metadb.Rollback()
 		return err
 	}
 
@@ -57,7 +60,7 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 	return err
 }
 
-func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, block *block.PlayableBlock) error {
+func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, metadb types.MetadataRegistryReaderWriter, block *block.PlayableBlock) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Transactions) - 1; i >= 0; i-- {
@@ -70,6 +73,11 @@ func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transactio
 				return err
 			}
 		}
+	}
+
+	err := metadb.RollbackBlock(block.Hash)
+	if err != nil {
+		return err
 	}
 
 	return nil

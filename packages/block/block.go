@@ -19,6 +19,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -63,8 +64,9 @@ func (b *PlayableBlock) PlaySafe() error {
 		return err
 	}
 	b.LDBTX = ldbtx
+	metaDbTx := model.MetadataRegistry.Begin()
 
-	err = b.Play(dbTransaction, ldbtx)
+	err = b.Play(dbTransaction, ldbtx, metaDbTx)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		transactions := []*blockchain.Transaction{}
@@ -94,6 +96,7 @@ func (b *PlayableBlock) PlaySafe() error {
 	} else if err != nil {
 		dbTransaction.Rollback()
 		ldbtx.Discard()
+		metaDbTx.Rollback()
 		if b.GenBlock && b.StopCount == 0 {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
@@ -121,8 +124,11 @@ func (b *PlayableBlock) PlaySafe() error {
 		return err
 	}
 
+	// TODO double phase commit
 	dbTransaction.Commit()
 	ldbtx.Commit()
+	metaDbTx.Commit()
+
 	b.LDBTX = nil
 	if b.SysUpdate {
 		b.SysUpdate = false
@@ -155,7 +161,7 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	return nil
 }
 
-func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.Transaction) error {
+func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.Transaction, memdb types.MetadataRegistryReaderWriter) error {
 	logger := b.GetLogger()
 	limits := NewLimits(b)
 
@@ -176,6 +182,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.
 		)
 		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
+		t.MetaDb = memdb
 
 		blockchain.IncrementTxAttemptCount(ldbtx, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
