@@ -33,7 +33,7 @@ const NETWORK_ID = 1
 const DEFAULT_TCP_PORT = 7078
 
 // FounderAmount is the starting amount of founder
-const FounderAmount = 50000
+const FounderAmount = 100000000
 
 // MoneyDigits is numbers of digits for tokens 1000000000000000000
 const MoneyDigits = 18
