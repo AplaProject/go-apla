@@ -36,6 +36,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -425,6 +426,10 @@ func CompileContract(sc *SmartContract, code string, state, id, token int64) (in
 
 // ContractAccess checks whether the name of the executable contract matches one of the names listed in the parameters.
 func ContractAccess(sc *SmartContract, names ...interface{}) bool {
+	if conf.Config.FuncBench {
+		return true
+	}
+
 	for _, iname := range names {
 		switch name := iname.(type) {
 		case string:
