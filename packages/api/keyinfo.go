@@ -44,22 +44,16 @@ func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	if keyID == 0 {
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
-	rows, err := model.DBConn.Table(`1_ecosystems`).Select("id").Rows()
+	ids, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
 	var (
-		id    string
 		found bool
 	)
-	defer rows.Close()
-	for rows.Next() {
-		if err := rows.Scan(&id); err != nil {
-			return errorAPI(w, err, http.StatusInternalServerError)
-		}
+	for _, ecosystemID := range ids {
 		key := &model.Key{}
-		ecosystemID := converter.StrToInt64(id)
 		key.SetTablePrefix(ecosystemID)
 		found, err = key.Get(keyID)
 		if err != nil {
@@ -68,7 +62,7 @@ func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		if !found {
 			continue
 		}
-		keyRes := keyInfoResult{Ecosystem: id}
+		keyRes := keyInfoResult{Ecosystem: converter.Int64ToStr(ecosystemID)}
 		ra := &model.RolesParticipants{}
 		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(keyID)
 		if err != nil {
