@@ -3,31 +3,28 @@
 package migration
 
 var firstEcosystemContractsSQL = `
-INSERT INTO "1_contracts" (id, name, value, conditions, app_id, wallet_id, ecosystem)
+INSERT INTO "1_contracts" (id, name, value, conditions, app_id, ecosystem)
 VALUES
-	(next_id('1_contracts'), 'ActivateContract', 'contract ActivateContract {
+	(next_id('1_contracts'), 'BindWallet', 'contract BindWallet {
 	data {
 		Id  int
 	}
 	conditions {
-		$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
+		$cur = DBRow("contracts").Columns("id,conditions,wallet_id").WhereId($Id)
 		if !$cur {
 			error Sprintf("Contract %%d does not exist", $Id)
 		}
-		if Int($cur["active"]) == 1 {
-			error Sprintf("The contract %%d has been already activated", $Id)
-		}
+		
 		Eval($cur["conditions"])
 		if $key_id != Int($cur["wallet_id"]) {
 			error Sprintf("Wallet %%d cannot activate the contract", $key_id)
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, {"active": 1})
-		Activate($Id, $ecosystem_id)
+		BndWallet($Id, $ecosystem_id)
 	}
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'CallDelayedContract', 'contract CallDelayedContract {
 	data {
 		Id int
@@ -70,36 +67,13 @@ VALUES
 		CallContract($cur["contract"], params)
 	}
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'CheckNodesBan', 'contract CheckNodesBan {
 	action {
 		UpdateNodesBan($block_time)
 	}
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
-	(next_id('1_contracts'), 'DeactivateContract', 'contract DeactivateContract {
-	data {
-		Id         int
-	}
-	conditions {
-		$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
-		if !$cur {
-			error Sprintf("Contract %%d does not exist", $Id)
-		}
-		if Int($cur["active"]) == 0 {
-			error Sprintf("The contract %%d has been already deactivated", $Id)
-		}
-		Eval($cur["conditions"])
-		if $key_id != Int($cur["wallet_id"]) {
-			error Sprintf("Wallet %%d cannot deactivate the contract", $key_id)
-		}
-	}
-	action {
-		DBUpdate("contracts", $Id, {"active": 0})
-		Deactivate($Id, $ecosystem_id)
-	}
-}
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditAppParam', 'contract EditAppParam {
     data {
         Id int
@@ -130,7 +104,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditApplication', 'contract EditApplication {
     data {
         ApplicationId int
@@ -157,7 +131,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditBlock', 'contract EditBlock {
     data {
         Id int
@@ -188,7 +162,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditColumn', 'contract EditColumn {
     data {
         TableName string
@@ -204,16 +178,15 @@ VALUES
         PermColumn($TableName, $Name, $Permissions)
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditContract', 'contract EditContract {
     data {
         Id int
         Value string "optional"
         Conditions string "optional"
-        WalletId string "optional"
     }
     func onlyConditions() bool {
-        return $Conditions && !$Value && !$WalletId
+        return $Conditions && !$Value
     }
 
     conditions {
@@ -221,31 +194,22 @@ VALUES
         if $Conditions {
             ValidateCondition($Conditions, $ecosystem_id)
         }
-        $cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
+        $cur = DBFind("contracts").Columns("id,value,conditions,wallet_id,token_id").WhereId($Id).Row()
         if !$cur {
             error Sprintf("Contract %%d does not exist", $Id)
         }
         if $Value {
             ValidateEditContractNewValue($Value, $cur["value"])
         }
-        if $WalletId != "" {
-            $recipient = AddressToId($WalletId)
-            if $recipient == 0 {
-                error Sprintf("New contract owner %%s is invalid", $WalletId)
-            }
-            if Int($cur["active"]) == 1 {
-                error "Contract must be deactivated before wallet changing"
-            }
-        } else {
-            $recipient = Int($cur["wallet_id"])
-        }
+   
+        $recipient = Int($cur["wallet_id"])
     }
 
     action {
-        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
+        UpdateContract($Id, $Value, $Conditions, $recipient, $cur["token_id"])
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditLang', 'contract EditLang {
     data {
         Id int
@@ -261,7 +225,7 @@ VALUES
         EditLanguage($Id, $lang["name"], $Trans)
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditMenu', 'contract EditMenu {
     data {
         Id int
@@ -296,7 +260,7 @@ VALUES
         }            
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditPage', 'contract EditPage {
     data {
         Id int
@@ -356,7 +320,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'EditTable', 'contract EditTable {
     data {
         Name string
@@ -392,7 +356,7 @@ VALUES
         PermTable($Name, JSONEncode($Permissions))
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'Import', 'contract Import {
     data {
         Data string
@@ -498,7 +462,7 @@ VALUES
         // Println(Sprintf("> time: %%v", $time))
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'ImportUpload', 'contract ImportUpload {
     data {
         input_file file
@@ -636,7 +600,7 @@ VALUES
         }
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewAppParam', 'contract NewAppParam {
     data {
         ApplicationId int
@@ -662,7 +626,7 @@ VALUES
               conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewApplication', 'contract NewApplication {
     data {
         Name string
@@ -685,7 +649,7 @@ VALUES
         $result = DBInsert("applications", {name: $Name,conditions: $Conditions})
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewBadBlock', 'contract NewBadBlock {
 	data {
 		ProducerNodeID int
@@ -699,7 +663,7 @@ VALUES
             block_id: $BlockID, "timestamp block_time": $Timestamp, reason: $Reason})
 	}
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewBlock', 'contract NewBlock {
     data {
         ApplicationId int
@@ -725,13 +689,12 @@ VALUES
               app_id: $ApplicationId})
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewContract', 'contract NewContract {
     data {
         ApplicationId int
         Value string
         Conditions string
-        Wallet string "optional"
         TokenEcosystem int "optional"
     }
 
@@ -740,14 +703,6 @@ VALUES
 
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
-        }
-
-        $walletContract = $key_id
-        if $Wallet {
-            $walletContract = AddressToId($Wallet)
-            if $walletContract == 0 {
-                error Sprintf("wrong wallet %%s", $Wallet)
-            }
         }
 
         $contract_name = ContractName($Value)
@@ -766,13 +721,13 @@ VALUES
     }
 
     action {
-        $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+        $result = CreateContract($contract_name, $Value, $Conditions, $TokenEcosystem, $ApplicationId)
     }
     func price() int {
         return SysParamInt("contract_price")
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewEcosystem', 'contract NewEcosystem {
 	data {
 		Name  string
@@ -781,7 +736,7 @@ VALUES
 		$result = CreateEcosystem($key_id, $Name)
 	}
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewLang', 'contract NewLang {
     data {
         ApplicationId int
@@ -805,7 +760,7 @@ VALUES
         CreateLanguage($Name, $Trans)
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewMenu', 'contract NewMenu {
     data {
         Name string
@@ -829,7 +784,7 @@ VALUES
         return SysParamInt("menu_price")
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewPage', 'contract NewPage {
     data {
         ApplicationId int
@@ -884,7 +839,7 @@ VALUES
         return SysParamInt("page_price")
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewTable', 'contract NewTable {
     data {
         ApplicationId int
@@ -906,7 +861,7 @@ VALUES
         return SysParamInt("table_price")
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewUser', 'contract NewUser {
 	data {
 		NewPubkey string
@@ -927,7 +882,7 @@ VALUES
         SetPubKey($newId, StringToBytes($NewPubkey))
 	}
 }
-', 'ContractConditions("NodeOwnerCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("NodeOwnerCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
         $raw_full_nodes = SysParamString("full_nodes")
@@ -947,7 +902,27 @@ VALUES
         }
 	}
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
+	(next_id('1_contracts'), 'UnbindWallet', 'contract UnbindWallet {
+	data {
+		Id         int
+	}
+	conditions {
+		$cur = DBRow("contracts").Columns("id,conditions,wallet_id").WhereId($Id)
+		if !$cur {
+			error Sprintf("Contract %%d does not exist", $Id)
+		}
+		
+		Eval($cur["conditions"])
+		if $key_id != Int($cur["wallet_id"]) {
+			error Sprintf("Wallet %%d cannot deactivate the contract", $key_id)
+		}
+	}
+	action {
+		UnbndWallet($Id, $ecosystem_id)
+	}
+}
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {
 	conditions {
 		ContractConditions("MainCondition")
@@ -979,7 +954,7 @@ VALUES
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'UpdateSysParam', 'contract UpdateSysParam {
      data {
         Name string
@@ -999,7 +974,7 @@ VALUES
         DBUpdateSysParam($Name, $Value, $Conditions)
      }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'UploadBinary', 'contract UploadBinary {
     data {
         ApplicationId int
@@ -1036,7 +1011,7 @@ VALUES
         $result = $Id
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1'),
+', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'UploadFile', 'contract UploadFile {
     data {
         ApplicationId int
@@ -1057,5 +1032,5 @@ VALUES
         $result = $Id
     }
 }
-', 'ContractConditions("MainCondition")', '1', %[1]d, '1');
+', 'ContractConditions("MainCondition")', '1', '1');
 `

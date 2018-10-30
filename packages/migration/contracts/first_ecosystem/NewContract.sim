@@ -5,7 +5,6 @@ contract NewContract {
         ApplicationId int
         Value string
         Conditions string
-        Wallet string "optional"
         TokenEcosystem int "optional"
     }
 
@@ -14,14 +13,6 @@ contract NewContract {
 
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
-        }
-
-        $walletContract = $key_id
-        if $Wallet {
-            $walletContract = AddressToId($Wallet)
-            if $walletContract == 0 {
-                error Sprintf("wrong wallet %s", $Wallet)
-            }
         }
 
         $contract_name = ContractName($Value)
@@ -40,7 +31,7 @@ contract NewContract {
     }
 
     action {
-        $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+        $result = CreateContract($contract_name, $Value, $Conditions, $TokenEcosystem, $ApplicationId)
     }
     func price() int {
         return SysParamInt("contract_price")

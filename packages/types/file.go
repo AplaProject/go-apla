@@ -1,27 +1,31 @@
 package types
 
-type File map[string]interface{}
+//type File *Map
 
-func NewFile() File {
-	return File{
+func NewFile() *Map {
+	return LoadMap(map[string]interface{}{
 		"Name":     "",
 		"MimeType": "",
 		"Body":     []byte{},
-	}
+	})
 }
 
-func NewFileFromMap(m map[interface{}]interface{}) (f File, ok bool) {
+func NewFileFromMap(m map[interface{}]interface{}) (f *Map, ok bool) {
+	var v interface{}
 	f = NewFile()
 
-	if f["Name"], ok = m["Name"].(string); !ok {
+	if v, ok = m["Name"].(string); !ok {
 		return
 	}
-	if f["MimeType"], ok = m["MimeType"].(string); !ok {
+	f.Set("Name", v)
+	if v, ok = m["MimeType"].(string); !ok {
 		return
 	}
-	if f["Body"], ok = m["Body"].([]byte); !ok {
+	f.Set("MimeType", v)
+	if v, ok = m["Body"].([]byte); !ok {
 		return
 	}
+	f.Set("Body", v)
 
 	return
 }
