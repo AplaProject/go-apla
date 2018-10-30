@@ -2026,10 +2026,10 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get current values")
 		return nil, err
 	}
+	defer rows.Close()
 	if !rows.Next() {
 		return nil, errNotFound
 	}
-	defer rows.Close()
 	// Get column names
 	columns, err := rows.Columns()
 	if err != nil {
