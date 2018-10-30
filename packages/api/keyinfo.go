@@ -34,6 +34,7 @@ type roleInfo struct {
 
 type keyInfoResult struct {
 	Ecosystem string     `json:"ecosystem"`
+	Name      string     `json:"name"`
 	Roles     []roleInfo `json:"roles,omitempty"`
 }
 
@@ -44,7 +45,7 @@ func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	if keyID == 0 {
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
-	ids, err := model.GetAllSystemStatesIDs()
+	ids, names, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return errorAPI(w, err, http.StatusInternalServerError)
 	}
@@ -52,7 +53,7 @@ func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	var (
 		found bool
 	)
-	for _, ecosystemID := range ids {
+	for i, ecosystemID := range ids {
 		key := &model.Key{}
 		key.SetTablePrefix(ecosystemID)
 		found, err = key.Get(keyID)
@@ -62,7 +63,8 @@ func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		if !found {
 			continue
 		}
-		keyRes := keyInfoResult{Ecosystem: converter.Int64ToStr(ecosystemID)}
+		keyRes := keyInfoResult{Ecosystem: converter.Int64ToStr(ecosystemID),
+			Name: names[i]}
 		ra := &model.RolesParticipants{}
 		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(keyID)
 		if err != nil {
