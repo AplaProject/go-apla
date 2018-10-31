@@ -408,6 +408,10 @@ func GetTableName(sc *SmartContract, tblname string) string {
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
+	if conf.Config.FuncBench {
+		return true
+	}
+
 	for _, item := range names {
 		if sc.TxContract.Name == `@1`+item {
 			return true
