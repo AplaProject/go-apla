@@ -24,7 +24,7 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('20','max_fuel_block', '200000000', 'ContractAccess("@1UpdateSysParam")'),
 	('21','commission_size', '3', 'ContractAccess("@1UpdateSysParam")'),
 	('22','commission_wallet', '', 'ContractAccess("@1UpdateSysParam")'),
-	('23','fuel_rate', '[["1","1000000000000000"]]', 'ContractAccess("@1UpdateSysParam")'),
+	('23','fuel_rate', '[["1","1000000000000"]]', 'ContractAccess("@1UpdateSysParam")'),
 	('24','price_exec_address_to_id', '10', 'ContractAccess("@1UpdateSysParam")'),
 	('25','price_exec_id_to_address', '10', 'ContractAccess("@1UpdateSysParam")'),
 	('26','price_exec_sha256', '50', 'ContractAccess("@1UpdateSysParam")'),
