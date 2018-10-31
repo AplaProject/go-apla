@@ -5,26 +5,23 @@ package vde
 var contractsDataSQL = `
 INSERT INTO "1_contracts" (id, name, value, conditions, app_id, ecosystem)
 VALUES
-	(next_id('1_contracts'), 'ActivateContract', 'contract ActivateContract {
+	(next_id('1_contracts'), 'BindWallet', 'contract BindWallet {
 	data {
 		Id  int
 	}
 	conditions {
-		$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
+		$cur = DBRow("contracts").Columns("id,conditions,wallet_id").WhereId($Id)
 		if !$cur {
 			error Sprintf("Contract %%d does not exist", $Id)
 		}
-		if Int($cur["active"]) == 1 {
-			error Sprintf("The contract %%d has been already activated", $Id)
-		}
+		
 		Eval($cur["conditions"])
 		if $key_id != Int($cur["wallet_id"]) {
 			error Sprintf("Wallet %%d cannot activate the contract", $key_id)
 		}
 	}
 	action {
-		DBUpdate("contracts", $Id, {"active": 1})
-		Activate($Id, $ecosystem_id)
+		BndWallet($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
@@ -74,29 +71,6 @@ VALUES
 	(next_id('1_contracts'), 'CheckNodesBan', 'contract CheckNodesBan {
 	action {
 		UpdateNodesBan($block_time)
-	}
-}
-', 'ContractConditions("MainCondition")', '1', '%[1]d'),
-	(next_id('1_contracts'), 'DeactivateContract', 'contract DeactivateContract {
-	data {
-		Id         int
-	}
-	conditions {
-		$cur = DBRow("contracts").Columns("id,conditions,active,wallet_id").WhereId($Id)
-		if !$cur {
-			error Sprintf("Contract %%d does not exist", $Id)
-		}
-		if Int($cur["active"]) == 0 {
-			error Sprintf("The contract %%d has been already deactivated", $Id)
-		}
-		Eval($cur["conditions"])
-		if $key_id != Int($cur["wallet_id"]) {
-			error Sprintf("Wallet %%d cannot deactivate the contract", $key_id)
-		}
-	}
-	action {
-		DBUpdate("contracts", $Id, {"active": 0})
-		Deactivate($Id, $ecosystem_id)
 	}
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
@@ -210,10 +184,9 @@ VALUES
         Id int
         Value string "optional"
         Conditions string "optional"
-        WalletId string "optional"
     }
     func onlyConditions() bool {
-        return $Conditions && !$Value && !$WalletId
+        return $Conditions && !$Value
     }
 
     conditions {
@@ -221,28 +194,19 @@ VALUES
         if $Conditions {
             ValidateCondition($Conditions, $ecosystem_id)
         }
-        $cur = DBFind("contracts").Columns("id,value,conditions,active,wallet_id,token_id").WhereId($Id).Row()
+        $cur = DBFind("contracts").Columns("id,value,conditions,wallet_id,token_id").WhereId($Id).Row()
         if !$cur {
             error Sprintf("Contract %%d does not exist", $Id)
         }
         if $Value {
             ValidateEditContractNewValue($Value, $cur["value"])
         }
-        if $WalletId != "" {
-            $recipient = AddressToId($WalletId)
-            if $recipient == 0 {
-                error Sprintf("New contract owner %%s is invalid", $WalletId)
-            }
-            if Int($cur["active"]) == 1 {
-                error "Contract must be deactivated before wallet changing"
-            }
-        } else {
-            $recipient = Int($cur["wallet_id"])
-        }
+   
+        $recipient = Int($cur["wallet_id"])
     }
 
     action {
-        UpdateContract($Id, $Value, $Conditions, $WalletId, $recipient, $cur["active"], $cur["token_id"])
+        UpdateContract($Id, $Value, $Conditions, $recipient, $cur["token_id"])
     }
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
@@ -776,7 +740,6 @@ VALUES
         ApplicationId int
         Value string
         Conditions string
-        Wallet string "optional"
         TokenEcosystem int "optional"
     }
 
@@ -785,14 +748,6 @@ VALUES
 
         if $ApplicationId == 0 {
             warning "Application id cannot equal 0"
-        }
-
-        $walletContract = $key_id
-        if $Wallet {
-            $walletContract = AddressToId($Wallet)
-            if $walletContract == 0 {
-                error Sprintf("wrong wallet %%s", $Wallet)
-            }
         }
 
         $contract_name = ContractName($Value)
@@ -811,7 +766,7 @@ VALUES
     }
 
     action {
-        $result = CreateContract($contract_name, $Value, $Conditions, $walletContract, $TokenEcosystem, $ApplicationId)
+        $result = CreateContract($contract_name, $Value, $Conditions, $TokenEcosystem, $ApplicationId)
     }
     func price() int {
         return SysParamInt("contract_price")
@@ -1093,6 +1048,26 @@ VALUES
             StopVDEProcess($VDEName)
             $result = "VDE " + $VDEName + " stopped"
 		}
+}
+', 'ContractConditions("MainCondition")', '1', '%[1]d'),
+	(next_id('1_contracts'), 'UnbindWallet', 'contract UnbindWallet {
+	data {
+		Id         int
+	}
+	conditions {
+		$cur = DBRow("contracts").Columns("id,conditions,wallet_id").WhereId($Id)
+		if !$cur {
+			error Sprintf("Contract %%d does not exist", $Id)
+		}
+		
+		Eval($cur["conditions"])
+		if $key_id != Int($cur["wallet_id"]) {
+			error Sprintf("Wallet %%d cannot deactivate the contract", $key_id)
+		}
+	}
+	action {
+		UnbndWallet($Id, $ecosystem_id)
+	}
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
 	(next_id('1_contracts'), 'UpdateMetrics', 'contract UpdateMetrics {

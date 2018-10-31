@@ -47,14 +47,14 @@ Genesis Blockchain Platform consists of two main components:
   - Centrifugo notification service
   - Go-Genesis kernel service (includes Genesis TCP and API servers)
   - PostgreSQL database
-  
+
 - Frontend
-  
+
   Molis client is the frontend for Genesis. It can be built as a native OS application or a web-application.
-  
+
 In a production environment, each of these components (backend and frontend) can be deployed on different hosts and operating systems.
 
-In this guide we will deploy Genesis Blockchain Platform based on three nodes with the same OS on the test ICT-infrastructure and build Molis client. 
+In this guide we will deploy Genesis Blockchain Platform based on three nodes with the same OS on the test ICT-infrastructure and build Molis client.
 
 As a node OS we will use:
  - Debian 9 (Stretch) 64-bit [official distributive](https://www.debian.org/CD/http-ftp/#stable)
@@ -87,7 +87,7 @@ Genesis Blockchain Platform backend consists of three main components:
 
 1) **PostgreSQL database system**
 
-Each Genesis node use PostgreSQL database system for store its current state database. 
+Each Genesis node use PostgreSQL database system for store its current state database.
 
 In a testing environment, you can deploy just one instance of PostgreSQL database system for all nodes. In this case, you must create PostgreSQL databases for each node. All nodes will connect to their databases located on one PostgreSQL instance.
 
@@ -135,7 +135,7 @@ All commands for Debian 9 must be run as a non-root user. But some system comman
 1) Become the root superuser:
 
 ```bash
-su - 
+su -
 ```
 
 2) Upgrade your system:
@@ -167,7 +167,7 @@ $ sudo apt install -y git curl apt-transport-https build-essential
 
 #### Create a directory for Genesis
 
-For Debian 9 OS, it is recommended to store all software used by Genesis Blockchain Platform in a special directory. 
+For Debian 9 OS, it is recommended to store all software used by Genesis Blockchain Platform in a special directory.
 
 In this guide, we will use /opt/genesis directory, but you can change it to your own.
 
@@ -347,7 +347,7 @@ Where:
 
  - 10.10.99.1 - IP-address of Node 1
  - --config=config.json - path to centrifugo configuration file 'config.json'
- 
+
 2) Execute go-genesis file in another console:
 
 ```bash
@@ -364,7 +364,7 @@ For each other node deployment you must repeat the following steps:
 
 - Install Backend Software Prerequisites
 - Install PostgreSQL
-- Install Centrifugo 
+- Install Centrifugo
 - Install Go-Genesis
 
 #### Other Nodes Configuration
@@ -409,7 +409,7 @@ Where:
 5) Start Node 2:
 
 ```bash
-./go-genesis start --config=node2/config.toml 
+./go-genesis start --config=node2/config.toml
 ```
 
 Ignore the showed errors. If you start node with log level "INFO", you'll see that node starts downloading blocks.
@@ -433,7 +433,7 @@ Where:
 -	PublicKey2 - content of file PublicKey of the second node
 -	balance - set wallet balance of the second node
 
-**Example**: 
+**Example**:
 
 ```bash
 python3 updatekeys.py bda1c45d3298cb7bece1f76a81d8016d33cdec18c925297c7748621c502a23f2 10.10.99.1 7079 -5910245696104921893 1812246837170b6df8609fd9d846a0984f4e5b3ee9037717e39dc38c82ea1a8e528c9e6f6acdc06b2a33f228c4d2649005bde47af857f3f756aaf64d3f1648dd 1000000000000000000000
@@ -464,21 +464,21 @@ Argument **NewValue** must be written in json format:
 ```json
 [
  {
-  "tcp_address":"Host1:tcpPort1", 
-  "api_address":"http://Host1:httpPort1", 
-  "key_id":"KeyID1", 
+  "tcp_address":"Host1:tcpPort1",
+  "api_address":"http://Host1:httpPort1",
+  "key_id":"KeyID1",
   "public_key":"NodePubKey1"
  },
  {
-  "tcp_address":"Host2:tcpPort2", 
-  "api_address":"http://Host2:httpPort2", 
-  "key_id":"KeyID2", 
+  "tcp_address":"Host2:tcpPort2",
+  "api_address":"http://Host2:httpPort2",
+  "key_id":"KeyID2",
   "public_key":"NodePubKey2"
  },
  {
-  "tcp_address":"HostN:tcpPortN", 
-  "api_address":"http://HostN:httpPortN", 
-  "key_id":"KeyIDN", 
+  "tcp_address":"HostN:tcpPortN",
+  "api_address":"http://HostN:httpPortN",
+  "key_id":"KeyIDN",
   "public_key":"NodePubKeyN"
  }
 ]
@@ -503,7 +503,7 @@ Where:
 
 **Example:**
 
-```bash 
+```bash
 python3 newValToFullNodes.py bda1c45d3298cb7bece1f76a81d8016d33cdec18c925297c7748621c502a23f2 10.10.99.1 7079 '[{"tcp_address":"10.10.99.1:7078","api_address":"http://10.10.99.1:7079","key_id":"5541394763743537703","public_key":"d26824d0e94894bae9e983e7a386a1c9e4f609990d4b635b6926b52c831d6ec28b95f75acf0c9d10ee96afc0dd02617f08fea225706f0e502d5fe26587023e3b"},{"tcp_address":"10.10.99.2:7078","api_address":"http://10.10.99.2:7079","key_id":"6404048169476933259","public_key":"afd9ed260ec65a2a294794285ad40c5edc219e3be2455a044e2444111b8525815b224fdb369aa17307434d0e6aca8f9c959f823756baeb9ccb105f96f996bf11" }, {"tcp_address":"10.10.99.3:7078","api_address":"http://10.10.99.3:7079","key_id":"-5910245696104921893","public_key":"254c38cd6d9f47ffc42a8d178bb47f9a0cbc46ec6ef4d972c05146bfe87a8da03cb3450b71b2a724fdb2184163ae91023931c9fe5f148f0bdceeeefc5a16fe58"}]'
 ```
 All used network settings (IP-adresses and ports) are described in [Overview](#overview).
@@ -696,7 +696,7 @@ For each other node deployment you should repeat the following steps:
 
 - Install Backend Software Prerequisites
 - Install PostgreSQL
-- Install Centrifugo 
+- Install Centrifugo
 - Install Go-Genesis
 
 #### Other Nodes Configuration
@@ -733,7 +733,7 @@ Where:
 
 5) Start Node 2 services:
 ```
-> centrifugo.exe -a 10.10.99.2 --config=config.json 
+> centrifugo.exe -a 10.10.99.2 --config=config.json
 > go-genesis.exe start --config=node\config.toml
 ```
 
@@ -744,7 +744,7 @@ Ignore the showed errors. If you start node with log level "INFO", you'll see th
 
 Errors that occurred above are caused by untrusted relationships between nodes. To fix it, add the second node public key to the first node.
 
-To add keys, download this script [updateKeys.py](https://github.com/GenesisKernel/genesis-tests/blob/master/scripts/updateKeys.py). All information that is needed for  script execution is located in node's directory. This scipt must be executed on the first node with founder's privileges. 
+To add keys, download this script [updateKeys.py](https://github.com/GenesisKernel/genesis-tests/blob/master/scripts/updateKeys.py). All information that is needed for  script execution is located in node's directory. This scipt must be executed on the first node with founder's privileges.
 
 Execute the script with the following arguments:
 
@@ -772,7 +772,7 @@ This script will create a contract, which add the second node public key to the 
 
 #### Create connection between nodes
 
-Next, you must create connection between nodes. For this, you should download this script [newValToFullNodes.py](https://github.com/GenesisKernel/genesis-tests/blob/master/scripts/newValToFullNodes.py). All information that is needed for  script execution is located in node's directory. This script must be executed on the first node with founder's privileges. 
+Next, you must create connection between nodes. For this, you should download this script [newValToFullNodes.py](https://github.com/GenesisKernel/genesis-tests/blob/master/scripts/newValToFullNodes.py). All information that is needed for  script execution is located in node's directory. This script must be executed on the first node with founder's privileges.
 
 Execute the script with the following arguments:
 
@@ -791,21 +791,21 @@ Argument **NewValue** must be written in json format:
 ```json
 [
  {
-  "tcp_address":"Host1:tcpPort1", 
-  "api_address":"http://Host1:httpPort1", 
-  "key_id":"KeyID1", 
+  "tcp_address":"Host1:tcpPort1",
+  "api_address":"http://Host1:httpPort1",
+  "key_id":"KeyID1",
   "public_key":"NodePubKey1"
  },
  {
-  "tcp_address":"Host2:tcpPort2", 
-  "api_address":"http://Host2:httpPort2", 
-  "key_id":"KeyID2", 
+  "tcp_address":"Host2:tcpPort2",
+  "api_address":"http://Host2:httpPort2",
+  "key_id":"KeyID2",
   "public_key":"NodePubKey2"
  },
  {
-  "tcp_address":"HostN:tcpPortN", 
-  "api_address":"http://HostN:httpPortN", 
-  "key_id":"KeyIDN", 
+  "tcp_address":"HostN:tcpPortN",
+  "api_address":"http://HostN:httpPortN",
+  "key_id":"KeyIDN",
   "public_key":"NodePubKeyN"
  }
 ]

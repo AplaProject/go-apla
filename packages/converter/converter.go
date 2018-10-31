@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"bytes"
@@ -582,7 +583,8 @@ func InterfaceToStr(v interface{}) (string, error) {
 	case []byte:
 		str = string(v.([]byte))
 	default:
-		if reflect.TypeOf(v).String() == `map[string]interface {}` {
+		if reflect.TypeOf(v).String() == `map[string]interface {}` ||
+			reflect.TypeOf(v).String() == `*types.Map` {
 			if out, err := json.Marshal(v); err != nil {
 				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling map for jsonb")
 				return ``, err
@@ -1028,4 +1030,9 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 			"value": fmt.Sprint(v)}).Error("converting value to int")
 	}
 	return
+}
+
+func Int64ToDateStr(date int64, format string) string {
+	t := time.Unix(date, 0)
+	return t.Format(format)
 }

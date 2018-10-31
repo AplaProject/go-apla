@@ -128,3 +128,5 @@ genesis-data/go-genesis.pid
 genesis-data2/g.lock
 genesis-data2/go-genesis.lock
 genesis-data2/go-genesis.pid
+packages/api/helper_test.go
+node1-data/go-genesis.lock

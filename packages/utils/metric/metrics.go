@@ -18,7 +18,7 @@ const (
 
 // CollectMetricDataForEcosystemTables returns metrics for some tables of ecosystems
 func CollectMetricDataForEcosystemTables(timeBlock int64) (metricValues []*Value, err error) {
-	stateIDs, err := model.GetAllSystemStatesIDs()
+	stateIDs, _, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get all system states ids")
 		return nil, err

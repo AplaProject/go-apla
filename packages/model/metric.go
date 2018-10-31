@@ -1,6 +1,7 @@
 package model
 
 import (
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func GetEcosystemTxPerDay(timeBlock int64) ([]*EcosystemTx, error) {
 	FROM rollback_tx rtx
 		INNER JOIN block_chain bc ON bc.id = rtx.block_id
 	WHERE to_timestamp(bc.time)::date >= (DATE('` + curDate + `') - interval '1' day)::date
-	GROUP BY unix_time, ecosystem`
+	GROUP BY unix_time, ecosystem ORDER BY unix_time, ecosystem`
 
 	var ecosystemTx []*EcosystemTx
 	err := DBConn.Raw(sql).Scan(&ecosystemTx).Error
@@ -64,15 +65,16 @@ func GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock string) ([]i
 		key    string
 		value  string
 	)
+	defer rows.Close()
 	for rows.Next() {
 		if err := rows.Scan(&key, &value); err != nil {
 			return nil, err
 		}
 
-		result = append(result, map[string]string{
+		result = append(result, types.LoadMap(map[string]interface{}{
 			"key":   key,
 			"value": value,
-		})
+		}))
 	}
 
 	return result, nil

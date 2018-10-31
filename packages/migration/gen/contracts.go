@@ -180,7 +180,7 @@ func generate(s scenario) error {
 		"Package":   pkg,
 		"Variable":  s.Variable,
 		"Ecosystem": s.Ecosystem,
-		"Owner":     s.Owner,
+		"Owner":     nil,
 		"Contracts": sources,
 	})
 }

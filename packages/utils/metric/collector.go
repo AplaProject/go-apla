@@ -1,5 +1,9 @@
 package metric
 
+import (
+	"github.com/GenesisKernel/go-genesis/packages/types"
+)
+
 // CollectorFunc represents function for collects values of metrics
 type CollectorFunc func(int64) ([]*Value, error)
 
@@ -12,13 +16,13 @@ type Value struct {
 }
 
 // ToMap returns values as map
-func (v *Value) ToMap() map[string]interface{} {
-	return map[string]interface{}{
+func (v *Value) ToMap() *types.Map {
+	return types.LoadMap(map[string]interface{}{
 		"time":   v.Time,
 		"metric": v.Metric,
 		"key":    v.Key,
 		"value":  v.Value,
-	}
+	})
 }
 
 // Collector represents struct that works with the collection of metrics
