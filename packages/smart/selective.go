@@ -21,7 +21,6 @@ import (
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
 
@@ -61,6 +60,14 @@ func getFieldIndex(fields []string, name string) int {
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
 
+	// fmt.Println("fields:", fields)
+	// fmt.Println("ivalues:", shortString(fmt.Sprintf("%+v", ivalues), 100))
+	// fmt.Println("table:", table)
+	// fmt.Println("wheref:", whereFields)
+	// fmt.Println("whereW:", whereValues)
+	// fmt.Println("genRolblack:", generalRollback)
+	// fmt.Println("exists:", exists)
+
 	var (
 		cost            int64
 		err             error
@@ -73,25 +80,27 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	sqlBuilder := CreateQueryBuilder(sc, table, fields, whereFields, whereValues, ivalues)
+	sqlBuilder := &smartQueryBuilder{
+		Entry:        logger,
+		table:        table,
+		Fields:       fields,
+		FieldValues:  ivalues,
+		WhereFields:  whereFields,
+		WhereValues:  whereValues,
+		KeyTableChkr: model.KeyTableChecker{},
+	}
+
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
 
-	if err := sqlBuilder.normalizeValues(fields, ivalues); err != nil {
+	selectQuery, err := sqlBuilder.getSelectExpr()
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err}).Error("on getting sql select statement")
 		return 0, "", err
 	}
 
-	values, err := converter.InterfaceSliceToStr(ivalues)
-	if err != nil {
-		return 0, ``, err
-	}
-
-	fieldsExpr := sqlBuilder.getSQLSelectFieldsExpr(fields)
-	whereExpr := sqlBuilder.getSQLWhereExpr(whereFields, whereValues)
-	selectQuery := `SELECT ` + fieldsExpr + ` FROM "` + table + `" ` + whereExpr
-
 	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "whereF": whereFields, "whereV": whereValues}).Error("getting query total cost")
 		return 0, "", err
 	}
 
@@ -103,25 +112,27 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	cost += selectCost
 	if exists && len(logData) == 0 {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
+		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "whereF": whereFields, "whereV": whereValues, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
 		return 0, "", errUpdNotExistRecord
 	}
 
 	if whereFields != nil && len(logData) > 0 {
-		// if isKeyTable {
-		// 	keyEcosystem = logData["ecosystem"]
-		// }
 		var err error
 		rollbackInfoStr, err = sqlBuilder.generateRollBackInfoString(logData)
 		if err != nil {
 			return 0, "", err
 		}
 
-		updateExpr, err := sqlBuilder.getSQLUpdateExpr(fields, values, logData)
+		updateExpr, err := sqlBuilder.GetSQLUpdateExpr(logData)
 		if err != nil {
 			return 0, "", err
 		}
 
+		whereExpr, err := sqlBuilder.GetSQLWhereExpr()
+		if err != nil {
+			logger.WithFields(log.Fields{"error": err}).Error("on getting where expression for update")
+			return 0, "", err
+		}
 		if !sc.VDE {
 			updateQuery := `UPDATE "` + sqlBuilder.table + `" SET ` + updateExpr + " " + whereExpr
 			updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)
@@ -140,9 +151,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		sqlBuilder.tableID = logData[`id`]
 	} else {
 
-		insertQuery, err := sqlBuilder.getSQLInsertQuery(fields, values, whereFields, whereValues)
+		insertQuery, err := sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{sc.DbTransaction})
 		if err != nil {
-
+			logger.WithFields(log.Fields{"error": err}).Error("on build insert qwery")
+			return 0, "", err
 		}
 
 		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
@@ -180,4 +192,12 @@ func (sc *SmartContract) update(fields []string, values []interface{},
 	table string, whereField string, whereValue interface{}) (int64, string, error) {
 	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
 		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
+}
+
+func shortString(raw string, length int) string {
+	if len(raw) > length {
+		return raw[:length]
+	}
+
+	return raw
 }

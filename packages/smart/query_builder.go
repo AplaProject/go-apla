@@ -1,7 +1,6 @@
 package smart
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -9,77 +8,130 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	log "github.com/sirupsen/logrus"
 )
 
-type smartQueryBuilder struct {
-	logger                *log.Entry
-	dbTx                  *model.DbTransaction
-	tableID               string
-	table                 string
-	isKeyTable            bool
-	keyEcosystem, keyName string
+// KeyTableChecker checks table
+type KeyTableChecker interface {
+	IsKeyTable(string) bool
 }
 
-func CreateQueryBuilder(sc *SmartContract, table string, fields, whereFields, whereValues []string, ivalues []interface{}) smartQueryBuilder {
-	builder := smartQueryBuilder{
-		logger: sc.GetLogger(),
-		dbTx:   sc.DbTransaction,
+type NextIDGetter interface {
+	GetNextID(string) (int64, error)
+}
+
+type smartQueryBuilder struct {
+	*log.Entry
+	tableID      string
+	table        string
+	isKeyTable   bool
+	prepared     bool
+	keyEcosystem string
+	keyName      string
+	Fields       []string
+	FieldValues  []interface{}
+	stringValues []string
+	WhereFields  []string
+	WhereValues  []string
+	KeyTableChkr KeyTableChecker
+	whereExpr    string
+}
+
+func (b *smartQueryBuilder) prepare() error {
+	if b.prepared {
+		return nil
 	}
 
-	idNames := strings.SplitN(table, `_`, 2)
+	idNames := strings.SplitN(b.table, `_`, 2)
 	if len(idNames) == 2 {
-		builder.keyName = idNames[1]
-		if v, ok := model.FirstEcosystemTables[builder.keyName]; ok && !v {
-			builder.isKeyTable = true
-			builder.keyEcosystem = idNames[0]
-			builder.table = `1_` + builder.keyName
+		b.keyName = idNames[1]
 
-			if contains, ecosysIndx := isParamsContainsEcosystem(fields, ivalues); contains {
-				if whereFields == nil {
-					builder.keyEcosystem = fmt.Sprint(ivalues[ecosysIndx])
+		if b.KeyTableChkr.IsKeyTable(b.keyName) {
+			b.isKeyTable = true
+			b.keyEcosystem = idNames[0]
+			b.table = `1_` + b.keyName
+
+			if contains, ecosysIndx := isParamsContainsEcosystem(b.Fields, b.FieldValues); contains {
+				if b.WhereFields == nil {
+					b.keyEcosystem = fmt.Sprint(b.FieldValues[ecosysIndx])
 				}
 			} else {
-				fields = append(fields, "ecosystem")
-				ivalues = append(ivalues, builder.keyEcosystem)
+				b.Fields = append(b.Fields, "ecosystem")
+				b.FieldValues = append(b.FieldValues, b.keyEcosystem)
 			}
 		}
 	}
 
-	return builder
+	if err := b.normalizeValues(); err != nil {
+		b.WithFields(log.Fields{"error": err}).Error("on normalize field values")
+		return err
+	}
+
+	values, err := converter.InterfaceSliceToStr(b.FieldValues)
+	if err != nil {
+		b.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("on convert field values to string")
+		return err
+	}
+
+	b.stringValues = values
+	b.prepared = true
+	return nil
 }
 
-func (b smartQueryBuilder) getSelectExpr(fields, whereFields, whereValues []string) string {
-	fieldsExpr := b.getSQLSelectFieldsExpr(fields)
-	whereExpr := b.getSQLWhereExpr(whereFields, whereValues)
-	return `SELECT ` + fieldsExpr + ` FROM "` + b.table + `" ` + whereExpr
+func (b *smartQueryBuilder) getSelectExpr() (string, error) {
+	if err := b.prepare(); err != nil {
+		return "", err
+	}
+
+	fieldsExpr, err := b.GetSQLSelectFieldsExpr()
+	if err != nil {
+		b.WithFields(log.Fields{"error": err}).Error("on getting sql fields statement")
+		return "", err
+	}
+
+	whereExpr, err := b.GetSQLWhereExpr()
+	if err != nil {
+		b.WithFields(log.Fields{"error": err}).Error("on getting sql where statement")
+		return "", err
+	}
+	return fmt.Sprintf(`SELECT %s FROM "%s" %s`, fieldsExpr, b.table, whereExpr), nil
 }
 
-func (b smartQueryBuilder) getSQLSelectFieldsExpr(fields []string) string {
-	sqlFields := make([]string, len(fields)+1)
+func (b *smartQueryBuilder) GetSQLSelectFieldsExpr() (string, error) {
+	if err := b.prepare(); err != nil {
+		return "", err
+	}
+
+	sqlFields := make([]string, 0, len(b.Fields)+1)
 	sqlFields = append(sqlFields, "id")
 
-	for i, _ := range fields {
-		fields[i] = strings.TrimSpace(strings.ToLower(fields[i]))
-		sqlFields = append(sqlFields, toSQLField(fields[i]))
-
+	for i, _ := range b.Fields {
+		b.Fields[i] = strings.TrimSpace(strings.ToLower(b.Fields[i]))
+		sqlFields = append(sqlFields, toSQLField(b.Fields[i]))
 	}
 
-	return strings.Join(sqlFields, ",")
+	return strings.Join(sqlFields, ","), nil
 }
 
-func (b smartQueryBuilder) getSQLWhereExpr(fields, values []string) string {
-	if fields == nil || values == nil {
-		return ""
+func (b *smartQueryBuilder) GetSQLWhereExpr() (string, error) {
+	if err := b.prepare(); err != nil {
+		return "", err
 	}
 
-	expressions := make([]string, len(fields))
-	for i := 0; i < len(fields); i++ {
-		if val := converter.StrToInt64(values[i]); val != 0 {
-			expressions = append(expressions, fields[i]+" = "+escapeSingleQuotes(values[i]))
+	if b.WhereFields == nil || b.WhereValues == nil {
+		return "", nil
+	}
+
+	if b.whereExpr != "" {
+		return b.whereExpr, nil
+	}
+
+	expressions := make([]string, 0, len(b.WhereFields))
+	for i := 0; i < len(b.WhereFields); i++ {
+		if val := converter.StrToInt64(b.WhereValues[i]); val != 0 {
+			expressions = append(expressions, b.WhereFields[i]+" = "+escapeSingleQuotes(b.WhereValues[i]))
 		} else {
-			expressions = append(expressions, fields[i]+" = "+wrapString(escapeSingleQuotes(values[i]), "'"))
+			expressions = append(expressions, b.WhereFields[i]+" = "+wrapString(escapeSingleQuotes(b.WhereValues[i]), "'"))
 		}
 	}
 
@@ -88,44 +140,49 @@ func (b smartQueryBuilder) getSQLWhereExpr(fields, values []string) string {
 	}
 
 	if len(expressions) > 0 {
-		return " WHERE " + strings.Join(expressions, " AND ") + "\n"
+		b.whereExpr = " WHERE " + strings.Join(expressions, " AND ") + " "
+		return b.whereExpr, nil
 	}
 
-	return ""
+	return "", nil
 }
 
-func (b smartQueryBuilder) getSQLUpdateExpr(fields, values []string, logData map[string]string) (string, error) {
-	expressions := make([]string, len(fields))
+func (b *smartQueryBuilder) GetSQLUpdateExpr(logData map[string]string) (string, error) {
+	if err := b.prepare(); err != nil {
+		return "", err
+	}
+
+	expressions := make([]string, 0, len(b.Fields))
 	jsonFields := make(map[string]map[string]string)
 
-	for i := 0; i < len(fields); i++ {
-		if b.isKeyTable && fields[i] == "ecosystem" {
+	for i := 0; i < len(b.Fields); i++ {
+		if b.isKeyTable && b.Fields[i] == "ecosystem" {
 			continue
 		}
 
-		if strings.Contains(fields[i], `->`) {
-			colfield := strings.Split(fields[i], `->`)
+		if strings.Contains(b.Fields[i], `->`) {
+			colfield := strings.Split(b.Fields[i], `->`)
 			if len(colfield) == 2 {
 				if jsonFields[colfield[0]] == nil {
 					jsonFields[colfield[0]] = make(map[string]string)
 				}
-				jsonFields[colfield[0]][colfield[1]] = values[i]
+				jsonFields[colfield[0]][colfield[1]] = b.stringValues[i]
 				continue
 			}
 		}
 
-		if converter.IsByteColumn(b.table, fields[i]) && len(values[i]) != 0 {
-			expressions = append(expressions, fields[i]+"="+toSQLHexExpr(values[i]))
-		} else if fields[i][:1] == "+" || fields[i][:1] == "-" {
-			expressions = append(expressions, toArithmeticUpdateExpr(fields[i], values[i]))
-		} else if values[i] == `NULL` {
-			expressions = append(expressions, fields[i]+"= NULL")
-		} else if strings.HasPrefix(fields[i], prefTimestampSpace) {
-			expressions = append(expressions, toTimestampUpdateExpr(fields[i], values[i]))
-		} else if strings.HasPrefix(values[i], prefTimestampSpace) {
-			expressions = append(expressions, fields[i]+`= timestamp '`+escapeSingleQuotes(values[i][len(`timestamp `):])+`'`)
+		if converter.IsByteColumn(b.table, b.Fields[i]) && len(b.stringValues[i]) != 0 {
+			expressions = append(expressions, b.Fields[i]+"="+toSQLHexExpr(b.stringValues[i]))
+		} else if b.Fields[i][:1] == "+" || b.Fields[i][:1] == "-" {
+			expressions = append(expressions, toArithmeticUpdateExpr(b.Fields[i], b.stringValues[i]))
+		} else if b.stringValues[i] == `NULL` {
+			expressions = append(expressions, b.Fields[i]+"= NULL")
+		} else if strings.HasPrefix(b.Fields[i], prefTimestampSpace) {
+			expressions = append(expressions, toTimestampUpdateExpr(b.Fields[i], b.stringValues[i]))
+		} else if strings.HasPrefix(b.stringValues[i], prefTimestampSpace) {
+			expressions = append(expressions, b.Fields[i]+`= timestamp '`+escapeSingleQuotes(b.stringValues[i][len(`timestamp `):])+`'`)
 		} else {
-			expressions = append(expressions, `"`+fields[i]+`"='`+escapeSingleQuotes(values[i])+`'`)
+			expressions = append(expressions, `"`+b.Fields[i]+`"='`+escapeSingleQuotes(b.stringValues[i])+`'`)
 		}
 	}
 
@@ -149,31 +206,35 @@ func (b smartQueryBuilder) getSQLUpdateExpr(fields, values []string, logData map
 	return strings.Join(expressions, ","), nil
 }
 
-func (b smartQueryBuilder) getSQLInsertQuery(fields, values, whereFields, whereValues []string) (string, error) {
+func (b *smartQueryBuilder) GetSQLInsertQuery(idGetter NextIDGetter) (string, error) {
+	if err := b.prepare(); err != nil {
+		return "", err
+	}
+
 	isID := false
 	insFields := []string{}
 	insValues := []string{}
 	jsonFields := make(map[string]map[string]string)
 
-	for i := 0; i < len(fields); i++ {
-		if fields[i] == `id` {
+	for i := 0; i < len(b.Fields); i++ {
+		if b.Fields[i] == `id` {
 			isID = true
-			b.tableID = escapeSingleQuotes(values[i])
+			b.tableID = escapeSingleQuotes(b.stringValues[i])
 		}
 
-		if strings.Contains(fields[i], `->`) {
-			colfield := strings.Split(fields[i], `->`)
+		if strings.Contains(b.Fields[i], `->`) {
+			colfield := strings.Split(b.Fields[i], `->`)
 			if len(colfield) == 2 {
 				if jsonFields[colfield[0]] == nil {
 					jsonFields[colfield[0]] = make(map[string]string)
 				}
-				jsonFields[colfield[0]][colfield[1]] = escapeSingleQuotes(values[i])
+				jsonFields[colfield[0]][colfield[1]] = escapeSingleQuotes(b.stringValues[i])
 				continue
 			}
 		}
 
-		insFields = append(insFields, toSQLField(fields[i]))
-		insValues = append(insValues, b.toSQLValue(values[i], fields[i]))
+		insFields = append(insFields, toSQLField(b.Fields[i]))
+		insValues = append(insValues, b.toSQLValue(b.stringValues[i], b.Fields[i]))
 	}
 
 	for colname, colvals := range jsonFields {
@@ -187,22 +248,24 @@ func (b smartQueryBuilder) getSQLInsertQuery(fields, values, whereFields, whereV
 		insValues = append(insValues, fmt.Sprintf(`'%s'::jsonb`, string(out)))
 	}
 
-	if whereFields != nil && whereValues != nil {
-		for i := 0; i < len(whereFields); i++ {
-			if whereFields[i] == `id` {
+	if b.WhereFields != nil && b.WhereValues != nil {
+		for i := 0; i < len(b.WhereFields); i++ {
+			if b.WhereFields[i] == `id` {
 				isID = true
-				b.tableID = whereValues[i]
+				b.tableID = b.WhereValues[i]
 			}
-			insFields = append(insFields, whereFields[i])
-			insValues = append(insValues, escapeSingleQuotes(whereValues[i]))
+			insFields = append(insFields, b.WhereFields[i])
+			insValues = append(insValues, escapeSingleQuotes(b.WhereValues[i]))
 		}
 	}
+
 	if !isID {
-		id, err := model.GetNextID(b.dbTx, b.table)
+		id, err := idGetter.GetNextID(b.table)
 		if err != nil {
-			b.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
+			b.Logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
 			return "", err
 		}
+
 		b.tableID = converter.Int64ToStr(id)
 		insFields = append(insFields, `id`)
 		insValues = append(insValues, wrapString(b.tableID, "'"))
@@ -229,7 +292,7 @@ func (b smartQueryBuilder) generateRollBackInfoString(logData map[string]string)
 
 	jsonRollbackInfo, err := json.Marshal(rollbackInfo)
 	if err != nil {
-		b.logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
+		b.Logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
 		return "", err
 	}
 
@@ -256,8 +319,8 @@ func (b smartQueryBuilder) toSQLValue(rawValue, rawField string) string {
 	return wrapString(escapeSingleQuotes(rawValue), "'")
 }
 
-func (b smartQueryBuilder) normalizeValues(fields []string, values []interface{}) error {
-	for i, v := range values {
+func (b smartQueryBuilder) normalizeValues() error {
+	for i, v := range b.FieldValues {
 		switch val := v.(type) {
 		case string:
 			if strings.HasPrefix(strings.TrimSpace(val), prefTimestamp) {
@@ -266,9 +329,9 @@ func (b smartQueryBuilder) normalizeValues(fields []string, values []interface{}
 				}
 			}
 
-			if len(fields) > i && converter.IsByteColumn(b.table, fields[i]) {
+			if len(b.Fields) > i && converter.IsByteColumn(b.table, b.Fields[i]) {
 				if vbyte, err := hex.DecodeString(val); err == nil {
-					values[i] = vbyte
+					b.FieldValues[i] = vbyte
 				}
 			}
 		}
@@ -323,11 +386,5 @@ func toSQLField(rawField string) string {
 }
 
 func wrapString(raw, wrapper string) string {
-	len := len([]byte(raw)) + len([]byte(wrapper))*2
-	bts := make([]byte, len)
-	buf := bytes.NewBuffer(bts)
-	buf.WriteString(wrapper)
-	buf.WriteString(raw)
-	buf.WriteString(wrapper)
-	return buf.String()
+	return wrapper + raw + wrapper
 }
