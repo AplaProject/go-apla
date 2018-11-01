@@ -20,8 +20,10 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -161,6 +163,9 @@ const (
 	cfField
 	cfFieldType
 	cfFieldTag
+	cfFields
+	cfFieldComma
+	cfFieldLine
 	cfWhile
 	cfContinue
 	cfBreak
@@ -198,6 +203,9 @@ var (
 		fField,
 		fFieldType,
 		fFieldTag,
+		fFields,
+		fFieldComma,
+		fFieldLine,
 		fWhile,
 		fContinue,
 		fBreak,
@@ -337,12 +345,12 @@ var (
 			0:         {errStrNum, cfError},
 		},
 		{ // stateFields
-			lexNewLine: {stateFields, 0},
-			isComma:    {stateFields, 0},
+			lexNewLine: {stateFields, cfFieldLine},
+			isComma:    {stateFields, cfFieldComma},
 			lexIdent:   {stateFields, cfField},
 			lexType:    {stateFields, cfFieldType},
 			lexString:  {stateFields, cfFieldTag},
-			isRCurly:   {stateToBody, 0},
+			isRCurly:   {stateToBody, cfFields},
 			0:          {errMustRCurly, cfError},
 		},
 	}
@@ -607,15 +615,48 @@ func fConstValue(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fField(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == reflect.TypeOf(nil) &&
+		(*tx)[len(*tx)-1].Tags != `_` {
+		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
+	}
 	*tx = append(*tx, &FieldInfo{Name: lexem.Value.(string), Type: reflect.TypeOf(nil)})
+	return nil
+}
+
+func fFields(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == nil {
+		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
+	}
+	return nil
+}
+
+func fFieldComma(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type != nil {
+		return fmt.Errorf(eDataName, lexem.Line, lexem.Column)
+	}
+	(*tx)[len(*tx)-1].Tags = `_`
+	return nil
+}
+
+func fFieldLine(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == nil {
+		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
+	}
 	return nil
 }
 
 func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type != nil {
+		return fmt.Errorf(eDataName, lexem.Line, lexem.Column)
+	}
 	for i, field := range *tx {
 		if field.Type == reflect.TypeOf(nil) {
 			(*tx)[i].Type = lexem.Value.(reflect.Type)
+			(*tx)[i].Tags = ``
 		}
 	}
 	return nil
@@ -623,6 +664,12 @@ func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if (*tx)[len(*tx)-1].Tags == `_` {
+		(*tx)[len(*tx)-1].Tags = ``
+	}
+	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type == nil || len((*tx)[len(*tx)-1].Tags) != 0 {
+		return fmt.Errorf(eDataTag, lexem.Line, lexem.Column)
+	}
 	for i := len(*tx) - 1; i >= 0; i-- {
 		if len((*tx)[i].Tags) == 0 {
 			(*tx)[i].Tags = lexem.Value.(string)
@@ -645,9 +692,9 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
-	if name[0] != '@' {
+	if !strings.HasPrefix(name, `@`) {
 		return fmt.Sprintf(`@%d%s`, state, name)
-	} else if name[1] < '0' || name[1] > '9' {
+	} else if len(name) > 1 && (name[1] < '0' || name[1] > '9') {
 		name = `@1` + name[1:]
 	}
 	return name
@@ -869,7 +916,7 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value mapItem, err error) {
 	var (
 		subArr []mapItem
-		subMap map[string]mapItem
+		subMap *types.Map
 	)
 	i := *ind
 	lexem := (*lexems)[i]
@@ -903,10 +950,10 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 	return
 }
 
-func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (map[string]mapItem, error) {
+func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (*types.Map, error) {
 	i := *ind + 1
 	key := ``
-	ret := make(map[string]mapItem)
+	ret := types.NewMap()
 	state := mustKey
 main:
 	for ; i < len(*lexems); i++ {
@@ -953,7 +1000,7 @@ main:
 			if err != nil {
 				return nil, err
 			}
-			ret[key] = mapi
+			ret.Set(key, mapi)
 			state = mustComma
 		}
 	}

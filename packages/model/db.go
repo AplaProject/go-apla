@@ -197,7 +197,16 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 
 // ExecSchema is executing schema
 func ExecSchema() error {
-	return migration.Migrate(&MigrationHistory{})
+	return migration.InitMigrate(&MigrationHistory{})
+}
+
+// UpdateSchema run update migrations
+func UpdateSchema() error {
+	b := &Block{}
+	if found, err := b.GetMaxBlock(); !found {
+		return err
+	}
+	return migration.UpdateMigrate(&MigrationHistory{})
 }
 
 // Update is updating table rows

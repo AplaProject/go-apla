@@ -14,7 +14,7 @@ import (
 )
 
 func loadContractTasks() error {
-	stateIDs, err := model.GetAllSystemStatesIDs()
+	stateIDs, _, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get all system states ids")
 		return err
