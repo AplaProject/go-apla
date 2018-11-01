@@ -23,7 +23,7 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('24','max_fuel_block', '100000', 'true'),
 	('25','commission_size', '3', 'true'),
 	('26','commission_wallet', '', 'true'),
-	('27','fuel_rate', '[["1","1000000000000000"]]', 'true'),
+	('27','fuel_rate', '[["1","100000000000"]]', 'true'),
 	('28','price_exec_address_to_id', '10', 'true'),
 	('29','price_exec_id_to_address', '10', 'true'),
 	('31','price_exec_sha256', '50', 'true'),
