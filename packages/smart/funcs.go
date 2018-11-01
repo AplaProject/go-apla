@@ -1573,7 +1573,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 	temp := &cols{}
 	err = model.GetDB(sc.DbTransaction).Table(`1_tables`).Where("name = ? and ecosystem = ?",
-		tableName, sc.TxSmart.EcosystemID).Select("id,columns").Find(temp).Error
+		strings.ToLower(tableName), sc.TxSmart.EcosystemID).Select("id,columns").Find(temp).Error
 
 	if err != nil {
 		return

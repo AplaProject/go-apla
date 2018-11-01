@@ -342,6 +342,24 @@ func TestNewTableOnly(t *testing.T) {
 	fmt.Printf("%+v\n", ret)
 }
 
+func TestUpperTable(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`Tab_`)
+	form := url.Values{"Name": {name}, "ApplicationId": {"1"}, "Columns": {`[{"name":"MyName","type":"varchar", 
+		"conditions":"true"},
+	  {"name":"Name", "type":"varchar","index": "0", "conditions":"{\"read\":\"true\",\"update\":\"true\"}"}]`},
+		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
+	assert.NoError(t, postTx(`NewTable`, &form))
+
+	form = url.Values{"TableName": {name}, "Name": {`newCol`},
+		"Type": {"varchar"}, "Index": {"0"}, "UpdatePerm": {"true"}, "ReadPerm": {"true"}}
+	assert.NoError(t, postTx(`NewColumn`, &form))
+	form = url.Values{"TableName": {name}, "Name": {`newCol`},
+		"UpdatePerm": {"true"}, "ReadPerm": {"true"}}
+	assert.NoError(t, postTx(`EditColumn`, &form))
+}
+
 func TestNewTable(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
