@@ -90,7 +90,7 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
-	{`SetVar(mykey,0266-5397-0542-4815-0876)Div(){AddressToID(#mykey#)=AddressToID()}`,
+	{`SetVar(mykey,0266-5397-0542-4815-0876)Div(){AddressToId(#mykey#)=AddressToId()}`,
 		`[{"tag":"div","children":[{"tag":"text","text":"2665397054248150876"},{"tag":"text","text":"="}]}]`},
 	{`SetVar(t,7)
 		Button(Body: Span(my#t#)).ErrorRedirect(PageParams: name=Val(#t#val), PageName: "v#t#", ErrorID: myerr).ErrorRedirect(PageParams: par=#t#, PageName: "qqq", ErrorID: err1)`,
