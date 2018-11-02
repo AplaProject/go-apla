@@ -170,8 +170,9 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 	limits := block.NewLimits(nil)
 
 	type badTxStruct struct {
-		hash []byte
-		msg  string
+		hash  []byte
+		msg   string
+		keyID int64
 	}
 
 	processBadTx := func(dbTx *model.DbTransaction) chan badTxStruct {
@@ -179,6 +180,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 
 		go func() {
 			for badTxItem := range ch {
+				block.BadTxForBan(badTxItem.keyID)
 				transaction.MarkTransactionBad(p.DbTransaction, badTxItem.hash, badTxItem.msg)
 			}
 		}()
@@ -216,13 +218,13 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 			p, err := transaction.UnmarshallTransaction(bufTransaction)
 			if err != nil {
 				if p != nil {
-					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 				}
 				continue
 			}
 
 			if err := p.Check(time.Now().Unix(), false); err != nil {
-				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 				continue
 			}
 
@@ -235,7 +237,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 					if err == block.ErrLimitSkip {
 						attemptCountChan <- p.TxHash
 					} else {
-						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 					}
 					continue
 				}

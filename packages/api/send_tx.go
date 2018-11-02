@@ -22,13 +22,16 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
+	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type sendTxResult struct {
@@ -53,6 +56,10 @@ func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 }
 
 func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	if block.IsKeyBanned(data.keyId) {
+		return errorAPI(w, "E_BANNED", http.StatusBadRequest, block.BannedTill(data.keyId))
+	}
+
 	err := r.ParseMultipartForm(multipartBuf)
 	if err != nil {
 		return errorAPI(w, err, http.StatusBadRequest)
@@ -100,6 +107,7 @@ type contractResult struct {
 func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, txData []byte) (string, error) {
 	if int64(len(txData)) > syspar.GetMaxTxSize() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
+		block.BadTxForBan(data.keyId)
 		return "", errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
 	}
 
@@ -107,7 +115,13 @@ func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
 		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
-
+	smartTx := tx.SmartContract{}
+	if err := msgpack.Unmarshal(rtx.Payload(), &smartTx); err != nil {
+		return "", errorAPI(w, err, http.StatusInternalServerError)
+	}
+	if smartTx.Header.KeyID != data.keyId {
+		return "", errorAPI(w, "E_DIFKEY", http.StatusBadRequest)
+	}
 	if err := model.SendTx(rtx, data.keyId); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return "", errorAPI(w, err, http.StatusInternalServerError)
