@@ -3,12 +3,24 @@ package smart
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	log "github.com/sirupsen/logrus"
+)
+
+const (
+	prefTimestamp      = "timestamp"
+	prefTimestampSpace = "timestamp "
+)
+
+var (
+	checkNowRE = regexp.MustCompile(`(now\s*\(\s*\)|localtime|current_date|current_time)`)
+	ErrNow     = errors.New(`It is prohibited to use NOW() or current time functions`)
 )
 
 // KeyTableChecker checks table
@@ -20,10 +32,10 @@ type NextIDGetter interface {
 	GetNextID(string) (int64, error)
 }
 
-type smartQueryBuilder struct {
+type SQLQueryBuilder struct {
 	*log.Entry
 	tableID      string
-	table        string
+	Table        string
 	isKeyTable   bool
 	prepared     bool
 	keyEcosystem string
@@ -37,19 +49,19 @@ type smartQueryBuilder struct {
 	whereExpr    string
 }
 
-func (b *smartQueryBuilder) prepare() error {
+func (b *SQLQueryBuilder) prepare() error {
 	if b.prepared {
 		return nil
 	}
 
-	idNames := strings.SplitN(b.table, `_`, 2)
+	idNames := strings.SplitN(b.Table, `_`, 2)
 	if len(idNames) == 2 {
 		b.keyName = idNames[1]
 
 		if b.KeyTableChkr.IsKeyTable(b.keyName) {
 			b.isKeyTable = true
 			b.keyEcosystem = idNames[0]
-			b.table = `1_` + b.keyName
+			b.Table = `1_` + b.keyName
 
 			if contains, ecosysIndx := isParamsContainsEcosystem(b.Fields, b.FieldValues); contains {
 				if b.WhereFields == nil {
@@ -78,7 +90,15 @@ func (b *smartQueryBuilder) prepare() error {
 	return nil
 }
 
-func (b *smartQueryBuilder) getSelectExpr() (string, error) {
+func (b *SQLQueryBuilder) SetTableID(id string) {
+	b.tableID = id
+}
+
+func (b *SQLQueryBuilder) TableID() string {
+	return b.tableID
+}
+
+func (b *SQLQueryBuilder) GetSelectExpr() (string, error) {
 	if err := b.prepare(); err != nil {
 		return "", err
 	}
@@ -94,10 +114,10 @@ func (b *smartQueryBuilder) getSelectExpr() (string, error) {
 		b.WithFields(log.Fields{"error": err}).Error("on getting sql where statement")
 		return "", err
 	}
-	return fmt.Sprintf(`SELECT %s FROM "%s" %s`, fieldsExpr, b.table, whereExpr), nil
+	return fmt.Sprintf(`SELECT %s FROM "%s" %s`, fieldsExpr, b.Table, whereExpr), nil
 }
 
-func (b *smartQueryBuilder) GetSQLSelectFieldsExpr() (string, error) {
+func (b *SQLQueryBuilder) GetSQLSelectFieldsExpr() (string, error) {
 	if err := b.prepare(); err != nil {
 		return "", err
 	}
@@ -113,7 +133,7 @@ func (b *smartQueryBuilder) GetSQLSelectFieldsExpr() (string, error) {
 	return strings.Join(sqlFields, ","), nil
 }
 
-func (b *smartQueryBuilder) GetSQLWhereExpr() (string, error) {
+func (b *SQLQueryBuilder) GetSQLWhereExpr() (string, error) {
 	if err := b.prepare(); err != nil {
 		return "", err
 	}
@@ -147,7 +167,7 @@ func (b *smartQueryBuilder) GetSQLWhereExpr() (string, error) {
 	return "", nil
 }
 
-func (b *smartQueryBuilder) GetSQLUpdateExpr(logData map[string]string) (string, error) {
+func (b *SQLQueryBuilder) GetSQLUpdateExpr(logData map[string]string) (string, error) {
 	if err := b.prepare(); err != nil {
 		return "", err
 	}
@@ -171,7 +191,7 @@ func (b *smartQueryBuilder) GetSQLUpdateExpr(logData map[string]string) (string,
 			}
 		}
 
-		if converter.IsByteColumn(b.table, b.Fields[i]) && len(b.stringValues[i]) != 0 {
+		if converter.IsByteColumn(b.Table, b.Fields[i]) && len(b.stringValues[i]) != 0 {
 			expressions = append(expressions, b.Fields[i]+"="+toSQLHexExpr(b.stringValues[i]))
 		} else if b.Fields[i][:1] == "+" || b.Fields[i][:1] == "-" {
 			expressions = append(expressions, toArithmeticUpdateExpr(b.Fields[i], b.stringValues[i]))
@@ -206,7 +226,7 @@ func (b *smartQueryBuilder) GetSQLUpdateExpr(logData map[string]string) (string,
 	return strings.Join(expressions, ","), nil
 }
 
-func (b *smartQueryBuilder) GetSQLInsertQuery(idGetter NextIDGetter) (string, error) {
+func (b *SQLQueryBuilder) GetSQLInsertQuery(idGetter NextIDGetter) (string, error) {
 	if err := b.prepare(); err != nil {
 		return "", err
 	}
@@ -260,7 +280,7 @@ func (b *smartQueryBuilder) GetSQLInsertQuery(idGetter NextIDGetter) (string, er
 	}
 
 	if !isID {
-		id, err := idGetter.GetNextID(b.table)
+		id, err := idGetter.GetNextID(b.Table)
 		if err != nil {
 			b.Logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
 			return "", err
@@ -274,16 +294,16 @@ func (b *smartQueryBuilder) GetSQLInsertQuery(idGetter NextIDGetter) (string, er
 	flds := strings.Join(insFields, ",")
 	vls := strings.Join(insValues, ",")
 
-	return fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES (%s)`, b.table, flds, vls), nil
+	return fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES (%s)`, b.Table, flds, vls), nil
 }
 
-func (b smartQueryBuilder) generateRollBackInfoString(logData map[string]string) (string, error) {
+func (b SQLQueryBuilder) GenerateRollBackInfoString(logData map[string]string) (string, error) {
 	rollbackInfo := make(map[string]string)
 	for k, v := range logData {
 		if k == `id` || (b.isKeyTable && k == "ecosystem") {
 			continue
 		}
-		if converter.IsByteColumn(b.table, k) && v != "" {
+		if converter.IsByteColumn(b.Table, k) && v != "" {
 			rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
 		} else {
 			rollbackInfo[k] = v
@@ -299,8 +319,8 @@ func (b smartQueryBuilder) generateRollBackInfoString(logData map[string]string)
 	return string(jsonRollbackInfo), nil
 }
 
-func (b smartQueryBuilder) toSQLValue(rawValue, rawField string) string {
-	if converter.IsByteColumn(b.table, rawField) && len(rawValue) != 0 {
+func (b SQLQueryBuilder) toSQLValue(rawValue, rawField string) string {
+	if converter.IsByteColumn(b.Table, rawField) && len(rawValue) != 0 {
 		return toSQLHexExpr(rawValue)
 	}
 
@@ -319,17 +339,17 @@ func (b smartQueryBuilder) toSQLValue(rawValue, rawField string) string {
 	return wrapString(escapeSingleQuotes(rawValue), "'")
 }
 
-func (b smartQueryBuilder) normalizeValues() error {
+func (b SQLQueryBuilder) normalizeValues() error {
 	for i, v := range b.FieldValues {
 		switch val := v.(type) {
 		case string:
 			if strings.HasPrefix(strings.TrimSpace(val), prefTimestamp) {
-				if err := checkNow(val); err != nil {
+				if err := CheckNow(val); err != nil {
 					return err
 				}
 			}
 
-			if len(b.Fields) > i && converter.IsByteColumn(b.table, b.Fields[i]) {
+			if len(b.Fields) > i && converter.IsByteColumn(b.Table, b.Fields[i]) {
 				if vbyte, err := hex.DecodeString(val); err == nil {
 					b.FieldValues[i] = vbyte
 				}
@@ -387,4 +407,27 @@ func toSQLField(rawField string) string {
 
 func wrapString(raw, wrapper string) string {
 	return wrapper + raw + wrapper
+}
+
+func escapeSingleQuotes(val string) string {
+	return strings.Replace(val, `'`, `''`, -1)
+}
+
+// CheckNow allows check if the content contains postgres NOW()
+func CheckNow(inputs ...string) error {
+	for _, item := range inputs {
+		if checkNowRE.Match([]byte(strings.ToLower(item))) {
+			return ErrNow
+		}
+	}
+	return nil
+}
+
+func getFieldIndex(fields []string, name string) int {
+	for i, v := range fields {
+		if strings.ToLower(v) == name {
+			return i
+		}
+	}
+	return -1
 }

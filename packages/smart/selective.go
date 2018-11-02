@@ -18,18 +18,12 @@ package smart
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
-
+	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
 	log "github.com/sirupsen/logrus"
-)
-
-const (
-	prefTimestamp      = "timestamp"
-	prefTimestampSpace = "timestamp "
 )
 
 func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) error {
@@ -48,25 +42,8 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 	return nil
 }
 
-func getFieldIndex(fields []string, name string) int {
-	for i, v := range fields {
-		if strings.ToLower(v) == name {
-			return i
-		}
-	}
-	return -1
-}
-
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
-
-	// fmt.Println("fields:", fields)
-	// fmt.Println("ivalues:", shortString(fmt.Sprintf("%+v", ivalues), 100))
-	// fmt.Println("table:", table)
-	// fmt.Println("wheref:", whereFields)
-	// fmt.Println("whereW:", whereValues)
-	// fmt.Println("genRolblack:", generalRollback)
-	// fmt.Println("exists:", exists)
 
 	var (
 		cost            int64
@@ -80,9 +57,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	sqlBuilder := &smartQueryBuilder{
+	sqlBuilder := &qb.SQLQueryBuilder{
 		Entry:        logger,
-		table:        table,
+		Table:        table,
 		Fields:       fields,
 		FieldValues:  ivalues,
 		WhereFields:  whereFields,
@@ -92,7 +69,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
 
-	selectQuery, err := sqlBuilder.getSelectExpr()
+	selectQuery, err := sqlBuilder.GetSelectExpr()
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Error("on getting sql select statement")
 		return 0, "", err
@@ -118,7 +95,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	if whereFields != nil && len(logData) > 0 {
 		var err error
-		rollbackInfoStr, err = sqlBuilder.generateRollBackInfoString(logData)
+		rollbackInfoStr, err = sqlBuilder.GenerateRollBackInfoString(logData)
 		if err != nil {
 			return 0, "", err
 		}
@@ -134,7 +111,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			return 0, "", err
 		}
 		if !sc.VDE {
-			updateQuery := `UPDATE "` + sqlBuilder.table + `" SET ` + updateExpr + " " + whereExpr
+			updateQuery := `UPDATE "` + sqlBuilder.Table + `" SET ` + updateExpr + " " + whereExpr
 			updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
@@ -143,15 +120,15 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			cost += updateCost
 		}
 
-		err = model.Update(sc.DbTransaction, sqlBuilder.table, updateExpr, whereExpr)
+		err = model.Update(sc.DbTransaction, sqlBuilder.Table, updateExpr, whereExpr)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "sql": updateExpr}).Error("getting update query")
 			return 0, "", err
 		}
-		sqlBuilder.tableID = logData[`id`]
+		sqlBuilder.SetTableID(logData[`id`])
 	} else {
 
-		insertQuery, err := sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{sc.DbTransaction})
+		insertQuery, err := sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{Tx: sc.DbTransaction})
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err}).Error("on build insert qwery")
 			return 0, "", err
@@ -172,15 +149,11 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	if generalRollback {
-		if err := addRollback(sc, sqlBuilder.table, sqlBuilder.tableID, rollbackInfoStr); err != nil {
-			return 0, sqlBuilder.tableID, err
+		if err := addRollback(sc, sqlBuilder.Table, sqlBuilder.TableID(), rollbackInfoStr); err != nil {
+			return 0, sqlBuilder.TableID(), err
 		}
 	}
-	return cost, sqlBuilder.tableID, nil
-}
-
-func escapeSingleQuotes(val string) string {
-	return strings.Replace(val, `'`, `''`, -1)
+	return cost, sqlBuilder.TableID(), nil
 }
 
 func (sc *SmartContract) insert(fields []string, ivalues []interface{},
