@@ -578,7 +578,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		blockNodePosition = sc.BlockData.NodePosition
 	}
 	extend := map[string]interface{}{
-		`type`:              head.Type,
+		`name`:              head.Name,
 		`time`:              head.Time,
 		`ecosystem_id`:      head.EcosystemID,
 		`node_position`:     blockNodePosition,
@@ -1007,7 +1007,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 			public = wallet.PublicKey
 		}
 	}
-	if sc.TxSmart.Header.Type == 258 { // UpdFullNodes
+	if sc.TxSmart.Header.Name == "UpdFullNodes" {
 		node := syspar.GetNode(sc.TxSmart.Header.KeyID)
 		if node == nil {
 			logger.WithFields(log.Fields{"user_id": sc.TxSmart.Header.KeyID, "type": consts.NotFound}).Error("unknown node id")

@@ -92,13 +92,9 @@ func CallContract(contractName string, ecosystemID int64, params map[string]stri
 	if err != nil {
 		return nil, err
 	}
-	vm := GetVM()
-	contract := VMGetContract(vm, contractName, uint32(ecosystemID))
-	info := contract.Block.Info.(*script.ContractInfo)
-
 	smartTx, err := blockchain.BuildTransaction(blockchain.Transaction{
 		Header: blockchain.TxHeader{
-			Type:        int(info.ID),
+			Name:        contractName,
 			Time:        time.Now().Unix(),
 			EcosystemID: ecosystemID,
 			KeyID:       conf.Config.KeyID,
