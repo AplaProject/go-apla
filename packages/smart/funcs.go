@@ -2435,7 +2435,7 @@ func TransactionData(blockHash []byte, hash []byte) (data *TxInfo, err error) {
 			return
 		}
 		if bytes.Equal(txHash, hash) {
-			contract := GetContractByID(int32(tx.Header.Type))
+			contract := GetContract(tx.Header.Name, uint32(tx.Header.EcosystemID))
 			if contract == nil {
 				err = errParseTransaction
 				return

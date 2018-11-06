@@ -84,7 +84,6 @@ func FromBlockchainTransaction(tx *blockchain.Transaction) (*Transaction, error)
 
 	t := new(Transaction)
 	t.TxFullData = bytes
-	t.TxType = int64(tx.Header.Type)
 	t.TxHash = hash
 	t.TxUsedCost = decimal.New(0, 0)
 	t.TxFullData = bytes
@@ -115,10 +114,10 @@ func (t *Transaction) parseFromContract(smartTx *blockchain.Transaction) error {
 	t.TxTime = smartTx.Header.Time
 	t.TxKeyID = smartTx.Header.KeyID
 
-	contract := smart.GetContractByID(int32(smartTx.Header.Type))
+	contract := smart.GetContract(smartTx.Header.Name, uint32(smartTx.Header.EcosystemID))
 	if contract == nil {
-		log.WithFields(log.Fields{"contract_type": smartTx.Header.Type, "type": consts.NotFound}).Error("unknown contract")
-		return fmt.Errorf(`unknown contract %d`, smartTx.Header.Type)
+		log.WithFields(log.Fields{"contract_name": smartTx.Header.Name, "type": consts.NotFound}).Error("unknown contract")
+		return fmt.Errorf(`unknown contract %s`, smartTx.Header.Name)
 	}
 	forsign := []string{smartTx.ForSign()}
 

@@ -32,7 +32,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/queue"
-	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -119,14 +118,13 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 			pubkey = data.params[`pubkey`].([]byte)
 			hexPubKey := hex.EncodeToString(pubkey)
 			params := map[string]string{"NewPubkey": hexPubKey}
-			contract := smart.GetContract("NewUser", 1)
 			NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
 			if err != nil {
 				return errorAPI(w, err, http.StatusInternalServerError)
 			}
 			sc := blockchain.Transaction{
 				Header: blockchain.TxHeader{
-					Type:        int(contract.Block.Info.(*script.ContractInfo).ID),
+					Name:        "NewUser",
 					Time:        time.Now().Unix(),
 					EcosystemID: 1,
 					KeyID:       conf.Config.KeyID,

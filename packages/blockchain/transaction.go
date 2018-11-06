@@ -92,7 +92,7 @@ func (ts TxStatus) Insert(tx *leveldb.Transaction, hash []byte) error {
 
 // Header is contain header data
 type TxHeader struct {
-	Type          int
+	Name          string
 	Time          int64
 	EcosystemID   int64
 	KeyID         int64
@@ -117,7 +117,7 @@ type Transaction struct {
 
 // ForSign is converting SmartContract to string
 func (t Transaction) ForSign() string {
-	return fmt.Sprintf("%s,%d,%d,%d,%d,%d,%s,%s,%d", t.RequestID, t.Header.Type, t.Header.Time, t.Header.KeyID, t.Header.EcosystemID,
+	return fmt.Sprintf("%s,%s,%d,%d,%d,%d,%s,%s,%d", t.RequestID, t.Header.Name, t.Header.Time, t.Header.KeyID, t.Header.EcosystemID,
 		t.TokenEcosystem, t.MaxSum, t.PayOver, t.SignedBy)
 }
 

@@ -37,21 +37,17 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 	}
 
 	for _, c := range contracts {
-		if err := dtx.createTx(c.ID, c.KeyID); err != nil {
+		if err := dtx.createTx(c.Contract, c.ID, c.KeyID); err != nil {
 			dtx.logger.WithFields(log.Fields{"error": err}).Debug("can't create transaction for delayed contract")
 		}
 	}
 }
 
-func (dtx *DelayedTx) createTx(delayedContractID, keyID int64) error {
-	vm := smart.GetVM()
-	contract := smart.VMGetContract(vm, callDelayedContract, uint32(firstEcosystemID))
+func (dtx *DelayedTx) createTx(name string, delayedContractID, keyID int64) error {
 	params := map[string]string{"Id": converter.Int64ToStr(delayedContractID)}
-	info := contract.Info()
-
 	smartTx := &blockchain.Transaction{
 		Header: blockchain.TxHeader{
-			Type:        int(info.ID),
+			Name:        name,
 			Time:        time.Now().Unix(),
 			EcosystemID: firstEcosystemID,
 			KeyID:       keyID,
