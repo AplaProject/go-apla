@@ -120,7 +120,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files 
 		var forv string
 		var isforv bool
 
-		if fitem.ContainsTag(script.TagFile) {
+		if fitem.Type.String() == "types.File" {
 			file, ok := files[fitem.Name]
 			if !ok {
 				return nil, nil
