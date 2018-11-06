@@ -517,12 +517,6 @@
 			"revisionTime": "2018-07-08T03:05:51Z"
 		},
 		{
-			"checksumSHA1": "Yul1w2EZS1iRmkUNyPuO+QMKwBQ=",
-			"path": "github.com/syndtr/goleveldb/leveldb",
-			"revision": "6b91fda63f2e36186f1c9d0e48578defb69c5d43",
-			"revisionTime": "2018-10-12T01:44:43Z"
-		},
-		{
 			"checksumSHA1": "G1tnrjQ9YZH7qfHAQI9vZmpNuYg=",
 			"path": "github.com/tevino/abool",
 			"revision": "9b9efcf221b50905aab9bbabd3daed56dc10f339",
