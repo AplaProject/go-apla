@@ -8,7 +8,7 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('4','gap_between_blocks', '2', 'ContractAccess("@1UpdateSysParam")'),
 	('5','rollback_blocks', '60', 'ContractAccess("@1UpdateSysParam")'),
 	('6','new_version_url', 'upd.apla.io', 'ContractAccess("@1UpdateSysParam")'),
-	('7','full_nodes', '', 'ContractAccess("@1UpdateSysParam")'),
+	('7','full_nodes', '', 'ContractAccess("@1UpdateSysParam","@1NodeRemoveByKey")'),
 	('8','number_of_nodes', '101', 'ContractAccess("@1UpdateSysParam")'),
 	('9','price_create_contract', '200', 'ContractAccess("@1UpdateSysParam")'),
 	('10','price_create_menu', '100', 'ContractAccess("@1UpdateSysParam")'),
