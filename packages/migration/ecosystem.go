@@ -14,7 +14,6 @@ func GetEcosystemScript() string {
 		parametersDataSQL,
 		membersDataSQL,
 		sectionsDataSQL,
-		tablesDataSQL,
 		keysDataSQL,
 	}
 
@@ -32,6 +31,14 @@ func GetFirstEcosystemScript() string {
 		firstTablesDataSQL,
 	}
 
+	return strings.Join(scripts, "\r\n")
+}
+
+// GetFirstTableScript returns script to update _tables for first ecosystem
+func GetFirstTableScript() string {
+	scripts := []string{
+		tablesDataSQL,
+	}
 	return strings.Join(scripts, "\r\n")
 }
 
