@@ -7,7 +7,6 @@ import (
 // GetEcosystemScript returns script to create ecosystem
 func GetEcosystemScript() string {
 	scripts := []string{
-		blocksDataSQL,
 		contractsDataSQL,
 		menuDataSQL,
 		pagesDataSQL,
@@ -26,6 +25,8 @@ func GetFirstEcosystemScript() string {
 		firstEcosystemSchema,
 		firstDelayedContractsDataSQL,
 		firstEcosystemContractsSQL,
+		firstEcosystemPagesDataSQL,
+		firstEcosystemBlocksDataSQL,
 		firstEcosystemDataSQL,
 		firstSystemParametersDataSQL,
 		firstTablesDataSQL,
