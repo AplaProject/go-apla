@@ -49,6 +49,7 @@ func Route(route *hr.Router) {
 	get(`contract/:name`, ``, authWallet, getContract)
 	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
 	get(`getuid`, ``, getUID)
+	get(`keyinfo/:wallet`, ``, keyInfo)
 	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
 	get(`sections`, `?limit ?offset:int64,?lang:string`, authWallet, sections)
 	get(`row/:name/:id`, `?columns:string`, authWallet, row)

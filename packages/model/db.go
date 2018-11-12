@@ -198,11 +198,19 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 
 // ExecSchema is executing schema
 func ExecSchema() error {
-	return migration.Migrate(&MigrationHistory{})
+	return migration.InitMigrate(&MigrationHistory{})
+}
+
+// UpdateSchema run update migrations
+func UpdateSchema() error {
+	if _, _, found, err := blockchain.GetLastBlock(nil); !found {
+		return err
+	}
+	return migration.UpdateMigrate(&MigrationHistory{})
 }
 
 func ExecSystemContractsData(wallet int64) error {
-	q := fmt.Sprintf(migration.GetSystemContractsScript(), "", wallet)
+	q := migration.GetSystemContractsScript()
 	if err := DBConn.Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing system contracts script")
 		return err

@@ -127,7 +127,6 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"value" text  NOT NULL DEFAULT '',
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
-		"active" character(1) NOT NULL DEFAULT '0',
 		"conditions" text  NOT NULL DEFAULT '',
 		"app_id" bigint NOT NULL DEFAULT '1',
 		"ecosystem" bigint NOT NULL DEFAULT '1',
@@ -170,8 +169,9 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" bigint  NOT NULL DEFAULT '0',
 		"txhash" bytea  NOT NULL DEFAULT '',
-		"created_at" timestamp DEFAULT NOW(),
-		"ecosystem" bigint NOT NULL DEFAULT '1'
+		"created_at" timestamp,
+		"ecosystem" bigint NOT NULL DEFAULT '1',
+		"type" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "1_history" ADD CONSTRAINT "1_history_pkey" PRIMARY KEY (id);
 		CREATE INDEX "1_history_index_sender" ON "1_history" (ecosystem, sender_id);

@@ -28,6 +28,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -43,7 +44,7 @@ const (
 	Decimal = `decimal.Decimal`
 	// Interface is the constant string for interface type
 	Interface = `interface`
-	File      = `types.File`
+	File      = `*types.Map`
 
 	brackets = `[]`
 
@@ -389,6 +390,8 @@ func valueToBool(v interface{}) bool {
 		return val != nil && len(val) > 0
 	case map[string]string:
 		return val != nil && len(val) > 0
+	case *types.Map:
+		return val != nil && val.Size() > 0
 	default:
 		dec, _ := decimal.NewFromString(fmt.Sprintf(`%v`, val))
 		return dec.Cmp(decimal.New(0, 0)) != 0
@@ -483,7 +486,7 @@ func (rt *RunTime) getResultValue(item mapItem) (value interface{}, err error) {
 			err = fmt.Errorf(eWrongVar, ivar.Obj.Value)
 		}
 	case mapMap:
-		value, err = rt.getResultMap(item.Value.(map[string]mapItem))
+		value, err = rt.getResultMap(item.Value.(*types.Map))
 	case mapArray:
 		value, err = rt.getResultArray(item.Value.([]mapItem))
 	}
@@ -502,14 +505,15 @@ func (rt *RunTime) getResultArray(cmd []mapItem) ([]interface{}, error) {
 	return initArr, nil
 }
 
-func (rt *RunTime) getResultMap(cmd map[string]mapItem) (map[string]interface{}, error) {
-	initMap := make(map[string]interface{})
-	for key, val := range cmd {
-		value, err := rt.getResultValue(val)
+func (rt *RunTime) getResultMap(cmd *types.Map) (*types.Map, error) {
+	initMap := types.NewMap()
+	for _, key := range cmd.Keys() {
+		val, _ := cmd.Get(key)
+		value, err := rt.getResultValue(val.(mapItem))
 		if err != nil {
 			return nil, err
 		}
-		initMap[key] = value
+		initMap.Set(key, value)
 	}
 	return initMap, nil
 }
@@ -534,8 +538,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
 		} else {
 			value = reflect.New(vpar).Elem().Interface()
-			if vpar == reflect.TypeOf(map[string]interface{}{}) {
-				value = make(map[string]interface{})
+			if vpar == reflect.TypeOf(&types.Map{}) {
+				value = types.NewMap()
 			} else if vpar == reflect.TypeOf([]interface{}{}) {
 				value = make([]interface{}, 0, len(rt.vars)+1)
 			}
@@ -744,20 +748,22 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 		case cmdIndex:
 			rv := reflect.ValueOf(rt.stack[size-2])
-			switch rv.Kind() {
-			case reflect.Map:
+			itype := reflect.TypeOf(rt.stack[size-2]).String()
+
+			switch {
+			case itype == `*types.Map`:
 				if reflect.TypeOf(rt.stack[size-1]).String() != `string` {
 					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-1]).String())
 					break
 				}
-				v := rv.MapIndex(reflect.ValueOf(rt.stack[size-1]))
-				if v.IsValid() {
-					rt.stack[size-2] = v.Interface()
+				v, found := rt.stack[size-2].(*types.Map).Get(rt.stack[size-1].(string))
+				if found {
+					rt.stack[size-2] = v
 				} else {
 					rt.stack[size-2] = nil
 				}
 				rt.stack = rt.stack[:size-1]
-			case reflect.Slice:
+			case itype[:2] == brackets:
 				if reflect.TypeOf(rt.stack[size-1]).String() != `int64` {
 					err = fmt.Errorf(eArrIndex, reflect.TypeOf(rt.stack[size-1]).String())
 					break
@@ -788,8 +794,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 
 			switch {
-			case itype[:3] == `map`:
-				if len(rt.stack[size-3].(map[string]interface{})) > maxMapCount {
+			case itype == `*types.Map`:
+				if rt.stack[size-3].(*types.Map).Size() > maxMapCount {
 					err = errMaxMapCount
 					break
 				}
@@ -797,7 +803,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-2]).String())
 					break
 				}
-				reflect.ValueOf(rt.stack[size-3]).SetMapIndex(reflect.ValueOf(rt.stack[size-2]), reflect.ValueOf(rt.stack[size-1]))
+				rt.stack[size-3].(*types.Map).Set(rt.stack[size-2].(string),
+					reflect.ValueOf(rt.stack[size-1]).Interface())
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == brackets:
 				if reflect.TypeOf(rt.stack[size-2]).String() != `int64` {
@@ -1163,7 +1170,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			rt.stack = append(rt.stack, initArray)
 		case cmdMapInit:
-			initMap, err := rt.getResultMap(cmd.Value.(map[string]mapItem))
+			initMap, err := rt.getResultMap(cmd.Value.(*types.Map))
 			if err != nil {
 				return 0, err
 			}

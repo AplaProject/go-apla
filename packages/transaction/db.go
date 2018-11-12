@@ -8,6 +8,7 @@ import (
 )
 
 var ErrDuplicatedTx = errors.New("Duplicated transaction")
+var ErrEarlyTime = errors.New("Early transaction time")
 
 // AllTxParser parses new transactions
 func ProcessTransactionsQueue() error {

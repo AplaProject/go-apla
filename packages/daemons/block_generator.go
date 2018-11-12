@@ -161,8 +161,9 @@ func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done 
 	limits := block.NewLimits(nil)
 
 	type badTxStruct struct {
-		hash []byte
-		msg  string
+		hash  []byte
+		msg   string
+		keyID int64
 	}
 
 	processBadTx := func() chan badTxStruct {
@@ -170,6 +171,7 @@ func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done 
 
 		go func() {
 			for badTxItem := range ch {
+				block.BadTxForBan(badTxItem.keyID)
 				blockchain.SetTransactionError(nil, badTxItem.hash, badTxItem.msg)
 			}
 		}()
@@ -207,13 +209,13 @@ func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done 
 			p, err := transaction.FromBlockchainTransaction(txItem)
 			if err != nil {
 				if p != nil {
-					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 				}
 				continue
 			}
 
 			if err := p.Check(time.Now().Unix()); err != nil {
-				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 				continue
 			}
 
@@ -226,7 +228,7 @@ func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done 
 					if err == block.ErrLimitSkip {
 						attemptCountChan <- p.TxHash
 					} else {
-						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 					}
 					continue
 				}

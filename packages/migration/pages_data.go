@@ -2,6 +2,7 @@ package migration
 
 var pagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, conditions, ecosystem) VALUES
 	(next_id('1_pages'), 'admin_index', '', 'admin_menu','ContractAccess("@1EditPage")', '%[1]d'),
+	(next_id('1_pages'), 'developer_index', '', 'developer_menu','ContractAccess("@1EditPage")', '%[1]d'),
 	(next_id('1_pages'), 'notifications', '', 'default_menu','ContractAccess("@1EditPage")', '%[1]d'),
 	(next_id('1_pages'), 'import_app', 'Div(content-wrapper){
     DBFind(@1buffer_data).Columns("id,value->name,value->data").Where({key:import, member_id:#key_id#, ecosystem:#ecosystem_id#}).Vars(import)
@@ -53,7 +54,7 @@ var pagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, conditions, ec
             }
         }
     }
-}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d'),
+}', 'developer_menu', 'ContractAccess("@1EditPage")', '%[1]d'),
 	(next_id('1_pages'), 'import_upload', 'Div(content-wrapper){
     SetTitle("Import")
     Div(breadcrumb){
@@ -71,5 +72,5 @@ var pagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, conditions, ec
             Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: @1import_app)
         }
     }
-}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d');
+}', 'developer_menu', 'ContractAccess("@1EditPage")', '%[1]d');
 `

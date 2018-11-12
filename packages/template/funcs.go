@@ -33,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
 	"github.com/shopspring/decimal"
@@ -60,6 +61,7 @@ func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTailTag, defaultTailTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
+	funcs[`AddressToId`] = tplFunc{addressIDTag, defaultTag, `addresstoid`, `Wallet`}
 	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source,Ecosystem`}
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
@@ -308,6 +310,18 @@ func addressTag(par parFunc) string {
 		return `unknown address`
 	}
 	return converter.AddressToString(id)
+}
+
+func addressIDTag(par parFunc) string {
+	address := (*par.Pars)[`Wallet`]
+	if len(address) == 0 {
+		return (*par.Workspace.Vars)[`key_id`]
+	}
+	id := smart.AddressToID(processToText(par, macro(address, par.Workspace.Vars)))
+	if id == 0 {
+		return `address is invalid`
+	}
+	return converter.Int64ToStr(id)
 }
 
 func calculateTag(par parFunc) string {
@@ -576,7 +590,7 @@ func dbfindTag(par parFunc) string {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
 			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
-			where, err = smart.GetWhere(inWhere.(map[string]interface{}))
+			where, err = smart.GetWhere(types.LoadMap(inWhere.(map[string]interface{})))
 			if err != nil {
 				return err.Error()
 			}
@@ -637,6 +651,7 @@ func dbfindTag(par parFunc) string {
 
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
+		log.WithFields(log.Fields{"table": tblname, "columns": columns}).Error("ACCESS DENIED")
 		return `Access denied`
 	}
 
@@ -1386,20 +1401,23 @@ func getHistoryTag(par parFunc) string {
 	}
 
 	cols := make([]string, 0, len(colsList))
-	types := make([]string, 0, len(colsList))
+	typesCol := make([]string, 0, len(colsList))
 	for _, v := range colsList {
 
 		cols = append(cols, v[columnNameKey])
-		types = append(types, `text`)
+		typesCol = append(typesCol, `text`)
 	}
 
 	data := make([][]string, 0)
 	if len(list) > 0 {
 		for i := range list {
-			item := list[i].(map[string]string)
+			item := list[i].(*types.Map)
 			items := make([]string, len(cols))
 			for ind, key := range cols {
-				val := item[key]
+				var val string
+				if v, found := item.Get(key); found {
+					val = v.(string)
+				}
 				if val == `NULL` {
 					val = ``
 				}
@@ -1409,7 +1427,7 @@ func getHistoryTag(par parFunc) string {
 		}
 	}
 	par.Node.Attr[`columns`] = &cols
-	par.Node.Attr[`types`] = &types
+	par.Node.Attr[`types`] = &typesCol
 	par.Node.Attr[`data`] = &data
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)
