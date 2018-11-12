@@ -110,6 +110,7 @@ KeyID
 apla.pid
 config.toml
 packages/registry/test.db
+packages/registry/metadata/testrollback
 
 packages/static/
 public/

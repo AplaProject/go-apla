@@ -2,7 +2,11 @@
 
 package types
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/syndtr/goleveldb/leveldb"
+)
 
 type RegistryType int8
 
@@ -78,7 +82,7 @@ type MetadataRegistryStorage interface {
 	RegistryState
 
 	// Write/Read transaction. Must be closed by calling Commit() or Rollback() when done.
-	Begin() MetadataRegistryReaderWriter
+	Begin(transaction *leveldb.Transaction) MetadataRegistryReaderWriter
 }
 
 type Index struct {

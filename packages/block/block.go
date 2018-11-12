@@ -64,7 +64,7 @@ func (b *PlayableBlock) PlaySafe() error {
 		return err
 	}
 	b.LDBTX = ldbtx
-	metaDbTx := model.MetadataRegistry.Begin()
+	metaDbTx := model.MetadataRegistry.Begin(ldbtx)
 
 	err = b.Play(dbTransaction, ldbtx, metaDbTx)
 	if b.GenBlock && b.StopCount > 0 {

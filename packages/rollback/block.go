@@ -45,7 +45,7 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 		return err
 	}
 
-	metadb := model.MetadataRegistry.Begin()
+	metadb := model.MetadataRegistry.Begin(ldbTx)
 
 	err = rollbackBlock(dbTransaction, ldbTx, metadb, b)
 	if err != nil {

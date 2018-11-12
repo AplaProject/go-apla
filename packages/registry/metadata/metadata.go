@@ -10,6 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/syndtr/goleveldb/leveldb"
 )
 
 const keyConvention = "%s.%s.%s"
@@ -298,13 +299,13 @@ func NewStorage(db kv.Database, indexes []types.Index, rollback bool, pricing bo
 	return ms, nil
 }
 
-func (m *storage) Begin() types.MetadataRegistryReaderWriter {
+func (m *storage) Begin(transaction *leveldb.Transaction) types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
 	tx := &tx{tx: databaseTx, indexer: m.indexer}
 
 	if m.rollback {
 		tx.saveState = true
-		tx.rollback = rollback{tx: databaseTx, counter: counter{txCounter: make(map[string]uint64)}}
+		tx.rollback = rollback{tx: databaseTx, ltx: transaction, counter: counter{txCounter: make(map[string]uint64)}}
 	}
 
 	if m.pricing {
@@ -334,7 +335,7 @@ func (m *storage) GetModel(registry *types.Registry, pkValue string) (types.Regi
 }
 
 func (m *storage) RollbackBlock(block []byte) error {
-	tx := m.Begin()
+	tx := m.Begin(nil)
 	err := tx.RollbackBlock(block)
 	if err != nil {
 		rbErr := tx.Rollback()
@@ -352,7 +353,7 @@ func (m *storage) RollbackBlock(block []byte) error {
 }
 
 func (m *storage) CleanBlockState(block []byte) error {
-	tx := m.Begin()
+	tx := m.Begin(nil)
 	err := tx.CleanBlockState(block)
 	if err != nil {
 		rbErr := tx.Rollback()

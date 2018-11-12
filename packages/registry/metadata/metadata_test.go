@@ -17,6 +17,7 @@ import (
 	"github.com/GenesisKernel/memdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tidwall/buntdb"
 	"github.com/tidwall/gjson"
 )
@@ -103,7 +104,7 @@ func TestMetadataTx_RW(t *testing.T) {
 		}, false, true)
 		require.Nil(t, err)
 
-		metadataTx := reg.Begin()
+		metadataTx := reg.Begin(nil)
 		require.Nil(t, err, c.testname)
 
 		err = metadataTx.Insert(nil, &types.Registry{Name: model.Ecosystem{}.ModelName()}, "abc", model.Ecosystem{
@@ -175,7 +176,7 @@ func TestMetadataIndex(t *testing.T) {
 	msrw, err := NewStorage(db, idxs, false, true)
 	require.Nil(t, err)
 
-	mtx := msrw.Begin()
+	mtx := msrw.Begin(nil)
 
 	keys := make(map[string][]string, 0)
 	for _, ecosys := range []string{"aaa", "bbb", "ccc"} {
@@ -273,7 +274,7 @@ func TestMetadataMultipleIndex(t *testing.T) {
 	msrw, err := NewStorage(db, idxs, false, true)
 	require.Nil(t, err)
 
-	mtx := msrw.Begin()
+	mtx := msrw.Begin(nil)
 	got := make([]model.KeySchema, 0)
 	err = mtx.Walk(&types.Registry{Name: model.KeySchema{}.ModelName(), Ecosystem: &types.Ecosystem{Name: "aaa"}}, "amount_blocked", func(jsonRow string) bool {
 		k := model.KeySchema{}
@@ -293,8 +294,15 @@ func TestRollbackSaveRollback(t *testing.T) {
 	require.Nil(t, err)
 	db := kv.DatabaseAdapter{Database: *mDb}
 
+	os.Remove("testrollback")
+	ldb, err := leveldb.OpenFile("testrollback", nil)
+	require.Nil(t, err)
+
+	ltx, err := ldb.OpenTransaction()
+	require.Nil(t, err)
+
 	dbTx := db.Begin(true)
-	mr := rollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
+	mr := rollback{tx: dbTx, ltx: ltx, counter: counter{txCounter: make(map[string]uint64)}}
 
 	registry := &types.Registry{
 		Name:      "key",
@@ -334,7 +342,7 @@ func TestRollbackSaveRollback(t *testing.T) {
 		tx := []byte(strconv.Itoa(key))
 		tx = append(tx, []byte("blah")...)
 
-		_, err := dbTx.Get(fmt.Sprintf(writePrefix, string(block), key+1, string(tx)))
+		_, err := ltx.Get([]byte(fmt.Sprintf(writePrefix, string(block), key+1, string(tx))), nil)
 		require.Nil(t, err)
 	}
 	require.Nil(t, dbTx.Commit())
@@ -342,21 +350,12 @@ func TestRollbackSaveRollback(t *testing.T) {
 	dbTx = db.Begin(true)
 	require.Nil(t, err)
 
-	dbTx.AddIndex(kv.Index{
-		Name: "rollback_tx",
-		SortFn: func(a, b string) bool {
-			return true
-		},
-		Pattern: fmt.Sprintf(searchPrefix, "*", "*", "*"),
-	})
-
-	mr = rollback{tx: dbTx, counter: counter{txCounter: make(map[string]uint64)}}
+	mr = rollback{tx: dbTx, ltx: ltx, counter: counter{txCounter: make(map[string]uint64)}}
 	require.Nil(t, mr.rollbackState(block))
 
 	// We are checking that all values are now at the previous state
 	for key := range make([]int, 20) {
-		// Emulating new value in database
-		value, err := dbTx.Get(fmt.Sprintf(keyConvention, registry.Name, registry.Ecosystem.Name, strconv.Itoa(key)))
+		value, err := ltx.Get([]byte(fmt.Sprintf(keyConvention, registry.Name, registry.Ecosystem.Name, strconv.Itoa(key))), nil)
 		require.Nil(t, err)
 
 		got := teststruct{}
@@ -370,7 +369,7 @@ func TestRollbackSaveRollback(t *testing.T) {
 }
 
 func BenchmarkMetadataTx(b *testing.B) {
-	rollbacks := true
+	rollbacks := false
 	persist := true
 	db, err := newKvDB(persist)
 	require.Nil(b, err)
@@ -395,7 +394,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 	}, rollbacks, false)
 	require.Nil(b, err)
 
-	metadataTx := storage.Begin()
+	metadataTx := storage.Begin(nil)
 
 	ecosystems := []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "k"}
 	for _, ecosystem := range ecosystems {
@@ -434,7 +433,7 @@ func BenchmarkMetadataTx(b *testing.B) {
 	require.Nil(b, metadataTx.Commit())
 	fmt.Println("Inserted", count, "keys:", time.Since(insertStart))
 
-	metadataTx = storage.Begin()
+	metadataTx = storage.Begin(nil)
 	updStart := time.Now()
 	for id, ecosys := range ids {
 		metadataTx.Update(

@@ -399,7 +399,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
 		return utils.ErrInfo(err)
 	}
-	metaDbTx := model.MetadataRegistry.Begin()
+	metaDbTx := model.MetadataRegistry.Begin(ldbTx)
 
 	// go through new blocks from the smallest block_id to the largest block_id
 	prevBlocks := make(map[int64]*block.PlayableBlock, 0)

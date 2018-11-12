@@ -9,7 +9,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
-	"github.com/tidwall/match"
+	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/util"
 )
 
 const (
@@ -46,7 +47,9 @@ func (c *counter) decrement(key string) uint64 {
 }
 
 type rollback struct {
-	tx      kv.Transaction
+	tx  kv.Transaction
+	ltx *leveldb.Transaction
+
 	counter counter
 }
 
@@ -63,7 +66,7 @@ func (mr *rollback) saveState(block, tx []byte, registry *types.Registry, pk, va
 	}
 
 	kk := fmt.Sprintf(writePrefix, string(block), counter, string(tx))
-	err = mr.tx.Set(kk, string(jstate))
+	err = mr.ltx.Put([]byte(kk), jstate, nil)
 	if err != nil {
 		mr.counter.decrement(key)
 		return err
@@ -124,23 +127,21 @@ func (mr *rollback) removeState(block []byte) error {
 func (mr *rollback) getBlockStates(block []byte) ([]state, error) {
 	txses := make([]state, 0)
 	var err error
-	err = mr.tx.Ascend("rollback_tx", func(key, value string) bool {
-		if match.Match(key, fmt.Sprintf(searchPrefix, string(block), "*", "*")) {
-			state := state{}
-			err = json.Unmarshal([]byte(value), &state)
-			if err != nil {
-				err = errors.Wrapf(err, "retrieving block transactions")
-				return false
-			}
 
-			txses = append(txses, state)
+	iter := mr.ltx.NewIterator(util.BytesPrefix([]byte(fmt.Sprintf("rollback_tx.%s", string(block)))), nil)
+	for iter.Next() {
+		state := state{}
+		err = json.Unmarshal([]byte(iter.Value()), &state)
+		if err != nil {
+			return nil, errors.Wrapf(err, "retrieving block transactions")
 		}
 
-		return true
-	})
-
+		txses = append(txses, state)
+	}
+	iter.Release()
+	err = iter.Error()
 	if err != nil {
-		return txses, err
+		return txses, errors.Wrapf(err, "retrieving block transactions")
 	}
 
 	sort.Slice(txses, func(i, j int) bool {
