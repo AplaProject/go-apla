@@ -149,15 +149,15 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files 
 			resultParams[fitem.Name] = getFieldDefaultValue(fitem.Type.String())
 			continue
 		}
-		if fitem.Type.String() == "types.File" {
+		if fitem.Type.String() == script.File {
 			file, ok := files[fitem.Name]
 			if !ok {
 				return nil, nil
 			}
-			fileMap := map[string]interface{}{}
-			fileMap["Body"] = file.Data
-			fileMap["MimeType"] = file.MimeType
-			fileMap["Name"] = fitem.Name
+			fileMap := types.LoadMap(map[string]interface{}{
+				"Body":     file.Data,
+				"MimeType": file.MimeType,
+				"Name":     fitem.Name})
 			resultParams[fitem.Name] = fileMap
 			forsign = append(forsign, file.MimeType, file.Hash)
 			continue
