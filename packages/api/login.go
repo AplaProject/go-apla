@@ -88,10 +88,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Warning("state is empty, using 1 as a state")
 		ecosystemID = 1
 	}
-	dataKey = data.params[`pubkey`].([]byte)
-	if len(dataKey) == 65 && dataKey[0] == 4 {
-		dataKey = dataKey[1:]
-	}
+	dataKey = crypto.CutPub(data.params[`pubkey`].([]byte))
 	if len(data.params[`key_id`].(string)) > 0 {
 		wallet = converter.StringToAddress(data.params[`key_id`].(string))
 	} else if len(dataKey) > 0 {
