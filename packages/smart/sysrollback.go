@@ -81,15 +81,11 @@ func SysRollbackContract(name string, EcosystemID int64) error {
 	if c := VMGetContract(vm, name, uint32(EcosystemID)); c != nil {
 		id := c.Block.Info.(*script.ContractInfo).ID
 		if int(id) != len(vm.Children)-1 {
-			return fmt.Errorf(``)
-			/*			for i := int(id); i < len(vm.Children); i++ {
-							fmt.Println(`Shift`, i, vm.Children[i])
-						}
-						fmt.Println(`ROLL`, id, len(vm.Children), c.Name)*/
+			err := fmt.Errorf(eRollbackContract, id, len(vm.Children)-1)
+			log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("rollback contract")
+			return err
 		}
-		if int(id) < len(vm.Children) {
-			vm.Children = vm.Children[:id]
-		}
+		vm.Children = vm.Children[:id]
 		delete(vm.Objects, c.Name)
 	}
 

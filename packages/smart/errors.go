@@ -49,6 +49,7 @@ const (
 	eConditionNotAllowed = `Condition %s is not allowed`
 	eTableNotEmpty       = `Table %s is not empty`
 	eColumnNotDeleted    = `Column %s cannot be deleted`
+	eRollbackContract    = `Wrong rollback of the latest contract %d != %d`
 )
 
 var (
