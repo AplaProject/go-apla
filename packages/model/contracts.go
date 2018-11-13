@@ -3,6 +3,7 @@ package model
 // Contract is model
 type Contract struct {
 	ID        int64  `gorm:"primary_key;not null"`
+	Name      string `gorm:"not null"`
 	Value     string `gorm:"not null"`
 	TokenID   int64  `gorm:"not null"`
 	WalletID  int64  `gorm:"not null"`

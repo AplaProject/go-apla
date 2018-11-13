@@ -357,22 +357,22 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
-func loadContractList(list []model.Contract, ecosystem int64) error {
+func loadContractList(list []model.Contract, ecosystem *int64) error {
+	fmt.Println(`LOADING`, len(GetVM().Children))
 	for _, item := range list {
 		clist, err := script.ContractsList(item.Value)
 		if err != nil {
 			return err
 		}
-		if ecosystem < item.Ecosystem {
+		if *ecosystem < item.Ecosystem && *ecosystem == 0 {
+			fmt.Println(`LOAD SYS`, int(item.Ecosystem), len(GetVM().Children))
 			LoadSysFuncs(smartVM, int(item.Ecosystem))
-			if ecosystem != item.Ecosystem-1 {
+			if *ecosystem != item.Ecosystem-1 {
 				return logError(errContractEcosystem, consts.ContractError,
 					fmt.Sprintf("id=%d", item.ID))
 			}
-			ecosystem = item.Ecosystem
-		}
-		if item.WalletID != 0 && item.TokenID != 0 {
-			fmt.Println(`ITEM`, item)
+			*ecosystem = item.Ecosystem
+			fmt.Println(`LOAD SYS OK`, len(GetVM().Children))
 		}
 		owner := script.OwnerInfo{
 			StateID:  uint32(item.Ecosystem),
@@ -384,6 +384,7 @@ func loadContractList(list []model.Contract, ecosystem int64) error {
 		if err = Compile(item.Value, &owner); err != nil {
 			logErrorValue(err, consts.EvalError, "Load Contract", strings.Join(clist, `,`))
 		}
+		fmt.Println(item.ID, item.Name, len(GetVM().Children))
 	}
 	return nil
 }
@@ -397,14 +398,16 @@ func LoadContracts() error {
 	}
 
 	defer ExternOff()
-	var offset int64
+	var offset, ecosystem int64
 	listCount := int64(20)
+	//	LoadSysFuncs(smartVM, 1)
+	fmt.Println(`LoadContracts`, count)
 	for ; offset < count; offset += listCount {
 		list, err := contract.GetList(offset, listCount)
 		if err != nil {
 			return logErrorDB(err, "getting list of contracts")
 		}
-		if err = loadContractList(list, 0); err != nil {
+		if err = loadContractList(list, &ecosystem); err != nil {
 			return err
 		}
 	}
@@ -501,7 +504,9 @@ func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error)
 	if err != nil {
 		return logErrorDB(err, "selecting all contracts from ecosystem")
 	}
-	if err = loadContractList(list, ecosystem-1); err != nil {
+	fmt.Println(`Load Contract`, ecosystem)
+	curEcosys := ecosystem - 1
+	if err = loadContractList(list, &curEcosys); err != nil {
 		return err
 	}
 	return

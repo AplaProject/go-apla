@@ -80,6 +80,13 @@ func SysRollbackContract(name string, EcosystemID int64) error {
 	vm := GetVM()
 	if c := VMGetContract(vm, name, uint32(EcosystemID)); c != nil {
 		id := c.Block.Info.(*script.ContractInfo).ID
+		if int(id) != len(vm.Children)-1 {
+			return fmt.Errorf(``)
+			/*			for i := int(id); i < len(vm.Children); i++ {
+							fmt.Println(`Shift`, i, vm.Children[i])
+						}
+						fmt.Println(`ROLL`, id, len(vm.Children), c.Name)*/
+		}
 		if int(id) < len(vm.Children) {
 			vm.Children = vm.Children[:id]
 		}
@@ -201,8 +208,15 @@ func SysRollbackEcosystem(DbTransaction *model.DbTransaction, sysData SysRollDat
 			}
 		}
 	} else {
-		if err := SysRollbackContract(`MainCondition`, sysData.ID); err != nil {
-			return err
+		vm := GetVM()
+		for vm.Children[len(vm.Children)-1].Type == script.ObjContract {
+			cinfo := vm.Children[len(vm.Children)-1].Info.(*script.ContractInfo)
+			if int64(cinfo.Owner.StateID) != sysData.ID {
+				break
+			}
+			if err := SysRollbackContract(cinfo.Name, sysData.ID); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
