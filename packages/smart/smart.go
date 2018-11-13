@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
@@ -358,23 +357,57 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
+func loadContractList(list []model.Contract, ecosystem int64) error {
+	for _, item := range list {
+		clist, err := script.ContractsList(item.Value)
+		if err != nil {
+			return err
+		}
+		if ecosystem < item.Ecosystem {
+			LoadSysFuncs(smartVM, int(item.Ecosystem))
+			if ecosystem != item.Ecosystem-1 {
+				return logError(errContractEcosystem, consts.ContractError,
+					fmt.Sprintf("id=%d", item.ID))
+			}
+			ecosystem = item.Ecosystem
+		}
+		if item.WalletID != 0 && item.TokenID != 0 {
+			fmt.Println(`ITEM`, item)
+		}
+		owner := script.OwnerInfo{
+			StateID:  uint32(item.Ecosystem),
+			Active:   false,
+			TableID:  item.ID,
+			WalletID: item.WalletID,
+			TokenID:  item.TokenID,
+		}
+		if err = Compile(item.Value, &owner); err != nil {
+			logErrorValue(err, consts.EvalError, "Load Contract", strings.Join(clist, `,`))
+		}
+	}
+	return nil
+}
+
 // LoadContracts reads and compiles contracts from smart_contracts tables
-func LoadContracts(transaction *model.DbTransaction) error {
-	ecosystemsIds, _, err := model.GetAllSystemStatesIDs()
+func LoadContracts() error {
+	contract := &model.Contract{}
+	count, err := contract.Count()
 	if err != nil {
-		return logErrorDB(err, "selecting ids from ecosystems")
+		return logErrorDB(err, "getting count of contracts")
 	}
 
 	defer ExternOff()
-
-	for _, ecosystemID := range ecosystemsIds {
-		prefix := strconv.FormatInt(ecosystemID, 10)
-		if err := LoadContract(transaction, prefix); err != nil {
+	var offset int64
+	listCount := int64(20)
+	for ; offset < count; offset += listCount {
+		list, err := contract.GetList(offset, listCount)
+		if err != nil {
+			return logErrorDB(err, "getting list of contracts")
+		}
+		if err = loadContractList(list, 0); err != nil {
 			return err
 		}
 	}
-
-	ExternOff()
 	return nil
 }
 
@@ -460,44 +493,22 @@ func ConditionById(table string, validate bool) {
 }
 
 // LoadContract reads and compiles contract of new state
-func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
-	var contracts []map[string]string
-	contracts, err = model.GetAllTransaction(transaction,
-		`select * from "1_contracts" where ecosystem = ? order by id`, -1, prefix)
-	if err != nil {
-		return logErrorDB(err, "selecting all transactions from contracts")
-	}
-	state := uint32(converter.StrToInt64(prefix))
-	LoadSysFuncs(smartVM, int(state))
-	for _, item := range contracts {
-		list, err := script.ContractsList(item[`value`])
-		if err != nil {
-			return err
-		}
-		names := strings.Join(list, `,`)
-		owner := script.OwnerInfo{
-			StateID:  state,
-			Active:   item[`active`] == `1`,
-			TableID:  converter.StrToInt64(item[`id`]),
-			WalletID: converter.StrToInt64(item[`wallet_id`]),
-			TokenID:  converter.StrToInt64(item[`token_id`]),
-		}
-		if err = Compile(item[`value`], &owner); err != nil {
-			logErrorValue(err, consts.EvalError, "Load Contract", names)
-		}
-	}
+func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error) {
+	contract := &model.Contract{}
 
+	defer ExternOff()
+	list, err := contract.GetFromEcosystem(transaction, ecosystem)
+	if err != nil {
+		return logErrorDB(err, "selecting all contracts from ecosystem")
+	}
+	if err = loadContractList(list, ecosystem-1); err != nil {
+		return err
+	}
 	return
 }
 
 func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
-	var contracts []map[string]string
 
-	contracts, err = model.GetAllTransaction(transaction,
-		`select * from "1_contracts" where ecosystem=? order by id`, -1, prefix)
-	if err != nil {
-		return err
-	}
 	state := converter.StrToInt64(prefix)
 	vm := GetVM()
 
@@ -507,25 +518,29 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	} else if conf.Config.IsVDEMaster() {
 		vmt = script.VMTypeVDEMaster
 	}
-
 	EmbedFuncs(vm, vmt)
+	defer ExternOff()
+
+	contract := &model.Contract{}
+	list, err := contract.GetFromEcosystem(transaction, state)
+	if err != nil {
+		return logErrorDB(err, "selecting all contracts from ecosystem")
+	}
 	LoadSysFuncs(vm, int(state))
-	for _, item := range contracts {
-		list, err := script.ContractsList(item[`value`])
+	for _, item := range list {
+		clist, err := script.ContractsList(item.Value)
 		if err != nil {
 			return err
 		}
-		names := strings.Join(list, `,`)
 		owner := script.OwnerInfo{
 			StateID:  uint32(state),
 			Active:   false,
-			TableID:  converter.StrToInt64(item[`id`]),
+			TableID:  item.ID,
 			WalletID: 0,
 			TokenID:  0,
 		}
-
-		if err = vmCompile(vm, item[`value`], &owner); err != nil {
-			logErrorValue(err, consts.EvalError, "Load VDE Contract", names)
+		if err = vmCompile(vm, item.Value, &owner); err != nil {
+			logErrorValue(err, consts.EvalError, "Load VDE Contract", strings.Join(clist, `,`))
 		}
 	}
 
