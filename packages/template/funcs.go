@@ -637,6 +637,7 @@ func dbfindTag(par parFunc) string {
 
 	sc := par.Workspace.SmartContract
 	tblname := converter.ParseTable(strings.Trim(macro((*par.Pars)[`Name`], par.Workspace.Vars), `"`), state)
+	tblname = strings.ToLower(tblname)
 
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
