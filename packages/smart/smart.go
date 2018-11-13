@@ -360,7 +360,7 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts(transaction *model.DbTransaction) error {
-	ecosystemsIds, err := model.GetAllSystemStatesIDs()
+	ecosystemsIds, _, err := model.GetAllSystemStatesIDs()
 	if err != nil {
 		return logErrorDB(err, "selecting ids from ecosystems")
 	}
@@ -847,6 +847,8 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 			return err
 		}
 
+		fmt.Printf("block_time %d\n", sc.BlockData.Time)
+
 		_, _, err = sc.insert(
 			[]string{
 				"sender_id",
@@ -856,6 +858,7 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 				"block_id",
 				"txhash",
 				"ecosystem",
+				"created_at",
 			},
 			[]interface{}{
 				fromIDString,
@@ -865,6 +868,7 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 				sc.BlockData.BlockID,
 				sc.TxHash,
 				sc.TxSmart.TokenEcosystem,
+				sc.BlockData.Time,
 			},
 			`1_history`)
 		if err != nil {

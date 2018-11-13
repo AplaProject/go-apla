@@ -61,6 +61,7 @@ func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTailTag, defaultTailTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
+	funcs[`AddressToId`] = tplFunc{addressIDTag, defaultTag, `addresstoid`, `Wallet`}
 	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source,Ecosystem`}
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
@@ -309,6 +310,18 @@ func addressTag(par parFunc) string {
 		return `unknown address`
 	}
 	return converter.AddressToString(id)
+}
+
+func addressIDTag(par parFunc) string {
+	address := (*par.Pars)[`Wallet`]
+	if len(address) == 0 {
+		return (*par.Workspace.Vars)[`key_id`]
+	}
+	id := smart.AddressToID(processToText(par, macro(address, par.Workspace.Vars)))
+	if id == 0 {
+		return `address is invalid`
+	}
+	return converter.Int64ToStr(id)
 }
 
 func calculateTag(par parFunc) string {
@@ -624,6 +637,7 @@ func dbfindTag(par parFunc) string {
 
 	sc := par.Workspace.SmartContract
 	tblname := converter.ParseTable(strings.Trim(macro((*par.Pars)[`Name`], par.Workspace.Vars), `"`), state)
+	tblname = strings.ToLower(tblname)
 
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {

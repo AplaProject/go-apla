@@ -21,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.0.6"
+const VERSION = "1.2.0"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
@@ -33,7 +33,7 @@ const NETWORK_ID = 1
 const DEFAULT_TCP_PORT = 7078
 
 // FounderAmount is the starting amount of founder
-const FounderAmount = 50000
+const FounderAmount = 100000000
 
 // MoneyDigits is numbers of digits for tokens 1000000000000000000
 const MoneyDigits = 18
