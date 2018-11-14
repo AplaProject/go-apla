@@ -93,7 +93,6 @@ var (
 	errIncorrectParameter = errors.New(`Incorrect parameter of the condition function`)
 	errParseTransaction   = errors.New(`parse transaction`)
 	errInputSlice         = errors.New(`input slice is short`)
-	errContractEcosystem  = errors.New(`Wrong ecosystem of contract`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )
