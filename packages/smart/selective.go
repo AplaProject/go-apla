@@ -17,16 +17,12 @@
 package smart
 
 import (
-	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
-
+	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -46,312 +42,118 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 	return nil
 }
 
-func getParam(fields []string, name string) int {
-	for i, v := range fields {
-		if strings.ToLower(v) == name {
-			return i
-		}
-	}
-	return -1
-}
-
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
 	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
-	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
+
 	var (
-		tableID               string
-		err                   error
-		cost                  int64
-		rollbackInfoStr       string
-		isKeyTable            bool
-		keyEcosystem, keyName string
+		cost            int64
+		err             error
+		rollbackInfoStr string
 	)
+
 	logger := sc.GetLogger()
-
-	idNames := strings.SplitN(table, `_`, 2)
-	if len(idNames) == 2 {
-		keyName = idNames[1]
-		if v, ok := model.FirstEcosystemTables[keyName]; ok && !v {
-			isKeyTable = true
-			keyEcosystem = idNames[0]
-			table = `1_` + keyName
-
-			if isEcosystem := getParam(fields, `ecosystem`); isEcosystem >= 0 && len(ivalues) > isEcosystem &&
-				converter.StrToInt64(fmt.Sprint(ivalues[isEcosystem])) > 0 {
-				if whereFields == nil {
-					keyEcosystem = fmt.Sprint(ivalues[isEcosystem])
-				}
-			} else {
-				fields = append(fields, "ecosystem")
-				ivalues = append(ivalues, keyEcosystem)
-			}
-		}
-	}
-
 	if generalRollback && sc.BlockData == nil {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
 
-	for i, v := range ivalues {
-		switch v.(type) {
-		case string:
-			if strings.HasPrefix(strings.TrimSpace(v.(string)), `timestamp`) {
-				if err = checkNow(v.(string)); err != nil {
-					return 0, ``, err
-				}
-			}
-			if len(fields) > i && converter.IsByteColumn(table, fields[i]) {
-				if vbyte, err := hex.DecodeString(v.(string)); err == nil {
-					ivalues[i] = vbyte
-				}
-			}
-		}
+	sqlBuilder := &qb.SQLQueryBuilder{
+		Entry:        logger,
+		Table:        table,
+		Fields:       fields,
+		FieldValues:  ivalues,
+		WhereFields:  whereFields,
+		WhereValues:  whereValues,
+		KeyTableChkr: model.KeyTableChecker{},
 	}
 
-	values, err := converter.InterfaceSliceToStr(ivalues)
+	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
+
+	selectQuery, err := sqlBuilder.GetSelectExpr()
 	if err != nil {
-		return 0, ``, err
+		logger.WithFields(log.Fields{"error": err}).Error("on getting sql select statement")
+		return 0, "", err
 	}
 
-	addSQLFields := `id,`
-	for i, field := range fields {
-		field = strings.TrimSpace(strings.ToLower(field))
-		fields[i] = field
-		if field[:1] == "+" || field[:1] == "-" {
-			addSQLFields += field[1:] + ","
-		} else if strings.HasPrefix(field, `timestamp `) {
-			addSQLFields += field[len(`timestamp `):] + `,`
-		} else if strings.Contains(field, `->`) {
-			addSQLFields += field[:strings.Index(field, `->`)] + `,`
-		} else {
-			addSQLFields += `"` + field + `",`
-		}
-	}
-
-	addSQLWhere := ""
-
-	if whereFields != nil && whereValues != nil {
-		for i := 0; i < len(whereFields); i++ {
-			if val := converter.StrToInt64(whereValues[i]); val != 0 {
-				addSQLWhere += whereFields[i] + "= " + escapeSingleQuotes(whereValues[i]) + " AND "
-			} else {
-				addSQLWhere += whereFields[i] + "= '" + escapeSingleQuotes(whereValues[i]) + "' AND "
-			}
-		}
-		if isKeyTable {
-			if isEcosystem := getParam(whereFields, `ecosystem`); isEcosystem < 0 {
-				addSQLWhere += fmt.Sprintf("ecosystem = '%d' AND ", converter.StrToInt64(keyEcosystem))
-			}
-		}
-	}
-	if len(addSQLWhere) > 0 {
-		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
-	}
-	addSQLFields = strings.TrimRight(addSQLFields, ",")
-	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
 	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting query total cost")
-		return 0, tableID, err
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "whereF": whereFields, "whereV": whereValues}).Error("getting query total cost")
+		return 0, "", err
 	}
+
 	logData, err := model.GetOneRowTransaction(sc.DbTransaction, selectQuery).String()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting one row transaction")
-		return 0, tableID, err
+		return 0, "", err
 	}
+
 	cost += selectCost
 	if exists && len(logData) == 0 {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "query": selectQuery}).Error("updating for not existing record")
-		return 0, tableID, errUpdNotExistRecord
+		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "whereF": whereFields, "whereV": whereValues, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
+		return 0, "", errUpdNotExistRecord
 	}
-	jsonFields := make(map[string]map[string]string)
+
 	if whereFields != nil && len(logData) > 0 {
-		if isKeyTable {
-			keyEcosystem = logData["ecosystem"]
-		}
-		rollbackInfo := make(map[string]string)
-		for k, v := range logData {
-			if k == `id` || (isKeyTable && k == "ecosystem") {
-				continue
-			}
-			if converter.IsByteColumn(table, k) && v != "" {
-				rollbackInfo[k] = string(converter.BinToHex([]byte(v)))
-			} else {
-				rollbackInfo[k] = v
-			}
-			if k[:1] == "+" || k[:1] == "-" {
-				addSQLFields += k[1:] + ","
-			} else if strings.HasPrefix(k, `timestamp `) {
-				addSQLFields += k[len(`timestamp `):] + `,`
-			} else {
-				addSQLFields += k + ","
-			}
-		}
-		jsonRollbackInfo, err := json.Marshal(rollbackInfo)
+		var err error
+		rollbackInfoStr, err = sqlBuilder.GenerateRollBackInfoString(logData)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback info to json")
-			return 0, tableID, err
+			return 0, "", err
 		}
-		rollbackInfoStr = string(jsonRollbackInfo)
-		addSQLUpdate := ""
-		for i := 0; i < len(fields); i++ {
-			if isKeyTable && fields[i] == "ecosystem" {
-				continue
-			}
-			if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
-				addSQLUpdate += fields[i] + `=decode('` + hex.EncodeToString([]byte(values[i])) + `','HEX'),`
-			} else if fields[i][:1] == "+" {
-				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `+` + escapeSingleQuotes(values[i]) + `,`
-			} else if fields[i][:1] == "-" {
-				addSQLUpdate += fields[i][1:len(fields[i])] + `=` + fields[i][1:len(fields[i])] + `-` + escapeSingleQuotes(values[i]) + `,`
-			} else if values[i] == `NULL` {
-				addSQLUpdate += fields[i] + `= NULL,`
-			} else if strings.HasPrefix(fields[i], `timestamp `) {
-				addSQLUpdate += fields[i][len(`timestamp `):] + `= to_timestamp('` + values[i] + `'),`
-			} else if strings.HasPrefix(values[i], `timestamp `) {
-				addSQLUpdate += fields[i] + `= timestamp '` + escapeSingleQuotes(values[i][len(`timestamp `):]) + `',`
-			} else if strings.Contains(fields[i], `->`) {
-				colfield := strings.Split(fields[i], `->`)
-				if len(colfield) == 2 {
-					if jsonFields[colfield[0]] == nil {
-						jsonFields[colfield[0]] = make(map[string]string)
-					}
-					jsonFields[colfield[0]][colfield[1]] = values[i]
-				}
-			} else {
-				addSQLUpdate += `"` + fields[i] + `"='` + escapeSingleQuotes(values[i]) + `',`
-			}
+
+		updateExpr, err := sqlBuilder.GetSQLUpdateExpr(logData)
+		if err != nil {
+			return 0, "", err
 		}
-		for colname, colvals := range jsonFields {
-			var initial string
-			out, err := json.Marshal(colvals)
-			if err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling update columns for jsonb")
-				return 0, ``, err
-			}
-			if len(logData[colname]) > 0 && logData[colname] != `NULL` {
-				initial = colname
-			} else {
-				initial = `'{}'`
-			}
-			addSQLUpdate += fmt.Sprintf(`%s=%s::jsonb || '%s'::jsonb,`, colname, initial, string(out))
+
+		whereExpr, err := sqlBuilder.GetSQLWhereExpr()
+		if err != nil {
+			logger.WithFields(log.Fields{"error": err}).Error("on getting where expression for update")
+			return 0, "", err
 		}
-		addSQLUpdate = strings.TrimRight(addSQLUpdate, `,`)
 		if !sc.VDE {
-			updateQuery := `UPDATE "` + table + `" SET ` + addSQLUpdate + addSQLWhere
+			updateQuery := `UPDATE "` + sqlBuilder.Table + `" SET ` + updateExpr + " " + whereExpr
 			updateCost, err := queryCoster.QueryCost(sc.DbTransaction, updateQuery)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": updateQuery}).Error("getting query total cost for update query")
-				return 0, tableID, err
+				return 0, "", err
 			}
 			cost += updateCost
 		}
-		err = model.Update(sc.DbTransaction, table, addSQLUpdate, addSQLWhere)
+
+		err = model.Update(sc.DbTransaction, sqlBuilder.Table, updateExpr, whereExpr)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "sql": addSQLUpdate}).Error("getting update query")
-			return 0, tableID, err
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "sql": updateExpr}).Error("getting update query")
+			return 0, "", err
 		}
-		tableID = logData[`id`]
+		sqlBuilder.SetTableID(logData[`id`])
 	} else {
-		isID := false
-		addSQLIns0 := []string{}
-		addSQLIns1 := []string{}
-		for i := 0; i < len(fields); i++ {
-			if fields[i] == `id` {
-				isID = true
-				tableID = escapeSingleQuotes(values[i])
-			}
 
-			if strings.Contains(fields[i], `->`) {
-				colfield := strings.Split(fields[i], `->`)
-				if len(colfield) == 2 {
-					if jsonFields[colfield[0]] == nil {
-						jsonFields[colfield[0]] = make(map[string]string)
-					}
-					jsonFields[colfield[0]][colfield[1]] = escapeSingleQuotes(values[i])
-					continue
-				}
-			}
+		insertQuery, err := sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{Tx: sc.DbTransaction})
+		if err != nil {
+			logger.WithFields(log.Fields{"error": err}).Error("on build insert qwery")
+			return 0, "", err
+		}
 
-			if fields[i][:1] == "+" || fields[i][:1] == "-" {
-				addSQLIns0 = append(addSQLIns0, fields[i][1:len(fields[i])])
-			} else if strings.HasPrefix(fields[i], `timestamp `) {
-				addSQLIns0 = append(addSQLIns0, fields[i][len(`timestamp `):])
-			} else {
-				addSQLIns0 = append(addSQLIns0, `"`+fields[i]+`"`)
-			}
-			if converter.IsByteColumn(table, fields[i]) && len(values[i]) != 0 {
-				addSQLIns1 = append(addSQLIns1, `decode('`+hex.EncodeToString([]byte(values[i]))+`','HEX')`)
-			} else if values[i] == `NULL` {
-				addSQLIns1 = append(addSQLIns1, `NULL`)
-			} else if strings.HasPrefix(fields[i], `timestamp`) {
-				addSQLIns1 = append(addSQLIns1, `to_timestamp('`+escapeSingleQuotes(values[i])+`')`)
-			} else if strings.HasPrefix(values[i], `timestamp`) {
-				addSQLIns1 = append(addSQLIns1, `timestamp '`+escapeSingleQuotes(values[i][len(`timestamp `):])+`'`)
-			} else {
-				addSQLIns1 = append(addSQLIns1, `'`+escapeSingleQuotes(values[i])+`'`)
-			}
-		}
-		for colname, colvals := range jsonFields {
-			out, err := json.Marshal(colvals)
-			if err != nil {
-				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling update columns for jsonb")
-				return 0, ``, err
-			}
-			addSQLIns0 = append(addSQLIns0, colname)
-			addSQLIns1 = append(addSQLIns1, fmt.Sprintf(`'%s'::jsonb`, string(out)))
-		}
-		if whereFields != nil && whereValues != nil {
-			for i := 0; i < len(whereFields); i++ {
-				if whereFields[i] == `id` {
-					isID = true
-					tableID = whereValues[i]
-				}
-				addSQLIns0 = append(addSQLIns0, whereFields[i])
-				addSQLIns1 = append(addSQLIns1, escapeSingleQuotes(whereValues[i]))
-			}
-		}
-		if !isID {
-			id, err := model.GetNextID(sc.DbTransaction, table)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id for table")
-				return 0, ``, err
-			}
-			tableID = converter.Int64ToStr(id)
-			addSQLIns0 = append(addSQLIns0, `id`)
-			addSQLIns1 = append(addSQLIns1, `'`+tableID+`'`)
-		}
-		insertQuery := `INSERT INTO "` + table + `" (` + strings.Join(addSQLIns0, ",") +
-			`) VALUES (` + strings.Join(addSQLIns1, ",") + `)`
 		insertCost, err := queryCoster.QueryCost(sc.DbTransaction, insertQuery)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("getting total query cost for insert query")
-			return 0, tableID, err
+			return 0, "", err
 		}
+
 		cost += insertCost
 		err = model.GetDB(sc.DbTransaction).Exec(insertQuery).Error
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": insertQuery}).Error("executing insert query")
+			return 0, "", err
 		}
-	}
-	if err != nil {
-		return 0, tableID, err
 	}
 
 	if generalRollback {
-		if isKeyTable {
-			table = keyEcosystem + `_` + keyName
-		}
-		if err = addRollback(sc, table, tableID, rollbackInfoStr); err != nil {
-			return 0, tableID, err
+		if err := addRollback(sc, sqlBuilder.Table, sqlBuilder.TableID(), rollbackInfoStr); err != nil {
+			return 0, sqlBuilder.TableID(), err
 		}
 	}
-	return cost, tableID, nil
-}
-
-func escapeSingleQuotes(val string) string {
-	return strings.Replace(val, `'`, `''`, -1)
+	return cost, sqlBuilder.TableID(), nil
 }
 
 func (sc *SmartContract) insert(fields []string, ivalues []interface{},
@@ -363,4 +165,12 @@ func (sc *SmartContract) update(fields []string, values []interface{},
 	table string, whereField string, whereValue interface{}) (int64, string, error) {
 	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
 		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
+}
+
+func shortString(raw string, length int) string {
+	if len(raw) > length {
+		return raw[:length]
+	}
+
+	return raw
 }

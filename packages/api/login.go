@@ -51,6 +51,16 @@ type loginForm struct {
 	IsMobile    bool     `schema:"mobile"`
 }
 
+type publicKeyValue struct {
+	hexValue
+}
+
+func (pk *publicKeyValue) UnmarshalText(v []byte) (err error) {
+	pk.value, err = hex.DecodeString(string(v))
+	pk.value = crypto.CutPub(pk.value)
+	return
+}
+
 func (f *loginForm) Validate(r *http.Request) error {
 	if f.Expire == 0 {
 		f.Expire = int64(jwtExpire)
