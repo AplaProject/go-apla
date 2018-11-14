@@ -80,7 +80,7 @@ func setRoutes(r *mux.Router) {
 		api.HandleFunc("/ecosystems", authRequire(getEcosystemsHandler)).Methods("GET")
 		api.HandleFunc("/ecosystemparam/{name}", authRequire(getEcosystemParamHandler)).Methods("GET")
 		api.HandleFunc("/ecosystemname", getEcosystemNameHandler).Methods("GET")
-		api.HandleFunc("/ecosystemname", authRequire(getTxStatusHandler)).Methods("POST")
+		api.HandleFunc("/txstatus", authRequire(getTxStatusHandler)).Methods("POST")
 	}
 }
 

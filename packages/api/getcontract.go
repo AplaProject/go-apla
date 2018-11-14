@@ -49,10 +49,10 @@ func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
-	contract := getContract(r, params["contract"])
+	contract := getContract(r, params["name"])
 	if contract == nil {
 		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": params["contract"]}).Error("contract name")
-		errorResponse(w, errContract.Errorf(params["contract"]))
+		errorResponse(w, errContract.Errorf(params["name"]))
 		return
 	}
 
