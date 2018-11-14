@@ -17,120 +17,79 @@
 package api
 
 import (
-	"strings"
+	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 
-	hr "github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
-func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(
-		method,
-		consts.ApiPath+pattern,
-		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
-	)
-}
-
 // Route sets routing pathes
-func Route(route *hr.Router) {
-	get := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `GET`, pattern, params, handler...)
-	}
-	post := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `POST`, pattern, params, handler...)
-	}
+func setRoutes(r *mux.Router) {
+	r.StrictSlash(true)
+	r.Use(loggerMiddleware, recoverMiddleware, statsdMiddleware)
 
-	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
-	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
+	// api router with prefix path
+	api := r.PathPrefix("/api/v2").Subrouter()
+	api.Use(nodeStateMiddleware, tokenMiddleware, clientMiddleware)
 
-	get(`contract/:name`, ``, authWallet, getContract)
-	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
-	get(`getuid`, ``, getUID)
-	get(`keyinfo/:wallet`, ``, keyInfo)
-	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
-	get(`sections`, `?limit ?offset:int64,?lang:string`, authWallet, sections)
-	get(`row/:name/:id`, `?columns:string`, authWallet, row)
-	get(`interface/page/:name`, ``, authWallet, getPageRow)
-	get(`interface/menu/:name`, ``, authWallet, getMenuRow)
-	get(`interface/block/:name`, ``, authWallet, getBlockInterfaceRow)
-	// get(`systemparams`, `?names:string`, authWallet, systemParams)
-	get(`table/:name`, ``, authWallet, table)
-	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	get(`test/:name`, ``, getTest)
-	get(`version`, ``, getVersion)
-	get(`avatar/:ecosystem/:member`, ``, getAvatar)
-	get(`config/:option`, ``, getConfigOption)
-	post(`content/source/:name`, ``, authWallet, getSource)
-	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
-	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
-	post(`content/hash/:name`, `?lang:string`, getPageHash)
-	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
-	post(`sendTx`, ``, authWallet, sendTx)
-	post(`test/:name`, ``, getTest)
-	post(`content`, `template ?source:string`, jsonContent)
-	post(`updnotificator`, `ids:string`, updateNotificator)
-	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
+	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", getDataHandler).Methods("GET")
+	api.HandleFunc("/data/{prefix}_binaries/{id}/data/{hash}", getBinaryHandler).Methods("GET")
+	api.HandleFunc("/avatar/{ecosystem}/{member}", getAvatarHandler).Methods("GET")
+
+	api.HandleFunc("/contract/{name}", authRequire(getContractInfoHandler)).Methods("GET")
+	api.HandleFunc("/contracts", authRequire(getContractsHandler)).Methods("GET")
+	api.HandleFunc("/getuid", getUIDHandler).Methods("GET")
+	api.HandleFunc("/keyinfo/{wallet}", getKeyInfoHandler).Methods("GET")
+	api.HandleFunc("/list/{name}", authRequire(getListHandler)).Methods("GET")
+	api.HandleFunc("/sections", authRequire(getSectionsHandler)).Methods("GET")
+	api.HandleFunc("/row/{name}/{id}", authRequire(getRowHandler)).Methods("GET")
+	api.HandleFunc("/interface/page/{name}", authRequire(getPageRowHandler)).Methods("GET")
+	api.HandleFunc("/interface/menu/{name}", authRequire(getMenuRowHandler)).Methods("GET")
+	api.HandleFunc("/interface/block/{name}", authRequire(getBlockInterfaceRowHandler)).Methods("GET")
+	api.HandleFunc("/table/{name}", authRequire(getTableHandler)).Methods("GET")
+	api.HandleFunc("/tables", authRequire(getTablesHandler)).Methods("GET")
+	api.HandleFunc("/test/{name}", getTestHandler).Methods("GET", "POST")
+	api.HandleFunc("/version", getVersionHandler).Methods("GET")
+	api.HandleFunc("/config/{option}", getConfigOptionHandler).Methods("GET")
+
+	api.HandleFunc("/content/source/{name}", authRequire(getSourceHandler)).Methods("POST")
+	api.HandleFunc("/content/page/{name}", authRequire(getPageHandler)).Methods("POST")
+	api.HandleFunc("/content/hash/{name}", authRequire(getPageHashHandler)).Methods("POST")
+	api.HandleFunc("/content/menu/{name}", authRequire(getMenuHandler)).Methods("POST")
+	api.HandleFunc("/content", authRequire(jsonContentHandler)).Methods("POST")
+	api.HandleFunc("/login", loginHandler).Methods("POST")
+	api.HandleFunc("/sendTx", authRequire(sendTxHandler)).Methods("POST")
+	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST")
+	api.HandleFunc("/node/{name}", nodeContractHandler).Methods("POST")
 
 	if !conf.Config.IsSupportingVDE() {
-		get(`txinfo/:hash`, `?contractinfo:int64`, authWallet, txinfo)
-		get(`txinfomultiple`, `data:string,?contractinfo:int64`, authWallet, txinfoMulti)
-		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
-		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
-		get(`history/:table/:id`, ``, authWallet, getHistory)
-		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
-		get(`block/:id`, ``, getBlockInfo)
-		get(`maxblockid`, ``, getMaxBlockID)
-		get("blocks", "block_id ?count:int64", getBlocksTxInfo)
-		get("detailed_blocks", "block_id ?count:int64", getBlocksDetailedInfo)
-		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
-		get(`systemparams`, `?names:string`, authWallet, systemParams)
-		get(`ecosystems`, ``, authWallet, ecosystems)
-		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
-		get("ecosystemname", "?id:int64", getEcosystemName)
-		post(`txstatus`, `data:string`, authWallet, txstatus)
+		api.HandleFunc("/txinfo/{hash}", authRequire(getTxInfoHandler)).Methods("GET")
+		api.HandleFunc("/txinfomultiple", authRequire(getTxInfoMultiHandler)).Methods("GET")
+		api.HandleFunc("/appparam/{appID}/{name}", authRequire(getAppParamHandler)).Methods("GET")
+		api.HandleFunc("/appparams/{appID}", authRequire(getAppParamsHandler)).Methods("GET")
+		api.HandleFunc("/history/{name}/{id}", authRequire(getHistoryHandler)).Methods("GET")
+		api.HandleFunc("/balance/{wallet}", authRequire(getBalanceHandler)).Methods("GET")
+		api.HandleFunc("/block/{id}", getBlockInfoHandler).Methods("GET")
+		api.HandleFunc("/maxblockid", getMaxBlockHandler).Methods("GET")
+		api.HandleFunc("/blocks", getBlocksTxInfoHandler).Methods("GET")
+		api.HandleFunc("/detailed_blocks", getBlocksDetailedInfoHandler).Methods("GET")
+		api.HandleFunc("/ecosystemparams", authRequire(getEcosystemParamsHandler)).Methods("GET")
+		api.HandleFunc("/systemparams", authRequire(getSystemParamsHandler)).Methods("GET")
+		api.HandleFunc("/ecosystems", authRequire(getEcosystemsHandler)).Methods("GET")
+		api.HandleFunc("/ecosystemparam/{name}", authRequire(getEcosystemParamHandler)).Methods("GET")
+		api.HandleFunc("/ecosystemname", getEcosystemNameHandler).Methods("GET")
+		api.HandleFunc("/ecosystemname", authRequire(getTxStatusHandler)).Methods("POST")
 	}
 }
 
-func processParams(input string) (params map[string]int) {
-	if len(input) == 0 {
-		return
-	}
-	params = make(map[string]int)
-	for _, par := range strings.Split(input, `,`) {
-		var vtype int
-		types := strings.Split(par, `:`)
-		if len(types) != 2 {
-			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect api route parameters")
-		}
-		switch types[1] {
-		case `hex`:
-			vtype = pHex
-		case `string`:
-			vtype = pString
-		case `int64`:
-			vtype = pInt64
-		default:
-			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Unknown type of api route parameter")
-		}
-		vars := strings.Split(types[0], ` `)
-		for _, v := range vars {
-			v = strings.TrimSpace(v)
-			if len(v) == 0 {
-				continue
-			}
-			if v[0] == '?' {
-				if len(v) > 1 {
-					params[v[1:]] = vtype | pOptional
-				} else {
-					log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect name of api route parameter")
-				}
-			} else {
-				params[v] = vtype
-			}
-		}
-	}
-	return
+func NewRouter() http.Handler {
+	r := mux.NewRouter()
+	setRoutes(r)
+	return r
+}
+
+func WithCors(h http.Handler) http.Handler {
+	return handlers.CORS()(h)
 }

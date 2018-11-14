@@ -36,13 +36,15 @@ type updateNotificatorResult struct {
 	Result bool `json:"result"`
 }
 
-func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var list []idItem
+func updateNotificatorHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
 
-	err := json.Unmarshal([]byte(data.params["ids"].(string)), &list)
+	var list []idItem
+	err := json.Unmarshal([]byte(r.FormValue("ids")), &list)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling ids")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling ids")
+		errorResponse(w, err)
+		return
 	}
 
 	stateList := make(map[int64][]int64)
@@ -56,6 +58,6 @@ func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, lo
 	}
 
 	go notificator.SendNotificationsByRequest(stateList)
-	data.result = &updateNotificatorResult{Result: true}
-	return nil
+
+	jsonResponse(w, &updateNotificatorResult{Result: true})
 }

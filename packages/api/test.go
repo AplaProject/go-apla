@@ -21,14 +21,16 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
 type getTestResult struct {
 	Value string `json:"value"`
 }
 
-func getTest(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	data.result = &getTestResult{Value: smart.GetTestValue(data.params[`name`].(string))}
-	return nil
+func getTestHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	jsonResponse(w, &getTestResult{
+		Value: smart.GetTestValue(params["name"]),
+	})
 }

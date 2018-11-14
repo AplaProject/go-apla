@@ -18,7 +18,7 @@ package api
 
 import (
 	"crypto/md5"
-	"errors"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -27,83 +27,72 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/gorilla/mux"
 
-	hr "github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
 const binaryColumn = "data"
 
-var errWrongHash = errors.New("Wrong hash")
+func compareHash(data []byte, urlHash string) bool {
+	urlHash = strings.ToLower(urlHash)
 
-func compareHash(w http.ResponseWriter, bin *model.Binary, data []byte, ps hr.Params) bool {
-	urlHash := strings.ToLower(ps.ByName(`hash`))
-	if len(urlHash) == 32 && fmt.Sprintf(`%x`, md5.Sum(data)) == urlHash {
-		return true
+	var hash []byte
+	switch len(urlHash) {
+	case 32:
+		h := md5.Sum(data)
+		hash = h[:]
+	case 64:
+		hash, _ = crypto.Hash(data)
 	}
-	if len(urlHash) == 64 {
-		var hashData string
-		if bin == nil {
-			hash, _ := crypto.Hash([]byte(data))
-			hashData = fmt.Sprintf(`%x`, hash)
-		} else {
-			hashData = bin.Hash
-		}
-		if hashData == urlHash {
-			return true
-		}
-	}
-	errorAPI(w, errWrongHash, http.StatusNotFound)
-	return false
+
+	return hex.EncodeToString(hash) == urlHash
 }
 
-func dataHandler() hr.Handle {
-	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-		tblname := ps.ByName("table")
-		column := ps.ByName("column")
+func getDataHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
 
-		if strings.Contains(tblname, model.BinaryTableSuffix) && column == binaryColumn {
-			binary(w, r, ps)
-			return
-		}
+	table, column := params["table"], params["column"]
 
-		id := ps.ByName(`id`)
-		data, err := model.GetColumnByID(tblname, column, id)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
-			errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
-			return
-		}
-
-		if !compareHash(w, nil, []byte(data), ps) {
-			return
-		}
-
-		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", "attachment")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Write([]byte(data))
-		return
-	})
-}
-
-func binary(w http.ResponseWriter, r *http.Request, ps hr.Params) {
-	bin := model.Binary{}
-	bin.SetTableName(ps.ByName("table"))
-
-	found, err := bin.GetByID(converter.StrToInt64(ps.ByName("id")))
+	data, err := model.GetColumnByID(table, column, params["id"])
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("getting binary by id")
-		errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting data from table")
+		errorResponse(w, errNotFound)
+		return
+	}
+
+	if !compareHash([]byte(data), params["hash"]) {
+		errorResponse(w, errHashWrong)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Content-Disposition", "attachment")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Write([]byte(data))
+	return
+}
+
+func getBinaryHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+
+	bin := model.Binary{}
+	found, err := bin.GetByID(converter.StrToInt64(params["id"]))
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Errorf("getting binary by id")
+		errorResponse(w, err)
 		return
 	}
 
 	if !found {
-		errorAPI(w, "E_SERVER", http.StatusNotFound)
+		errorResponse(w, errNotFound)
 		return
 	}
 
-	if !compareHash(w, &bin, bin.Data, ps) {
+	if !compareHash(bin.Data, params["hash"]) {
+		errorResponse(w, errHashWrong)
 		return
 	}
 

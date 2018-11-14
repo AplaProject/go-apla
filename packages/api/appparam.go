@@ -19,6 +19,8 @@ package api
 import (
 	"net/http"
 
+	"github.com/gorilla/mux"
+
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -26,25 +28,35 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func appParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	_, prefix, err := checkEcosystem(w, data, logger)
-	if err != nil {
-		return err
+func getAppParamHandler(w http.ResponseWriter, r *http.Request) {
+	form := &ecosystemForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
+
+	logger := getLogger(r)
+	params := mux.Vars(r)
+
 	ap := &model.AppParam{}
-	ap.SetTablePrefix(prefix)
-	name := data.params[`name`].(string)
-	found, err := ap.Get(nil, converter.StrToInt64(data.params[`appid`].(string)), name)
+	ap.SetTablePrefix(form.EcosystemPrefix)
+	name := params["name"]
+	found, err := ap.Get(nil, converter.StrToInt64(params["appID"]), name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting app parameter by name")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": name}).Error("app parameter not found")
-		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusBadRequest, name)
+		errorResponse(w, errParamNotFound.Errorf(name))
+		return
 	}
 
-	data.result = &paramValue{ID: converter.Int64ToStr(ap.ID), Name: ap.Name, Value: ap.Value,
-		Conditions: ap.Conditions}
-	return
+	jsonResponse(w, &paramResult{
+		ID:         converter.Int64ToStr(ap.ID),
+		Name:       ap.Name,
+		Value:      ap.Value,
+		Conditions: ap.Conditions,
+	})
 }
