@@ -847,8 +847,6 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 			return err
 		}
 
-		fmt.Printf("block_time %d\n", sc.BlockData.Time)
-
 		_, _, err = sc.insert(
 			[]string{
 				"sender_id",

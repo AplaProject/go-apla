@@ -44,11 +44,11 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/scheduler"
 	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
-
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -840,16 +840,6 @@ func PrepareWhere(where string) string {
 	return where
 }
 
-func checkNow(inputs ...string) error {
-	re := regexp.MustCompile(`(now\s*\(\s*\)|localtime|current_date|current_time)`)
-	for _, item := range inputs {
-		if re.Match([]byte(strings.ToLower(item))) {
-			return errNow
-		}
-	}
-	return nil
-}
-
 func GetColumns(inColumns interface{}) ([]string, error) {
 	var columns []string
 
@@ -872,7 +862,7 @@ func GetColumns(inColumns interface{}) ([]string, error) {
 	for i, v := range columns {
 		columns[i] = converter.Sanitize(strings.ToLower(v), `*->`)
 	}
-	if err := checkNow(columns...); err != nil {
+	if err := qb.CheckNow(columns...); err != nil {
 		return nil, err
 	}
 	return columns, nil
@@ -926,7 +916,7 @@ func GetOrder(inOrder interface{}) (string, error) {
 	if len(orders) == 0 {
 		orders = []string{`id`}
 	}
-	if err := checkNow(orders...); err != nil {
+	if err := qb.CheckNow(orders...); err != nil {
 		return ``, err
 	}
 	return strings.Join(orders, `,`), nil
@@ -1059,7 +1049,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 	}
 	if len(cond) > 0 {
 		where = strings.Join(cond, ` and `)
-		if err := checkNow(where); err != nil {
+		if err := qb.CheckNow(where); err != nil {
 			return ``, err
 		}
 	}
