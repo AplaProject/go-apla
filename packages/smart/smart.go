@@ -238,11 +238,19 @@ func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []s
 }
 
 func VMGetContractByID(vm *script.VM, id int32) *Contract {
-	idcont := id // - CNTOFF
+	var tableID int64
+	if id > consts.ShiftContractID {
+		tableID = int64(id - consts.ShiftContractID)
+		id = int32(tableID + vm.ShiftContract)
+	}
+	idcont := id
 	if len(vm.Children) <= int(idcont) {
 		return nil
 	}
 	if vm.Children[idcont] == nil || vm.Children[idcont].Type != script.ObjContract {
+		return nil
+	}
+	if tableID > 0 && vm.Children[idcont].Info.(*script.ContractInfo).Owner.TableID != tableID {
 		return nil
 	}
 	return &Contract{Name: vm.Children[idcont].Info.(*script.ContractInfo).Name,
@@ -357,22 +365,16 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
-func loadContractList(list []model.Contract, ecosystem *int64) error {
-	fmt.Println(`LOADING`, len(GetVM().Children))
+func loadContractList(list []model.Contract) error {
+	if smartVM.ShiftContract == 0 {
+		LoadSysFuncs(smartVM, 1)
+		smartVM.ShiftContract = int64(len(smartVM.Children) - 1)
+	}
+
 	for _, item := range list {
 		clist, err := script.ContractsList(item.Value)
 		if err != nil {
 			return err
-		}
-		if *ecosystem < item.Ecosystem && *ecosystem == 0 {
-			fmt.Println(`LOAD SYS`, int(item.Ecosystem), len(GetVM().Children))
-			LoadSysFuncs(smartVM, int(item.Ecosystem))
-			if *ecosystem != item.Ecosystem-1 {
-				return logError(errContractEcosystem, consts.ContractError,
-					fmt.Sprintf("id=%d", item.ID))
-			}
-			*ecosystem = item.Ecosystem
-			fmt.Println(`LOAD SYS OK`, len(GetVM().Children))
 		}
 		owner := script.OwnerInfo{
 			StateID:  uint32(item.Ecosystem),
@@ -384,7 +386,6 @@ func loadContractList(list []model.Contract, ecosystem *int64) error {
 		if err = Compile(item.Value, &owner); err != nil {
 			logErrorValue(err, consts.EvalError, "Load Contract", strings.Join(clist, `,`))
 		}
-		fmt.Println(item.ID, item.Name, len(GetVM().Children))
 	}
 	return nil
 }
@@ -398,16 +399,14 @@ func LoadContracts() error {
 	}
 
 	defer ExternOff()
-	var offset, ecosystem int64
-	listCount := int64(20)
-	//	LoadSysFuncs(smartVM, 1)
-	fmt.Println(`LoadContracts`, count)
+	var offset int64
+	listCount := int64(consts.ContractList)
 	for ; offset < count; offset += listCount {
 		list, err := contract.GetList(offset, listCount)
 		if err != nil {
 			return logErrorDB(err, "getting list of contracts")
 		}
-		if err = loadContractList(list, &ecosystem); err != nil {
+		if err = loadContractList(list); err != nil {
 			return err
 		}
 	}
@@ -504,9 +503,7 @@ func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error)
 	if err != nil {
 		return logErrorDB(err, "selecting all contracts from ecosystem")
 	}
-	fmt.Println(`Load Contract`, ecosystem)
-	curEcosys := ecosystem - 1
-	if err = loadContractList(list, &curEcosys); err != nil {
+	if err = loadContractList(list); err != nil {
 		return err
 	}
 	return
