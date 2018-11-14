@@ -3,6 +3,7 @@ package model
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
@@ -187,8 +188,10 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	if err := DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error; err != nil {
+	query := fmt.Sprintf(vde.GetVDEScript(), id, wallet)
+	if err := DBConn.Exec(query).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing vde script")
+		ioutil.WriteFile("/home/losaped/schema.sql", []byte(query), 0644)
 		return err
 	}
 

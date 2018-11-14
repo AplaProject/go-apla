@@ -358,6 +358,31 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 	return
 }
 
+func (t *Transaction) CallVDEContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
+	sc := smart.SmartContract{
+		VDE:           true,
+		Rollback:      false,
+		SysUpdate:     false,
+		VM:            smart.GetVM(),
+		TxSmart:       *t.TxSmart,
+		TxData:        t.TxData,
+		TxContract:    t.TxContract,
+		TxCost:        t.TxCost,
+		TxUsedCost:    t.TxUsedCost,
+		BlockData:     t.BlockData,
+		TxHash:        t.TxHash,
+		TxSignature:   t.TxSignature,
+		TxSize:        int64(len(t.TxBinaryData)),
+		PublicKeys:    t.PublicKeys,
+		DbTransaction: t.DbTransaction,
+		Rand:          t.Rand,
+	}
+	resultContract, err = sc.CallContract()
+	t.SysUpdate = sc.SysUpdate
+	t.Notifications = sc.Notifications
+	return
+}
+
 // CleanCache cleans cache of transaction parsers
 func CleanCache() {
 	txCache.Clean()

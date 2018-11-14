@@ -21,14 +21,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
 
@@ -39,29 +37,6 @@ import (
 
 type vdeCreateResult struct {
 	Result bool `json:"result"`
-}
-
-func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
-		return errorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
-	}
-	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
-	if _, err := sp.Get(nil, `founder_account`); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusBadRequest)
-	}
-	if converter.StrToInt64(sp.Value) != data.keyId {
-		logger.WithFields(log.Fields{"type": consts.AccessDenied, "error": fmt.Errorf(`Access denied`)}).Error("creating vde")
-		return errorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
-	}
-	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusInternalServerError)
-	}
-	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
-	data.result = vdeCreateResult{Result: true}
-	return nil
 }
 
 // InitSmartContract is initializes smart contract
@@ -169,7 +144,12 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 	}
 	result = &contractResult{Hash: hex.EncodeToString(hash)}
 
-	sc := smart.SmartContract{VDE: true, TxHash: hash, Rand: rand.New(rand.NewSource(time.Now().Unix()))}
+	sc := smart.SmartContract{
+		VDE:    true,
+		TxHash: hash,
+		Rand:   rand.New(rand.NewSource(time.Now().Unix())),
+	}
+
 	err = InitSmartContract(&sc, contractData)
 	if err != nil {
 		result.Message = &txstatusError{Type: "panic", Error: err.Error()}

@@ -1,6 +1,6 @@
 package vde
 
-var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions", "ecosystem") VALUES 
+var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES 
 (next_id('1_tables'), 'contracts', '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}', 
 '{"name": "false", 
 	"value": "ContractConditions(\"MainCondition\")",
