@@ -79,7 +79,7 @@ func TestJSON(t *testing.T) {
 	var timeout bool
 	vars := make(map[string]string)
 	vars[`_full`] = `0`
-	vars[`my`] = `Span(test)`
+	vars[`mytest`] = `Span(test)`
 	for _, item := range forTest {
 		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
@@ -90,6 +90,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(mykey,0266-5397-0542-4815-0876)Div(){AddressToId(#mykey#)=AddressToId()}`,
+		`[{"tag":"div","children":[{"tag":"text","text":"2665397054248150876"},{"tag":"text","text":"="}]}]`},
 	{`SetVar(t,7)
 		Button(Body: Span(my#t#)).ErrorRedirect(PageParams: name=Val(#t#val), PageName: "v#t#", ErrorID: myerr).ErrorRedirect(PageParams: par=#t#, PageName: "qqq", ErrorID: err1)`,
 		`[{"tag":"button","attr":{"errredirect":{"err1":{"errorid":"err1","pagename":"qqq","pageparams":{"par":{"text":"7","type":"text"}}},"myerr":{"errorid":"myerr","pagename":"v7","pageparams":{"name":{"params":["7val"],"type":"Val"}}}}},"children":[{"tag":"span","children":[{"tag":"text","text":"my7"}]}]}]`},
@@ -188,7 +190,7 @@ var forTest = tplList{
 	{`ArrayToSource(arr, [{"k1":"v1"},{"k2":"v2"}])ForList(arr){JsonToSource(json, #value#)}`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"k1\":\"v1\"}"],["1","{\"k2\":\"v2\"}"]],"source":"arr","types":["text","text"]}},{"tag":"forlist","attr":{"source":"arr"},"children":[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k1","v1"]],"source":"json","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k2","v2"]],"source":"json","types":["text","text"]}}]}]`},
 	{`Button(Body: addpage).CompositeContract().CompositeContract(NewPage, [{"param1": "Value 1"},
-		{"param2": "Value 2", "param3" : "#my#"}]).CompositeContract(EditPage)`,
+		{"param2": "Value 2", "param3" : "#mytest#"}]).CompositeContract(EditPage)`,
 		`[{"tag":"button","attr":{"composite":[{"name":"NewPage","data":[{"param1":"Value 1"},{"param2":"Value 2","param3":"Span(test)"}]},{"name":"EditPage"}]},"children":[{"tag":"text","text":"addpage"}]}]`},
 	{`SetVar(a, 0)SetVar(a, #a#7)SetVar(where, #where# 1)Div(){#where##a#}`, `[{"tag":"div","children":[{"tag":"text","text":"#where# 107"}]}]`},
 	{`Div(){Span(begin "You've" end<hr>)}Div(Body: ` + "`\"You've\"`" + `)
@@ -196,7 +198,7 @@ var forTest = tplList{
 	{`Data(Source: test, Columns: "a,b"){a}ForList(Source: test){#a#}`,
 		`[{"tag":"data","attr":{"columns":["a","b"],"data":[["a",""]],"source":"test","types":["text","text"]}},{"tag":"forlist","attr":{"source":"test"},"children":[{"tag":"text","text":"a"}]}]`},
 	{`QRcode(Some text)`, `[{"tag":"qrcode","attr":{"text":"Some text"}}]`},
-	{`SetVar(q, q#my#q)Div(Class: #my#){#my# Strong(#my#) Div(#q#){P(Span(#my#))}}`,
+	{`SetVar(q, q#mytest#q)Div(Class: #mytest#){#mytest# Strong(#mytest#) Div(#q#){P(Span(#mytest#))}}`,
 		`[{"tag":"div","attr":{"class":"Span(test)"},"children":[{"tag":"text","text":"Span(test) "},{"tag":"strong","children":[{"tag":"text","text":"Span(test)"}]},{"tag":"div","attr":{"class":"qSpan(test)q"},"children":[{"tag":"p","children":[{"tag":"span","children":[{"tag":"text","text":"Span(test)"}]}]}]}]}]`},
 	{`If(){SetVar(false_condition, 1)Span(False)}.Else{SetVar(true_condition, 1)Span(True)} 
 	  If(true){SetVar(ok, 1)}.Else{SetVar(problem, 1)}
@@ -218,7 +220,7 @@ var forTest = tplList{
 		`[{"tag":"text","text":"753013346318631859107508068064700000-468"}]`},
 	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,
 		`[{"tag":"text","text":"6100"},{"tag":"text","text":"=141.1111"}]`},
-	{`Span((span text), ok )Span(((span text), ok) )Div(){{My #my# body}}`,
+	{`Span((span text), ok )Span(((span text), ok) )Div(){{My #mytest# body}}`,
 		`[{"tag":"span","attr":{"class":"ok"},"children":[{"tag":"text","text":"(span text)"}]},{"tag":"span","children":[{"tag":"text","text":"((span text), ok)"}]},{"tag":"div","children":[{"tag":"text","text":"{My Span(test) body}"}]}]`},
 	{`Code(P(Some text)
  Div(myclass){
@@ -340,7 +342,7 @@ var forTest = tplList{
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
 		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
 	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
-		And(1,#mytest#)Or(#empty#, And(#empty#, line))Or(#test#==mytest)If(#empty#).Else{Div(){#my#}}`,
+		And(1,#mytest#)Or(#empty#, And(#empty#, line))Or(#test#==mytest)If(#empty#).Else{Div(){#mytest#}}`,
 		`[{"tag":"text","text":"0100101"},{"tag":"div","children":[{"tag":"text","text":"Span(test)"}]}]`},
 	{`Address()Span(Address(-5728238900021))Address(3467347643873).(-6258391547979339691)`,
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},

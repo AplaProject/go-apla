@@ -24,7 +24,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
@@ -867,7 +866,7 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 				sc.BlockData.BlockID,
 				sc.TxHash,
 				sc.TxSmart.TokenEcosystem,
-				fmt.Sprintf("timestamp '%s'", converter.Int64ToDateStr(sc.BlockData.Time, time.RFC3339)),
+				sc.BlockData.Time,
 			},
 			`1_history`)
 		if err != nil {

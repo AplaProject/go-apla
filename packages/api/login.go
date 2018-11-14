@@ -63,10 +63,10 @@ type rolesResult struct {
 
 func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var (
-		pubkey []byte
-		wallet int64
-		msg    string
-		err    error
+		dataKey, pubkey []byte
+		wallet          int64
+		msg             string
+		err             error
 	)
 
 	if data.token != nil && data.token.Valid {
@@ -88,11 +88,11 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Warning("state is empty, using 1 as a state")
 		ecosystemID = 1
 	}
-
+	dataKey = crypto.CutPub(data.params[`pubkey`].([]byte))
 	if len(data.params[`key_id`].(string)) > 0 {
 		wallet = converter.StringToAddress(data.params[`key_id`].(string))
-	} else if len(data.params[`pubkey`].([]byte)) > 0 {
-		wallet = crypto.Address(data.params[`pubkey`].([]byte))
+	} else if len(dataKey) > 0 {
+		wallet = crypto.Address(dataKey)
 	}
 
 	account := &model.Key{}
@@ -110,7 +110,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 		}
 	} else if !conf.Config.IsSupportingVDE() {
 		if syspar.IsTestMode() {
-			pubkey = data.params[`pubkey`].([]byte)
+			pubkey = dataKey
 			if len(pubkey) == 0 {
 				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 				return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
@@ -134,7 +134,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					NetworkID:   consts.NETWORK_ID,
 				},
 				Params: map[string]interface{}{
-					"NewPubkey": hex.EncodeToString(data.params[`pubkey`].([]byte)),
+					"NewPubkey": hex.EncodeToString(dataKey),
 				},
 			}
 
@@ -172,7 +172,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 	}
 
 	if len(pubkey) == 0 {
-		pubkey = data.params[`pubkey`].([]byte)
+		pubkey = dataKey
 		if len(pubkey) == 0 {
 			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
 			return errorAPI(w, `E_EMPTYPUBLIC`, http.StatusBadRequest)
