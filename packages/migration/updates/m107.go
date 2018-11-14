@@ -1,6 +1,6 @@
 package updates
 
-var M1O7 = `
+var M107 = `
 ALTER TABLE "1_history" 
 ALTER COLUMN created_at DROP DEFAULT;
 --===============================================
