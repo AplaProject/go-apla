@@ -30,7 +30,7 @@ const (
 	multipartBuf = 100000 // the buffer size for ParseMultipartForm
 )
 
-// Client структура клиента
+// Client represents data of client
 type Client struct {
 	KeyID         int64
 	EcosystemID   int64
