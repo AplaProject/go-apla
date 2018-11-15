@@ -45,6 +45,30 @@
 			"revisionTime": "2017-04-19T07:17:51Z"
 		},
 		{
+			"checksumSHA1": "Lp/wfyPm+F2PnU2o0k3ChwKSDY0=",
+			"path": "github.com/cznic/fileutil",
+			"revision": "6a051e75936f623600b67c2b1116b6b6c0ffb936",
+			"revisionTime": "2018-01-08T21:13:00Z"
+		},
+		{
+			"checksumSHA1": "iTLOteQl7IylNDiLSnQbQUiKy0o=",
+			"path": "github.com/cznic/golex",
+			"revision": "4ab7c5e190e49208c823ce8ec803aa39e6a4b31a",
+			"revisionTime": "2017-08-03T12:31:10Z"
+		},
+		{
+			"checksumSHA1": "Efk7lSfOBbj1oslJJ2wp4V0vc7k=",
+			"path": "github.com/cznic/lex",
+			"revision": "68050f59b71a42ca5b94e7b832e5bc2cdb48af66",
+			"revisionTime": "2017-01-12T13:55:02Z"
+		},
+		{
+			"checksumSHA1": "VBaI6mNmSAodGO7fvKwzrppJsuc=",
+			"path": "github.com/cznic/lexer",
+			"revision": "52ae7862082bd9649e03c1c4013a104b37811bfa",
+			"revisionTime": "2014-12-11T09:55:40Z"
+		},
+		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",
@@ -485,6 +509,12 @@
 			"path": "golang.org/x/crypto/ssh/terminal",
 			"revision": "9f005a07e0d31d45e6656d241bb5c0f2efd4bc94",
 			"revisionTime": "2017-09-21T17:41:56Z"
+		},
+		{
+			"checksumSHA1": "ntLZm7Mr8xK+8uNcEUzpGUgnJUI=",
+			"path": "golang.org/x/exp/ebnf",
+			"revision": "a3060d491354240eda536d676ced8bb702018b7e",
+			"revisionTime": "2018-11-11T16:03:37Z"
 		},
 		{
 			"checksumSHA1": "GtamqiJoL7PGHsN454AoffBFMa8=",
