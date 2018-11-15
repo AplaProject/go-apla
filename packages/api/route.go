@@ -73,6 +73,7 @@ func Route(route *hr.Router) {
 	post(`content`, `template ?source:string`, jsonContent)
 	post(`updnotificator`, `ids:string`, updateNotificator)
 	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
+	post(`txstatus`, `data:string`, authWallet, txstatus)
 
 	if !conf.Config.IsSupportingVDE() {
 		get(`txinfo/:hash`, `?contractinfo:int64`, authWallet, txinfo)
@@ -90,7 +91,7 @@ func Route(route *hr.Router) {
 		get(`ecosystems`, ``, authWallet, ecosystems)
 		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
 		get("ecosystemname", "?id:int64", getEcosystemName)
-		post(`txstatus`, `data:string`, authWallet, txstatus)
+
 	}
 }
 
