@@ -150,13 +150,15 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 				}
 			} else {
-				proc := blockchainTxPreprocessor{
+				proc := vdeTxPreprocessor{
 					logger: logger,
 					keyID:  wallet,
 				}
 
-				str, err := proc.ProcessClientTranstaction(w, txData)
-
+				_, err := proc.ProcessClientTranstaction(w, txData)
+				if err != nil {
+					log.WithFields(log.Fields{"error": err}).Error("on run internal NewUser")
+				}
 			}
 		}
 
