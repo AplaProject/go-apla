@@ -16,7 +16,8 @@ var migrations = []*migration{
 }
 
 var updateMigrations = []*migration{
-	&migration{"1.0.7", updates.M1O7},
+	&migration{"1.0.7", updates.M107},
+	&migration{"1.2.0", updates.M120},
 }
 
 type migration struct {

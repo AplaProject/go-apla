@@ -51,6 +51,20 @@ var (
 	}
 )
 
+type KeyTableChecker struct{}
+
+func (ktc KeyTableChecker) IsKeyTable(tableName string) bool {
+	val, exist := FirstEcosystemTables[tableName]
+	return exist && !val
+}
+
+type NextIDGetter struct {
+	Tx *DbTransaction
+}
+
+func (g NextIDGetter) GetNextID(tableName string) (int64, error) {
+	return GetNextID(g.Tx, tableName)
+}
 func isFound(db *gorm.DB) (bool, error) {
 	if db.RecordNotFound() {
 		return false, nil

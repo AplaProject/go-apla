@@ -59,7 +59,7 @@ func GetExcessCommonTokenMovementPerDay(tx *DbTransaction) (amount decimal.Decim
 
 	var res result
 	err = db.Table("1_history").Select("SUM(amount) as amount").
-		Where("created_at > NOW() - interval '24 hours' AND amount > 0").Scan(&res).Error
+		Where("to_timestamp(created_at) > NOW() - interval '24 hours' AND amount > 0").Scan(&res).Error
 
 	return res.Amount, err
 }
@@ -69,7 +69,7 @@ func GetExcessFromToTokenMovementPerDay(tx *DbTransaction) (excess []APLTransfer
 	db := GetDB(tx)
 	err = db.Table("1_history").
 		Select("sender_id, recipient_id, SUM(amount) amount").
-		Where("created_at > NOW() - interval '24 hours' AND amount > 0").
+		Where("to_timestamp(created_at) > NOW() - interval '24 hours' AND amount > 0").
 		Group("sender_id, recipient_id").
 		Having("SUM(amount) > ?", consts.FromToPerDayLimit).
 		Scan(&excess).Error
