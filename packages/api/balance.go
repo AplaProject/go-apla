@@ -23,7 +23,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -32,34 +31,24 @@ type balanceResult struct {
 	Money  string `json:"money"`
 }
 
-func getBalanceHandler(w http.ResponseWriter, r *http.Request) {
-	form := &ecosystemForm{}
-	if err := parseForm(r, form); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return
+func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	ecosystemId, _, err := checkEcosystem(w, data, logger)
+	if err != nil {
+		return err
 	}
-
-	params := mux.Vars(r)
-	logger := getLogger(r)
-
-	keyID := converter.StringToAddress(params["wallet"])
+	keyID := converter.StringToAddress(data.params[`wallet`].(string))
 	if keyID == 0 {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": params["wallet"]}).Error("converting wallet to address")
-		errorResponse(w, errInvalidWallet.Errorf(params["wallet"]))
-		return
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": data.params["wallet"].(string)}).Error("converting wallet to address")
+		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
 
 	key := &model.Key{}
-	key.SetTablePrefix(form.EcosystemID)
-	_, err := key.Get(keyID)
+	key.SetTablePrefix(ecosystemId)
+	_, err = key.Get(keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
-		errorResponse(w, err)
-		return
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-
-	jsonResponse(w, &balanceResult{
-		Amount: key.Amount,
-		Money:  converter.EGSMoney(key.Amount),
-	})
+	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}
+	return nil
 }

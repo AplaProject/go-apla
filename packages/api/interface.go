@@ -5,8 +5,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -15,32 +13,30 @@ type componentModel interface {
 	Get(name string) (bool, error)
 }
 
-func getPageRowHandler(w http.ResponseWriter, r *http.Request) {
-	getInterfaceRow(w, r, &model.Page{})
+func getPageRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	return getInterfaceRow(w, r, data, logger, &model.Page{})
 }
 
-func getMenuRowHandler(w http.ResponseWriter, r *http.Request) {
-	getInterfaceRow(w, r, &model.Menu{})
+func getMenuRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	return getInterfaceRow(w, r, data, logger, &model.Menu{})
 }
 
-func getBlockInterfaceRowHandler(w http.ResponseWriter, r *http.Request) {
-	getInterfaceRow(w, r, &model.BlockInterface{})
+func getBlockInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	return getInterfaceRow(w, r, data, logger, &model.BlockInterface{})
 }
 
-func getInterfaceRow(w http.ResponseWriter, r *http.Request, c componentModel) {
-	params := mux.Vars(r)
-	logger := getLogger(r)
-	client := getClient(r)
-
-	c.SetTablePrefix(client.Prefix())
-	if ok, err := c.Get(params["name"]); err != nil {
+func getInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, c componentModel) error {
+	c.SetTablePrefix(getPrefix(data))
+	ok, err := c.Get(data.ParamString("name"))
+	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-		errorResponse(w, errQuery)
-		return
-	} else if !ok {
-		errorResponse(w, errNotFound)
-		return
+		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
+	}
+	if !ok {
+		return errorAPI(w, `E_NOTFOUND`, http.StatusInternalServerError)
 	}
 
-	jsonResponse(w, c)
+	data.result = c
+
+	return nil
 }

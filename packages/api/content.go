@@ -19,7 +19,6 @@ package api
 import (
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -32,7 +31,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/template"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -53,24 +51,19 @@ const (
 	strOne  = `1`
 )
 
-var errEmptyTemplate = errors.New("Empty template")
-
-func initVars(r *http.Request) *map[string]string {
-	client := getClient(r)
-	r.ParseForm()
-
+func initVars(r *http.Request, data *apiData) *map[string]string {
 	vars := make(map[string]string)
 	for name := range r.Form {
 		vars[name] = r.FormValue(name)
 	}
 	vars[`_full`] = `0`
 	vars[`guest_key`] = consts.GuestKey
-	if client.KeyID != 0 {
-		vars[`ecosystem_id`] = converter.Int64ToStr(client.EcosystemID)
-		vars[`key_id`] = converter.Int64ToStr(client.KeyID)
-		vars[`isMobile`] = isMobileValue(client.IsMobile)
-		vars[`role_id`] = converter.Int64ToStr(client.RoleID)
-		vars[`ecosystem_name`] = client.EcosystemName
+	if data.keyId != 0 {
+		vars[`ecosystem_id`] = converter.Int64ToStr(data.ecosystemId)
+		vars[`key_id`] = converter.Int64ToStr(data.keyId)
+		vars[`isMobile`] = data.isMobile
+		vars[`role_id`] = converter.Int64ToStr(data.roleId)
+		vars[`ecosystem_name`] = data.ecosystemName
 	} else {
 		vars[`ecosystem_id`] = vars[`ecosystem`]
 		if len(vars[`keyID`]) > 0 {
@@ -100,13 +93,6 @@ func initVars(r *http.Request) *map[string]string {
 	return &vars
 }
 
-func isMobileValue(v bool) string {
-	if v {
-		return "1"
-	}
-	return "0"
-}
-
 func parseEcosystem(in string) (string, string) {
 	ecosystem, name := converter.ParseName(in)
 	if ecosystem == 0 {
@@ -115,53 +101,44 @@ func parseEcosystem(in string) (string, string) {
 	return converter.Int64ToStr(ecosystem), name
 }
 
-func pageValue(r *http.Request) (*model.Page, string, error) {
-	params := mux.Vars(r)
-	logger := getLogger(r)
-	client := getClient(r)
-
+func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.Page, string, error) {
 	var ecosystem string
 	page := &model.Page{}
-	name := params["name"]
+	name := data.params[`name`].(string)
 	if strings.HasPrefix(name, `@`) {
 		ecosystem, name = parseEcosystem(name)
 		if len(name) == 0 {
-			logger.WithFields(log.Fields{
-				"type":  consts.NotFound,
-				"value": params["name"],
-			}).Error("page not found")
-			return nil, ``, errNotFound
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"value": data.params[`name`].(string)}).Error("page not found")
+			return nil, ``, errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 		}
 	} else {
-		ecosystem = client.Prefix()
+		ecosystem = getPrefix(data)
 	}
 	page.SetTablePrefix(ecosystem)
 	found, err := page.Get(name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page")
-		return nil, ``, err
+		return nil, ``, errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("page not found")
-		return nil, ``, errNotFound
+		return nil, ``, errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 	return page, ecosystem, nil
 }
 
-func getPage(r *http.Request) (result *contentResult, err error) {
-	page, prefix, err := pageValue(r)
+func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	page, prefix, err := pageValue(w, data, logger)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	logger := getLogger(r)
-
 	menu := &model.Menu{}
 	menu.SetTablePrefix(prefix)
 	_, err = menu.Get(page.Menu)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
-		return nil, errServer
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
+		return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
 	}
 	var wg sync.WaitGroup
 	var timeout bool
@@ -170,7 +147,7 @@ func getPage(r *http.Request) (result *contentResult, err error) {
 	go func() {
 		defer wg.Done()
 
-		vars := initVars(r)
+		vars := initVars(r, data)
 		(*vars)["app_id"] = converter.Int64ToStr(page.AppID)
 
 		ret := template.Template2JSON(page.Value, &timeout, vars)
@@ -181,12 +158,7 @@ func getPage(r *http.Request) (result *contentResult, err error) {
 		if timeout {
 			return
 		}
-		result = &contentResult{
-			Tree:       ret,
-			Menu:       page.Menu,
-			MenuTree:   retmenu,
-			NodesCount: page.ValidateCount,
-		}
+		data.result = &contentResult{Tree: ret, Menu: page.Menu, MenuTree: retmenu, NodesCount: page.ValidateCount}
 		success <- true
 	}()
 	go func() {
@@ -202,75 +174,49 @@ func getPage(r *http.Request) (result *contentResult, err error) {
 	}()
 	wg.Wait()
 	close(success)
-
 	if timeout {
-		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error(page.Name + " is a heavy page")
-		return nil, errHeavyPage
+		log.WithFields(log.Fields{"type": consts.InvalidObject}).Error(page.Name + " is a heavy page")
+		return errorAPI(w, `E_HEAVYPAGE`, http.StatusInternalServerError)
 	}
-
-	return result, nil
+	return nil
 }
 
-func getPageHandler(w http.ResponseWriter, r *http.Request) {
-	result, err := getPage(r)
-	if err != nil {
-		errorResponse(w, err)
-		return
+func getPageHash(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	if ecosystem := r.FormValue(`ecosystem`); len(ecosystem) > 0 &&
+		!strings.HasPrefix(data.params[`name`].(string), `@`) {
+		data.params[`name`] = `@` + ecosystem + data.params[`name`].(string)
 	}
-
-	jsonResponse(w, result)
+	err = getPage(w, r, data, logger)
+	if err == nil {
+		var out, ret []byte
+		out, err = json.Marshal(data.result.(*contentResult))
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("getting string for hash")
+			return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+		}
+		ret, err = crypto.Hash(out)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of the page")
+			return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
+		}
+		data.result = &hashResult{Hash: hex.EncodeToString(ret)}
+	}
+	return
 }
 
-func getPageHashHandler(w http.ResponseWriter, r *http.Request) {
-	logger := getLogger(r)
-	params := mux.Vars(r)
-
-	if ecosystem := r.FormValue("ecosystem"); len(ecosystem) > 0 &&
-		!strings.HasPrefix(params["name"], "@") {
-		params["name"] = "@" + ecosystem + params["name"]
-	}
-	result, err := getPage(r)
-	if err != nil {
-		errorResponse(w, err)
-		return
-	}
-
-	out, err := json.Marshal(result)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("getting string for hash")
-		errorResponse(w, errServer)
-		return
-	}
-	ret, err := crypto.Hash(out)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of the page")
-		errorResponse(w, errServer)
-		return
-	}
-
-	jsonResponse(w, &hashResult{Hash: hex.EncodeToString(ret)})
-}
-
-func getMenuHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	client := getClient(r)
-	logger := getLogger(r)
-
+func getMenu(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var ecosystem string
 	menu := &model.Menu{}
-	name := params["name"]
+	name := data.params[`name`].(string)
 	if strings.HasPrefix(name, `@`) {
 		ecosystem, name = parseEcosystem(name)
 		if len(name) == 0 {
-			logger.WithFields(log.Fields{
-				"type":  consts.NotFound,
-				"value": params["name"],
-			}).Error("page not found")
-			errorResponse(w, errNotFound)
-			return
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"value": data.params[`name`].(string)}).Error("page not found")
+			return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 		}
 	} else {
-		ecosystem = client.Prefix()
+		ecosystem = getPrefix(data)
 	}
 
 	menu.SetTablePrefix(ecosystem)
@@ -278,59 +224,38 @@ func getMenuHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting menu")
-		errorResponse(w, err)
-		return
+		return errorAPI(w, err, http.StatusBadRequest)
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("menu not found")
-		errorResponse(w, errNotFound)
-		return
+		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
 	}
 	var timeout bool
-	ret := template.Template2JSON(menu.Value, &timeout, initVars(r))
-	jsonResponse(w, &contentResult{Tree: ret, Title: menu.Title})
-}
-
-type jsonContentForm struct {
-	Template string `schema:"template"`
-	Source   bool   `schema:"source"`
-}
-
-func (f *jsonContentForm) Validate(r *http.Request) error {
-	if len(f.Template) == 0 {
-		return errEmptyTemplate
-	}
+	ret := template.Template2JSON(menu.Value, &timeout, initVars(r, data))
+	data.result = &contentResult{Tree: ret, Title: menu.Title}
 	return nil
 }
 
-func jsonContentHandler(w http.ResponseWriter, r *http.Request) {
-	form := &jsonContentForm{}
-	if err := parseForm(r, form); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return
-	}
-
+func jsonContent(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var timeout bool
-	vars := initVars(r)
-
-	if form.Source {
+	vars := initVars(r, data)
+	if data.params[`source`].(string) == strOne || data.params[`source`].(string) == strTrue {
 		(*vars)["_full"] = strOne
 	}
-
-	ret := template.Template2JSON(form.Template, &timeout, vars)
-	jsonResponse(w, &contentResult{Tree: ret})
+	ret := template.Template2JSON(data.params[`template`].(string), &timeout, vars)
+	data.result = &contentResult{Tree: ret}
+	return nil
 }
 
-func getSourceHandler(w http.ResponseWriter, r *http.Request) {
-	page, _, err := pageValue(r)
+func getSource(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	page, _, err := pageValue(w, data, logger)
 	if err != nil {
-		errorResponse(w, err)
-		return
+		return err
 	}
 	var timeout bool
-	vars := initVars(r)
+	vars := initVars(r, data)
 	(*vars)["_full"] = strOne
 	ret := template.Template2JSON(page.Value, &timeout, vars)
-
-	jsonResponse(w, &contentResult{Tree: ret})
+	data.result = &contentResult{Tree: ret}
+	return nil
 }

@@ -20,12 +20,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,73 +38,49 @@ type keyInfoResult struct {
 	Roles     []roleInfo `json:"roles,omitempty"`
 }
 
-func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	logger := getLogger(r)
+func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 
 	keysList := make([]keyInfoResult, 0)
-	keyID := converter.StringToAddress(params["wallet"])
+	keyID := converter.StringToAddress(data.params[`wallet`].(string))
 	if keyID == 0 {
-		errorResponse(w, errInvalidWallet.Errorf(params["wallet"]))
-		return
+		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
-
 	ids, names, err := model.GetAllSystemStatesIDs()
 	if err != nil {
-		errorResponse(w, err)
-		return
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	var found bool
+	var (
+		found bool
+	)
 	for i, ecosystemID := range ids {
-		found, err = getEcosystemKey(keyID, ecosystemID)
+		key := &model.Key{}
+		key.SetTablePrefix(ecosystemID)
+		found, err = key.Get(keyID)
 		if err != nil {
-			errorResponse(w, err)
-			return
+			return errorAPI(w, err, http.StatusInternalServerError)
 		}
 		if !found {
 			continue
 		}
-		keyRes := keyInfoResult{
-			Ecosystem: converter.Int64ToStr(ecosystemID),
-			Name:      names[i],
-		}
+		keyRes := keyInfoResult{Ecosystem: converter.Int64ToStr(ecosystemID),
+			Name: names[i]}
 		ra := &model.RolesParticipants{}
 		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(keyID)
 		if err != nil {
-			errorResponse(w, err)
-			return
+			return errorAPI(w, err, http.StatusInternalServerError)
 		}
 		for _, r := range roles {
 			var role roleInfo
 			if err := json.Unmarshal([]byte(r.Role), &role); err != nil {
-				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
-				errorResponse(w, err)
-				return
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
+				return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
 			} else {
 				keyRes.Roles = append(keyRes.Roles, role)
 			}
 		}
 		keysList = append(keysList, keyRes)
 	}
-
-	if len(keysList) == 0 && syspar.IsTestMode() {
-		keysList = append(keysList, keyInfoResult{
-			Ecosystem: converter.Int64ToStr(ids[0]),
-			Name:      names[0],
-		})
-	}
-
-	jsonResponse(w, &keysList)
-}
-
-func getEcosystemKey(keyID, ecosystemID int64) (bool, error) {
-	// registration for the first ecosystem is open in test mode
-	if ecosystemID == 1 && syspar.IsTestMode() {
-		return true, nil
-	}
-
-	key := &model.Key{}
-	key.SetTablePrefix(ecosystemID)
-	return key.Get(keyID)
+	data.result = &keysList
+	return
 }

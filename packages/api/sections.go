@@ -17,93 +17,63 @@ package api
 
 import (
 	"encoding/json"
-	"net/http"
-
+	"fmt"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-
 	log "github.com/sirupsen/logrus"
+	"net/http"
 )
 
-const defaultSectionsLimit = 100
-
-type sectionsForm struct {
-	paginatorForm
-	Lang string `schema:"lang"`
-}
-
-func (f *sectionsForm) Validate(r *http.Request) error {
-	if err := f.paginatorForm.Validate(r); err != nil {
-		return err
-	}
-
-	if len(f.Lang) == 0 {
-		f.Lang = r.Header.Get("Accept-Language")
-	}
-
-	return nil
-}
-
-func getSectionsHandler(w http.ResponseWriter, r *http.Request) {
-	form := &sectionsForm{}
-	form.defaultLimit = defaultSectionsLimit
-	if err := parseForm(r, form); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return
-	}
-
-	client := getClient(r)
-	logger := getLogger(r)
-
-	table := "1_section"
-	q := model.GetDB(nil).Table(table).Where("ecosystem = ? AND status > 0", client.EcosystemID).Order("id ASC")
-
-	result := new(listResult)
-	err := q.Count(&result.Count).Error
+func sections(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	var limit int
+	table := `1_sections`
+	where := fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
+	count, err := model.GetRecordsCountTx(nil, table, where)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
-		errorResponse(w, errTableNotFound.Errorf(table))
-		return
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	rows, err := q.Offset(form.Offset).Limit(form.Limit).Rows()
+	if data.params[`limit`].(int64) > 0 {
+		limit = int(data.params[`limit`].(int64))
+	} else {
+		limit = 25
+	}
+	list, err := model.GetAll(fmt.Sprintf(`select * from "%s" where %s order by id desc offset %d`,
+		table, where, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
-		errorResponse(w, err)
-		return
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-
-	result.List, err = model.GetResult(rows)
-	if err != nil {
-		errorResponse(w, err)
-		return
+	lang := r.FormValue(`lang`)
+	if len(lang) == 0 {
+		lang = r.Header.Get(`Accept-Language`)
 	}
-
-	var sections []map[string]string
-	for _, item := range result.List {
+	var result []map[string]string
+	for _, item := range list {
 		var roles []int64
 		if err := json.Unmarshal([]byte(item["roles_access"]), &roles); err != nil {
-			errorResponse(w, err)
-			return
+			return errorAPI(w, err, http.StatusInternalServerError)
 		}
+		var added bool
 		if len(roles) > 0 {
-			var added bool
 			for _, v := range roles {
-				if v == client.RoleID {
+				if v == data.roleId {
 					added = true
 					break
 				}
 			}
-			if !added {
-				continue
-			}
+		} else {
+			added = true
 		}
-
-		item["title"] = language.LangMacro(item["title"], int(client.EcosystemID), form.Lang)
-		sections = append(sections, item)
+		if added {
+			item["title"] = language.LangMacro(item["title"], int(data.ecosystemId), lang)
+			result = append(result, item)
+		}
 	}
-	result.List = sections
-
-	jsonResponse(w, result)
+	data.result = &listResult{
+		Count: converter.Int64ToStr(count), List: result,
+	}
+	return
 }
