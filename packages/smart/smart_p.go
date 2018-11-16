@@ -443,7 +443,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	idStr := converter.Int64ToStr(id)
-	if err := LoadContract(sc.DbTransaction, idStr); err != nil {
+	if err := LoadContract(sc.DbTransaction, id); err != nil {
 		return 0, err
 	}
 	if !sc.VDE {

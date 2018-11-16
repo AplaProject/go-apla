@@ -120,7 +120,7 @@ func (t *FirstBlockTransaction) Action() error {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default menu")
 		return utils.ErrInfo(err)
 	}
-	err = smart.LoadContract(t.DbTransaction, `1`)
+	err = smart.LoadContract(t.DbTransaction, 1)
 	if err != nil {
 		return utils.ErrInfo(err)
 	}
