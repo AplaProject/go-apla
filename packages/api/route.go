@@ -69,6 +69,7 @@ func setRoutes(r *mux.Router) {
 		api.HandleFunc("/txinfomultiple", authRequire(getTxInfoMultiHandler)).Methods("GET")
 		api.HandleFunc("/appparam/{appID}/{name}", authRequire(getAppParamHandler)).Methods("GET")
 		api.HandleFunc("/appparams/{appID}", authRequire(getAppParamsHandler)).Methods("GET")
+		api.HandleFunc("/appcontent/{appID}", authRequire(getAppContentHandler)).Methods("GET")
 		api.HandleFunc("/history/{name}/{id}", authRequire(getHistoryHandler)).Methods("GET")
 		api.HandleFunc("/balance/{wallet}", authRequire(getBalanceHandler)).Methods("GET")
 		api.HandleFunc("/block/{id}", getBlockInfoHandler).Methods("GET")

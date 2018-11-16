@@ -6,8 +6,7 @@ import (
 
 // Contract represents record of 1_contracts table
 type Contract struct {
-	tableName string
-
+	tableName   string
 	ID          int64
 	Name        string
 	Value       string
@@ -48,4 +47,11 @@ func (c *Contract) ToMap() (v map[string]string) {
 	v["app_id"] = converter.Int64ToStr(c.AppID)
 	v["ecosystem_id"] = converter.Int64ToStr(c.EcosystemID)
 	return
+}
+
+// GetByApp returns all contracts belonging to selected app
+func (c *Contract) GetByApp(appID int64) ([]Contract, error) {
+	var result []Contract
+	err := DBConn.Where("app_id = ?", appID).Find(&result).Error
+	return result, err
 }

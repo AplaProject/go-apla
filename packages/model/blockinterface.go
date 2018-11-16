@@ -4,10 +4,11 @@ import "github.com/GenesisKernel/go-genesis/packages/converter"
 
 // BlockInterface is model
 type BlockInterface struct {
-	ecosystem  int64
-	ID         int64  `gorm:"primary_key;not null" json:"id"`
-	Name       string `gorm:"not null" json:"name"`
-	Value      string `gorm:"not null" json:"value"`
+	ecosystem int64
+	ID        int64  `gorm:"primary_key;not null" json:"id"`
+	Name      string `gorm:"not null" json:"name"`
+	Value     string `gorm:"not null" json:"value"`
+
 	Conditions string `gorm:"not null" json:"conditions"`
 }
 
@@ -27,4 +28,11 @@ func (bi BlockInterface) TableName() string {
 // Get is retrieving model from database
 func (bi *BlockInterface) Get(name string) (bool, error) {
 	return isFound(DBConn.Where("ecosystem=? and name = ?", bi.ecosystem, name).First(bi))
+}
+
+// GetByApp returns all interface blocks belonging to selected app
+func (bi *BlockInterface) GetByApp(appID int64) ([]BlockInterface, error) {
+	var result []BlockInterface
+	err := DBConn.Where("app_id = ?", appID).Find(&result).Error
+	return result, err
 }
