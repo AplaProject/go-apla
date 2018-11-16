@@ -218,6 +218,9 @@ func Start() {
 	}
 
 	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
+	if conf.Config.FuncBench {
+		log.Warning("Warning! Access checking is disabled in some built-in functions")
+	}
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
