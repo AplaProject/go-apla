@@ -64,6 +64,10 @@ func getContractsHandler(w http.ResponseWriter, r *http.Request) {
 		list[i]["address"] = converter.AddressToString(c.WalletID)
 	}
 
+	if len(list) == 0 {
+		list = nil
+	}
+
 	jsonResponse(w, &listResult{
 		Count: converter.Int64ToStr(count),
 		List:  list,

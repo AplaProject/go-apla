@@ -72,7 +72,7 @@ func getEcosystemNameHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "ecosystem_id": ecosystemID}).Error("ecosystem by id not found")
-		errorResponse(w, errNotFound)
+		errorResponse(w, errParamNotFound.Errorf("name"))
 		return
 	}
 

@@ -47,7 +47,7 @@ func (f *sectionsForm) Validate(r *http.Request) error {
 
 func getSectionsHandler(w http.ResponseWriter, r *http.Request) {
 	form := &sectionsForm{}
-	form.maxLimit = defaultSectionsLimit
+	form.defaultLimit = defaultSectionsLimit
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
