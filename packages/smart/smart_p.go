@@ -443,7 +443,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	idStr := converter.Int64ToStr(id)
-	if err := LoadContract(sc.DbTransaction, idStr); err != nil {
+	if err := LoadContract(sc.DbTransaction, id); err != nil {
 		return 0, err
 	}
 	if !sc.VDE {
@@ -461,12 +461,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, logErrorDB(err, "inserting application")
 	}
 	if _, _, err = DBInsert(sc, `@1pages`, types.LoadMap(map[string]interface{}{"ecosystem": idStr,
-		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
-		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`})); err != nil {
+		"name": "default_page", "app_id": appID, "value": SysParamString("default_ecosystem_page"),
+		"menu": "default_menu", "conditions": `ContractConditions("@1DeveloperCondition")`})); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
 	if _, _, err = DBInsert(sc, `@1menu`, types.LoadMap(map[string]interface{}{"ecosystem": idStr,
-		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`})); err != nil {
+		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("@1DeveloperCondition")`})); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
 
