@@ -104,7 +104,7 @@ func (t *FirstBlockTransaction) Action() error {
 		return utils.ErrInfo(err)
 	}
 	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_pages" (id,name,menu,value,conditions) values(?, 'default_page',
-		  'default_menu', ?, 'ContractAccess("@1EditPage")')`,
+		  'default_menu', ?, 'ContractConditions("@1DeveloperCondition")')`,
 		id, syspar.SysString(`default_ecosystem_page`)).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
