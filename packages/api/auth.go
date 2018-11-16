@@ -17,19 +17,26 @@
 package api
 
 import (
+	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	jwtSecret = crypto.RandSeq(15)
+	jwtSecret = []byte(crypto.RandSeq(15))
+	jwtPrefix = "Bearer "
+	jwtExpire = 36000 // By default, seconds
+
+	errJWTAuthValue      = errors.New("wrong authorization value")
+	errEcosystemNotFound = errors.New("ecosystem not found")
 )
 
 // JWTClaims is storing jwt claims
@@ -38,21 +45,27 @@ type JWTClaims struct {
 	EcosystemID string `json:"ecosystem_id,omitempty"`
 	KeyID       string `json:"key_id,omitempty"`
 	RoleID      string `json:"role_id,omitempty"`
-	IsMobile    string `json:"is_mobile,omitempty"`
+	IsMobile    bool   `json:"is_mobile,omitempty"`
 	jwt.StandardClaims
 }
 
-func jwtToken(r *http.Request) (*jwt.Token, error) {
-	auth := r.Header.Get(`Authorization`)
-	if len(auth) == 0 {
+func generateJWTToken(claims JWTClaims) (string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
+}
+
+func parseJWTToken(header string) (*jwt.Token, error) {
+	if len(header) == 0 {
 		return nil, nil
 	}
-	if strings.HasPrefix(auth, jwtPrefix) {
-		auth = auth[len(jwtPrefix):]
+
+	if strings.HasPrefix(header, jwtPrefix) {
+		header = header[len(jwtPrefix):]
 	} else {
-		return nil, fmt.Errorf(`wrong authorization value`)
+		return nil, errJWTAuthValue
 	}
-	return jwt.ParseWithClaims(auth, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
+
+	return jwt.ParseWithClaims(header, &JWTClaims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -60,23 +73,34 @@ func jwtToken(r *http.Request) (*jwt.Token, error) {
 	})
 }
 
-func jwtGenerateToken(w http.ResponseWriter, claims JWTClaims) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(jwtSecret))
-}
-
-func authWallet(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.keyId == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
-		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
+func getClientFromToken(token *jwt.Token) (*Client, error) {
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok {
+		return nil, nil
 	}
-	return nil
-}
-
-func authState(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if data.keyId == 0 || data.ecosystemId <= 1 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("state is empty")
-		return errorAPI(w, `E_UNAUTHORIZED`, http.StatusUnauthorized)
+	if len(claims.KeyID) == 0 {
+		return nil, nil
 	}
-	return nil
+
+	client := &Client{
+		EcosystemID: converter.StrToInt64(claims.EcosystemID),
+		KeyID:       converter.StrToInt64(claims.KeyID),
+		IsMobile:    claims.IsMobile,
+		RoleID:      converter.StrToInt64(claims.RoleID),
+	}
+
+	ecosystem := &model.Ecosystem{}
+	found, err := ecosystem.Get(client.EcosystemID)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
+		return nil, err
+	}
+	if !found {
+		log.WithFields(log.Fields{"type": consts.NotFound, "id": client.EcosystemID, "error": errEcosystemNotFound}).Error("ecosystem not found")
+		return nil, err
+	}
+
+	client.EcosystemName = ecosystem.Name
+
+	return client, nil
 }
