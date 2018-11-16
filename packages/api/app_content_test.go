@@ -32,15 +32,15 @@ func TestAppContent(t *testing.T) {
 		return
 	}
 
-	if len(ret.Blocks) != 5 {
+	if len(ret.Blocks) == 0 {
 		t.Error("incorrect blocks count")
 	}
 
-	if len(ret.Contracts) != 34 {
+	if len(ret.Contracts) == 0 {
 		t.Error("incorrect contracts count")
 	}
 
-	if len(ret.Pages) != 6 {
+	if len(ret.Pages) == 0 {
 		t.Error("incorrent pages count")
 	}
 }

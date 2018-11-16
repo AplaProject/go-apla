@@ -7,15 +7,15 @@ import (
 // Contract represents record of 1_contracts table
 type Contract struct {
 	tableName   string
-	ID          int64
-	Name        string
-	Value       string
-	WalletID    int64
-	TokenID     int64
-	Active      bool
-	Conditions  string
-	AppID       int64
-	EcosystemID int64
+	ID          int64  `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Value       string `json:"value,omitempty"`
+	WalletID    int64  `json:"wallet_id,omitempty"`
+	TokenID     int64  `json:"token_id,omitempty"`
+	Active      bool   `json:"active,omitempty"`
+	Conditions  string `json:"conditions,omitempty"`
+	AppID       int64  `json:"app_id,omitempty"`
+	EcosystemID int64  `json:"ecosystem_id,omitempty"`
 }
 
 // TableName returns name of table
@@ -52,6 +52,6 @@ func (c *Contract) ToMap() (v map[string]string) {
 // GetByApp returns all contracts belonging to selected app
 func (c *Contract) GetByApp(appID int64) ([]Contract, error) {
 	var result []Contract
-	err := DBConn.Where("app_id = ?", appID).Find(&result).Error
+	err := DBConn.Select("id, name").Where("app_id = ?", appID).Find(&result).Error
 	return result, err
 }
