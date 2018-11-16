@@ -17,6 +17,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -36,56 +37,56 @@ type tablesResult struct {
 	List  []tableInfo `json:"list"`
 }
 
-func getTablesHandler(w http.ResponseWriter, r *http.Request) {
-	form := &paginatorForm{}
-	if err := parseForm(r, form); err != nil {
-		errorResponse(w, err, http.StatusBadGateway)
-		return
-	}
+func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	var (
+		result tablesResult
+		limit  int
+	)
 
-	client := getClient(r)
-	logger := getLogger(r)
-	prefix := client.Prefix()
+	table := `1_tables`
+	where := fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
 
-	table := &model.Table{}
-	table.SetTablePrefix(prefix)
-
-	count, err := table.Count()
+	count, err := model.GetRecordsCountTx(nil, table, ``)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
-		errorResponse(w, err)
-		return
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
-
-	rows, err := model.GetDB(nil).Table(table.TableName()).Where("ecosystem = ?", client.EcosystemID).Offset(form.Offset).Limit(form.Limit).Rows()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
-		errorResponse(w, err)
-		return
+	if data.params[`limit`].(int64) > 0 {
+		limit = int(data.params[`limit`].(int64))
+	} else {
+		limit = 25
 	}
-
-	list, err := model.GetResult(rows)
+	list, err := model.GetAll(fmt.Sprintf(`select name from "1_tables" where %s order by name offset %d `,
+		where, data.params[`offset`].(int64)), limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
-		errorResponse(w, err)
-		return
+		return errorAPI(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	result := &tablesResult{
-		Count: count,
-		List:  make([]tableInfo, len(list)),
+	result = tablesResult{
+		Count: count, List: make([]tableInfo, len(list)),
 	}
 	for i, item := range list {
-		err = model.GetTableQuery(item["name"], client.EcosystemID).Count(&count).Error
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")
-			errorResponse(w, err)
-			return
+		var maxid int64
+		result.List[i].Name = item[`name`]
+		fullname := getPrefix(data) + `_` + item[`name`]
+		if item[`name`] == `keys` || item[`name`] == `members` {
+			err = model.DBConn.Table(fullname).Count(&maxid).Error
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")
+			}
+		} else {
+			maxid, err = model.GetNextID(nil, fullname)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id from table")
+			}
+			maxid--
 		}
-
-		result.List[i].Name = item["name"]
-		result.List[i].Count = converter.Int64ToStr(count)
+		if err != nil {
+			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		}
+		result.List[i].Count = converter.Int64ToStr(maxid)
 	}
-
-	jsonResponse(w, result)
+	data.result = &result
+	return
 }

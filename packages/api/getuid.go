@@ -28,8 +28,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const jwtUIDExpire = time.Second * 5
-
 type getUIDResult struct {
 	UID         string `json:"uid,omitempty"`
 	Token       string `json:"token,omitempty"`
@@ -39,36 +37,30 @@ type getUIDResult struct {
 	Address     string `json:"address,omitempty"`
 }
 
-func getUIDHandler(w http.ResponseWriter, r *http.Request) {
-	result := new(getUIDResult)
+func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
+	var result getUIDResult
 
-	token := getToken(r)
-	if token != nil {
-		if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
+	data.result = &result
+
+	if data.token != nil && data.token.Valid {
+		if claims, ok := data.token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
 			result.EcosystemID = claims.EcosystemID
 			result.Expire = converter.Int64ToStr(claims.ExpiresAt - time.Now().Unix())
 			result.KeyID = claims.KeyID
-			jsonResponse(w, result)
-			return
+			return nil
 		}
 	}
-
 	result.UID = converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
 	claims := JWTClaims{
-		UID:         result.UID,
-		EcosystemID: "1",
+		UID: result.UID,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(jwtUIDExpire).Unix(),
+			ExpiresAt: time.Now().Add(time.Second * 5).Unix(),
 		},
 	}
-
-	var err error
-	if result.Token, err = generateJWTToken(claims); err != nil {
-		logger := getLogger(r)
+	result.Token, err = jwtGenerateToken(w, claims)
+	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		errorResponse(w, err)
-		return
+		return errorAPI(w, err, http.StatusInternalServerError)
 	}
-
-	jsonResponse(w, result)
+	return
 }

@@ -22,8 +22,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/smart"
 
-	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -45,19 +45,16 @@ type getContractResult struct {
 	Name     string          `json:"name"`
 }
 
-func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	logger := getLogger(r)
-
-	contract := getContract(r, params["name"])
-	if contract == nil {
-		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": params["contract"]}).Error("contract name")
-		errorResponse(w, errContract.Errorf(params["name"]))
-		return
-	}
-
+func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
 	var result getContractResult
-	info := getContractInfo(contract)
+
+	cntname := data.params[`name`].(string)
+	contract := smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
+	if contract == nil {
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": cntname}).Error("contract name")
+		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
+	}
+	info := (*contract).Block.Info.(*script.ContractInfo)
 	fields := make([]contractField, 0)
 	result = getContractResult{
 		ID:   uint32(info.Owner.TableID + consts.ShiftContractID),
@@ -79,7 +76,8 @@ func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	result.Fields = fields
 
-	jsonResponse(w, result)
+	data.result = result
+	return nil
 }
 
 func getFieldTypeAlias(t string) string {

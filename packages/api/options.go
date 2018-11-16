@@ -19,23 +19,16 @@ package api
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-
-	log "github.com/sirupsen/logrus"
+	hr "github.com/julienschmidt/httprouter"
 )
 
-type ecosystemsResult struct {
-	Number uint32 `json:"number"`
-}
-
-func ecosystems(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-
-	number, err := model.GetNextID(nil, "1_ecosystems")
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Error getting next ecosystem id")
-		return err
-	}
-	data.result = &ecosystemsResult{Number: uint32(number - 1)}
-	return
+func optionsHandler() hr.Handle {
+	return hr.Handle(func(w http.ResponseWriter, r *http.Request, ps hr.Params) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Requested-With")
+		w.Header().Set("Access-Control-Max-Age", "86400")
+		return
+	})
 }

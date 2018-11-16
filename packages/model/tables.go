@@ -1,49 +1,16 @@
 package model
 
-import (
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
-
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-
-	"github.com/jinzhu/gorm"
-)
-
-// const TableName = "1_tables"
+import "github.com/GenesisKernel/go-genesis/packages/converter"
 
 // Table is model
 type Table struct {
-	ID          int64       `gorm:"primary_key;not null"`
-	Name        string      `gorm:"not null;size:100"`
-	Permissions Permissions `gorm:"not null;type:jsonb(PostgreSQL)"`
-	Columns     string      `gorm:"not null"`
-	Conditions  string      `gorm:"not null"`
-	AppID       int64       `gorm:"not null"`
-	Ecosystem   int64       `gorm:"not null"`
-}
-
-type Permissions struct {
-	Insert    string `json:"insert"`
-	NewColumn string `json:"new_column"`
-	Update    string `json:"update"`
-	Read      string `json:"read"`
-	Filter    string `json:"filter"`
-}
-
-func (p Permissions) Value() (driver.Value, error) {
-	data, err := json.Marshal(p)
-	if err != nil {
-		return nil, err
-	}
-	return string(data), err
-}
-func (p *Permissions) Scan(v interface{}) error {
-	data, ok := v.([]byte)
-	if !ok {
-		return errors.New("Bad permissions")
-	}
-	return json.Unmarshal(data, p)
+	ID          int64  `gorm:"primary_key;not null"`
+	Name        string `gorm:"not null;size:100"`
+	Permissions string `gorm:"not null;type:jsonb(PostgreSQL)"`
+	Columns     string `gorm:"not null"`
+	Conditions  string `gorm:"not null"`
+	AppID       int64  `gorm:"not null"`
+	Ecosystem   int64  `gorm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix
@@ -133,11 +100,6 @@ func (t *Table) GetPermissions(transaction *DbTransaction, name, jsonKey string)
 	return result, nil
 }
 
-func (t *Table) Count() (count int64, err error) {
-	err = GetDB(nil).Table(t.TableName()).Where("ecosystem= ?", t.Ecosystem).Count(&count).Error
-	return
-}
-
 // CreateTable is creating table
 func CreateTable(transaction *DbTransaction, tableName, colsSQL string) error {
 	return GetDB(transaction).Exec(`CREATE TABLE "` + tableName + `" (
@@ -154,22 +116,8 @@ func (t *Table) GetAll(prefix string) ([]Table, error) {
 	return result, err
 }
 
-// func (t *Table) GetList(offset, limit int64) ([]Table, error) {
-// 	var list []Table
-// 	err := DBConn.Table(t.TableName()).Offset(offset).Limit(limit).Select("name").Order("name").Find(&list).Error
-// 	return list, err
-// }
-
 // GetRowConditionsByTableNameAndID returns value of `conditions` field for table row by id
 func GetRowConditionsByTableNameAndID(transaction *DbTransaction, tblname string, id int64) (string, error) {
 	sql := `SELECT conditions FROM "` + tblname + `" WHERE id = ? LIMIT 1`
 	return Single(transaction, sql, id).String()
-}
-
-func GetTableQuery(table string, ecosystemID int64) *gorm.DB {
-	if FirstEcosystemTables[table] {
-		return DBConn.Table("1_"+table).Where("ecosystem = ?", ecosystemID)
-	}
-
-	return DBConn.Table(converter.ParseTable(table, ecosystemID))
 }

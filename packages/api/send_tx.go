@@ -38,13 +38,11 @@ type sendTxResult struct {
 	Hashes map[string]string `json:"hashes"`
 }
 
-func getTxData(r *http.Request, key string) ([]byte, error) {
-	logger := getLogger(r)
-
+func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, key string) ([]byte, error) {
 	file, _, err := r.FormFile(key)
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Error("request.FormFile")
-		return nil, err
+		return nil, errorAPI(w, err, http.StatusInternalServerError)
 	}
 	defer file.Close()
 
@@ -57,32 +55,26 @@ func getTxData(r *http.Request, key string) ([]byte, error) {
 	return txData, nil
 }
 
-func sendTxHandler(w http.ResponseWriter, r *http.Request) {
-	client := getClient(r)
-
-	if block.IsKeyBanned(client.KeyID) {
-		errorResponse(w, errBannded.Errorf(block.BannedTill(client.KeyID)))
-		return
+func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+	if block.IsKeyBanned(data.keyId) {
+		return errorAPI(w, "E_BANNED", http.StatusBadRequest, block.BannedTill(data.keyId))
 	}
 
 	err := r.ParseMultipartForm(multipartBuf)
 	if err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return
+		return errorAPI(w, err, http.StatusBadRequest)
 	}
 
 	result := &sendTxResult{Hashes: make(map[string]string)}
 	for key := range r.MultipartForm.File {
-		txData, err := getTxData(r, key)
+		txData, err := getTxData(w, r, data, logger, key)
 		if err != nil {
-			errorResponse(w, err)
-			return
+			return err
 		}
 
-		hash, err := txHandler(r, txData)
+		hash, err := handlerTx(w, r, data, logger, txData)
 		if err != nil {
-			errorResponse(w, err)
-			return
+			return err
 		}
 		result.Hashes[key] = hash
 	}
@@ -90,19 +82,19 @@ func sendTxHandler(w http.ResponseWriter, r *http.Request) {
 	for key := range r.Form {
 		txData, err := hex.DecodeString(r.FormValue(key))
 		if err != nil {
-			errorResponse(w, err)
-			return
+			return err
 		}
 
-		hash, err := txHandler(r, txData)
+		hash, err := handlerTx(w, r, data, logger, txData)
 		if err != nil {
-			errorResponse(w, err)
-			return
+			return err
 		}
 		result.Hashes[key] = hash
 	}
 
-	jsonResponse(w, result)
+	data.result = result
+
+	return nil
 }
 
 type contractResult struct {
@@ -112,30 +104,27 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func txHandler(r *http.Request, txData []byte) (string, error) {
-	client := getClient(r)
-	logger := getLogger(r)
-
+func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, txData []byte) (string, error) {
 	if int64(len(txData)) > syspar.GetMaxTxSize() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
-		block.BadTxForBan(client.KeyID)
-		return "", errLimitTxSize.Errorf(len(txData))
+		block.BadTxForBan(data.keyId)
+		return "", errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
 	}
 
 	rtx := &transaction.RawTransaction{}
 	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
-		return "", err
+		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
 	smartTx := tx.SmartContract{}
 	if err := msgpack.Unmarshal(rtx.Payload(), &smartTx); err != nil {
-		return "", err
+		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
-	if smartTx.Header.KeyID != client.KeyID {
-		return "", errDiffKey
+	if smartTx.Header.KeyID != data.keyId {
+		return "", errorAPI(w, "E_DIFKEY", http.StatusBadRequest)
 	}
-	if err := model.SendTx(rtx, client.KeyID); err != nil {
+	if err := model.SendTx(rtx, data.keyId); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
-		return "", err
+		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
 
 	return string(converter.BinToHex(rtx.Hash())), nil

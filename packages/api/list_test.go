@@ -39,7 +39,7 @@ func TestList(t *testing.T) {
 		return
 	}
 	err = sendGet(`list/qwert`, nil, &ret)
-	if err.Error() != `400 {"error":"E_TABLENOTFOUND","msg":"Table qwert has not been found"}` {
+	if err.Error() != `400 {"error": "E_TABLENOTFOUND", "msg": "Table qwert has not been found" , "params": ["qwert"]}` {
 		t.Error(err)
 		return
 	}
