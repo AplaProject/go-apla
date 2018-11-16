@@ -28,11 +28,12 @@ func (h HostPort) Str() string {
 
 // DBConfig database connection parameters
 type DBConfig struct {
-	Name     string
-	Host     string // ipaddr, hostname, or "0.0.0.0"
-	Port     int    // must be in range 1..65535
-	User     string
-	Password string
+	Name        string
+	Host        string // ipaddr, hostname, or "0.0.0.0"
+	Port        int    // must be in range 1..65535
+	User        string
+	Password    string
+	LockTimeout int // lock_timeout in milliseconds
 }
 
 // StatsDConfig statd connection parameters

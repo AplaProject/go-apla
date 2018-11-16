@@ -108,7 +108,11 @@ func StartTransaction() (*DbTransaction, error) {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": conn.Error}).Error("cannot start transaction because of connection error")
 		return nil, conn.Error
 	}
-
+	err := conn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
+		return nil, err
+	}
 	return &DbTransaction{
 		conn: conn,
 	}, nil
