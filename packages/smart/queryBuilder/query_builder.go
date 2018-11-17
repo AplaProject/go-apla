@@ -431,3 +431,7 @@ func getFieldIndex(fields []string, name string) int {
 	}
 	return -1
 }
+
+func (b *SQLQueryBuilder) GetEcosystem() string {
+	return b.keyEcosystem
+}
