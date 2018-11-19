@@ -32,7 +32,7 @@ func ProcessTransactionsQueue() error {
 			return errors.New(errStr)
 		}
 
-		if err := queue.ProcessTxQueue.Enqueue(tx); err != nil {
+		if err := blockchain.InsertTxToProcess(nil, tx); err != nil {
 			return err
 		}
 		return nil

@@ -11,7 +11,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/opt"
+	"github.com/syndtr/goleveldb/leveldb/util"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
@@ -21,6 +23,7 @@ type levelDBGetterPutterDeleter interface {
 	Get([]byte, *opt.ReadOptions) ([]byte, error)
 	Put([]byte, []byte, *opt.WriteOptions) error
 	Delete([]byte, *opt.WriteOptions) error
+	NewIterator(slice *util.Range, ro *opt.ReadOptions) iterator.Iterator
 }
 
 func GetDB(tx *leveldb.Transaction) levelDBGetterPutterDeleter {
@@ -30,8 +33,11 @@ func GetDB(tx *leveldb.Transaction) levelDBGetterPutterDeleter {
 	return DB
 }
 
+const txProcessPrefix = "process-"
+
 var txPrefix func([]byte) []byte = prefixFunc("tx-")
 var txStatusPrefix func([]byte) []byte = prefixFunc("txstatus-")
+var processTxPrefix func([]byte) []byte = prefixFunc(txProcessPrefix)
 
 func Init(filename string) error {
 	var err error
@@ -166,7 +172,7 @@ func (t *Transaction) Get(tx *leveldb.Transaction, hash []byte) (bool, error) {
 	return true, nil
 }
 
-func (t *Transaction) Insert(tx *leveldb.Transaction) error {
+func insertTransactionWithPrefix(tx *leveldb.Transaction, t *Transaction, prefix func([]byte) []byte) error {
 	hash, err := t.Hash()
 	if err != nil {
 		return err
@@ -176,12 +182,55 @@ func (t *Transaction) Insert(tx *leveldb.Transaction) error {
 		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling transaction")
 		return err
 	}
-	err = GetDB(tx).Put(txPrefix(hash), val, nil)
+	err = GetDB(tx).Put(prefix(hash), val, nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting transaction")
 		return err
 	}
 	return nil
+}
+
+func (t *Transaction) Insert(tx *leveldb.Transaction) error {
+	hash, err := t.Hash()
+	if err != nil {
+		return err
+	}
+	if err := DeleteProcessedTx(tx, hash); err != nil {
+		return err
+	}
+
+	return insertTransactionWithPrefix(tx, t, txPrefix)
+}
+
+func DeleteProcessedTx(tx *leveldb.Transaction, hash []byte) error {
+	err := GetDB(tx).Delete(processTxPrefix(hash), nil)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("inserting transaction")
+		return err
+	}
+	return nil
+}
+
+func GetTxsToProcess(tx *leveldb.Transaction) ([]*Transaction, error) {
+	txs := []*Transaction{}
+	iter := GetDB(tx).NewIterator(util.BytesPrefix([]byte(txProcessPrefix)), nil)
+	for iter.Next() {
+		value := iter.Value()
+		t := &Transaction{}
+		if err := t.Unmarshal(value); err != nil {
+			return nil, err
+		}
+		txs = append(txs, t)
+	}
+	iter.Release()
+	if err := iter.Error(); err != nil {
+		return nil, err
+	}
+	return txs, nil
+}
+
+func InsertTxToProcess(tx *leveldb.Transaction, t *Transaction) error {
+	return insertTransactionWithPrefix(tx, t, processTxPrefix)
 }
 
 func SetTransactionError(tx *leveldb.Transaction, hash []byte, errString string) error {
@@ -197,6 +246,9 @@ func SetTransactionError(tx *leveldb.Transaction, hash []byte, errString string)
 		return txWithError.Insert(tx, hash)
 	}
 	txStatus.Error = errString
+	if err := DeleteProcessedTx(tx, hash); err != nil {
+		return err
+	}
 	return txStatus.Insert(tx, hash)
 }
 

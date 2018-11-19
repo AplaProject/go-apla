@@ -27,7 +27,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/notificator"
 	"github.com/GenesisKernel/go-genesis/packages/protocols"
-	"github.com/GenesisKernel/go-genesis/packages/queue"
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
@@ -115,43 +114,44 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
-	queue.ProcessTxQueue.ProcessAllItems(func(trs []*blockchain.Transaction) error {
-		trs, err := processTransactions(trs, d.logger, done)
-		if err != nil {
-			return err
-		}
+	txs, err := blockchain.GetTxsToProcess(nil)
+	if err != nil {
+		return err
+	}
+	trs, err := processTransactions(txs, d.logger, done)
+	if err != nil {
+		return err
+	}
 
-		// Block generation will be started only if we have transactions
-		if len(trs) == 0 {
-			return nil
-		}
-
-		header := &blockchain.BlockHeader{
-			BlockID:      prevBlock.Header.BlockID + 1,
-			Time:         time.Now().Unix(),
-			EcosystemID:  0,
-			KeyID:        conf.Config.KeyID,
-			NodePosition: nodePosition,
-			Version:      consts.BLOCK_VERSION,
-		}
-		bBlock := blockchain.Block{
-			Header:       header,
-			Transactions: trs,
-		}
-
-		blockBin, err := bBlock.Marshal()
-		if err != nil {
-			return err
-		}
-
-		err = block.InsertBlockWOForks(blockBin, true, false)
-		if err != nil {
-			return err
-		}
-		log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
-		go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
+	// Block generation will be started only if we have transactions
+	if len(trs) == 0 {
 		return nil
-	})
+	}
+
+	header := &blockchain.BlockHeader{
+		BlockID:      prevBlock.Header.BlockID + 1,
+		Time:         time.Now().Unix(),
+		EcosystemID:  0,
+		KeyID:        conf.Config.KeyID,
+		NodePosition: nodePosition,
+		Version:      consts.BLOCK_VERSION,
+	}
+	bBlock := blockchain.Block{
+		Header:       header,
+		Transactions: trs,
+	}
+
+	blockBin, err := bBlock.Marshal()
+	if err != nil {
+		return err
+	}
+
+	err = block.InsertBlockWOForks(blockBin, true, false)
+	if err != nil {
+		return err
+	}
+	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
+	go notificator.CheckTokenMovementLimits(nil, conf.Config.TokenMovement, header.BlockID)
 
 	return nil
 }
@@ -179,11 +179,12 @@ func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done 
 		return ch
 	}
 
-	processIncAttemptCnt := func() chan []byte {
-		ch := make(chan []byte)
+	processIncAttemptCnt := func() chan *blockchain.Transaction {
+		ch := make(chan *blockchain.Transaction)
 		go func() {
 			for tx := range ch {
-				blockchain.IncrementTxAttemptCount(nil, tx)
+				hash, _ := tx.Hash()
+				blockchain.IncrementTxAttemptCount(nil, hash)
 			}
 		}()
 
@@ -222,11 +223,11 @@ func processTransactions(trs []*blockchain.Transaction, logger *log.Entry, done 
 			if p.TxSmart != nil {
 				err = limits.CheckLimit(p)
 				if err == block.ErrLimitStop && i > 0 {
-					attemptCountChan <- p.TxHash
+					attemptCountChan <- txItem
 					break
 				} else if err != nil {
 					if err == block.ErrLimitSkip {
-						attemptCountChan <- p.TxHash
+						attemptCountChan <- txItem
 					} else {
 						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 					}

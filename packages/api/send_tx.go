@@ -116,14 +116,22 @@ func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	if rtx.Header.KeyID != data.keyId {
 		return "", errorAPI(w, "E_DIFKEY", http.StatusBadRequest)
 	}
+	txHash, err := rtx.Hash()
+	if err != nil {
+		return "", errorAPI(w, err, http.StatusInternalServerError)
+	}
+	txStatus := &blockchain.TxStatus{
+		BlockID:   0,
+		BlockHash: []byte(""),
+		Error:     "",
+		Attempts:  0}
+	if err := txStatus.Insert(nil, txHash); err != nil {
+		return "", errorAPI(w, err, http.StatusInternalServerError)
+	}
 	if err := queue.ValidateTxQueue.Enqueue(rtx); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	txHash, err := rtx.Hash()
-	if err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
-	}
 	return string(converter.BinToHex(txHash)), nil
 }
