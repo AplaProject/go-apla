@@ -82,10 +82,28 @@
 			"revisionTime": "2017-11-13T18:07:20Z"
 		},
 		{
+			"checksumSHA1": "bffinqNcCczds9fAuZGjoRWdvdU=",
+			"path": "github.com/gorilla/handlers",
+			"revision": "350d97a79266938cd77a9192b7d995132d4e2b5b",
+			"revisionTime": "2018-10-12T15:33:34Z"
+		},
+		{
+			"checksumSHA1": "5NQxGXStdEEDvT6IPRtJk7Qg+GQ=",
+			"path": "github.com/gorilla/mux",
+			"revision": "3d80bc801bb034e17cae38591335b3b1110f1c47",
+			"revisionTime": "2018-10-30T15:25:28Z"
+		},
+		{
 			"checksumSHA1": "UcxIsr0IzcSKDqGVnK1HsxnSSVU=",
 			"path": "github.com/gorilla/rpc",
 			"revision": "22c016f3df3febe0c1f6727598b6389507e03a18",
 			"revisionTime": "2016-09-23T22:06:01Z"
+		},
+		{
+			"checksumSHA1": "/SiHYonMCQZb95XIV+hdb3UYOS8=",
+			"path": "github.com/gorilla/schema",
+			"revision": "da8e73546beca346d03fd40d5b146e06e6b98b7a",
+			"revisionTime": "2018-10-17T15:13:37Z"
 		},
 		{
 			"checksumSHA1": "SGSXlSU1TFtg5aTlVA9v4Ka86lU=",
@@ -183,12 +201,6 @@
 			"path": "github.com/jinzhu/inflection",
 			"revision": "1c35d901db3da928c72a72d8458480cc9ade058f",
 			"revisionTime": "2017-01-02T12:52:26Z"
-		},
-		{
-			"checksumSHA1": "rylbYOEA1HI2BfUOOz0QRmCf5ks=",
-			"path": "github.com/julienschmidt/httprouter",
-			"revision": "e1b9828bc9e5904baec057a154c09ca40fe7fae0",
-			"revisionTime": "2017-10-27T13:37:09Z"
 		},
 		{
 			"checksumSHA1": "gEjGS03N1eysvpQ+FCHTxPcbxXc=",
