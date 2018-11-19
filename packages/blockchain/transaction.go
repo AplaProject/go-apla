@@ -19,14 +19,14 @@ import (
 
 var DB *leveldb.DB
 
-type levelDBGetterPutterDeleter interface {
+type LevelDBGetterPutterDeleter interface {
 	Get([]byte, *opt.ReadOptions) ([]byte, error)
 	Put([]byte, []byte, *opt.WriteOptions) error
 	Delete([]byte, *opt.WriteOptions) error
 	NewIterator(slice *util.Range, ro *opt.ReadOptions) iterator.Iterator
 }
 
-func GetDB(tx *leveldb.Transaction) levelDBGetterPutterDeleter {
+func GetDB(tx *leveldb.Transaction) LevelDBGetterPutterDeleter {
 	if tx != nil {
 		return tx
 	}

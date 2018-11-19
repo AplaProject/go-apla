@@ -4,21 +4,19 @@ package types
 
 import (
 	"encoding/json"
-
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
-type RegistryType int8
+type MetaRegistryType int8
 
 const (
-	RegistryTypeDefault RegistryType = iota
+	RegistryTypeDefault MetaRegistryType = iota
 	RegistryTypePrimary
 )
 
 type Registry struct {
 	Name      string // ex table Name
 	Ecosystem *Ecosystem
-	Type      RegistryType
+	Type      MetaRegistryType
 }
 
 type RegistryModel interface {
@@ -58,7 +56,7 @@ type MetadataRegistryReaderWriter interface {
 	MetadataRegistryWriter
 	Pricer
 	Converter
-	RegistryState
+	StateApplier
 }
 
 type BlockchainContext interface {
@@ -66,25 +64,14 @@ type BlockchainContext interface {
 	GetTransactionHash() []byte
 }
 
-type RegistryState interface {
-	// Rollback is rollback all block transactions
-	RollbackBlock(block []byte) error
-
-	// CleanBlockState is removing all rollbacks generated for block transactions
-	CleanBlockState(block []byte) error
-}
-
 // MetadataRegistryStorage provides a read or read-write transactions for metadata registry
 type MetadataRegistryStorage interface {
 	// Storage provides unpaid reading
 	MetadataRegistryReader
 
-	RegistryState
-
 	// Write/Read transaction. Must be closed by calling Commit() or Rollback() when done.
-	Begin(transaction *leveldb.Transaction) MetadataRegistryReaderWriter
+	Begin(saver StateStorage) MetadataRegistryReaderWriter
 }
-
 type Index struct {
 	Registry *Registry
 	Name     string
@@ -93,4 +80,27 @@ type Index struct {
 
 type Indexer interface {
 	GetIndexes() []Index
+}
+
+type DBType int8
+
+const (
+	DBTypeMeta DBType = iota
+	DBTypeBlockChain
+)
+
+type State struct {
+	Transaction []byte `json:"t"`
+	DBType      DBType `json:"d"`
+	Key         string `json:"k"`
+	Value       string `json:"v"`
+}
+
+type StateStorage interface {
+	Save(State) error
+	Get() ([]State, error)
+}
+
+type StateApplier interface {
+	Apply(State) error
 }

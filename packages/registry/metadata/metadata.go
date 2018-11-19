@@ -4,13 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 const keyConvention = "%s.%s.%s"
@@ -30,7 +27,7 @@ type tx struct {
 	priceCounter priceCounter
 
 	saveState bool
-	rollback  rollback
+	undo      types.StateStorage
 
 	indexer registryIndexer
 }
@@ -62,7 +59,7 @@ func (m *tx) Insert(ctx types.BlockchainContext, registry *types.Registry, pkVal
 	}
 
 	if m.saveState && registry.Name != "ecosystems" {
-		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, "")
+		err = m.undo.Save(types.State{Transaction: ctx.GetTransactionHash(), DBType: types.DBTypeMeta, Key: key, Value: ""})
 		if err != nil {
 			return errors.Wrapf(err, "saving rollback info")
 		}
@@ -93,7 +90,7 @@ func (m *tx) Update(ctx types.BlockchainContext, registry *types.Registry, pkVal
 	}
 
 	if m.saveState && registry.Name != "ecosystems" {
-		err = m.rollback.saveState(ctx.GetBlockHash(), ctx.GetTransactionHash(), registry, pkValue, old)
+		err = m.undo.Save(types.State{Transaction: ctx.GetTransactionHash(), DBType: types.DBTypeMeta, Key: key, Value: old})
 		if err != nil {
 			return errors.Wrapf(err, "saving rollback info")
 		}
@@ -205,20 +202,27 @@ func (m *tx) Price() int64 {
 	return 0
 }
 
-func (m *tx) RollbackBlock(block []byte) error {
-	if !m.saveState {
-		return ErrRollbackDisabled
+func (m *tx) Apply(state types.State) error {
+	// rollback inserted row
+	if state.Value == "" {
+		err := m.tx.Delete(state.Key)
+		if err != nil {
+			return errors.Wrapf(err, "deleting old row")
+		}
+	} else {
+		// rollback updated row
+		err := m.tx.Delete(state.Key)
+		if err != nil {
+			return errors.Wrapf(err, "deleting old row")
+		}
+
+		err = m.tx.Set(state.Key, state.Value)
+		if err != nil {
+			return errors.Wrapf(err, "setting old value")
+		}
 	}
 
-	return m.rollback.rollbackState(block)
-}
-
-func (m *tx) CleanBlockState(block []byte) error {
-	if !m.saveState {
-		return ErrRollbackDisabled
-	}
-
-	return m.rollback.removeState(block)
+	return nil
 }
 
 func (m *tx) CreateFromParams(name string, params map[string]interface{}) (types.RegistryModel, error) {
@@ -280,18 +284,6 @@ func NewStorage(db kv.Database, indexes []types.Index, rollback bool, pricing bo
 		return nil, err
 	}
 
-	if ms.rollback {
-		if err := kvTx.AddIndex(kv.Index{
-			Name: "rollback_tx",
-			SortFn: func(a, b string) bool {
-				return true
-			},
-			Pattern: fmt.Sprintf(searchPrefix, "*", "*", "*"),
-		}); err != nil {
-			return nil, err
-		}
-	}
-
 	if err := kvTx.Commit(); err != nil {
 		return nil, err
 	}
@@ -299,13 +291,13 @@ func NewStorage(db kv.Database, indexes []types.Index, rollback bool, pricing bo
 	return ms, nil
 }
 
-func (m *storage) Begin(transaction *leveldb.Transaction) types.MetadataRegistryReaderWriter {
+func (m *storage) Begin(undoLog types.StateStorage) types.MetadataRegistryReaderWriter {
 	databaseTx := m.db.Begin(true)
 	tx := &tx{tx: databaseTx, indexer: m.indexer}
 
 	if m.rollback {
 		tx.saveState = true
-		tx.rollback = rollback{tx: databaseTx, ltx: transaction, counter: counter{txCounter: make(map[string]uint64)}}
+		tx.undo = undoLog
 	}
 
 	if m.pricing {
@@ -332,40 +324,4 @@ func (m *storage) GetModel(registry *types.Registry, pkValue string) (types.Regi
 	tx := &tx{tx: m.db.Begin(false)}
 	defer tx.Rollback()
 	return tx.GetModel(registry, pkValue)
-}
-
-func (m *storage) RollbackBlock(block []byte) error {
-	tx := m.Begin(nil)
-	err := tx.RollbackBlock(block)
-	if err != nil {
-		rbErr := tx.Rollback()
-		log.WithFields(log.Fields{"type": consts.DBError, "error": rbErr}).Error("rollback metadata db")
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("commiting metadata db")
-		return err
-	}
-
-	return nil
-}
-
-func (m *storage) CleanBlockState(block []byte) error {
-	tx := m.Begin(nil)
-	err := tx.CleanBlockState(block)
-	if err != nil {
-		rbErr := tx.Rollback()
-		log.WithFields(log.Fields{"type": consts.DBError, "error": rbErr}).Error("removing block rollback")
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("commiting metadata db")
-		return err
-	}
-
-	return nil
 }
