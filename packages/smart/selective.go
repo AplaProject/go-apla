@@ -26,6 +26,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -357,6 +358,20 @@ func escapeSingleQuotes(val string) string {
 func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 	table string) (int64, string, error) {
 	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, nil, !sc.VDE && sc.Rollback, false)
+}
+
+func (sc *SmartContract) updateWhere(fields []string, values []interface{},
+	table string, where *types.Map) (int64, string, error) {
+	whereFields, vals, err := mapToParams(where)
+	if err != nil {
+		return 0, ``, err
+	}
+	whereValues := make([]string, len(vals))
+	for i, v := range vals {
+		whereValues[i] = fmt.Sprint(v)
+	}
+	return sc.selectiveLoggingAndUpd(fields, values, table, whereFields, whereValues,
+		!sc.VDE && sc.Rollback, true)
 }
 
 func (sc *SmartContract) update(fields []string, values []interface{},
