@@ -339,7 +339,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DelTable":                     DelTable,
 		"DelColumn":                    DelColumn,
 		"Throw":                        Throw,
-		"HexToPub":                     HexToPub,
+		"HexToPub":                     crypto.HexToPub,
 		"PubToHex":                     PubToHex,
 	}
 
@@ -2471,9 +2471,4 @@ func PubToHex(in interface{}) (ret string) {
 		ret = crypto.PubToHex(v)
 	}
 	return
-}
-
-func HexToPub(in string) (string, error) {
-	ret, err := crypto.HexToPub(in)
-	return string(ret), err
 }
