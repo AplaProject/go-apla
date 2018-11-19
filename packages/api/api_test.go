@@ -64,7 +64,7 @@ func PrivateToPublicHex(hexkey string) (string, error) {
 	if err != nil {
 		return ``, err
 	}
-	return hex.EncodeToString(pubKey), nil
+	return crypto.PubToHex(pubKey), nil
 }
 
 func sendRawRequest(rtype, url string, form *url.Values) ([]byte, error) {

@@ -29,7 +29,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 
-	"encoding/hex"
 	"encoding/json"
 
 	"github.com/GenesisKernel/go-genesis/packages/script"
@@ -134,7 +133,7 @@ func login(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.En
 					NetworkID:   consts.NETWORK_ID,
 				},
 				Params: map[string]interface{}{
-					"NewPubkey": hex.EncodeToString(dataKey),
+					"NewPubkey": crypto.PubToHex(dataKey),
 				},
 			}
 
