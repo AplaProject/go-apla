@@ -27,7 +27,7 @@ type Contract struct {
 	TokenID     int64
 	Conditions  string
 	AppID       int64
-	EcosystemID int64
+	EcosystemID int64 `gorm:"column:ecosystem"`
 }
 
 // TableName returns name of table
