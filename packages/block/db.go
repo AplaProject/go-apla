@@ -184,13 +184,6 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		log.WithFields(log.Fields{"type": consts.ParserError}).Error("getting data of first block")
 		return
 	}
-	sysParam := &model.SystemParameter{}
-	sysParam.Name = "test"
-	if data.Test == 1 {
-		sysParam.Update("1")
-	} else {
-		sysParam.Update("0")
-	}
 	syspar.SysUpdate(nil)
 	return
 }
