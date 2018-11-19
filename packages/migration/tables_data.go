@@ -10,9 +10,8 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
         '{    
             "name": "false",
             "value": "ContractAccess(\"@1EditContract\")",
-            "wallet_id": "ContractAccess(\"@1EditContract\")",
+            "wallet_id": "ContractAccess(\"@1BindWallet\", \"@1UnbindWallet\")",
             "token_id": "ContractAccess(\"@1EditContract\")",
-            "active": "ContractAccess(\"@1ActivateContract\", \"@1DeactivateContract\",\"@1EditContract\")",
             "conditions": "ContractAccess(\"@1EditContract\")",
             "app_id": "ContractAccess(\"@1ItemChangeAppId\")",
             "ecosystem": "false"
@@ -38,7 +37,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
     ),
     (next_id('1_tables'), 'history',
         '{
-            "insert": "ContractConditions(\"@1NodeOwnerCondition\")",
+            "insert": "ContractAccess(\"@1TokensTransfer\")",
             "update": "ContractConditions(\"@1AdminCondition\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
@@ -49,7 +48,8 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "comment": "false",
             "block_id":  "false",
             "txhash": "false",
-            "ecosystem": "false"
+            "ecosystem": "false",
+            "type": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),

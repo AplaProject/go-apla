@@ -62,23 +62,25 @@ func (sys Ecosystem) GetIndexes() []types.Index {
 }
 
 // GetAllSystemStatesIDs is retrieving all ecosystems ids
-func GetAllSystemStatesIDs() ([]int64, error) {
+func GetAllSystemStatesIDs() ([]int64, []string, error) {
 	if !IsTable(ecosysTable) {
 		//return nil, fmt.Errorf("%s does not exists", ecosysTable)
-		return nil, nil
+		return nil, nil, nil
 	}
 
 	ecosystems := new([]Ecosystem)
 	if err := DBConn.Find(&ecosystems).Order("id").Error; err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	ids := make([]int64, 0, len(*ecosystems))
-	for _, s := range *ecosystems {
-		ids = append(ids, s.ID)
+	ids := make([]int64, len(*ecosystems))
+	names := make([]string, len(*ecosystems))
+	for i, s := range *ecosystems {
+		ids[i] = s.ID
+		names[i] = s.Name
 	}
 
-	return ids, nil
+	return ids, names, nil
 }
 
 // Get is fill reciever from db

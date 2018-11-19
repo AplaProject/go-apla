@@ -54,5 +54,7 @@ var (
 		`E_UPDATING`:        `Node is updating blockchain`,
 		`E_STOPPING`:        `Network is stopping`,
 		`E_NOTIMPLEMENTED`:  `Not implemented`,
+		`E_DIFKEY`:          `Sender's key is different from tx key`,
+		`E_BANNED`:          `The key is banned till %s`,
 	}
 )

@@ -293,7 +293,6 @@ func (bq *QueueBlockQueue) ProcessItems(processF func(tx *QueueBlock) error) err
 
 var SendTxQueue *TransactionQueue = &TransactionQueue{}
 var ValidateTxQueue *TransactionQueue = &TransactionQueue{}
-var ProcessTxQueue *TransactionQueue = &TransactionQueue{}
 var SendBlockQueue *BlockQueue = &BlockQueue{}
 var ProcessBlockQueue *BlockQueue = &BlockQueue{}
 var ValidateBlockQueue *QueueBlockQueue = &QueueBlockQueue{}
@@ -303,9 +302,6 @@ func Init() error {
 		return err
 	}
 	if err := ValidateTxQueue.Init("validate_tx"); err != nil {
-		return err
-	}
-	if err := ProcessTxQueue.Init("process_tx"); err != nil {
 		return err
 	}
 	if err := SendBlockQueue.Init("send_block"); err != nil {

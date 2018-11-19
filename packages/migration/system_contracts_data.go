@@ -3,7 +3,7 @@
 package migration
 
 var systemContractsDataSQL = `
-INSERT INTO "system_contracts" (id, name, value, conditions, wallet_id)
+INSERT INTO "system_contracts" (id, name, value, conditions)
 VALUES
 	(next_id('system_contracts'), 'FirstBlock', 'contract FirstBlock {
     data {
@@ -17,5 +17,5 @@ VALUES
         InitFirstEcosystem($Data)
     }
 }
-', 'ContractConditions("MainCondition")', %[2]d);
+', 'ContractConditions("MainCondition")');
 `

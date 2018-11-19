@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
@@ -32,6 +33,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/language"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/utils/metric"
 
@@ -91,23 +93,23 @@ var (
 )
 
 const (
-	nActivateContract   = "ActivateContract"
-	nDeactivateContract = "DeactivateContract"
-	nEditColumn         = "EditColumn"
-	nEditContract       = "EditContract"
-	nEditEcosystemName  = "EditEcosystemName"
-	nEditLang           = "EditLang"
-	nEditLangJoint      = "EditLangJoint"
-	nEditTable          = "EditTable"
-	nImport             = "Import"
-	nNewColumn          = "NewColumn"
-	nNewContract        = "NewContract"
-	nNewEcosystem       = "NewEcosystem"
-	nNewLang            = "NewLang"
-	nNewLangJoint       = "NewLangJoint"
-	nNewTable           = "NewTable"
-	nNewTableJoint      = "NewTableJoint"
-	nNewUser            = "NewUser"
+	nBindWallet        = "BindWallet"
+	nUnbindWallet      = "UnbindWallet"
+	nEditColumn        = "EditColumn"
+	nEditContract      = "EditContract"
+	nEditEcosystemName = "EditEcosystemName"
+	nEditLang          = "EditLang"
+	nEditLangJoint     = "EditLangJoint"
+	nEditTable         = "EditTable"
+	nImport            = "Import"
+	nNewColumn         = "NewColumn"
+	nNewContract       = "NewContract"
+	nNewEcosystem      = "NewEcosystem"
+	nNewLang           = "NewLang"
+	nNewLangJoint      = "NewLangJoint"
+	nNewTable          = "NewTable"
+	nNewTableJoint     = "NewTableJoint"
+	nNewUser           = "NewUser"
 )
 
 //SignRes contains the data of the signature
@@ -336,8 +338,8 @@ func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error)
 		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.Header.EcosystemID)
-	if _, id, err = DBInsert(sc, `@1languages`, map[string]interface{}{"name": name,
-		"ecosystem": idStr, "res": trans}); err != nil {
+	if _, id, err = DBInsert(sc, `@1languages`, types.LoadMap(map[string]interface{}{"name": name,
+		"ecosystem": idStr, "res": trans})); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return 0, err
 	}
@@ -351,7 +353,7 @@ func EditLanguage(sc *SmartContract, id int64, name, trans string) error {
 		return err
 	}
 	if _, err := DBUpdate(sc, `@1languages`, id,
-		map[string]interface{}{"name": name, "res": trans}); err != nil {
+		types.LoadMap(map[string]interface{}{"name": name, "res": trans})); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting new language")
 		return err
 	}
@@ -381,7 +383,11 @@ func GetContractById(sc *SmartContract, id int64) string {
 	}
 
 	re := regexp.MustCompile(`(?is)^\s*contract\s+([\d\w_]+)\s*{`)
-	names := re.FindStringSubmatch(ret[0].(map[string]interface{})["value"].(string))
+	var val string
+	if v, found := ret[0].(*types.Map).Get("value"); found {
+		val = v.(string)
+	}
+	names := re.FindStringSubmatch(val)
 	if len(names) != 2 {
 		return ``
 	}
@@ -449,20 +455,20 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	sc.FullAccess = true
-	if _, _, err = DBInsert(sc, "@1applications", map[string]interface{}{
+	if _, _, err = DBInsert(sc, "@1applications", types.LoadMap(map[string]interface{}{
 		"name":       "System",
 		"conditions": `ContractConditions("MainCondition")`,
 		"ecosystem":  id,
-	}); err != nil {
+	})); err != nil {
 		return 0, logErrorDB(err, "inserting application")
 	}
-	if _, _, err = DBInsert(sc, `@1pages`, map[string]interface{}{"ecosystem": idStr,
+	if _, _, err = DBInsert(sc, `@1pages`, types.LoadMap(map[string]interface{}{"ecosystem": idStr,
 		"name": "default_page", "value": SysParamString("default_ecosystem_page"),
-		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`}); err != nil {
+		"menu": "default_menu", "conditions": `ContractConditions("MainCondition")`})); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
-	if _, _, err = DBInsert(sc, `@1menu`, map[string]interface{}{"ecosystem": idStr,
-		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`}); err != nil {
+	if _, _, err = DBInsert(sc, `@1menu`, types.LoadMap(map[string]interface{}{"ecosystem": idStr,
+		"name": "default_menu", "value": SysParamString("default_ecosystem_menu"), "title": "default", "conditions": `ContractConditions("MainCondition")`})); err != nil {
 		return 0, logErrorDB(err, "inserting default page")
 	}
 
@@ -476,20 +482,22 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	}
 
 	if Len(ret) > 0 {
-		pub = ret[0].(map[string]interface{})[`pub`].(string)
+		if v, found := ret[0].(*types.Map).Get("pub"); found {
+			pub = v.(string)
+		}
 	}
-	if _, _, err := DBInsert(sc, `@1keys`,
-		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr}); err != nil {
+	if _, _, err := DBInsert(sc, `@1keys`, types.LoadMap(
+		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr})); err != nil {
 		return 0, logErrorDB(err, "inserting key")
 	}
 
 	sc.FullAccess = false
 	// because of we need to know which ecosystem to rollback.
 	// All tables will be deleted so it's no need to rollback data from tables
-	if _, _, err := DBInsert(sc, "@1ecosystems", map[string]interface{}{
+	if _, _, err := DBInsert(sc, "@1ecosystems", types.LoadMap(map[string]interface{}{
 		"id":   id,
 		"name": name,
-	}); err != nil {
+	})); err != nil {
 		return 0, logErrorDB(err, "insert new ecosystem to stat table")
 	}
 
@@ -519,7 +527,6 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 		return err
 	}
 
-	_, err := DBUpdate(sc, "@1ecosystems", sysID, map[string]interface{}{"name": newName})
 	if err := sc.MetaDb.Update(
 		nil, // TODO
 		&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
@@ -552,34 +559,33 @@ func Substr(s string, off int64, slen int64) string {
 	return s[off : off+slen]
 }
 
-// Activate sets Active status of the contract in smartVM
-func Activate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Activate`, sc, nActivateContract); err != nil {
+// BndWallet sets wallet_id to current wallet and updates value in vm
+func BndWallet(sc *SmartContract, tblid int64, state int64) error {
+	if err := validateAccess(`BindWallet`, sc, nBindWallet); err != nil {
+		log.Error("BindWallet access denied")
 		return err
 	}
-	ActivateContract(tblid, state, true)
-	if !sc.VDE {
-		if err := SysRollback(sc, SysRollData{Type: "ActivateContract",
-			EcosystemID: state, ID: tblid}); err != nil {
-			return err
-		}
+
+	if _, _, err := sc.update([]string{"wallet_id"}, []interface{}{sc.TxSmart.Header.KeyID}, "1_contracts", "id", tblid); err != nil {
+		log.WithFields(log.Fields{"error": err, "contract_id": tblid}).Error("on updating contract wallet")
+		return err
 	}
-	return nil
+
+	return SetContractWallet(sc, tblid, state, sc.TxSmart.Header.KeyID)
 }
 
-// Deactivate sets Active status of the contract in smartVM
-func Deactivate(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`Deactivate`, sc, nDeactivateContract); err != nil {
+// UnbndWallet sets Active status of the contract in smartVM
+func UnbndWallet(sc *SmartContract, tblid int64, state int64) error {
+	if err := validateAccess(`UnbindWallet`, sc, nUnbindWallet); err != nil {
 		return err
 	}
-	ActivateContract(tblid, state, false)
-	if !sc.VDE {
-		if err := SysRollback(sc, SysRollData{Type: "DeactivateContract",
-			EcosystemID: state, ID: tblid}); err != nil {
-			return err
-		}
+
+	if _, _, err := sc.update([]string{"wallet_id"}, []interface{}{0}, "1_contracts", "id", tblid); err != nil {
+		log.WithFields(log.Fields{"error": err, "contract_id": tblid}).Error("on updating contract wallet")
+		return err
 	}
-	return nil
+
+	return SetContractWallet(sc, tblid, state, 0)
 }
 
 // CheckSignature checks the additional signatures for the contract
@@ -626,7 +632,8 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
-	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc)
+	timeBlock := time.Unix(sc.TxSmart.Header.Time, 0).Format(`2006-01-02 15:04:05`)
+	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock)
 	if err != nil {
 		return nil, logErrorDB(err, "get values of metric")
 	}
@@ -635,17 +642,18 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 
 // DBCollectMetrics returns actual values of all metrics
 // This function used to further store these values
-func DBCollectMetrics() []interface{} {
+func DBCollectMetrics(sc *SmartContract) []interface{} {
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,
 		metric.CollectMetricDataForEcosystemTx,
 	)
-	return c.Values()
+	return c.Values(sc.TxSmart.Header.Time)
 }
 
 // JSONDecode converts json string to object
 func JSONDecode(input string) (ret interface{}, err error) {
 	err = unmarshalJSON([]byte(input), &ret, "unmarshalling json")
+	ret = types.ConvertMap(ret)
 	return
 }
 
@@ -655,7 +663,7 @@ func JSONEncodeIndent(input interface{}, indent string) (string, error) {
 	if rv.Kind() == reflect.Ptr {
 		rv = rv.Elem()
 	}
-	if rv.Kind() == reflect.Struct {
+	if rv.Kind() == reflect.Struct && reflect.TypeOf(input).String() != `*types.Map` {
 		return "", logErrorfShort(eTypeJSON, input, consts.TypeError)
 	}
 	var (

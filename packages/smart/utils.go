@@ -112,6 +112,28 @@ func CallContract(contractName string, ecosystemID int64, params map[string]stri
 	return smartTx, nil
 }
 
+func getFieldDefaultValue(fieldType string) interface{} {
+	switch fieldType {
+	case "bool":
+		return false
+	case "float64":
+		return float64(0)
+	case "int64":
+		return int64(0)
+	case script.Decimal:
+		return decimal.New(0, consts.MoneyDigits)
+	case "string":
+		return ""
+	case "[]uint8":
+		return []byte{}
+	case "[]interface {}":
+		return []interface{}{}
+	case script.File:
+		return types.NewFile()
+	}
+	return nil
+}
+
 func FillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files map[string]*tx.File, forsign []string) (map[string]interface{}, error) {
 	resultParams := map[string]interface{}{}
 	for _, fitem := range fieldInfos {
@@ -119,15 +141,24 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files 
 		var v interface{}
 		var forv string
 		var isforv bool
-
-		if fitem.Type.String() == "types.File" {
+		if _, ok := params[fitem.Name]; !ok && fitem.ContainsTag(script.TagOptional) {
+			resultParams[fitem.Name] = getFieldDefaultValue(fitem.Type.String())
+			continue
+		}
+		if _, ok := files[fitem.Name]; !ok && fitem.ContainsTag(script.TagOptional) {
+			resultParams[fitem.Name] = getFieldDefaultValue(fitem.Type.String())
+			continue
+		}
+		if fitem.Type.String() == script.File {
 			file, ok := files[fitem.Name]
 			if !ok {
 				return nil, nil
 			}
-			resultParams[fitem.Name] = file.Data
-			resultParams[fitem.Name+"MimeType"] = file.MimeType
-
+			fileMap := types.LoadMap(map[string]interface{}{
+				"Body":     file.Data,
+				"MimeType": file.MimeType,
+				"Name":     fitem.Name})
+			resultParams[fitem.Name] = fileMap
 			forsign = append(forsign, file.MimeType, file.Hash)
 			continue
 		}
@@ -179,26 +210,4 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files 
 		forsign = append(forsign, fmt.Sprintf("%v", v))
 	}
 	return resultParams, nil
-}
-
-func getFieldDefaultValue(fieldType string) interface{} {
-	switch fieldType {
-	case "bool":
-		return false
-	case "float64":
-		return float64(0)
-	case "int64":
-		return int64(0)
-	case script.Decimal:
-		return decimal.New(0, consts.MoneyDigits)
-	case "string":
-		return ""
-	case "[]uint8":
-		return []byte{}
-	case "[]interface {}":
-		return []interface{}{}
-	case script.File:
-		return types.NewFile()
-	}
-	return nil
 }

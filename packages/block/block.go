@@ -101,6 +101,7 @@ func (b *PlayableBlock) PlaySafe() error {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
 			}
+			BadTxForBan(b.Transactions[0].TxHeader.KeyID)
 			bTx, err := b.Transactions[0].ToBlockchainTransaction()
 			if err != nil {
 				return err
