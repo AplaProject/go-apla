@@ -377,7 +377,7 @@ func loadContractList(list []model.Contract) error {
 			return err
 		}
 		owner := script.OwnerInfo{
-			StateID:  uint32(item.Ecosystem),
+			StateID:  uint32(item.EcosystemID),
 			Active:   false,
 			TableID:  item.ID,
 			WalletID: item.WalletID,
