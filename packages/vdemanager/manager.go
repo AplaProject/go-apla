@@ -126,12 +126,12 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 
 	cmd := config.configCommand()
 	if err = cmd.Run(); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run config command")
+		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args, "error": err}).Error("on run config command")
 		return err
 	}
 
 	if err = config.generateKeysCommand().Run(); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args}).Error("on run generateKeys command")
+		log.WithFields(log.Fields{"type": consts.IOError, "args": cmd.Args, "error": err}).Error("on run generateKeys command")
 		return err
 	}
 

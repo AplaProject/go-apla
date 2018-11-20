@@ -38,7 +38,7 @@ func (c ChildVDEConfig) configCommand() *exec.Cmd {
 		fmt.Sprintf("--keysDir=%s", c.Directory),
 		fmt.Sprintf("--logTo=%s", c.LogTo),
 		fmt.Sprintf("--logLevel=%s", c.LogLevel),
-		"--runMode=VDE",
+		"--vdeMode=VDE",
 	}
 
 	return exec.Command(c.Executable, args...)
