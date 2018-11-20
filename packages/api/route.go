@@ -91,7 +91,6 @@ func Route(route *hr.Router) {
 		get(`ecosystems`, ``, authWallet, ecosystems)
 		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
 		get("ecosystemname", "?id:int64", getEcosystemName)
-
 	}
 }
 

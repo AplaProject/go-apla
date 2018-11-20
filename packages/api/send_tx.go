@@ -21,6 +21,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 
@@ -124,7 +125,7 @@ func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 		return "", err
 	}
 
-	return string(converter.BinToHex(hash)), nil
+	return hash, nil
 }
 
 type blockchainTxPreprocessor struct {
@@ -168,16 +169,28 @@ func (p vdeTxPreprocessor) ProcessClientTranstaction(w http.ResponseWriter, txDa
 		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
 
+	ts := &model.TransactionStatus{
+		BlockID:  1,
+		Hash:     tx.TxHash,
+		Time:     time.Now().Unix(),
+		WalletID: p.keyID,
+		Type:     tx.TxType,
+	}
+
+	if err := ts.Create(); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating tx status")
+		return "", err
+	}
+
 	res, _, err := tx.CallVDEContract()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on execution contract")
 		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
 
-	ts := &model.TransactionStatus{}
 	if err := ts.UpdateBlockMsg(nil, 1, res, tx.TxHash); err != nil {
 		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
-		return "", err
+		return "", errorAPI(w, err, http.StatusInternalServerError)
 	}
 
 	return string(converter.BinToHex(tx.TxHash)), nil
