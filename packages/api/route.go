@@ -58,9 +58,9 @@ func setRoutes(r *mux.Router) {
 
 	api.HandleFunc("/content/source/{name}", authRequire(getSourceHandler)).Methods("POST")
 	api.HandleFunc("/content/page/{name}", authRequire(getPageHandler)).Methods("POST")
-	api.HandleFunc("/content/hash/{name}", authRequire(getPageHashHandler)).Methods("POST")
+	api.HandleFunc("/content/hash/{name}", getPageHashHandler).Methods("POST")
 	api.HandleFunc("/content/menu/{name}", authRequire(getMenuHandler)).Methods("POST")
-	api.HandleFunc("/content", authRequire(jsonContentHandler)).Methods("POST")
+	api.HandleFunc("/content", jsonContentHandler).Methods("POST")
 	api.HandleFunc("/login", loginHandler).Methods("POST")
 	api.HandleFunc("/sendTx", authRequire(sendTxHandler)).Methods("POST")
 	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST")
