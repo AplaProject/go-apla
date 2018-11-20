@@ -1159,7 +1159,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+func DBUpdateExt(sc *SmartContract, tblname string, where *types.Map,
 	values *types.Map) (qcost int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
@@ -1175,13 +1175,13 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.update(columns, val, tblname, column, fmt.Sprint(value))
+	qcost, _, err = sc.updateWhere(columns, val, tblname, where)
 	return
 }
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, values *types.Map) (qcost int64, err error) {
-	return DBUpdateExt(sc, tblname, `id`, id, values)
+	return DBUpdateExt(sc, tblname, types.LoadMap(map[string]interface{}{`id`: id}), values)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem

@@ -23,6 +23,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
+	"github.com/GenesisKernel/go-genesis/packages/types"
+
 	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
 	log "github.com/sirupsen/logrus"
 )
@@ -44,7 +46,7 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 }
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
+	table string, inWhere *types.Map, generalRollback bool, exists bool) (int64, string, error) {
 
 	var (
 		cost            int64
@@ -75,6 +77,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		logger.WithFields(log.Fields{"error": err}).Error("on getting sql select statement")
 		return 0, "", err
 	}
+	var addSQLWhere string
 
 	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {
@@ -165,13 +168,18 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 	table string) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, nil, !sc.VDE && sc.Rollback, false)
+	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, !sc.VDE && sc.Rollback, false)
+}
+
+func (sc *SmartContract) updateWhere(fields []string, values []interface{},
+	table string, where *types.Map) (int64, string, error) {
+	return sc.selectiveLoggingAndUpd(fields, values, table, where, !sc.VDE && sc.Rollback, true)
 }
 
 func (sc *SmartContract) update(fields []string, values []interface{},
 	table string, whereField string, whereValue interface{}) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
-		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
+	return sc.updateWhere(fields, values, table, types.LoadMap(map[string]interface{}{
+		whereField: fmt.Sprint(whereValue)}))
 }
 
 func shortString(raw string, length int) string {

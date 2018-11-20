@@ -136,7 +136,7 @@ func (m *Map) Remove(key string) {
 
 // IsEmpty returns true if map does not contain any elements
 func (m *Map) IsEmpty() bool {
-	return m.Size() == 0
+	return m == nil || m.Size() == 0
 }
 
 // Size returns number of elements in the map.
