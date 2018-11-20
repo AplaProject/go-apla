@@ -25,6 +25,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const corsMaxAge = 600
+
 // Route sets routing pathes
 func setRoutes(r *mux.Router) {
 	r.StrictSlash(true)
@@ -91,5 +93,10 @@ func NewRouter() http.Handler {
 }
 
 func WithCors(h http.Handler) http.Handler {
-	return handlers.CORS()(h)
+	return handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET", "HEAD", "POST"}),
+		handlers.AllowedHeaders([]string{"Authorization", "Content-Type", "X-Requested-With"}),
+		handlers.MaxAge(corsMaxAge),
+	)(h)
 }
