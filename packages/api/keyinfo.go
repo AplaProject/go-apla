@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -41,18 +42,28 @@ type keyInfoResult struct {
 func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
 
 	keysList := make([]keyInfoResult, 0)
+
 	keyID := converter.StringToAddress(data.params[`wallet`].(string))
 	if keyID == 0 {
 		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
 	}
-	ids, names, err := model.GetAllSystemStatesIDs()
-	if err != nil {
-		return errorAPI(w, err, http.StatusInternalServerError)
+
+	var ids []int64
+	var names []string
+
+	if !conf.Config.IsSupportingVDE() {
+		if ids, names, err = model.GetAllSystemStatesIDs(); err != nil {
+			return errorAPI(w, err, http.StatusInternalServerError)
+		}
+	} else {
+		ids = append(ids, 1)
+		names = append(names, "Platform ecosystem")
 	}
 
 	var (
 		found bool
 	)
+
 	for i, ecosystemID := range ids {
 		key := &model.Key{}
 		key.SetTablePrefix(ecosystemID)
