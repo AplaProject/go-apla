@@ -36,6 +36,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -590,7 +591,7 @@ func dbfindTag(par parFunc) string {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
 			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
-			where, err = smart.GetWhere(types.LoadMap(inWhere.(map[string]interface{})))
+			where, err = qb.GetWhere(types.LoadMap(inWhere.(map[string]interface{})))
 			if err != nil {
 				return err.Error()
 			}

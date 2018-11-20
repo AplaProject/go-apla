@@ -65,8 +65,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		Table:        table,
 		Fields:       fields,
 		FieldValues:  ivalues,
-		WhereFields:  whereFields,
-		WhereValues:  whereValues,
+		Where:        inWhere,
 		KeyTableChkr: model.KeyTableChecker{},
 	}
 
@@ -77,11 +76,10 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		logger.WithFields(log.Fields{"error": err}).Error("on getting sql select statement")
 		return 0, "", err
 	}
-	var addSQLWhere string
 
 	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "whereF": whereFields, "whereV": whereValues}).Error("getting query total cost")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "where": inWhere}).Error("getting query total cost")
 		return 0, "", err
 	}
 
@@ -92,12 +90,19 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	cost += selectCost
-	if exists && len(logData) == 0 {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "whereF": whereFields, "whereV": whereValues, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
-		return 0, "", errUpdNotExistRecord
+	if exists {
+		if len(logData) == 0 {
+			logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "where": inWhere, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
+			return 0, "", errUpdNotExistRecord
+		}
+		if sqlBuilder.IsEmptyWhere() {
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"error": errWhereUpdate}).Error("update without where")
+			return 0, "", errWhereUpdate
+		}
 	}
 
-	if whereFields != nil && len(logData) > 0 {
+	if !sqlBuilder.Where.IsEmpty() && len(logData) > 0 {
 		var err error
 		rollbackInfoStr, err = sqlBuilder.GenerateRollBackInfoString(logData)
 		if err != nil {

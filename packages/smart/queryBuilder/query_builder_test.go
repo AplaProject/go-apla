@@ -1,4 +1,4 @@
-package smart
+package queryBuilder
 
 import (
 	"fmt"
