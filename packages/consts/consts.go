@@ -173,6 +173,12 @@ const TokenEcosystem = 1
 
 const HTTPServerMaxBodySize = 1 << 20
 
+// ShiftContractID is the offset of tx identifiers
+const ShiftContractID = 5000
+
+// ContractList is the number of contracts per page on loading
+const ContractList = 200
+
 // GuestKey is the guest id
 const GuestKey = `4544233900443112470`
 

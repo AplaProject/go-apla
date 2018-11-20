@@ -49,6 +49,7 @@ const (
 	eConditionNotAllowed = `Condition %s is not allowed`
 	eTableNotEmpty       = `Table %s is not empty`
 	eColumnNotDeleted    = `Column %s cannot be deleted`
+	eRollbackContract    = `Wrong rollback of the latest contract %d != %d`
 )
 
 var (
@@ -60,7 +61,6 @@ var (
 	errEmptyColumn        = errors.New(`Column name is empty`)
 	errWrongColumn        = errors.New(`Column name cannot begin with digit`)
 	errNotFound           = errors.New(`Record has not been found`)
-	errNow                = errors.New(`It is prohibited to use NOW() or current time functions`)
 	errContractChange     = errors.New(`Contract cannot be removed or inserted`)
 	errCurrentBalance     = errors.New(`Current balance is not enough`)
 	errDeletedKey         = errors.New(`The key is deleted`)
