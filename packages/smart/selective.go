@@ -57,7 +57,7 @@ func getParam(fields []string, name string) int {
 }
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
+	table string, inWhere *types.Map, generalRollback bool, exists bool) (int64, string, error) {
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
 	var (
 		tableID               string
@@ -77,9 +77,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			keyEcosystem = idNames[0]
 			table = `1_` + keyName
 
-			if isEcosystem := getParam(fields, `ecosystem`); isEcosystem >= 0 && len(ivalues) > isEcosystem &&
-				converter.StrToInt64(fmt.Sprint(ivalues[isEcosystem])) > 0 {
-				if whereFields == nil {
+			if isEcosystem := getParam(fields, `ecosystem`); isEcosystem >= 0 &&
+				len(ivalues) > isEcosystem && converter.StrToInt64(fmt.Sprint(ivalues[isEcosystem])) > 0 {
+				if inWhere.IsEmpty() {
 					keyEcosystem = fmt.Sprint(ivalues[isEcosystem])
 				}
 			} else {
@@ -129,25 +129,25 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			addSQLFields += `"` + field + `",`
 		}
 	}
+	var addSQLWhere string
 
-	addSQLWhere := ""
-
-	if whereFields != nil && whereValues != nil {
-		for i := 0; i < len(whereFields); i++ {
-			if val := converter.StrToInt64(whereValues[i]); val != 0 {
-				addSQLWhere += whereFields[i] + "= " + escapeSingleQuotes(whereValues[i]) + " AND "
-			} else {
-				addSQLWhere += whereFields[i] + "= '" + escapeSingleQuotes(whereValues[i]) + "' AND "
+	if !inWhere.IsEmpty() {
+		if isKeyTable {
+			if _, isEcosystem := inWhere.Get(`ecosystem`); !isEcosystem {
+				inWhere.Set(`ecosystem`, converter.StrToInt64(keyEcosystem))
 			}
 		}
-		if isKeyTable {
-			if isEcosystem := getParam(whereFields, `ecosystem`); isEcosystem < 0 {
-				addSQLWhere += fmt.Sprintf("ecosystem = '%d' AND ", converter.StrToInt64(keyEcosystem))
-			}
+		addSQLWhere, err = GetWhere(inWhere)
+		if err != nil {
+			return 0, ``, err
 		}
 	}
 	if len(addSQLWhere) > 0 {
-		addSQLWhere = " WHERE " + addSQLWhere[0:len(addSQLWhere)-5]
+		addSQLWhere = " WHERE " + addSQLWhere
+	} else if exists {
+		logger.WithFields(log.Fields{"type": consts.NotFound,
+			"error": errWhereUpdate}).Error("update without where")
+		return 0, tableID, errWhereUpdate
 	}
 	addSQLFields = strings.TrimRight(addSQLFields, ",")
 	selectQuery := `SELECT ` + addSQLFields + ` FROM "` + table + `" ` + addSQLWhere
@@ -167,7 +167,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		return 0, tableID, errUpdNotExistRecord
 	}
 	jsonFields := make(map[string]map[string]string)
-	if whereFields != nil && len(logData) > 0 {
+	if !inWhere.IsEmpty() && len(logData) > 0 {
 		if isKeyTable {
 			keyEcosystem = logData["ecosystem"]
 		}
@@ -303,16 +303,6 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 			addSQLIns0 = append(addSQLIns0, colname)
 			addSQLIns1 = append(addSQLIns1, fmt.Sprintf(`'%s'::jsonb`, string(out)))
 		}
-		if whereFields != nil && whereValues != nil {
-			for i := 0; i < len(whereFields); i++ {
-				if whereFields[i] == `id` {
-					isID = true
-					tableID = whereValues[i]
-				}
-				addSQLIns0 = append(addSQLIns0, whereFields[i])
-				addSQLIns1 = append(addSQLIns1, escapeSingleQuotes(whereValues[i]))
-			}
-		}
 		if !isID {
 			id, err := model.GetNextID(sc.DbTransaction, table)
 			if err != nil {
@@ -357,25 +347,16 @@ func escapeSingleQuotes(val string) string {
 
 func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 	table string) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, nil, !sc.VDE && sc.Rollback, false)
+	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, !sc.VDE && sc.Rollback, false)
 }
 
 func (sc *SmartContract) updateWhere(fields []string, values []interface{},
 	table string, where *types.Map) (int64, string, error) {
-	whereFields, vals, err := mapToParams(where)
-	if err != nil {
-		return 0, ``, err
-	}
-	whereValues := make([]string, len(vals))
-	for i, v := range vals {
-		whereValues[i] = fmt.Sprint(v)
-	}
-	return sc.selectiveLoggingAndUpd(fields, values, table, whereFields, whereValues,
-		!sc.VDE && sc.Rollback, true)
+	return sc.selectiveLoggingAndUpd(fields, values, table, where, !sc.VDE && sc.Rollback, true)
 }
 
 func (sc *SmartContract) update(fields []string, values []interface{},
 	table string, whereField string, whereValue interface{}) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
-		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
+	return sc.updateWhere(fields, values, table, types.LoadMap(map[string]interface{}{
+		whereField: fmt.Sprint(whereValue)}))
 }
