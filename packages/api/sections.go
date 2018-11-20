@@ -56,7 +56,7 @@ func getSectionsHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	table := "1_section"
+	table := "1_sections"
 	q := model.GetDB(nil).Table(table).Where("ecosystem = ? AND status > 0", client.EcosystemID).Order("id ASC")
 
 	result := new(listResult)
