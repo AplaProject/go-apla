@@ -21,6 +21,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/GenesisKernel/go-genesis/packages/types"
+
 	"github.com/shopspring/decimal"
 )
 
@@ -45,15 +47,15 @@ func (block *Block) String() (ret string) {
 	return
 }
 
-func getMap() *Map {
-	myMap := NewMap()
+func getMap() *types.Map {
+	myMap := types.NewMap()
 	myMap.Set(`par0`, `Parameter 0`)
 	myMap.Set(`par1`, `Parameter 1`)
 	return myMap
 }
 
 func getArray() []interface{} {
-	myMap := NewMap()
+	myMap := types.NewMap()
 	myMap.Set(`par0`, `Parameter 0`)
 	myMap.Set(`par1`, `Parameter 1`)
 	return []interface{}{myMap,
@@ -74,7 +76,7 @@ func Money(v interface{}) (ret decimal.Decimal) {
 	return ret
 }
 
-func outMap(v *Map) string {
+func outMap(v *types.Map) string {
 	return fmt.Sprint(v)
 }
 
@@ -669,7 +671,7 @@ func TestVMCompile(t *testing.T) {
 				break
 			}
 		} else {
-			glob := NewMap()
+			glob := types.NewMap()
 			glob.Set(`test`, `String value`)
 			glob.Set(`number`, 1001)
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
