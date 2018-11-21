@@ -40,23 +40,25 @@ type txstatusResult struct {
 	Result  string         `json:"result"`
 }
 
-func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstatusResult, error) {
+func getTxStatus(r *http.Request, hash string) (*txstatusResult, error) {
+	logger := getLogger(r)
+
 	var status txstatusResult
 	if _, err := hex.DecodeString(hash); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding tx hash from hex")
-		return nil, errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+		return nil, errHashWrong
 	}
 	tx := &blockchain.TxStatus{}
 	found, err := tx.Get(nil, converter.HexToBin(hash))
 	if err != nil {
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": []byte(converter.HexToBin(hash))}).Error("getting transaction status by hash")
-		return nil, errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
+		return nil, errHashNotFound
 	}
 	if err != nil {
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	if tx.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(tx.BlockID)
@@ -81,20 +83,23 @@ type txstatusRequest struct {
 	Hashes []string `json:"hashes"`
 }
 
-func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func getTxStatusHandler(w http.ResponseWriter, r *http.Request) {
 	result := &multiTxStatusResult{}
 	result.Results = map[string]*txstatusResult{}
+
 	var request txstatusRequest
-	if err := json.Unmarshal([]byte(data.params["data"].(string)), &request); err != nil {
-		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+	if err := json.Unmarshal([]byte(r.FormValue("data")), &request); err != nil {
+		errorResponse(w, errHashWrong)
+		return
 	}
 	for _, hash := range request.Hashes {
-		status, err := getTxStatus(hash, w, logger)
+		status, err := getTxStatus(r, hash)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Results[hash] = status
 	}
-	data.result = result
-	return nil
+
+	jsonResponse(w, result)
 }

@@ -35,11 +35,13 @@ type sendTxResult struct {
 	Hashes map[string]string `json:"hashes"`
 }
 
-func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, key string) ([]byte, error) {
+func getTxData(r *http.Request, key string) ([]byte, error) {
+	logger := getLogger(r)
+
 	file, _, err := r.FormFile(key)
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Error("request.FormFile")
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -52,26 +54,32 @@ func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	return txData, nil
 }
 
-func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if block.IsKeyBanned(data.keyId) {
-		return errorAPI(w, "E_BANNED", http.StatusBadRequest, block.BannedTill(data.keyId))
+func sendTxHandler(w http.ResponseWriter, r *http.Request) {
+	client := getClient(r)
+
+	if block.IsKeyBanned(client.KeyID) {
+		errorResponse(w, errBannded.Errorf(block.BannedTill(client.KeyID)))
+		return
 	}
 
 	err := r.ParseMultipartForm(multipartBuf)
 	if err != nil {
-		return errorAPI(w, err, http.StatusBadRequest)
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
 	result := &sendTxResult{Hashes: make(map[string]string)}
 	for key := range r.MultipartForm.File {
-		txData, err := getTxData(w, r, data, logger, key)
+		txData, err := getTxData(r, key)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 
-		hash, err := handlerTx(w, r, data, logger, txData)
+		hash, err := txHandler(r, txData)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Hashes[key] = hash
 	}
@@ -79,19 +87,19 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	for key := range r.Form {
 		txData, err := hex.DecodeString(r.FormValue(key))
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 
-		hash, err := handlerTx(w, r, data, logger, txData)
+		hash, err := txHandler(r, txData)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Hashes[key] = hash
 	}
 
-	data.result = result
-
-	return nil
+	jsonResponse(w, result)
 }
 
 type contractResult struct {
@@ -101,24 +109,27 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, txData []byte) (string, error) {
+func txHandler(r *http.Request, txData []byte) (string, error) {
+	client := getClient(r)
+	logger := getLogger(r)
+
 	if int64(len(txData)) > syspar.GetMaxTxSize() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
-		block.BadTxForBan(data.keyId)
-		return "", errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
+		block.BadTxForBan(client.KeyID)
+		return "", errLimitTxSize.Errorf(len(txData))
 	}
 
 	rtx := &blockchain.Transaction{}
 	if err := rtx.Unmarshal(txData); err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
-	if rtx.Header.KeyID != data.keyId {
-		return "", errorAPI(w, "E_DIFKEY", http.StatusBadRequest)
+	if rtx.Header.KeyID != client.KeyID {
+		return "", errDiffKey
 	}
 	txHash, err := rtx.Hash()
 	if err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 	txStatus := &blockchain.TxStatus{
 		BlockID:   0,
@@ -126,11 +137,11 @@ func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 		Error:     "",
 		Attempts:  0}
 	if err := txStatus.Insert(nil, txHash); err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 	if err := queue.ValidateTxQueue.Enqueue(rtx); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	return string(converter.BinToHex(txHash)), nil

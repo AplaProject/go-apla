@@ -24,7 +24,7 @@ func (rt *RollbackTx) GetRollbackTransactions(dbTransaction *DbTransaction, tran
 // GetBlockRollbackTransactions returns records of rollback by blockID
 func (rt *RollbackTx) GetBlockRollbackTransactions(dbTransaction *DbTransaction, blockID int64) ([]RollbackTx, error) {
 	var rollbackTransactions []RollbackTx
-	err := GetDB(dbTransaction).Where("block_id = ?", blockID).Order("tx_hash asc").Find(&rollbackTransactions).Error
+	err := GetDB(dbTransaction).Where("block_id = ?", blockID).Order("id asc").Find(&rollbackTransactions).Error
 	return rollbackTransactions, err
 }
 
@@ -59,5 +59,6 @@ func (rt *RollbackTx) Create(transaction *DbTransaction) error {
 
 // Get is retrieving model from database
 func (rt *RollbackTx) Get(dbTransaction *DbTransaction, transactionHash []byte, tableName string) (bool, error) {
-	return isFound(GetDB(dbTransaction).Where("tx_hash = ? AND table_name = ?", transactionHash, tableName).First(rt))
+	return isFound(GetDB(dbTransaction).Where("tx_hash = ? AND table_name = ?", transactionHash,
+		tableName).Order("id desc").First(rt))
 }

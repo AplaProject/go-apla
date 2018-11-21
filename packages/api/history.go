@@ -22,6 +22,8 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -31,14 +33,18 @@ type historyResult struct {
 	List []map[string]string `json:"list"`
 }
 
-func getHistory(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	table := getPrefix(data) + "_" + data.params["table"].(string)
-	id := data.params["id"].(string)
+func getHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+	client := getClient(r)
+
+	table := client.Prefix() + "_" + params["name"]
 	rollbackTx := &model.RollbackTx{}
-	txs, err := rollbackTx.GetRollbackTxsByTableIDAndTableName(id, table, rollbackHistoryLimit)
+	txs, err := rollbackTx.GetRollbackTxsByTableIDAndTableName(params["id"], table, rollbackHistoryLimit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("rollback history")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
 	rollbackList := []map[string]string{}
 	for _, tx := range *txs {
@@ -48,10 +54,11 @@ func getHistory(w http.ResponseWriter, r *http.Request, data *apiData, logger *l
 		rollback := map[string]string{}
 		if err := json.Unmarshal([]byte(tx.Data), &rollback); err != nil {
 			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling rollbackTx.Data from JSON")
-			return errorAPI(w, err, http.StatusInternalServerError)
+			errorResponse(w, err)
+			return
 		}
 		rollbackList = append(rollbackList, rollback)
 	}
-	data.result = &historyResult{rollbackList}
-	return nil
+
+	jsonResponse(w, &historyResult{rollbackList})
 }

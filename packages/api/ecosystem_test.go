@@ -191,7 +191,7 @@ func TestEcosystemParam(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var ret, ret1 paramValue
+	var ret, ret1 paramResult
 	err := sendGet(`ecosystemparam/changing_menu`, nil, &ret)
 	if err != nil {
 		t.Error(err)
@@ -232,7 +232,7 @@ func TestAppParams(t *testing.T) {
 	assert.NoError(t, sendGet(fmt.Sprintf(`appparams/1?names=%s1,%[1]s2&ecosystem=1`, rnd), nil, &ret))
 	assert.Len(t, ret.List, 2)
 
-	var ret1, ret2 paramValue
+	var ret1, ret2 paramResult
 	assert.NoError(t, sendGet(`appparam/1/`+rnd+`2`, nil, &ret1))
 	assert.Equal(t, `another string`, ret1.Value)
 

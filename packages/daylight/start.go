@@ -47,7 +47,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 
-	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -154,17 +153,10 @@ func delPidFile() {
 	os.Remove(conf.Config.GetPidPath())
 }
 
-func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
-	for _, method := range methods {
-		route.HandlerFunc(method, path, handle)
-	}
-}
-
 func initRoutes(listenHost string) {
-	route := httprouter.New()
-	api.Route(route)
-
-	handler := httpserver.NewMaxBodyReader(route, conf.Config.HTTPServerMaxBodySize)
+	handler := api.NewRouter()
+	handler = api.WithCors(handler)
+	handler = httpserver.NewMaxBodyReader(handler, conf.Config.HTTPServerMaxBodySize)
 
 	if conf.Config.TLS {
 		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
@@ -220,6 +212,9 @@ func Start() {
 	}
 
 	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
+	if conf.Config.FuncBench {
+		log.Warning("Warning! Access checking is disabled in some built-in functions")
+	}
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()

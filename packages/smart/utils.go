@@ -80,6 +80,10 @@ func marshalJSON(v interface{}, comment string) (out []byte, err error) {
 }
 
 func validateAccess(funcName string, sc *SmartContract, contracts ...string) error {
+	if conf.Config.FuncBench {
+		return nil
+	}
+
 	if !accessContracts(sc, contracts...) {
 		err := fmt.Errorf(eAccessContract, funcName, strings.Join(contracts, ` or `))
 		return logError(err, consts.IncorrectCallingContract, err.Error())

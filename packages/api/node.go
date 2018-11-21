@@ -18,11 +18,9 @@ package api
 
 import (
 	"net/http"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // nodeContract is used when calling a cron contract in VDE mode
-func nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	return errorAPI(w, "E_NOTIMPLEMENTED", http.StatusNotImplemented)
+func nodeContractHandler(w http.ResponseWriter, r *http.Request) {
+	errorResponse(w, errNotImplemented)
 }
