@@ -1062,6 +1062,13 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 			fuelRate = fuelRate.Add(payOver)
 		}
+		var sp model.StateParameter
+		sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+		if found, err := sp.Get(sc.DbTransaction, "ecosystem_wallet"); err != nil {
+			return retError(err)
+		} else if found && len(sp.Value) > 0 {
+			fromID = AddressToID(sp.Value)
+		}
 
 		payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
 		if found, err := payWallet.Get(fromID); err != nil || !found {
