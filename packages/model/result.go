@@ -130,17 +130,25 @@ func (r *OneRow) Int() (map[string]int, error) {
 
 // GetAllTransaction is retrieve all query result rows
 func GetAllTransaction(transaction *DbTransaction, query string, countRows int, args ...interface{}) ([]map[string]string, error) {
-	var result []map[string]string
 	rows, err := GetDB(transaction).Raw(query, args...).Rows()
 	if err != nil {
-		return result, fmt.Errorf("%s in query %s %s", err, query, args)
+		return nil, fmt.Errorf("%s in query %s %s", err, query, args)
 	}
 	defer rows.Close()
+	result, err := getResult(rows, countRows)
+	if err != nil {
+		return nil, fmt.Errorf("%s in query %s %s", err, query, args)
+	}
+	return result, nil
+}
+
+func getResult(rows *sql.Rows, countRows int) ([]map[string]string, error) {
+	var result []map[string]string
 
 	// Get column names
 	columns, err := rows.Columns()
 	if err != nil {
-		return result, fmt.Errorf("%s in query %s %s", err, query, args)
+		return nil, err
 	}
 	// Make a slice for the values
 	values := make([][]byte /*sql.RawBytes*/, len(columns))
@@ -159,7 +167,7 @@ func GetAllTransaction(transaction *DbTransaction, query string, countRows int, 
 		// get RawBytes from data
 		err = rows.Scan(scanArgs...)
 		if err != nil {
-			return result, fmt.Errorf("%s in query %s %s", err, query, args)
+			return nil, err
 		}
 
 		// Now do something with the data.
@@ -182,7 +190,7 @@ func GetAllTransaction(transaction *DbTransaction, query string, countRows int, 
 		}
 	}
 	if err = rows.Err(); err != nil {
-		return result, fmt.Errorf("%s in query %s %s", err, query, args)
+		return nil, err
 	}
 	return result, nil
 }
@@ -213,4 +221,22 @@ func GetOneRowTransaction(transaction *DbTransaction, query string, args ...inte
 // GetOneRow returns one row
 func GetOneRow(query string, args ...interface{}) *OneRow {
 	return GetOneRowTransaction(nil, query, args...)
+}
+
+func GetRows(tableName, columns string, offset, limit int64) ([]map[string]string, error) {
+	query := DBConn.Table(tableName).Order("id").Offset(offset).Limit(limit)
+	if len(columns) > 0 {
+		columns = "id," + columns
+		query = query.Select(columns)
+	}
+	rows, err := query.Rows()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	return getResult(rows, -1)
+}
+
+func GetResult(rows *sql.Rows) ([]map[string]string, error) {
+	return getResult(rows, -1)
 }

@@ -15,14 +15,12 @@ type Row struct {
 // GetEcosystemScript returns script to create ecosystem
 func GetEcosystemScript() string {
 	scripts := []string{
-		blocksDataSQL,
 		contractsDataSQL,
 		menuDataSQL,
 		pagesDataSQL,
 		parametersDataSQL,
 		membersDataSQL,
 		sectionsDataSQL,
-		tablesDataSQL,
 		keysDataSQL,
 	}
 
@@ -35,10 +33,20 @@ func GetFirstEcosystemScript() string {
 		firstEcosystemSchema,
 		firstDelayedContractsDataSQL,
 		firstEcosystemContractsSQL,
+		firstEcosystemPagesDataSQL,
+		firstEcosystemBlocksDataSQL,
 		firstEcosystemDataSQL,
 		firstTablesDataSQL,
 	}
 
+	return strings.Join(scripts, "\r\n")
+}
+
+// GetFirstTableScript returns script to update _tables for first ecosystem
+func GetFirstTableScript() string {
+	scripts := []string{
+		tablesDataSQL,
+	}
 	return strings.Join(scripts, "\r\n")
 }
 

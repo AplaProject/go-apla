@@ -41,27 +41,34 @@ type vdeCreateResult struct {
 	Result bool `json:"result"`
 }
 
-func vdeCreate(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, data.ecosystemId)) {
-		return errorAPI(w, `E_VDECREATED`, http.StatusBadRequest)
+func vdeCreate(w http.ResponseWriter, r *http.Request) {
+	client := getClient(r)
+	logger := getLogger(r)
+
+	if model.IsTable(fmt.Sprintf(`%d_vde_tables`, client.EcosystemID)) {
+		errorResponse(w, errVDECreated)
+		return
 	}
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
+	sp.SetTablePrefix(converter.Int64ToStr(client.EcosystemID))
 	if _, err := sp.Get(nil, `founder_account`); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusBadRequest)
+		errorResponse(w, err)
+		return
 	}
-	if converter.StrToInt64(sp.Value) != data.keyId {
+	if converter.StrToInt64(sp.Value) != client.KeyID {
 		logger.WithFields(log.Fields{"type": consts.AccessDenied, "error": fmt.Errorf(`Access denied`)}).Error("creating vde")
-		return errorAPI(w, `E_PERMISSION`, http.StatusUnauthorized)
+		errorResponse(w, errPermission)
+		return
 	}
-	if err := model.ExecSchemaLocalData(int(data.ecosystemId), data.keyId); err != nil {
+	if err := model.ExecSchemaLocalData(int(client.EcosystemID), client.KeyID); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating vde")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
-	smart.LoadVDEContracts(nil, converter.Int64ToStr(data.ecosystemId))
-	data.result = vdeCreateResult{Result: true}
-	return nil
+	smart.LoadVDEContracts(nil, converter.Int64ToStr(client.EcosystemID))
+
+	jsonResponse(w, &vdeCreateResult{Result: true})
 }
 
 // InitSmartContract is initializes smart contract
@@ -138,7 +145,7 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 }
 
 // VDEContract is init VDE contract
-func VDEContract(contractData []byte, data *apiData) (result *contractResult, err error) {
+func VDEContract(r *http.Request, contractData []byte) (result *contractResult, err error) {
 	var ret string
 	hash, err := crypto.Hash(contractData)
 	if err != nil {
@@ -154,8 +161,10 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 		return
 	}
 
-	if data.token != nil && data.token.Valid {
-		if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
+	token := getToken(r)
+
+	if token.Valid {
+		if auth, err := token.SignedString([]byte(jwtSecret)); err == nil {
 			sc.TxData[`auth_token`] = auth
 		}
 	}

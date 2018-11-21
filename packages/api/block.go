@@ -9,32 +9,43 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-type getMaxBlockIDResult struct {
+type maxBlockResult struct {
 	MaxBlockID int64  `json:"max_block_id"`
 	Hash       string `json:"hash"`
 }
 
-func getMaxBlockID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	block, hash, found, err := blockchain.GetLastBlock(nil)
+func getMaxBlockHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+
+	block := &blockchain.Block{}
+	_, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
+		errorResponse(w, err)
+		return
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
+		errorResponse(w, errNotFound)
+		return
 	}
-	data.result = &getMaxBlockIDResult{
+	hash, err := block.Hash()
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+	result := &maxBlockResult{
 		MaxBlockID: block.Header.BlockID,
 		Hash:       string(converter.BinToHex(hash)),
 	}
-	return nil
+	jsonResponse(w, result)
 }
 
-type getBlockInfoResult struct {
+type blockInfoResult struct {
 	Hash          []byte `json:"hash"`
 	EcosystemID   int64  `json:"ecosystem_id"`
 	KeyID         int64  `json:"key_id"`
@@ -43,21 +54,33 @@ type getBlockInfoResult struct {
 	RollbacksHash []byte `json:"rollbacks_hash"`
 }
 
-func getBlockInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	blockHash := converter.HexToBin(data.params["hash"].(string))
+func getBlockInfoHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+	params := mux.Vars(r)
+
+	blockHash := converter.HexToBin(params["hash"])
 	block := &blockchain.Block{}
 	found, err := block.Get(nil, blockHash)
+
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block")
+		errorResponse(w, err)
+		return
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "hash": blockHash}).Error("block with hash not found")
-		return errorAPI(w, `E_NOTFOUND`, http.StatusNotFound)
+		logger.WithFields(log.Fields{"type": consts.NotFound, "hash": blockHash}).Error("block with hash not found")
+		errorResponse(w, errNotFound)
+		return
 	}
-	data.result = &getBlockInfoResult{Hash: blockHash, EcosystemID: block.Header.EcosystemID, KeyID: block.Header.KeyID, Time: block.Header.Time, Tx: int32(len(block.Transactions)), RollbacksHash: block.Header.RollbacksHash}
-	log.WithFields(log.Fields{"id": block.Header.BlockID, "hash": blockHash, "ecosystem_id": block.Header.EcosystemID, "key_id": block.Header.KeyID, "time": block.Header.Time, "rollbacks_hash": block.RollbacksHash}).Debug("Block Information")
-	return nil
+
+	jsonResponse(w, &blockInfoResult{
+		Hash:          blockHash,
+		EcosystemID:   block.Header.EcosystemID,
+		KeyID:         block.Header.KeyID,
+		Time:          block.Header.Time,
+		Tx:            int32(len(block.Transactions)),
+		RollbacksHash: block.RollbacksHash,
+	})
 }
 
 type TxInfo struct {
@@ -67,23 +90,36 @@ type TxInfo struct {
 	KeyID        int64                  `json:"key_id"`
 }
 
-func getBlocksTxInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	startBlockHashHex := data.params["block_hash"].(string)
-	blocksCount := data.params["count"].(int64)
-	startBlockHash, err := hex.DecodeString(startBlockHashHex)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding block hash from string")
-		return errorAPI(w, err, http.StatusInternalServerError)
+type blocksTxInfoForm struct {
+	nopeValidator
+	BlockHashHex string `schema:"block_hash"`
+	Count        int64  `schema:"count"`
+}
+
+func getBlocksTxInfoHandler(w http.ResponseWriter, r *http.Request) {
+	form := &blocksTxInfoForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
-	blocks, err := blockchain.GetNBlocksFrom(nil, startBlockHash, int(blocksCount), 1)
+	logger := getLogger(r)
+	startBlockHash, err := hex.DecodeString(form.BlockHashHex)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting blocks range")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding block hash from string")
+		errorResponse(w, err)
+	}
+
+	blocks, err := blockchain.GetNBlocksFrom(nil, startBlockHash, int(form.Count), 1)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting blocks range")
+		errorResponse(w, err)
+		return
 	}
 
 	if len(blocks) == 0 {
-		return errorAPI(w, "E_NOTFOUND", http.StatusNotFound)
+		errorResponse(w, errNotFound)
+		return
 	}
 
 	result := map[int64][]TxInfo{}
@@ -91,7 +127,9 @@ func getBlocksTxInfo(w http.ResponseWriter, r *http.Request, data *apiData, logg
 		txInfoCollection := make([]TxInfo, 0, len(blck.Transactions))
 		b, err := block.FromBlockchainBlock(blck.Block, blck.Hash, nil)
 		if err != nil {
-			return err
+			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "block_id": blck.Header.BlockID}).Error("on unmarshalling block")
+			errorResponse(w, err)
+			return
 		}
 		for _, tx := range b.Transactions {
 			txInfo := TxInfo{
@@ -112,8 +150,7 @@ func getBlocksTxInfo(w http.ResponseWriter, r *http.Request, data *apiData, logg
 		result[blck.Block.Header.BlockID] = txInfoCollection
 	}
 
-	data.result = result
-	return nil
+	jsonResponse(w, &result)
 }
 
 type TxDetailedInfo struct {
@@ -153,23 +190,31 @@ type BlockDetailedInfo struct {
 	Transactions  []TxDetailedInfo `json:"transactions"`
 }
 
-func getBlocksDetailedInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	startBlockHashHex := data.params["block_hash"].(string)
-	blocksCount := data.params["count"].(int64)
-	startBlockHash, err := hex.DecodeString(startBlockHashHex)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding block hash from string")
-		return errorAPI(w, err, http.StatusInternalServerError)
+func getBlocksDetailedInfoHandler(w http.ResponseWriter, r *http.Request) {
+	form := &blocksTxInfoForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
-	blocks, err := blockchain.GetNBlocksFrom(nil, startBlockHash, int(blocksCount), 1)
+	logger := getLogger(r)
+	startBlockHash, err := hex.DecodeString(form.BlockHashHex)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting blocks range")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding block hash from string")
+		errorResponse(w, err)
+		return
+	}
+
+	blocks, err := blockchain.GetNBlocksFrom(nil, startBlockHash, int(form.Count), 1)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting blocks range")
+		errorResponse(w, err)
+		return
 	}
 
 	if len(blocks) == 0 {
-		return errorAPI(w, "E_NOTFOUND", http.StatusNotFound)
+		errorResponse(w, errNotFound)
+		return
 	}
 
 	result := map[int64]BlockDetailedInfo{}
@@ -177,7 +222,8 @@ func getBlocksDetailedInfo(w http.ResponseWriter, r *http.Request, data *apiData
 		blck, err := block.FromBlockchainBlock(blockModel.Block, blockModel.Hash, nil)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "block_id": blockModel.Block.Header.BlockID}).Error("on unmarshalling block")
-			return errorAPI(w, err, http.StatusInternalServerError)
+			errorResponse(w, err)
+			return
 		}
 
 		txDetailedInfoCollection := make([]TxDetailedInfo, 0, len(blck.Transactions))
@@ -228,6 +274,5 @@ func getBlocksDetailedInfo(w http.ResponseWriter, r *http.Request, data *apiData
 		result[blockModel.Block.Header.BlockID] = bdi
 	}
 
-	data.result = result
-	return nil
+	jsonResponse(w, &result)
 }

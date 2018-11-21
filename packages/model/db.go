@@ -55,6 +55,20 @@ var (
 	}
 )
 
+type KeyTableChecker struct{}
+
+func (ktc KeyTableChecker) IsKeyTable(tableName string) bool {
+	val, exist := FirstEcosystemTables[tableName]
+	return exist && !val
+}
+
+type NextIDGetter struct {
+	Tx *DbTransaction
+}
+
+func (g NextIDGetter) GetNextID(tableName string) (int64, error) {
+	return GetNextID(g.Tx, tableName)
+}
 func isFound(db *gorm.DB) (bool, error) {
 	if db.RecordNotFound() {
 		return false, nil
@@ -99,7 +113,11 @@ func StartTransaction() (*DbTransaction, error) {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": conn.Error}).Error("cannot start transaction because of connection error")
 		return nil, conn.Error
 	}
-
+	err := conn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
+		return nil, err
+	}
 	return &DbTransaction{
 		conn: conn,
 	}, nil
@@ -185,6 +203,10 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 		q = fmt.Sprintf(migration.GetFirstEcosystemScript(), wallet)
 		if err := GetDB(db).Exec(q).Error; err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
+		}
+		q = fmt.Sprintf(migration.GetFirstTableScript(), id)
+		if err := GetDB(db).Exec(q).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first tables schema")
 		}
 	}
 	return nil
