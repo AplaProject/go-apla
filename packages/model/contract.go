@@ -25,6 +25,7 @@ type Contract struct {
 	Name        string `json:"name,omitempty"`
 	Value       string `json:"value,omitempty"`
 	WalletID    int64  `json:"wallet_id,omitempty"`
+	Active      bool   `json:"active,omitempty"`
 	TokenID     int64  `json:"token_id,omitempty"`
 	Conditions  string `json:"conditions,omitempty"`
 	AppID       int64  `json:"app_id,omitempty"`
