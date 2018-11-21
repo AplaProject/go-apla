@@ -13,23 +13,28 @@ import (
 
 const (
 	defaultPaginatorLimit = 25
+	maxPaginatorLimit     = 1000
 )
 
 type paginatorForm struct {
-	maxLimit int64
+	defaultLimit int64
 
 	Limit  int64 `schema:"limit"`
 	Offset int64 `schema:"offset"`
 }
 
 func (f *paginatorForm) Validate(r *http.Request) error {
-	if f.maxLimit == 0 {
-		f.maxLimit = defaultPaginatorLimit
+	if f.Limit <= 0 {
+		f.Limit = f.defaultLimit
+		if f.Limit == 0 {
+			f.Limit = defaultPaginatorLimit
+		}
 	}
 
-	if f.Limit <= 0 || f.Limit > f.maxLimit {
-		f.Limit = f.maxLimit
+	if f.Limit > maxPaginatorLimit {
+		f.Limit = maxPaginatorLimit
 	}
+
 	return nil
 }
 

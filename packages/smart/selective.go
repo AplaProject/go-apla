@@ -18,6 +18,7 @@ package smart
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -149,6 +150,12 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	if generalRollback {
+		if off := strings.IndexByte(sqlBuilder.Table, '_'); off > 0 {
+			name := sqlBuilder.Table[off+1:]
+			if sqlBuilder.KeyTableChkr.IsKeyTable(name) {
+				sqlBuilder.Table = fmt.Sprintf(`%s_%s`, sqlBuilder.GetEcosystem(), name)
+			}
+		}
 		if err := addRollback(sc, sqlBuilder.Table, sqlBuilder.TableID(), rollbackInfoStr); err != nil {
 			return 0, sqlBuilder.TableID(), err
 		}

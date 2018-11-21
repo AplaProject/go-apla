@@ -28,11 +28,12 @@ func (h HostPort) Str() string {
 
 // DBConfig database connection parameters
 type DBConfig struct {
-	Name     string
-	Host     string // ipaddr, hostname, or "0.0.0.0"
-	Port     int    // must be in range 1..65535
-	User     string
-	Password string
+	Name        string
+	Host        string // ipaddr, hostname, or "0.0.0.0"
+	Port        int    // must be in range 1..65535
+	User        string
+	Password    string
+	LockTimeout int // lock_timeout in milliseconds
 }
 
 // StatsDConfig statd connection parameters
@@ -78,17 +79,18 @@ type GlobalConfig struct {
 	KeyID        int64  `toml:"-"`
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`
+	FuncBench    bool   `toml:"-"`
 
-	PidFilePath    string
-	LockFilePath   string
-	DataDir        string // application work dir (cwd by default)
-	KeysDir        string // place for private keys files: NodePrivateKey, PrivateKey
-	TempDir        string // temporary dir
-	FirstBlockPath string
-	TLS            bool   // TLS is on/off. It is required for https
-	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
-	TLSKey         string // TLSKey is a filepath of the private key.
-	VDEMode        string
+	PidFilePath           string
+	LockFilePath          string
+	DataDir               string // application work dir (cwd by default)
+	KeysDir               string // place for private keys files: NodePrivateKey, PrivateKey
+	TempDir               string // temporary dir
+	FirstBlockPath        string
+	TLS                   bool   // TLS is on/off. It is required for https
+	TLSCert               string // TLSCert is a filepath of the fullchain of certificate.
+	TLSKey                string // TLSKey is a filepath of the private key.
+	VDEMode               string
 	HTTPServerMaxBodySize int64
 
 	MaxPageGenerationTime int64 // in milliseconds
