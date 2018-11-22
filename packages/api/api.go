@@ -20,6 +20,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/schema"
 
@@ -27,7 +28,9 @@ import (
 )
 
 const (
-	multipartBuf = 100000 // the buffer size for ParseMultipartForm
+	multipartBuf      = 100000 // the buffer size for ParseMultipartForm
+	multipartFormData = "multipart/form-data"
+	contentType       = "Content-Type"
 )
 
 // Client represents data of client
@@ -75,14 +78,26 @@ func (np nopeValidator) Validate(r *http.Request) error {
 	return nil
 }
 
-func parseForm(r *http.Request, f formValidator) error {
-	r.ParseForm()
+func parseForm(r *http.Request, f formValidator) (err error) {
+	if isMultipartForm(r) {
+		err = r.ParseMultipartForm(multipartBuf)
+	} else {
+		err = r.ParseForm()
+	}
+	if err != nil {
+		return
+	}
+
 	decoder := schema.NewDecoder()
 	decoder.IgnoreUnknownKeys(true)
 	if err := decoder.Decode(f, r.Form); err != nil {
 		return err
 	}
 	return f.Validate(r)
+}
+
+func isMultipartForm(r *http.Request) bool {
+	return strings.HasPrefix(r.Header.Get(contentType), multipartFormData)
 }
 
 type hexValue struct {
