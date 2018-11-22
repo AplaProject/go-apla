@@ -18,50 +18,64 @@ package api
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/gorilla/mux"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type appParamsResult struct {
-	App  string       `json:"app_id"`
-	List []paramValue `json:"list"`
+	App  string        `json:"app_id"`
+	List []paramResult `json:"list"`
 }
 
-func appParams(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var (
-		result appParamsResult
-		names  map[string]bool
-	)
-	_, prefix, err := checkEcosystem(w, data, logger)
-	if err != nil {
-		return err
+type appParamsForm struct {
+	ecosystemForm
+	paramsForm
+}
+
+func (f *appParamsForm) Validate(r *http.Request) error {
+	return f.ecosystemForm.Validate(r)
+}
+
+func getAppParamsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &appParamsForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
+
+	params := mux.Vars(r)
+	logger := getLogger(r)
+
 	ap := &model.AppParam{}
-	ap.SetTablePrefix(prefix)
-	list, err := ap.GetAllAppParameters(converter.StrToInt64(data.params[`appid`].(string)))
+	ap.SetTablePrefix(form.EcosystemPrefix)
+
+	list, err := ap.GetAllAppParameters(converter.StrToInt64(params["appID"]))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all app parameters")
 	}
-	result.List = make([]paramValue, 0)
-	if len(data.params[`names`].(string)) > 0 {
-		names = make(map[string]bool)
-		for _, item := range strings.Split(data.params[`names`].(string), `,`) {
-			names[item] = true
-		}
+
+	result := &appParamsResult{
+		App:  params["appID"],
+		List: make([]paramResult, 0),
 	}
+
+	acceptNames := form.AcceptNames()
 	for _, item := range list {
-		if names != nil && !names[item.Name] {
+		if !acceptNames[item.Name] {
 			continue
 		}
-		result.List = append(result.List, paramValue{ID: converter.Int64ToStr(item.ID),
-			Name: item.Name, Value: item.Value, Conditions: item.Conditions})
+		result.List = append(result.List, paramResult{
+			ID:         converter.Int64ToStr(item.ID),
+			Name:       item.Name,
+			Value:      item.Value,
+			Conditions: item.Conditions,
+		})
 	}
-	result.App = data.params[`appid`].(string)
-	data.result = &result
-	return
+
+	jsonResponse(w, result)
 }

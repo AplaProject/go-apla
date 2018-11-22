@@ -72,11 +72,13 @@ func init() {
 	configCmd.Flags().StringVar(&conf.Config.DB.Name, "dbName", "genesis", "DB name")
 	configCmd.Flags().StringVar(&conf.Config.DB.User, "dbUser", "postgres", "DB username")
 	configCmd.Flags().StringVar(&conf.Config.DB.Password, "dbPassword", "genesis", "DB password")
+	configCmd.Flags().IntVar(&conf.Config.DB.LockTimeout, "dbLockTimeout", 5000, "DB lock timeout")
 	viper.BindPFlag("DB.Name", configCmd.Flags().Lookup("dbName"))
 	viper.BindPFlag("DB.Host", configCmd.Flags().Lookup("dbHost"))
 	viper.BindPFlag("DB.Port", configCmd.Flags().Lookup("dbPort"))
 	viper.BindPFlag("DB.User", configCmd.Flags().Lookup("dbUser"))
 	viper.BindPFlag("DB.Password", configCmd.Flags().Lookup("dbPassword"))
+	viper.BindPFlag("DB.LockTimeout", configCmd.Flags().Lookup("dbLockTimeout"))
 
 	// StatsD
 	configCmd.Flags().StringVar(&conf.Config.StatsD.Host, "statsdHost", "127.0.0.1", "StatsD host")

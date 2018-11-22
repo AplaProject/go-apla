@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"strings"
 	"time"
 
@@ -135,7 +136,7 @@ func InitSmartContract(sc *smart.SmartContract, data []byte) error {
 }
 
 // VDEContract is init VDE contract
-func VDEContract(contractData []byte, data *apiData) (result *contractResult, err error) {
+func VDEContract(r *http.Request, contractData []byte) (result *contractResult, err error) {
 	var ret string
 	hash, err := crypto.Hash(contractData)
 	if err != nil {
@@ -156,8 +157,10 @@ func VDEContract(contractData []byte, data *apiData) (result *contractResult, er
 		return
 	}
 
-	if data.token != nil && data.token.Valid {
-		if auth, err := data.token.SignedString([]byte(jwtSecret)); err == nil {
+	token := getToken(r)
+
+	if token.Valid {
+		if auth, err := token.SignedString([]byte(jwtSecret)); err == nil {
 			sc.TxData[`auth_token`] = auth
 		}
 	}

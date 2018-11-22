@@ -40,7 +40,7 @@ func RunAllDaemons(ctx context.Context) error {
 	}
 
 	log.Info("load contracts")
-	if err := smart.LoadContracts(nil); err != nil {
+	if err := smart.LoadContracts(); err != nil {
 		log.Errorf("Load Contracts error: %s", err)
 		return err
 	}

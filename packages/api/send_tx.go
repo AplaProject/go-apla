@@ -42,14 +42,16 @@ type sendTxResult struct {
 }
 
 type ClientTxPreprocessor interface {
-	ProcessClientTranstaction(http.ResponseWriter, []byte) (string, error)
+	ProcessClientTranstaction([]byte) (string, error)
 }
 
-func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, key string) ([]byte, error) {
+func getTxData(r *http.Request, key string) ([]byte, error) {
+	logger := getLogger(r)
+
 	file, _, err := r.FormFile(key)
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Error("request.FormFile")
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -62,26 +64,32 @@ func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	return txData, nil
 }
 
-func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if block.IsKeyBanned(data.keyId) {
-		return errorAPI(w, "E_BANNED", http.StatusBadRequest, block.BannedTill(data.keyId))
+func sendTxHandler(w http.ResponseWriter, r *http.Request) {
+	client := getClient(r)
+
+	if block.IsKeyBanned(client.KeyID) {
+		errorResponse(w, errBannded.Errorf(block.BannedTill(client.KeyID)))
+		return
 	}
 
 	err := r.ParseMultipartForm(multipartBuf)
 	if err != nil {
-		return errorAPI(w, err, http.StatusBadRequest)
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
 	result := &sendTxResult{Hashes: make(map[string]string)}
 	for key := range r.MultipartForm.File {
-		txData, err := getTxData(w, r, data, logger, key)
+		txData, err := getTxData(r, key)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 
-		hash, err := handlerTx(w, r, data, logger, txData)
+		hash, err := txHandler(r, txData)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Hashes[key] = hash
 	}
@@ -89,19 +97,19 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	for key := range r.Form {
 		txData, err := hex.DecodeString(r.FormValue(key))
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 
-		hash, err := handlerTx(w, r, data, logger, txData)
+		hash, err := txHandler(r, txData)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Hashes[key] = hash
 	}
 
-	data.result = result
-
-	return nil
+	jsonResponse(w, result)
 }
 
 type contractResult struct {
@@ -111,16 +119,19 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, txData []byte) (string, error) {
+func txHandler(r *http.Request, txData []byte) (string, error) {
+	client := getClient(r)
+	logger := getLogger(r)
+
 	if int64(len(txData)) > syspar.GetMaxTxSize() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
-		block.BadTxForBan(data.keyId)
-		return "", errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
+		block.BadTxForBan(client.KeyID)
+		return "", errLimitTxSize.Errorf(len(txData))
 	}
 
-	p := getClientTxPreprocessor(logger, data.keyId)
+	p := getClientTxPreprocessor(logger, client.KeyID)
 
-	hash, err := p.ProcessClientTranstaction(w, txData)
+	hash, err := p.ProcessClientTranstaction(txData)
 	if err != nil {
 		return "", err
 	}
@@ -133,24 +144,24 @@ type blockchainTxPreprocessor struct {
 	keyID  int64
 }
 
-func (p blockchainTxPreprocessor) ProcessClientTranstaction(w http.ResponseWriter, txData []byte) (string, error) {
+func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
 	rtx := &transaction.RawTransaction{}
 	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	smartTx := tx.SmartContract{}
 	if err := msgpack.Unmarshal(rtx.Payload(), &smartTx); err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	if smartTx.Header.KeyID != p.keyID {
-		return "", errorAPI(w, "E_DIFKEY", http.StatusBadRequest)
+		return "", errDiffKey
 	}
 
 	if err := model.SendTx(rtx, p.keyID); err != nil {
 		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	return string(converter.BinToHex(rtx.Hash())), nil
@@ -161,12 +172,12 @@ type vdeTxPreprocessor struct {
 	keyID  int64
 }
 
-func (p vdeTxPreprocessor) ProcessClientTranstaction(w http.ResponseWriter, txData []byte) (string, error) {
+func (p vdeTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
 
 	tx, err := transaction.UnmarshallTransaction(bytes.NewBuffer(txData))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on unmarshaling user tx")
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	ts := &model.TransactionStatus{
@@ -185,12 +196,12 @@ func (p vdeTxPreprocessor) ProcessClientTranstaction(w http.ResponseWriter, txDa
 	res, _, err := tx.CallVDEContract()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on execution contract")
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	if err := ts.UpdateBlockMsg(nil, 1, res, tx.TxHash); err != nil {
 		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	return string(converter.BinToHex(tx.TxHash)), nil

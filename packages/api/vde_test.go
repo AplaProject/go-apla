@@ -116,7 +116,7 @@ func TestVDEParams(t *testing.T) {
 	assert.NoError(t, sendGet(`ecosystemparams?vde=true&names=stylesheet,`+rnd, nil, &ret))
 	assert.Len(t, ret.List, 2, fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 
-	var parValue paramValue
+	var parValue paramResult
 	assert.NoError(t, sendGet(`ecosystemparam/`+rnd+`?vde=true`, nil, &parValue))
 	assert.Equal(t, rnd, parValue.Name)
 
