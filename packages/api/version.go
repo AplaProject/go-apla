@@ -2,13 +2,13 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-
-	log "github.com/sirupsen/logrus"
 )
 
-func getVersion(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	data.result = consts.VERSION + ` ` + consts.BuildInfo
-	return nil
+func getVersionHandler(w http.ResponseWriter, r *http.Request) {
+	jsonResponse(w, strings.Join([]string{
+		consts.VERSION, consts.BuildInfo}, " ",
+	))
 }
