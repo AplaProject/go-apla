@@ -84,7 +84,7 @@ func getBlocksTxInfo(w http.ResponseWriter, r *http.Request, data *apiData, logg
 
 	result := map[int64][]TxInfo{}
 	for _, blockModel := range blocks {
-		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1)
+		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1, false)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "bolck_id": blockModel.ID}).Error("on unmarshalling block")
 			return errorAPI(w, err, http.StatusInternalServerError)
@@ -176,7 +176,7 @@ func getBlocksDetailedInfo(w http.ResponseWriter, r *http.Request, data *apiData
 
 	result := map[int64]BlockDetailedInfo{}
 	for _, blockModel := range blocks {
-		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1)
+		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1, false)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "bolck_id": blockModel.ID}).Error("on unmarshalling block")
 			return errorAPI(w, err, http.StatusInternalServerError)

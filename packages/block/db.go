@@ -167,7 +167,7 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		return
 	}
 
-	pb, err := UnmarshallBlock(bytes.NewBuffer(block.Data), true)
+	pb, err := UnmarshallBlock(bytes.NewBuffer(block.Data), true, true)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("parsing data of first block")
 		return

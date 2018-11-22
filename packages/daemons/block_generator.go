@@ -213,7 +213,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 			return txList, err
 		default:
 			bufTransaction := bytes.NewBuffer(txItem.Data)
-			p, err := transaction.UnmarshallTransaction(bufTransaction)
+			p, err := transaction.UnmarshallTransaction(bufTransaction, true)
 			if err != nil {
 				if p != nil {
 					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}

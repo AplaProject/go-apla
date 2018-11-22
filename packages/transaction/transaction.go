@@ -126,7 +126,7 @@ func (t Transaction) GetLogger() *log.Entry {
 var txCache = &transactionCache{cache: make(map[string]*Transaction)}
 
 // UnmarshallTransaction is unmarshalling transaction
-func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
+func UnmarshallTransaction(buffer *bytes.Buffer, fillData bool) (*Transaction, error) {
 	rtx := &RawTransaction{}
 	if err := rtx.Unmarshall(buffer); err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
 	if IsContractTransaction(rtx.Type()) {
 		t.TxSignature = rtx.Signature()
 		// skip byte with transaction type
-		if err := t.parseFromContract(); err != nil {
+		if err := t.parseFromContract(fillData); err != nil {
 			return nil, err
 		}
 		// struct transaction (only first block transaction for now)
@@ -201,7 +201,7 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[stri
 	return nil
 }
 
-func (t *Transaction) parseFromContract() error {
+func (t *Transaction) parseFromContract(fillData bool) error {
 	smartTx := tx.SmartContract{}
 	if err := msgpack.Unmarshal(t.TxBinaryData, &smartTx); err != nil {
 		log.WithFields(log.Fields{"tx_hash": t.TxHash, "error": err, "type": consts.UnmarshallingError}).Error("unmarshalling smart tx msgpack")
@@ -225,8 +225,12 @@ func (t *Transaction) parseFromContract() error {
 	txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 
 	if txInfo != nil {
-		if err := t.fillTxData(*txInfo, smartTx.Params); err != nil {
-			return err
+		if fillData {
+			if err := t.fillTxData(*txInfo, smartTx.Params); err != nil {
+				return err
+			}
+		} else {
+			t.TxData = smartTx.Params
 		}
 	}
 
@@ -236,7 +240,7 @@ func (t *Transaction) parseFromContract() error {
 // CheckTransaction is checking transaction
 func CheckTransaction(data []byte) (*tx.Header, error) {
 	trBuff := bytes.NewBuffer(data)
-	t, err := UnmarshallTransaction(trBuff)
+	t, err := UnmarshallTransaction(trBuff, true)
 	if err != nil {
 		return nil, err
 	}
