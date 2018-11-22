@@ -213,6 +213,8 @@ var (
 		"TransactionInfo":              100,
 		"DelTable":                     100,
 		"DelColumn":                    100,
+		"HexToPub":                     20,
+		"PubToHex":                     20,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -337,6 +339,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DelTable":                     DelTable,
 		"DelColumn":                    DelColumn,
 		"Throw":                        Throw,
+		"HexToPub":                     crypto.HexToPub,
+		"PubToHex":                     PubToHex,
 	}
 
 	switch vt {
@@ -1599,8 +1603,8 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 	if err = validateAccess(`SetPubKey`, sc, nNewUser); err != nil {
 		return
 	}
-	if len(pubKey) == consts.PubkeySizeLength*2 {
-		pubKey, err = hex.DecodeString(string(pubKey))
+	if len(pubKey) >= consts.PubkeySizeLength*2 {
+		pubKey, err = crypto.HexToPub(string(pubKey))
 		if err != nil {
 			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
 		}
@@ -2457,4 +2461,14 @@ func (throw *ThrowError) Error() string {
 
 func Throw(code, errText string) error {
 	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
+}
+
+func PubToHex(in interface{}) (ret string) {
+	switch v := in.(type) {
+	case string:
+		ret = crypto.PubToHex([]byte(v))
+	case []byte:
+		ret = crypto.PubToHex(v)
+	}
+	return
 }

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"io/ioutil"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
@@ -44,7 +44,7 @@ var generateFirstBlockCmd = &cobra.Command{
 				log.WithError(err).WithFields(log.Fields{"key": kName, "filepath": filepath}).Fatal("Reading key data")
 			}
 
-			decodedKey, err := hex.DecodeString(string(data))
+			decodedKey, err := crypto.HexToPub(string(data))
 			if err != nil {
 				log.WithError(err).Fatalf("converting %s from hex", kName)
 			}
@@ -84,8 +84,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
-				Test: test,
-				PrivateBlockchain:     pb,
+				Test:              test,
+				PrivateBlockchain: pb,
 			},
 		)
 

@@ -134,7 +134,7 @@ func GenHexKeys() (string, string, error) {
 	if err != nil {
 		return ``, ``, err
 	}
-	return hex.EncodeToString(priv), hex.EncodeToString(pub), nil
+	return hex.EncodeToString(priv), PubToHex(pub), nil
 }
 
 // CBCEncrypt encrypts the text by using the key parameter. It uses CBC mode of AES.
