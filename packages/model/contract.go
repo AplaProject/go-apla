@@ -29,7 +29,7 @@ type Contract struct {
 	TokenID     int64  `json:"token_id,omitempty"`
 	Conditions  string `json:"conditions,omitempty"`
 	AppID       int64  `json:"app_id,omitempty"`
-	EcosystemID int64  `json:"ecosystem_id,omitempty"`
+	EcosystemID int64  `gorm:"column:ecosystem" json:"ecosystem_id,omitempty"`
 }
 
 // TableName returns name of table
