@@ -2305,7 +2305,6 @@ func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...int
 
 func TransactionData(blockHash []byte, hash []byte) (data *TxInfo, err error) {
 	var found bool
-	var txHash []byte
 	blockOwner := blockchain.Block{}
 	found, err = blockOwner.Get(nil, blockHash)
 	if err != nil || !found {
@@ -2313,22 +2312,26 @@ func TransactionData(blockHash []byte, hash []byte) (data *TxInfo, err error) {
 	}
 	data = &TxInfo{}
 	data.Block = converter.Int64ToStr(blockOwner.Header.BlockID)
-	for _, tx := range blockOwner.Transactions {
-		txHash, err = tx.Hash()
+	txs, err := blockOwner.Transactions(nil)
+	if err != nil {
+		return nil, err
+	}
+	for _, tx := range txs {
+		txHash, err := tx.Hash()
 		if err != nil {
-			return
+			return nil, err
 		}
 		if bytes.Equal(txHash, hash) {
 			contract := GetContract(tx.Header.Name, uint32(tx.Header.EcosystemID))
 			if contract == nil {
 				err = errParseTransaction
-				return
+				return nil, err
 			}
 			data.Contract = contract.Name
 			txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 			if txInfo != nil {
 				if data.Params, err = FillTxData(*txInfo, tx.Params, tx.Files, []string{}); err != nil {
-					return
+					return nil, err
 				}
 			}
 			break

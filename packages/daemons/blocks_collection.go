@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/GenesisKernel/go-genesis/packages/block"
@@ -65,10 +64,6 @@ func InitialLoad(logger *log.Entry) error {
 
 	if toLoad {
 		logger.Debug("start first block loading")
-
-		if err := firstLoad(logger); err != nil {
-			return err
-		}
 
 		model.UpdateSchema()
 	}
@@ -128,8 +123,16 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	}
 
 	playRawBlock := func(rb []byte) error {
+		blck := &blockchain.Block{}
+		if err := blck.Unmarshal(rb); err != nil {
+			return err
+		}
+		txs, err := blck.Transactions(nil)
+		if err != nil {
+			return err
+		}
 
-		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(rb, true, nil)
+		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(blck, txs, true, nil)
 		defer func() {
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
@@ -167,7 +170,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return err
 		}
 
-		if err = bl.PlaySafe(); err != nil {
+		if err = bl.PlaySafe(txs); err != nil {
 			return err
 		}
 
@@ -219,30 +222,6 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		}
 	}
 	return nil
-}
-
-// init first block from file or from embedded value
-func loadFirstBlock(logger *log.Entry) error {
-	newBlock, err := ioutil.ReadFile(conf.Config.FirstBlockPath)
-	if err != nil {
-		logger.WithFields(log.Fields{
-			"type": consts.IOError, "error": err, "path": conf.Config.FirstBlockPath,
-		}).Error("reading first block from file")
-	}
-
-	if err = block.InsertBlockWOForks(newBlock, false, true); err != nil {
-		logger.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("inserting new block")
-		return err
-	}
-
-	return nil
-}
-
-func firstLoad(logger *log.Entry) error {
-	DBLock()
-	defer DBUnlock()
-
-	return loadFirstBlock(logger)
 }
 
 func needLoad(logger *log.Entry) (bool, error) {
@@ -356,8 +335,16 @@ func getBlocks(ctx context.Context, blockHash []byte, host string) ([]*block.Pla
 		if count > int64(rollback) {
 			break
 		}
+		bl := &blockchain.Block{}
+		if err := bl.Unmarshal(binaryBlock); err != nil {
+			break
+		}
+		txs, err := bl.Transactions(nil)
+		if err != nil {
+			break
+		}
 
-		block, err := block.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true, nil)
+		block, err := block.ProcessBlockWherePrevFromBlockchainTable(bl, txs, true, nil)
 		if err != nil {
 			return nil, utils.ErrInfo(err)
 		}
@@ -428,8 +415,14 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 			dbTransaction.Rollback()
 			return err
 		}
+		_, txs, err := b.ToBlockchainBlock()
+		if err != nil {
+			ldbTx.Discard()
+			dbTransaction.Rollback()
+			return err
+		}
 
-		if err := b.Play(dbTransaction, ldbTx); err != nil {
+		if err := b.Play(dbTransaction, txs, ldbTx); err != nil {
 			ldbTx.Discard()
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
@@ -448,11 +441,11 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := blocks[i]
 		// insert new blocks into blockchain
-		bBlock, err := b.ToBlockchainBlock()
+		bBlock, transactions, err := b.ToBlockchainBlock()
 		if err != nil {
 			return err
 		}
-		if err := bBlock.Insert(ldbTx); err != nil {
+		if err := bBlock.Insert(ldbTx, transactions); err != nil {
 			ldbTx.Discard()
 			dbTransaction.Rollback()
 			return err

@@ -78,7 +78,7 @@ func getBlockInfoHandler(w http.ResponseWriter, r *http.Request) {
 		EcosystemID:   block.Header.EcosystemID,
 		KeyID:         block.Header.KeyID,
 		Time:          block.Header.Time,
-		Tx:            int32(len(block.Transactions)),
+		Tx:            int32(len(block.TxHashes)),
 		RollbacksHash: block.RollbacksHash,
 	})
 }
@@ -124,8 +124,13 @@ func getBlocksTxInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := map[int64][]TxInfo{}
 	for _, blck := range blocks {
-		txInfoCollection := make([]TxInfo, 0, len(blck.Transactions))
-		b, err := block.FromBlockchainBlock(blck.Block, blck.Hash, nil)
+		txInfoCollection := make([]TxInfo, 0, len(blck.TxHashes))
+		txs, err := blck.Block.Transactions(nil)
+		if err != nil {
+			errorResponse(w, errNotFound)
+			return
+		}
+		b, err := block.FromBlockchainBlock(blck.Block, txs, blck.Hash, nil)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "block_id": blck.Header.BlockID}).Error("on unmarshalling block")
 			errorResponse(w, err)
@@ -219,7 +224,12 @@ func getBlocksDetailedInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := map[int64]BlockDetailedInfo{}
 	for _, blockModel := range blocks {
-		blck, err := block.FromBlockchainBlock(blockModel.Block, blockModel.Hash, nil)
+		txs, err := blockModel.Transactions(nil)
+		if err != nil {
+			errorResponse(w, errNotFound)
+			return
+		}
+		blck, err := block.FromBlockchainBlock(blockModel.Block, txs, blockModel.Hash, nil)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "block_id": blockModel.Block.Header.BlockID}).Error("on unmarshalling block")
 			errorResponse(w, err)
@@ -262,7 +272,7 @@ func getBlocksDetailedInfoHandler(w http.ResponseWriter, r *http.Request) {
 			NodePosition:  blockModel.Block.Header.NodePosition,
 			KeyID:         blockModel.Block.Header.KeyID,
 			Time:          blockModel.Block.Header.Time,
-			Tx:            int32(len(blockModel.Block.Transactions)),
+			Tx:            int32(len(blockModel.Block.TxHashes)),
 			RollbacksHash: blockModel.Block.RollbacksHash,
 			MrklRoot:      blck.MrklRoot,
 			BinData:       blck.BinData,

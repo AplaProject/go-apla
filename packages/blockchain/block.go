@@ -112,7 +112,7 @@ func MerkleTreeRoot(dataArray [][]byte) []byte {
 
 type Block struct {
 	Header        *BlockHeader
-	Transactions  []*Transaction
+	TxHashes      [][]byte
 	MrklRoot      []byte
 	PrevHash      []byte
 	RollbacksHash []byte
@@ -126,13 +126,8 @@ type BlockWithHash struct {
 
 func (b *Block) GetMrklRoot() ([]byte, error) {
 	var mrklArray [][]byte
-	for _, tr := range b.Transactions {
-		doubleHash, err := tr.Hash()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("double hashing transaction")
-			return nil, err
-		}
-		mrklArray = append(mrklArray, converter.BinToHex(doubleHash))
+	for _, tr := range b.TxHashes {
+		mrklArray = append(mrklArray, converter.BinToHex(tr))
 	}
 	if len(mrklArray) == 0 {
 		mrklArray = append(mrklArray, []byte("0"))
@@ -199,6 +194,19 @@ func (b *Block) Get(tx *leveldb.Transaction, hash []byte) (bool, error) {
 	return true, nil
 }
 
+func (b *Block) Transactions(ltx *leveldb.Transaction) ([]*Transaction, error) {
+	txList := []*Transaction{}
+	for _, txHash := range b.TxHashes {
+		tx := &Transaction{}
+		if found, err := tx.Get(ltx, txHash); err != nil {
+			return nil, err
+		} else if found {
+			txList = append(txList, tx)
+		}
+	}
+	return txList, nil
+}
+
 func GetNextBlock(tx *leveldb.Transaction, hash []byte) (*BlockWithHash, bool, error) {
 	nextHash, found, err := GetNextBlockHash(tx, hash)
 	if err != nil {
@@ -231,7 +239,7 @@ func (b *Block) Hash() ([]byte, error) {
 	return blockHash, nil
 }
 
-func (b *Block) Insert(tx *leveldb.Transaction) error {
+func (b *Block) Insert(tx *leveldb.Transaction, txs []*Transaction) error {
 	prevHash := b.PrevHash
 	hash, err := b.Hash()
 	if err != nil {
@@ -261,7 +269,7 @@ func (b *Block) Insert(tx *leveldb.Transaction) error {
 			return err
 		}
 	}
-	for _, tr := range b.Transactions {
+	for _, tr := range txs {
 		txHash, err := tr.Hash()
 		if err != nil {
 			return err
