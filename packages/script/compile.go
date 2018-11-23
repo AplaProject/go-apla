@@ -979,6 +979,8 @@ main:
 			switch lexem.Type & 0xff {
 			case lexIdent:
 				key = lexem.Value.(string)
+			case lexExtend:
+				key = `$` + lexem.Value.(string)
 			case lexString:
 				key = lexem.Value.(string)
 			case lexKeyword:

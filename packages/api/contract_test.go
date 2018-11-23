@@ -38,10 +38,11 @@ func TestDBFindContract(t *testing.T) {
 		    data {
 			}
 			action { 
-				var ret i array
+				var ret i j array
 				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}})
-				i = DBFind("contracts").Where({value: {"$ilike": "rEmove"}})
-				$result = Sprintf("%d %d", Len(ret), Len(i))
+				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}})
+				j = DBFind("contracts").Where({id: {$lt: 10}})
+				$result = Sprintf("%d %d %d", Len(ret), Len(i), Len(j))
 			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	_, msg, err := postTxResult(rnd, &url.Values{})
