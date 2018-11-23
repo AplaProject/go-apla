@@ -30,6 +30,27 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestDBFindContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+			}
+			action { 
+				var ret i array
+				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}})
+				i = DBFind("contracts").Where({value: {"$ilike": "rEmove"}})
+				$result = Sprintf("%d %d", Len(ret), Len(i))
+			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, msg, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	if msg != `ok` {
+		t.Error(fmt.Errorf(`wrong msg %s`, msg))
+	}
+}
+
 func TestUpdate_FullNodes(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)

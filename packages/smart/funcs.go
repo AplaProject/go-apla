@@ -1001,6 +1001,12 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			return like(`like '%%%s'`, v)
 		case `$begin`:
 			return like(`like '%s%%'`, v)
+		case `$ilike`:
+			return like(`ilike '%%%s%%'`, v)
+		case `$iend`:
+			return like(`ilike '%%%s'`, v)
+		case `$ibegin`:
+			return like(`ilike '%s%%'`, v)
 		case `$and`:
 			return logic(`and`, v)
 		case `$or`:
