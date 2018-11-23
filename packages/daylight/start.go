@@ -39,7 +39,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/network/httpserver"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
@@ -279,15 +278,10 @@ func Start() {
 			if err != nil {
 				log.WithError(err).Fatal("Can't init ban service")
 			}
-		} else {
-			if err := smart.LoadVDEContracts(nil, converter.Int64ToStr(consts.DefaultVDE)); err != nil {
-				log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Fatal("on loading vde virtual mashine")
-				Exit(1)
-			}
+		}
 
-			if conf.Config.IsVDEMaster() {
-				vdemanager.InitVDEManager()
-			}
+		if conf.Config.IsVDEMaster() {
+			vdemanager.InitVDEManager()
 		}
 	}
 

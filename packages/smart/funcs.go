@@ -22,6 +22,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -60,6 +61,10 @@ const (
 	historyLimit              = 250
 	dateTimeFormat            = "2006-01-02 15:04:05"
 	contractTxType            = 128
+)
+
+var (
+	ErrNotImplementedOnOBS = errors.New("Contract not implemented on OBS")
 )
 
 type ThrowError struct {
@@ -341,6 +346,9 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Throw":                        Throw,
 		"HexToPub":                     crypto.HexToPub,
 		"PubToHex":                     PubToHex,
+		"UpdateNodesBan":               UpdateNodesBan,
+		"DBSelectMetrics":              DBSelectMetrics,
+		"DBCollectMetrics":             DBCollectMetrics,
 	}
 
 	switch vt {
@@ -371,9 +379,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
-		f["UpdateNodesBan"] = UpdateNodesBan
-		f["DBSelectMetrics"] = DBSelectMetrics
-		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}
@@ -1822,6 +1827,10 @@ func UpdateCron(sc *SmartContract, id int64) error {
 }
 
 func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
+	if conf.Config.IsSupportingVDE() {
+		return ErrNotImplementedOnOBS
+	}
+
 	now := time.Unix(timestamp, 0)
 
 	badBlocks := &model.BadBlocks{}
@@ -1997,7 +2006,7 @@ func BytesToString(src []byte) string {
 	return string(src)
 }
 
-// CreateVDE allow create new VDE throw vdemanager
+// CreateVDE allow create new VDE throught vdemanager
 func CreateVDE(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
 	return vdemanager.Manager.CreateVDE(name, dbUser, dbPassword, int(port))
 }

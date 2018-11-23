@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -124,9 +125,9 @@ type TxSignJSON struct {
 	Params  []SignRes `json:"params"`
 }
 
-func init() {
-	EmbedFuncs(smartVM, script.VMTypeSmart)
-}
+// func init() {
+// 	EmbedFuncs(smartVM, script.VMTypeSmart)
+// }
 
 func getCostP(name string) int64 {
 	if key, ok := extendCostSysParams[name]; ok && syspar.HasSys(key) {
@@ -602,6 +603,10 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
+	if conf.Config.IsSupportingVDE() {
+		return nil, ErrNotImplementedOnOBS
+	}
+
 	timeBlock := time.Unix(sc.TxSmart.Time, 0).Format(`2006-01-02 15:04:05`)
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock)
 	if err != nil {
@@ -613,6 +618,10 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 // DBCollectMetrics returns actual values of all metrics
 // This function used to further store these values
 func DBCollectMetrics(sc *SmartContract) []interface{} {
+	if conf.Config.IsSupportingVDE() {
+		return nil
+	}
+
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,
 		metric.CollectMetricDataForEcosystemTx,

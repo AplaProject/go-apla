@@ -16,27 +16,20 @@ import (
 
 // RunAllDaemons start daemons, load contracts and tcpserver
 func RunAllDaemons(ctx context.Context) error {
+	logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
+
+	daemons.InitialLoad(logEntry)
+
+	err := syspar.SysUpdate(nil)
+	if err != nil {
+		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
+		return err
+	}
+
 	if !conf.Config.IsSupportingVDE() {
-		logEntry := log.WithFields(log.Fields{"daemon_name": "block_collection"})
-
-		daemons.InitialLoad(logEntry)
-
-		err := syspar.SysUpdate(nil)
-		if err != nil {
-			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
-			return err
-		}
-
 		if data, ok := block.GetDataFromFirstBlock(); ok {
 			syspar.SetFirstBlockData(data)
 		}
-	} else {
-		err := syspar.SysUpdate(nil)
-		if err != nil {
-			log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
-			return err
-		}
-
 	}
 
 	log.Info("load contracts")
@@ -47,6 +40,10 @@ func RunAllDaemons(ctx context.Context) error {
 
 	log.Info("start daemons")
 	daemons.StartDaemons(ctx)
+
+	if conf.Config.IsSupportingVDE() {
+		return nil
+	}
 
 	if err := tcpserver.TcpListener(conf.Config.TCPServer.Str()); err != nil {
 		log.Errorf("can't start tcp servers, stop")

@@ -60,9 +60,11 @@ func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
 	info := getContractInfo(contract)
 	fields := make([]contractField, 0)
 	result = getContractResult{
-		ID:   uint32(info.Owner.TableID + consts.ShiftContractID),
-		Name: info.Name, StateID: info.Owner.StateID,
-		Active: info.Owner.Active, TableID: converter.Int64ToStr(info.Owner.TableID),
+		ID:       uint32(info.Owner.TableID + consts.ShiftContractID),
+		Name:     info.Name,
+		StateID:  info.Owner.StateID,
+		Active:   info.Owner.Active,
+		TableID:  converter.Int64ToStr(info.Owner.TableID),
 		WalletID: converter.Int64ToStr(info.Owner.WalletID),
 		TokenID:  converter.Int64ToStr(info.Owner.TokenID),
 		Address:  converter.AddressToString(info.Owner.WalletID),

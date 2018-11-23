@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
@@ -87,6 +88,11 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 		KeyID:       converter.StrToInt64(claims.KeyID),
 		IsMobile:    claims.IsMobile,
 		RoleID:      converter.StrToInt64(claims.RoleID),
+	}
+
+	if conf.Config.IsSupportingVDE() {
+		client.EcosystemName = "Platform ecosystem"
+		return client, nil
 	}
 
 	ecosystem := &model.Ecosystem{}
