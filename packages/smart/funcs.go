@@ -1080,6 +1080,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			return ``, err
 		}
 	}
+	fmt.Println(`WHERE`, where)
 	return where, nil
 }
 

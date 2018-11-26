@@ -38,17 +38,18 @@ func TestDBFindContract(t *testing.T) {
 		    data {
 			}
 			action { 
-				var ret i j k array
+				var ret i j k m array
 				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}})
 				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}})
 				j = DBFind("contracts").Where({id: {$lt: 10}})
-				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, {id: {$neq: 26}} ]})
-				$result = Sprintf("%d %d %d %d", Len(ret), Len(i), Len(j), Len(k))
+				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, id: {$neq: 26} ]})
+				m = DBFind("contracts").Where({id: 10, name: "EditColumn", $or: [id: 10, id: {$neq: 20}]})
+				$result = Sprintf("%d %d %d %d %d", Len(ret), Len(i), Len(j), Len(k), Len(m))
 			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	_, msg, err := postTxResult(rnd, &url.Values{})
 	assert.NoError(t, err)
-	if msg != `25 19 9 2` {
+	if msg != `25 19 9 2 1` {
 		t.Error(fmt.Errorf(`wrong msg %s`, msg))
 	}
 }
