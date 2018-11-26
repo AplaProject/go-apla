@@ -90,7 +90,7 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 		RoleID:      converter.StrToInt64(claims.RoleID),
 	}
 
-	if conf.Config.IsSupportingVDE() {
+	if conf.Config.IsSupportingOBS() {
 		client.EcosystemName = "Platform ecosystem"
 		return client, nil
 	}

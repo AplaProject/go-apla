@@ -1,4 +1,4 @@
-package vde
+package obs
 
 import "github.com/GenesisKernel/go-genesis/packages/consts"
 

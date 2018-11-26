@@ -56,7 +56,7 @@ func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	var names []string
 	var err error
 
-	if !conf.Config.IsSupportingVDE() {
+	if !conf.Config.IsSupportingOBS() {
 		if ids, names, err = model.GetAllSystemStatesIDs(); err != nil {
 			errorResponse(w, err)
 			return

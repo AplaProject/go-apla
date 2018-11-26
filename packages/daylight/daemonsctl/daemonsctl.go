@@ -26,7 +26,7 @@ func RunAllDaemons(ctx context.Context) error {
 		return err
 	}
 
-	if !conf.Config.IsSupportingVDE() {
+	if !conf.Config.IsSupportingOBS() {
 		if data, ok := block.GetDataFromFirstBlock(); ok {
 			syspar.SetFirstBlockData(data)
 		}
@@ -41,7 +41,7 @@ func RunAllDaemons(ctx context.Context) error {
 	log.Info("start daemons")
 	daemons.StartDaemons(ctx)
 
-	if conf.Config.IsSupportingVDE() {
+	if conf.Config.IsSupportingOBS() {
 		return nil
 	}
 

@@ -1,4 +1,4 @@
-package vde
+package obs
 
 var systemParametersDataSQL = `
 INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES 

@@ -67,7 +67,7 @@ func setRoutes(r *mux.Router) {
 	api.HandleFunc("/node/{name}", nodeContractHandler).Methods("POST")
 	api.HandleFunc("/txstatus", authRequire(getTxStatusHandler)).Methods("POST")
 
-	if !conf.Config.IsSupportingVDE() {
+	if !conf.Config.IsSupportingOBS() {
 		api.HandleFunc("/txinfo/{hash}", authRequire(getTxInfoHandler)).Methods("GET")
 		api.HandleFunc("/txinfomultiple", authRequire(getTxInfoMultiHandler)).Methods("GET")
 		api.HandleFunc("/appparam/{appID}/{name}", authRequire(getAppParamHandler)).Methods("GET")

@@ -163,8 +163,8 @@ const TxRequestExpire = 1 * time.Minute
 // DefaultTempDirName is default name of temporary directory
 const DefaultTempDirName = "genesis-temp"
 
-// DefaultVDE allways is 1
-const DefaultVDE = 1
+// DefaultOBS allways is 1
+const DefaultOBS = 1
 
 // MoneyLength is the maximum number of digits in money value
 const MoneyLength = 30

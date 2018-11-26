@@ -1,4 +1,4 @@
-package vde
+package obs
 
 var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES 
 (next_id('1_tables'), 'contracts', '{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")", "new_column": "ContractConditions(\"MainCondition\")"}', 

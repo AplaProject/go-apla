@@ -1,4 +1,4 @@
-package vde
+package obs
 
 var pagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, conditions, ecosystem) VALUES
 	(next_id('1_pages'), 'admin_dashboard', 'SetVar(this_page,admin_dashboard)

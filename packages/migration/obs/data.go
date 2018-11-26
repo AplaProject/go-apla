@@ -1,4 +1,4 @@
-package vde
+package obs
 
 var (
 	migrationInitial = `

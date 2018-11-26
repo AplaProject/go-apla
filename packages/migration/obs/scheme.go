@@ -1,13 +1,13 @@
-package vde
+package obs
 
 import (
 	"strings"
 )
 
-// GetVDEScript returns script to create ecosystem
-func GetVDEScript() string {
+// GetOBSScript returns script to create ecosystem
+func GetOBSScript() string {
 	scripts := []string{
-		schemaVDE,
+		schemaOBS,
 		blocksDataSQL,
 		contractsDataSQL,
 		menuDataSQL,
@@ -25,7 +25,7 @@ func GetVDEScript() string {
 }
 
 // SchemaEcosystem contains SQL queries for creating ecosystem
-var schemaVDE = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
+var schemaOBS = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 		"id" bigint  NOT NULL DEFAULT '0',
 		"pub" bytea  NOT NULL DEFAULT '',
 		"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),

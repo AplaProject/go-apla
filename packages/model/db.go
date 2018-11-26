@@ -10,7 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/migration"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
+	"github.com/GenesisKernel/go-genesis/packages/migration/obs"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -210,9 +210,9 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecSchemaLocalData is executing schema with local data
 func ExecSchemaLocalData(id int, wallet int64) error {
-	query := fmt.Sprintf(vde.GetVDEScript(), id, wallet)
+	query := fmt.Sprintf(obs.GetOBSScript(), id, wallet)
 	if err := DBConn.Exec(query).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing vde script")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing obs script")
 		ioutil.WriteFile("/home/losaped/schema.sql", []byte(query), 0644)
 		return err
 	}
@@ -461,9 +461,9 @@ func InitDB(cfg conf.DBConfig) error {
 		return err
 	}
 
-	if conf.Config.IsSupportingVDE() {
-		if err := ExecSchemaLocalData(consts.DefaultVDE, conf.Config.KeyID); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE schema")
+	if conf.Config.IsSupportingOBS() {
+		if err := ExecSchemaLocalData(consts.DefaultOBS, conf.Config.KeyID); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating OBS schema")
 			return err
 		}
 	}

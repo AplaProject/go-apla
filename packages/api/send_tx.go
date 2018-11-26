@@ -114,7 +114,7 @@ func sendTxHandler(w http.ResponseWriter, r *http.Request) {
 
 type contractResult struct {
 	Hash string `json:"hash"`
-	// These fields are used for VDE
+	// These fields are used for OBS
 	Message *txstatusError `json:"errmsg,omitempty"`
 	Result  string         `json:"result,omitempty"`
 }
@@ -167,12 +167,12 @@ func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte) (stri
 	return string(converter.BinToHex(rtx.Hash())), nil
 }
 
-type vdeTxPreprocessor struct {
+type obsTxPreprocessor struct {
 	logger *log.Entry
 	keyID  int64
 }
 
-func (p vdeTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
+func (p obsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
 
 	tx, err := transaction.UnmarshallTransaction(bytes.NewBuffer(txData))
 	if err != nil {
@@ -193,7 +193,7 @@ func (p vdeTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, err
 		return "", err
 	}
 
-	res, _, err := tx.CallVDEContract()
+	res, _, err := tx.CallOBSContract()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on execution contract")
 		return "", err
@@ -208,8 +208,8 @@ func (p vdeTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, err
 }
 
 func getClientTxPreprocessor(logger *log.Entry, keyID int64) ClientTxPreprocessor {
-	if conf.Config.IsSupportingVDE() {
-		return vdeTxPreprocessor{
+	if conf.Config.IsSupportingOBS() {
+		return obsTxPreprocessor{
 			logger: logger,
 			keyID:  keyID,
 		}

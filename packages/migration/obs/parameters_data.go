@@ -1,4 +1,4 @@
-package vde
+package obs
 
 var parametersDataSQL = `
 INSERT INTO "1_parameters" ("id","name", "value", "conditions", "ecosystem") VALUES

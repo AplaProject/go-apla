@@ -41,7 +41,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -207,7 +206,7 @@ func Start() {
 		}
 	}
 
-	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
+	log.WithFields(log.Fields{"mode": conf.Config.OBSMode}).Info("Node running mode")
 	if conf.Config.FuncBench {
 		log.Warning("Warning! Access checking is disabled in some built-in functions")
 	}
@@ -260,7 +259,7 @@ func Start() {
 			os.Exit(1)
 		}
 
-		if !conf.Config.IsSupportingVDE() {
+		if !conf.Config.IsSupportingOBS() {
 			var availableBCGap int64 = consts.AvailableBCGap
 			if syspar.GetRbBlocks1() > consts.AvailableBCGap {
 				availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
@@ -280,8 +279,8 @@ func Start() {
 			}
 		}
 
-		if conf.Config.IsVDEMaster() {
-			vdemanager.InitVDEManager()
+		if conf.Config.IsOBSMaster() {
+			obsmanager.InitOBSManager()
 		}
 	}
 

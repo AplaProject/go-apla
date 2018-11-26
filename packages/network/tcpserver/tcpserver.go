@@ -109,7 +109,7 @@ func HandleTCPRequest(rw net.Conn) {
 // TcpListener is listening tcp address
 func TcpListener(laddr string) error {
 
-	if conf.Config.IsSupportingVDE() {
+	if conf.Config.IsSupportingOBS() {
 		return nil
 	}
 

@@ -77,7 +77,7 @@ type loginResult struct {
 	NotifyKey   string        `json:"notify_key,omitempty"`
 	IsNode      bool          `json:"isnode,omitempty"`
 	IsOwner     bool          `json:"isowner,omitempty"`
-	IsVDE       bool          `json:"vde,omitempty"`
+	IsOBS       bool          `json:"obs,omitempty"`
 	Timestamp   string        `json:"timestamp,omitempty"`
 	Roles       []rolesResult `json:"roles,omitempty"`
 }
@@ -138,7 +138,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		publicKey = account.PublicKey
 	} else {
-		if !conf.Config.IsSupportingVDE() && !syspar.IsTestMode() {
+		if !conf.Config.IsSupportingOBS() && !syspar.IsTestMode() {
 			errorResponse(w, errKeyNotFound)
 		}
 
@@ -177,12 +177,12 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
 		} else {
-			if !conf.Config.IsSupportingVDE() {
+			if !conf.Config.IsSupportingOBS() {
 				if err := tx.CreateTransaction(txData, txHash, sc.KeyID); err != nil {
 					log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 				}
 			} else {
-				proc := vdeTxPreprocessor{
+				proc := obsTxPreprocessor{
 					logger: logger,
 					keyID:  wallet,
 				}
@@ -259,7 +259,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Address:     address,
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
-		IsVDE:       conf.Config.IsSupportingVDE(),
+		IsOBS:       conf.Config.IsSupportingOBS(),
 	}
 
 	claims := JWTClaims{

@@ -66,10 +66,10 @@ const (
 
 	// VMTypeSmart is smart vm type
 	VMTypeSmart VMType = 1
-	// VMTypeVDE is vde vm type
-	VMTypeVDE VMType = 2
-	// VMTypeVDEMaster is VDEMaster type
-	VMTypeVDEMaster VMType = 3
+	// VMTypeOBS is obs vm type
+	VMTypeOBS VMType = 2
+	// VMTypeOBSMaster is OBSMaster type
+	VMTypeOBSMaster VMType = 3
 
 	TagFile      = "file"
 	TagAddress   = "address"

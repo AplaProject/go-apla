@@ -1,4 +1,4 @@
-package vdemanager
+package obsmanager
 
 import (
 	"errors"
@@ -30,23 +30,23 @@ const (
 	dropDBRoleTemplate = `DROP ROLE IF EXISTS %s`
 	commandTemplate    = `%s start --config=%s`
 
-	alreadyExistsErrorTemplate = `vde '%s' already exists`
+	alreadyExistsErrorTemplate = `obs '%s' already exists`
 )
 
 var (
-	errWrongMode        = errors.New("node must be running as VDEMaster")
-	errIncorrectVDEName = errors.New("the name cannot begit with a number and must contain alphabetical symbols and numbers")
+	errWrongMode        = errors.New("node must be running as OBSMaster")
+	errIncorrectOBSName = errors.New("the name cannot begit with a number and must contain alphabetical symbols and numbers")
 )
 
-// VDEManager struct
-type VDEManager struct {
+// OBSManager struct
+type OBSManager struct {
 	processes        *process.ProcessManager
 	execPath         string
 	childConfigsPath string
 }
 
 var (
-	Manager *VDEManager
+	Manager *OBSManager
 )
 
 func prepareWorkDir() (string, error) {
@@ -62,11 +62,11 @@ func prepareWorkDir() (string, error) {
 	return childConfigsPath, nil
 }
 
-// CreateVDE creates one instance of VDE
-func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) error {
-	if err := checkVDEName(name); err != nil {
-		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on check VDE name")
-		return errIncorrectVDEName
+// CreateOBS creates one instance of OBS
+func (mgr *OBSManager) CreateOBS(name, dbUser, dbPassword string, port int) error {
+	if err := checkOBSName(name); err != nil {
+		log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err}).Error("on check OBS name")
+		return errIncorrectOBSName
 	}
 
 	var err error
@@ -82,7 +82,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 		}
 	}()
 
-	config := ChildVDEConfig{
+	config := ChildOBSConfig{
 		Executable:     mgr.execPath,
 		Name:           name,
 		Directory:      path.Join(mgr.childConfigsPath, name),
@@ -95,12 +95,12 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	}
 
 	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("creating new VDE")
+		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("creating new OBS")
 		return errWrongMode
 	}
 
-	if err = mgr.createVDEDB(name, dbUser, dbPassword); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating VDE DB")
+	if err = mgr.createOBSDB(name, dbUser, dbPassword); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating OBS DB")
 		return fmt.Errorf(alreadyExistsErrorTemplate, name)
 	}
 
@@ -111,17 +111,17 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	dirPath := path.Join(mgr.childConfigsPath, name)
 	if directoryExists(dirPath) {
 		err = fmt.Errorf(alreadyExistsErrorTemplate, name)
-		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err, "dirPath": dirPath}).Error("on check directory")
+		log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err, "dirPath": dirPath}).Error("on check directory")
 		return err
 	}
 
-	if err = mgr.initVDEDir(name); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "DirName": name, "error": err}).Error("on init VDE dir")
+	if err = mgr.initOBSDir(name); err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "DirName": name, "error": err}).Error("on init OBS dir")
 		return err
 	}
 
 	cancelChain = append(cancelChain, func() {
-		dropVDEDir(mgr.childConfigsPath, name)
+		dropOBSDir(mgr.childConfigsPath, name)
 	})
 
 	cmd := config.configCommand()
@@ -145,7 +145,7 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 	command := fmt.Sprintf("%s start --config=%s", config.Executable, filepath.Join(config.Directory, consts.DefaultConfigFile))
 	log.Infoln(command)
 	procConfEntry.AddKeyValue("command", command)
-	proc := process.NewProcess("vdeMaster", procConfEntry)
+	proc := process.NewProcess("obsMaster", procConfEntry)
 
 	mgr.processes.Add(name, proc)
 	mgr.processes.Find(name).Start(true)
@@ -153,9 +153,9 @@ func (mgr *VDEManager) CreateVDE(name, dbUser, dbPassword string, port int) erro
 }
 
 // ListProcess returns list of process names with state of process
-func (mgr *VDEManager) ListProcess() (map[string]string, error) {
+func (mgr *OBSManager) ListProcess() (map[string]string, error) {
 	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("get VDE list")
+		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("get OBS list")
 		return nil, errWrongMode
 	}
 
@@ -168,7 +168,7 @@ func (mgr *VDEManager) ListProcess() (map[string]string, error) {
 	return list, nil
 }
 
-func (mgr *VDEManager) ListProcessWithPorts() (map[string]string, error) {
+func (mgr *OBSManager) ListProcessWithPorts() (map[string]string, error) {
 	list, err := mgr.ListProcess()
 	if err != nil {
 		return list, err
@@ -178,7 +178,7 @@ func (mgr *VDEManager) ListProcessWithPorts() (map[string]string, error) {
 		path := path.Join(mgr.childConfigsPath, name, consts.DefaultConfigFile)
 		c := &conf.GlobalConfig{}
 		if err := conf.LoadConfigToVar(path, c); err != nil {
-			log.WithFields(log.Fields{"type": "dbError", "error": err, "path": path}).Warn("on loading child VDE config")
+			log.WithFields(log.Fields{"type": "dbError", "error": err, "path": path}).Warn("on loading child OBS config")
 			continue
 		}
 
@@ -188,44 +188,44 @@ func (mgr *VDEManager) ListProcessWithPorts() (map[string]string, error) {
 	return list, err
 }
 
-// DeleteVDE stop VDE process and remove VDE folder
-func (mgr *VDEManager) DeleteVDE(name string) error {
+// DeleteOBS stop OBS process and remove OBS folder
+func (mgr *OBSManager) DeleteOBS(name string) error {
 
 	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("deleting VDE")
+		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("deleting OBS")
 		return errWrongMode
 	}
 
-	mgr.StopVDE(name)
+	mgr.StopOBS(name)
 	mgr.processes.Remove(name)
-	vdeDir := path.Join(mgr.childConfigsPath, name)
-	vdeConfigPath := filepath.Join(vdeDir, consts.DefaultConfigFile)
-	vdeConfig, err := conf.GetConfigFromPath(vdeConfigPath)
+	obsDir := path.Join(mgr.childConfigsPath, name)
+	obsConfigPath := filepath.Join(obsDir, consts.DefaultConfigFile)
+	obsConfig, err := conf.GetConfigFromPath(obsConfigPath)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Errorf("Getting config from path %s", vdeConfigPath)
-		return fmt.Errorf(`VDE '%s' is not exists`, name)
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Errorf("Getting config from path %s", obsConfigPath)
+		return fmt.Errorf(`OBS '%s' is not exists`, name)
 	}
 
 	time.Sleep(1 * time.Second)
-	if err := dropDb(vdeConfig.DB.Name, vdeConfig.DB.User); err != nil {
+	if err := dropDb(obsConfig.DB.Name, obsConfig.DB.User); err != nil {
 		return err
 	}
 
-	return os.RemoveAll(vdeDir)
+	return os.RemoveAll(obsDir)
 }
 
-// StartVDE find process and then start him
-func (mgr *VDEManager) StartVDE(name string) error {
+// StartOBS find process and then start him
+func (mgr *OBSManager) StartOBS(name string) error {
 
 	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("starting VDE")
+		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("starting OBS")
 		return errWrongMode
 	}
 
 	proc := mgr.processes.Find(name)
 	if proc == nil {
-		err := fmt.Errorf(`VDE '%s' is not exists`, name)
-		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on find VDE process")
+		err := fmt.Errorf(`OBS '%s' is not exists`, name)
+		log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err}).Error("on find OBS process")
 		return err
 	}
 
@@ -234,27 +234,27 @@ func (mgr *VDEManager) StartVDE(name string) error {
 		state == process.EXITED ||
 		state == process.FATAL {
 		proc.Start(true)
-		log.WithFields(log.Fields{"vde_name": name}).Info("VDE started")
+		log.WithFields(log.Fields{"obs_name": name}).Info("OBS started")
 		return nil
 	}
 
-	err := fmt.Errorf("VDE '%s' is %s", name, state)
-	log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on starting VDE")
+	err := fmt.Errorf("OBS '%s' is %s", name, state)
+	log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err}).Error("on starting OBS")
 	return err
 }
 
-// StopVDE find process with definded name and then stop him
-func (mgr *VDEManager) StopVDE(name string) error {
+// StopOBS find process with definded name and then stop him
+func (mgr *OBSManager) StopOBS(name string) error {
 
 	if mgr.processes == nil {
-		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("on stopping VDE process")
+		log.WithFields(log.Fields{"type": consts.WrongModeError, "error": errWrongMode}).Error("on stopping OBS process")
 		return errWrongMode
 	}
 
 	proc := mgr.processes.Find(name)
 	if proc == nil {
-		err := fmt.Errorf(`VDE '%s' is not exists`, name)
-		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on find VDE process")
+		err := fmt.Errorf(`OBS '%s' is not exists`, name)
+		log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err}).Error("on find OBS process")
 		return err
 	}
 
@@ -262,27 +262,27 @@ func (mgr *VDEManager) StopVDE(name string) error {
 	if state == process.RUNNING ||
 		state == process.STARTING {
 		proc.Stop(true)
-		log.WithFields(log.Fields{"vde_name": name}).Info("VDE is stoped")
+		log.WithFields(log.Fields{"obs_name": name}).Info("OBS is stoped")
 		return nil
 	}
 
-	err := fmt.Errorf("VDE '%s' is %s", name, state)
-	log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Error("on stoping VDE")
+	err := fmt.Errorf("OBS '%s' is %s", name, state)
+	log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err}).Error("on stoping OBS")
 	return err
 }
 
-func (mgr *VDEManager) createVDEDB(vdeName, login, pass string) error {
+func (mgr *OBSManager) createOBSDB(obsName, login, pass string) error {
 
 	if err := model.DBConn.Exec(fmt.Sprintf(createRoleTemplate, login, pass)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE DB User")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating OBS DB User")
 		return err
 	}
 
-	if err := model.DBConn.Exec(fmt.Sprintf(createDBTemplate, vdeName, login)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE DB")
+	if err := model.DBConn.Exec(fmt.Sprintf(createDBTemplate, obsName, login)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating OBS DB")
 
 		if err := model.GetDB(nil).Exec(fmt.Sprintf(dropDBRoleTemplate, login)).Error; err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": login}).Error("on deleting vde role")
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": login}).Error("on deleting obs role")
 			return err
 		}
 		return err
@@ -291,12 +291,12 @@ func (mgr *VDEManager) createVDEDB(vdeName, login, pass string) error {
 	return nil
 }
 
-func (mgr *VDEManager) initVDEDir(vdeName string) error {
+func (mgr *OBSManager) initOBSDir(obsName string) error {
 
-	vdeDirName := path.Join(mgr.childConfigsPath, vdeName)
-	if _, err := os.Stat(vdeDirName); os.IsNotExist(err) {
-		if err := os.Mkdir(vdeDirName, 0700); err != nil {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating VDE directory")
+	obsDirName := path.Join(mgr.childConfigsPath, obsName)
+	if _, err := os.Stat(obsDirName); os.IsNotExist(err) {
+		if err := os.Mkdir(obsDirName, 0700); err != nil {
+			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("creating OBS directory")
 			return err
 		}
 	}
@@ -304,19 +304,19 @@ func (mgr *VDEManager) initVDEDir(vdeName string) error {
 	return nil
 }
 
-func InitVDEManager() {
+func InitOBSManager() {
 
 	execPath, err := os.Executable()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Fatal("on determine executable path")
+		log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err}).Fatal("on determine executable path")
 	}
 
 	childConfigsPath, err := prepareWorkDir()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.VDEManagerError, "error": err}).Fatal("on prepare child configs folder")
+		log.WithFields(log.Fields{"type": consts.OBSManagerError, "error": err}).Fatal("on prepare child configs folder")
 	}
 
-	Manager = &VDEManager{
+	Manager = &OBSManager{
 		processes:        process.NewProcessManager(),
 		execPath:         execPath,
 		childConfigsPath: childConfigsPath,
@@ -324,7 +324,7 @@ func InitVDEManager() {
 
 	list, err := ioutil.ReadDir(childConfigsPath)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": childConfigsPath}).Fatal("on read child VDE directory")
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err, "path": childConfigsPath}).Fatal("on read child OBS directory")
 	}
 
 	for _, item := range list {
@@ -339,7 +339,7 @@ func InitVDEManager() {
 			confEntry.AddKeyValue("autostart", "true")
 			confEntry.AddKeyValue("autorestart", "true")
 
-			proc := process.NewProcess("vdeMaster", confEntry)
+			proc := process.NewProcess("obsMaster", confEntry)
 			Manager.processes.Add(item.Name(), proc)
 			proc.Start(true)
 		}
@@ -348,18 +348,18 @@ func InitVDEManager() {
 
 func dropDb(name, role string) error {
 	if err := model.DropDatabase(name); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "db_name": name}).Error("Deleting vde db")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "db_name": name}).Error("Deleting obs db")
 		return err
 	}
 
 	if err := model.GetDB(nil).Exec(fmt.Sprintf(dropDBRoleTemplate, role)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": role}).Error("on deleting vde role")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "role": role}).Error("on deleting obs role")
 	}
 	return nil
 }
 
-func dropVDEDir(configsPath, vdeName string) error {
-	path := path.Join(configsPath, vdeName)
+func dropOBSDir(configsPath, obsName string) error {
+	path := path.Join(configsPath, obsName)
 	if directoryExists(path) {
 		os.RemoveAll(path)
 	}
@@ -378,7 +378,7 @@ func directoryExists(path string) bool {
 	return true
 }
 
-func checkVDEName(name string) error {
+func checkOBSName(name string) error {
 
 	name = strings.ToLower(name)
 
@@ -394,7 +394,7 @@ func checkVDEName(name string) error {
 	return nil
 }
 
-func (mgr *VDEManager) configByName(name string) (*conf.GlobalConfig, error) {
+func (mgr *OBSManager) configByName(name string) (*conf.GlobalConfig, error) {
 	path := path.Join(mgr.childConfigsPath)
 	c := &conf.GlobalConfig{}
 	err := conf.LoadConfigToVar(path, c)

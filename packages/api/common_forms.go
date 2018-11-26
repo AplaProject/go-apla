@@ -63,8 +63,8 @@ func (f *ecosystemForm) Validate(r *http.Request) error {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	if conf.Config.IsSupportingVDE() {
-		f.EcosystemID = consts.DefaultVDE
+	if conf.Config.IsSupportingOBS() {
+		f.EcosystemID = consts.DefaultOBS
 	} else if f.EcosystemID > 0 {
 		count, err := model.GetNextID(nil, "1_ecosystems")
 		if err != nil {

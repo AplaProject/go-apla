@@ -447,7 +447,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if err := LoadContract(sc.DbTransaction, id); err != nil {
 		return 0, err
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem", ID: id}); err != nil {
 			return 0, err
 		}
@@ -603,7 +603,7 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
-	if conf.Config.IsSupportingVDE() {
+	if conf.Config.IsSupportingOBS() {
 		return nil, ErrNotImplementedOnOBS
 	}
 
@@ -618,7 +618,7 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 // DBCollectMetrics returns actual values of all metrics
 // This function used to further store these values
 func DBCollectMetrics(sc *SmartContract) []interface{} {
-	if conf.Config.IsSupportingVDE() {
+	if conf.Config.IsSupportingOBS() {
 		return nil
 	}
 

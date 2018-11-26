@@ -1,4 +1,4 @@
-package vde
+package obs
 
 var blocksDataSQL = `INSERT INTO "1_blocks" (id, name, value, conditions, ecosystem) VALUES
 		(next_id('1_blocks'), 'admin_link', 'If(#sort#==1){

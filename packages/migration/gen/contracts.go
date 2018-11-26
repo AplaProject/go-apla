@@ -31,8 +31,8 @@ var (
 			"firstEcosystemContractsSQL", "1", "%[1]d",
 		},
 		{
-			[]string{"./contracts/common", "./contracts/first_ecosystem", "./contracts/vde"},
-			"./vde/vde_data_contracts.go",
+			[]string{"./contracts/common", "./contracts/first_ecosystem", "./contracts/obs"},
+			"./obs/obs_data_contracts.go",
 			"contractsDataSQL", "%[1]d", "",
 		},
 	}

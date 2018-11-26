@@ -83,7 +83,7 @@ func (sc SmartContract) GetLogger() *log.Entry {
 	if sc.TxContract != nil {
 		name = sc.TxContract.Name
 	}
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
+	return log.WithFields(log.Fields{"obs": sc.OBS, "name": name})
 }
 
 func newVM() *script.VM {
@@ -395,10 +395,10 @@ func LoadContracts() error {
 	vm := GetVM()
 
 	vmt := script.VMTypeSmart
-	if conf.Config.IsVDE() {
-		vmt = script.VMTypeVDE
-	} else if conf.Config.IsVDEMaster() {
-		vmt = script.VMTypeVDEMaster
+	if conf.Config.IsOBS() {
+		vmt = script.VMTypeOBS
+	} else if conf.Config.IsOBSMaster() {
+		vmt = script.VMTypeOBSMaster
 	}
 	EmbedFuncs(vm, vmt)
 
@@ -520,7 +520,7 @@ func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error)
 	return
 }
 
-// func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
+// func LoadOBSContracts(transaction *model.DbTransaction, prefix string) (err error) {
 
 // 	state := converter.StrToInt64(prefix)
 
@@ -545,7 +545,7 @@ func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error)
 // 			TokenID:  0,
 // 		}
 // 		if err = vmCompile(vm, item.Value, &owner); err != nil {
-// 			logErrorValue(err, consts.EvalError, "Load VDE Contract", strings.Join(clist, `,`))
+// 			logErrorValue(err, consts.EvalError, "Load OBS Contract", strings.Join(clist, `,`))
 // 		}
 // 	}
 
@@ -984,7 +984,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.AppendStack(sc.TxContract.Name)
 	sc.VM = GetVM()
 
-	if !sc.VDE {
+	if !sc.OBS {
 		toID = sc.BlockData.KeyID
 		fromID = sc.TxSmart.KeyID
 	}
@@ -1033,7 +1033,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		return retError(errIncorrectSign)
 	}
 
-	needPayment := sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain()
+	needPayment := sc.TxSmart.EcosystemID > 0 && !sc.OBS && !syspar.IsPrivateBlockchain()
 	if needPayment {
 		if sc.TxSmart.TokenEcosystem == 0 {
 			sc.TxSmart.TokenEcosystem = 1

@@ -1,4 +1,4 @@
-package vdemanager
+package obsmanager
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ const (
 	startCommand   = "start"
 )
 
-// ChildVDEConfig struct to manage child entry
-type ChildVDEConfig struct {
+// ChildOBSConfig struct to manage child entry
+type ChildOBSConfig struct {
 	Executable     string
 	Name           string
 	Directory      string
@@ -25,7 +25,7 @@ type ChildVDEConfig struct {
 	HTTPPort       int
 }
 
-func (c ChildVDEConfig) configCommand() *exec.Cmd {
+func (c ChildOBSConfig) configCommand() *exec.Cmd {
 
 	args := []string{
 		"config",
@@ -38,29 +38,29 @@ func (c ChildVDEConfig) configCommand() *exec.Cmd {
 		fmt.Sprintf("--keysDir=%s", c.Directory),
 		fmt.Sprintf("--logTo=%s", c.LogTo),
 		fmt.Sprintf("--logLevel=%s", c.LogLevel),
-		"--vdeMode=VDE",
+		"--obsMode=OBS",
 	}
 
 	return exec.Command(c.Executable, args...)
 }
 
-func (c ChildVDEConfig) initDBCommand() *exec.Cmd {
+func (c ChildOBSConfig) initDBCommand() *exec.Cmd {
 	return c.getCommand(inidDBCommand)
 }
 
-func (c ChildVDEConfig) generateKeysCommand() *exec.Cmd {
+func (c ChildOBSConfig) generateKeysCommand() *exec.Cmd {
 	return c.getCommand(genKeysCommand)
 }
 
-func (c ChildVDEConfig) startCommand() *exec.Cmd {
+func (c ChildOBSConfig) startCommand() *exec.Cmd {
 	return c.getCommand(startCommand)
 }
 
-func (c ChildVDEConfig) configPath() string {
+func (c ChildOBSConfig) configPath() string {
 	return filepath.Join(c.Directory, c.ConfigFileName)
 }
 
-func (c ChildVDEConfig) getCommand(commandName string) *exec.Cmd {
+func (c ChildOBSConfig) getCommand(commandName string) *exec.Cmd {
 	args := []string{
 		commandName,
 		fmt.Sprintf("--config=%s", c.configPath()),
