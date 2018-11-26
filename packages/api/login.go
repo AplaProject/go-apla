@@ -165,7 +165,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 					NetworkID:   consts.NETWORK_ID,
 				},
 				Params: map[string]interface{}{
-					"NewPubkey": hex.EncodeToString(publicKey),
+					"NewPubkey": crypto.PubToHex(publicKey),
 				},
 			}
 
