@@ -272,10 +272,18 @@ func postTxResult(name string, form getter) (id int64, msg string, err error) {
 		switch field.Type {
 		case "bool":
 			params[name], err = strconv.ParseBool(value)
-		case "int":
+		case "int", "address":
 			params[name], err = strconv.ParseInt(value, 10, 64)
 		case "float":
 			params[name], err = strconv.ParseFloat(value, 64)
+		case "array":
+			var v interface{}
+			err = json.Unmarshal([]byte(value), &v)
+			params[name] = v
+		case "map":
+			var v map[string]interface{}
+			err = json.Unmarshal([]byte(value), &v)
+			params[name] = v
 		case "string", "money":
 			params[name] = value
 		case "file", "bytes":

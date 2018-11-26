@@ -72,7 +72,7 @@ func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
 		for _, fitem := range *info.Tx {
 			fields = append(fields, contractField{
 				Name:     fitem.Name,
-				Type:     getFieldTypeAlias(fitem.Type.String()),
+				Type:     script.OriginalToString(fitem.Original),
 				Optional: fitem.ContainsTag(script.TagOptional),
 			})
 		}
@@ -80,20 +80,4 @@ func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
 	result.Fields = fields
 
 	jsonResponse(w, result)
-}
-
-func getFieldTypeAlias(t string) string {
-	var fieldTypeAliases = map[string]string{
-		"int64":           "int",
-		"float64":         "float",
-		"decimal.Decimal": "money",
-		"[]uint8":         "bytes",
-		"[]interface {}":  "array",
-		"*types.Map":      "file",
-	}
-
-	if v, ok := fieldTypeAliases[t]; ok {
-		return v
-	}
-	return t
 }
