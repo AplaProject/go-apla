@@ -125,10 +125,6 @@ type TxSignJSON struct {
 	Params  []SignRes `json:"params"`
 }
 
-// func init() {
-// 	EmbedFuncs(smartVM, script.VMTypeSmart)
-// }
-
 func getCostP(name string) int64 {
 	if key, ok := extendCostSysParams[name]; ok && syspar.HasSys(key) {
 		return syspar.SysInt64(key)

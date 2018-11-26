@@ -520,38 +520,6 @@ func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error)
 	return
 }
 
-// func LoadOBSContracts(transaction *model.DbTransaction, prefix string) (err error) {
-
-// 	state := converter.StrToInt64(prefix)
-
-// 	defer ExternOff()
-
-// 	contract := &model.Contract{}
-// 	list, err := contract.GetFromEcosystem(transaction, state)
-// 	if err != nil {
-// 		return logErrorDB(err, "selecting all contracts from ecosystem")
-// 	}
-// 	LoadSysFuncs(vm, int(state))
-// 	for _, item := range list {
-// 		clist, err := script.ContractsList(item.Value)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		owner := script.OwnerInfo{
-// 			StateID:  uint32(state),
-// 			Active:   false,
-// 			TableID:  item.ID,
-// 			WalletID: 0,
-// 			TokenID:  0,
-// 		}
-// 		if err = vmCompile(vm, item.Value, &owner); err != nil {
-// 			logErrorValue(err, consts.EvalError, "Load OBS Contract", strings.Join(clist, `,`))
-// 		}
-// 	}
-
-// 	return
-// }
-
 func (sc *SmartContract) getExtend() *map[string]interface{} {
 	var block, blockTime, blockKeyID, blockNodePosition int64
 

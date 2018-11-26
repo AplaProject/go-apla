@@ -3,7 +3,6 @@ package model
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"time"
 
@@ -213,7 +212,6 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 	query := fmt.Sprintf(obs.GetOBSScript(), id, wallet)
 	if err := DBConn.Exec(query).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing obs script")
-		ioutil.WriteFile("/home/losaped/schema.sql", []byte(query), 0644)
 		return err
 	}
 
