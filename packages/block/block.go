@@ -73,7 +73,7 @@ func (b *Block) PlaySafe() error {
 		}
 
 		isFirstBlock := b.Header.BlockID == 1
-		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock)
+		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock, true)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -405,7 +405,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := UnmarshallBlock(buf, !checkSize)
+	block, err := UnmarshallBlock(buf, !checkSize, true)
 	if err != nil {
 		return nil, err
 	}

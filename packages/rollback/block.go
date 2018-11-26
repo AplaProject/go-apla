@@ -37,7 +37,7 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 		return fmt.Errorf("empty buffer")
 	}
 
-	block, err := block.UnmarshallBlock(buf, false)
+	block, err := block.UnmarshallBlock(buf, false, true)
 	if err != nil {
 		return err
 	}
