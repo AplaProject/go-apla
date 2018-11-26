@@ -311,7 +311,7 @@ func Sha256(text string) (string, error) {
 
 // PubToID returns a numeric identifier for the public key specified in the hexadecimal form.
 func PubToID(hexkey string) int64 {
-	pubkey, err := hex.DecodeString(hexkey)
+	pubkey, err := crypto.HexToPub(hexkey)
 	if err != nil {
 		logErrorValue(err, consts.CryptoError, "decoding hexkey to string", hexkey)
 		return 0

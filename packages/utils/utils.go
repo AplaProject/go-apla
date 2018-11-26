@@ -398,7 +398,7 @@ func GetNodeKeys() (string, string, error) {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting node private key to public")
 		return "", "", err
 	}
-	return string(nprivkey), hex.EncodeToString(npubkey), nil
+	return string(nprivkey), crypto.PubToHex(npubkey), nil
 }
 
 func GetNodePrivateKey() ([]byte, error) {
