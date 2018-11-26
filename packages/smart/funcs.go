@@ -1008,9 +1008,17 @@ func GetWhere(inWhere *types.Map) (string, error) {
 		case `$ibegin`:
 			return like(`ilike '%s%%'`, v)
 		case `$and`:
-			return logic(`and`, v)
+			icond, err := logic(`and`, v)
+			if err != nil {
+				return ``, err
+			}
+			cond = append(cond, icond)
 		case `$or`:
-			return logic(`or`, v)
+			icond, err := logic(`or`, v)
+			if err != nil {
+				return ``, err
+			}
+			cond = append(cond, icond)
 		case `$in`:
 			return in(`in`, v)
 		case `$nin`:
@@ -1072,6 +1080,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			return ``, err
 		}
 	}
+	fmt.Println(`WHERE`, where)
 	return where, nil
 }
 
@@ -1098,6 +1107,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err != nil {
 		return 0, nil, err
 	}
+	fmt.Println(`SELECT`, where)
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1
