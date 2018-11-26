@@ -1080,7 +1080,6 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			return ``, err
 		}
 	}
-	fmt.Println(`WHERE`, where)
 	return where, nil
 }
 
@@ -1107,7 +1106,6 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err != nil {
 		return 0, nil, err
 	}
-	fmt.Println(`SELECT`, where)
 	if id != 0 {
 		where = fmt.Sprintf(`id='%d'`, id)
 		limit = 1

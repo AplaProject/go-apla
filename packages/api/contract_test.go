@@ -39,8 +39,8 @@ func TestDBFindContract(t *testing.T) {
 			}
 			action { 
 				var ret i j k m array
-				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}})
-				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}})
+				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}}).Limit(100)
+				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}}).Limit(100)
 				j = DBFind("contracts").Where({id: {$lt: 10}})
 				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, id: {$neq: 26} ]})
 				m = DBFind("contracts").Where({id: 10, name: "EditColumn", $or: [id: 10, id: {$neq: 20}]})
@@ -49,7 +49,7 @@ func TestDBFindContract(t *testing.T) {
 	assert.NoError(t, postTx(`NewContract`, &form))
 	_, msg, err := postTxResult(rnd, &url.Values{})
 	assert.NoError(t, err)
-	if msg != `25 19 9 2 1` {
+	if msg != `25 25 9 2 1` {
 		t.Error(fmt.Errorf(`wrong msg %s`, msg))
 	}
 }

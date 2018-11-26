@@ -928,7 +928,7 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 			value = mapItem{Type: mapArray, Value: subArr}
 		}
 	case isLCurly:
-		subMap, err = vm.getInitMap(lexems, &i, block)
+		subMap, err = vm.getInitMap(lexems, &i, block, false)
 		if err == nil {
 			value = mapItem{Type: mapMap, Value: subMap}
 		}
@@ -950,8 +950,12 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 	return
 }
 
-func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (*types.Map, error) {
-	i := *ind + 1
+func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block, oneItem bool) (*types.Map, error) {
+	var next int
+	if !oneItem {
+		next = 1
+	}
+	i := *ind + next
 	key := ``
 	ret := types.NewMap()
 	state := mustKey
@@ -963,6 +967,11 @@ main:
 			continue
 		case isRCurly:
 			break main
+		case isComma, isRBrack:
+			if oneItem {
+				*ind = i - 1
+				return ret, nil
+			}
 		}
 		switch state {
 		case mustComma:
@@ -1033,11 +1042,19 @@ main:
 			}
 			state = mustValue
 		case mustValue:
-			arri, err := vm.getInitValue(lexems, &i, block)
-			if err != nil {
-				return nil, err
+			if i+1 < len(*lexems) && (*lexems)[i+1].Type == isColon {
+				subMap, err := vm.getInitMap(lexems, &i, block, true)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, mapItem{Type: mapMap, Value: subMap})
+			} else {
+				arri, err := vm.getInitValue(lexems, &i, block)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, arri)
 			}
-			ret = append(ret, arri)
 			state = mustComma
 		}
 	}
@@ -1080,7 +1097,7 @@ main:
 		logger := lexem.GetLogger()
 		if !noMap {
 			if lexem.Type == isLCurly {
-				pMap, err := vm.getInitMap(lexems, &i, block)
+				pMap, err := vm.getInitMap(lexems, &i, block, false)
 				if err != nil {
 					return err
 				}
