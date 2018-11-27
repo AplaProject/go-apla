@@ -45,8 +45,8 @@ func TestOBSCreate(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 
 	form := url.Values{
-		"OBSName":    {"obs"},
-		"DBUser":     {"obsuser"},
+		"OBSName":    {"obs1"},
+		"DBUser":     {"obsuser1"},
 		"DBPassword": {"obspassword"},
 		"OBSAPIPort": {"8095"},
 	}
@@ -78,7 +78,7 @@ func TestRunOBS(t *testing.T) {
 func TestRemoveOBS(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	form := url.Values{
-		"OBSName": {"mobs"},
+		"OBSName": {"obs"},
 	}
 	require.NoError(t, postTx("RemoveOBS", &form))
 }
@@ -307,7 +307,7 @@ func TestHTTPRequest(t *testing.T) {
 				if json["name"] != "@1OBSFunctions" {
 					error "Wrong obs contract"
 				}
-			}}`}, `Conditions`: {`true`}, `obs`: {`true`}}
+			}}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
 
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
