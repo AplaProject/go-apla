@@ -627,7 +627,7 @@ VALUES
     }
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
-	(next_id('1_contracts'), 'ListVDE', 'contract ListOBS {
+	(next_id('1_contracts'), 'ListOBS', 'contract ListOBS {
 		data {}
 	
 		conditions {}
@@ -855,6 +855,41 @@ VALUES
     }
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
+	(next_id('1_contracts'), 'NewOBS', 'contract NewOBS {
+		data {
+			OBSName string
+			DBUser string
+			DBPassword string
+			OBSAPIPort int
+		}
+	
+		conditions {
+            if Size($OBSName) == 0 {
+                warning "OBSName was not received"
+            }
+            if Contains($OBSName, " ") {
+                error "OBSName can not contain spaces"
+            }
+            if Size($DBUser) == 0 {
+                warning "DBUser was not received"
+            }
+            if Size($DBPassword) == 0 {
+                warning "DBPassword was not received"
+            }
+            if $OBSAPIPort <= 0  {
+                warning "OBS API PORT not received"
+            }
+            
+		}
+	
+		action {
+            $OBSName = ToLower($OBSName)
+            $DBUser = ToLower($DBUser)
+            CreateOBS($OBSName, $DBUser, $DBPassword, $OBSAPIPort)
+            $result = "OBS " + $OBSName + " created"
+		}
+}
+', 'ContractConditions("MainCondition")', '1', '%[1]d'),
 	(next_id('1_contracts'), 'NewPage', 'contract NewPage {
     data {
         ApplicationId int
@@ -953,41 +988,6 @@ VALUES
 	}
 }
 ', 'ContractConditions("NodeOwnerCondition")', '1', '%[1]d'),
-	(next_id('1_contracts'), 'NewVDE', 'contract NewOBS {
-		data {
-			OBSName string
-			DBUser string
-			DBPassword string
-			OBSAPIPort int
-		}
-	
-		conditions {
-            if Size($OBSName) == 0 {
-                warning "OBSName was not received"
-            }
-            if Contains($OBSName, " ") {
-                error "OBSName can not contain spaces"
-            }
-            if Size($DBUser) == 0 {
-                warning "DBUser was not received"
-            }
-            if Size($DBPassword) == 0 {
-                warning "DBPassword was not received"
-            }
-            if $OBSAPIPort <= 0  {
-                warning "OBS API PORT not received"
-            }
-            
-		}
-	
-		action {
-            $OBSName = ToLower($OBSName)
-            $DBUser = ToLower($DBUser)
-            CreateOBS($OBSName, $DBUser, $DBPassword, $OBSAPIPort)
-            $result = "OBS " + $OBSName + " created"
-		}
-}
-', 'ContractConditions("MainCondition")', '1', '%[1]d'),
 	(next_id('1_contracts'), 'NodeOwnerCondition', 'contract NodeOwnerCondition {
 	conditions {
         $raw_full_nodes = SysParamString("full_nodes")
@@ -1008,7 +1008,7 @@ VALUES
 	}
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
-	(next_id('1_contracts'), 'RemoveVDE', 'contract RemoveOBS {
+	(next_id('1_contracts'), 'RemoveOBS', 'contract RemoveOBS {
 	data {
 			OBSName string
 	}
@@ -1020,7 +1020,7 @@ VALUES
 	}
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
-	(next_id('1_contracts'), 'RunVDE', 'contract RunOBS {
+	(next_id('1_contracts'), 'RunOBS', 'contract RunOBS {
 	data {
 		OBSName string
 	}	
@@ -1033,7 +1033,7 @@ VALUES
 	}
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
-	(next_id('1_contracts'), 'StopVDE', 'contract StopOBS {
+	(next_id('1_contracts'), 'StopOBS', 'contract StopOBS {
 		data {
 			OBSName string
 		}
