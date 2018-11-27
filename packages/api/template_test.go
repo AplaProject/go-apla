@@ -107,7 +107,7 @@ func TestAPI(t *testing.T) {
 		}
 	}
 	err = sendPost(`content/page/mypage`, &url.Values{}, &ret)
-	if err != nil && err.Error() != `404 {"error": "E_NOTFOUND", "msg": "Page not found" }` {
+	if err != nil && err.Error() != `404 {"error":"E_NOTFOUND","msg":"Page not found"}` {
 		t.Error(err)
 		return
 	}
@@ -119,6 +119,10 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind(@1pages).Where({{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"],["3","notifications"],["2","developer_index"]],"name":"@1pages","types":["text","text"],"where":"{{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}"}}]`},
+	{`DBFind(@1pages).Where({{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}).Columns("id,name")`,
+		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["2","developer_index"]],"name":"@1pages","types":["text","text"],"where":"{{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}"}}]`},
+	{`DBFind(@1pages).Where({id:10, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["10","properties_edit"]],"name":"@1pages","types":["text","text"],"where":"{id:10, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}"}}]`},
 	{`DBFind(@1pages).Where({id:1}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"]],"name":"@1pages","types":["text","text"],"where":"{id:1}"}}]`},
 	{`DBFind(keys).Where("id='#key_id#'").Columns("amount").Vars(amount)`, `[{"tag":"text","text":"Where has wrong format"}]`},
 	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},

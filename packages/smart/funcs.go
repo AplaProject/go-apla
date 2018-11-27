@@ -1051,7 +1051,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 						}
 						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
 					default:
-						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
+						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(avalue)))
 					}
 				}
 				if len(acond) > 0 {
