@@ -29,7 +29,6 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/api"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
@@ -39,7 +38,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/network/httpserver"
 	"github.com/GenesisKernel/go-genesis/packages/obsmanager"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	"github.com/GenesisKernel/go-genesis/packages/service"
 	"github.com/GenesisKernel/go-genesis/packages/statsd"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
@@ -260,29 +258,7 @@ func Start() {
 			os.Exit(1)
 		}
 
-		if !conf.Config.IsSupportingOBS() {
-			var availableBCGap int64 = consts.AvailableBCGap
-			if syspar.GetRbBlocks1() > consts.AvailableBCGap {
-				availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
-			}
-
-			blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-			blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-			blockGenerationTime := blockGenerationDuration + blocksGapDuration
-
-			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
-			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-			na.Run(ctx)
-
-			err = service.InitNodesBanService()
-			if err != nil {
-				log.WithError(err).Fatal("Can't init ban service")
-			}
-		}
-
-		if conf.Config.IsOBSMaster() {
-			obsmanager.InitOBSManager()
-		}
+		obsmanager.InitOBSManager()
 	}
 
 	daemons.WaitForSignals()

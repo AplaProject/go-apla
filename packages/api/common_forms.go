@@ -63,23 +63,36 @@ func (f *ecosystemForm) Validate(r *http.Request) error {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	if conf.Config.IsSupportingOBS() {
-		f.EcosystemID = consts.DefaultOBS
-	} else if f.EcosystemID > 0 {
-		count, err := model.GetNextID(nil, "1_ecosystems")
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id of ecosystems")
-			return err
-		}
-		if f.EcosystemID >= count {
-			logger.WithFields(log.Fields{"state_id": f.EcosystemID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
-			return errEcosystem.Errorf(f.EcosystemID)
-		}
-	} else {
-		f.EcosystemID = client.EcosystemID
+	ecosysID, err := validateEcosysID(f.EcosystemID, client.EcosystemID, logger)
+	if err != nil {
+		return err
 	}
 
+	f.EcosystemID = ecosysID
 	f.EcosystemPrefix = converter.Int64ToStr(f.EcosystemID)
 
 	return nil
+}
+
+func validateEcosysID(formID, clientID int64, logger *log.Entry) (int64, error) {
+	if conf.Config.IsSupportingOBS() {
+		return consts.DefaultOBS, nil
+	}
+
+	if formID <= 0 {
+		return clientID, nil
+	}
+
+	count, err := model.GetNextID(nil, "1_ecosystems")
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id of ecosystems")
+		return 0, err
+	}
+
+	if formID >= count {
+		logger.WithFields(log.Fields{"state_id": formID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
+		return 0, errEcosystem.Errorf(formID)
+	}
+
+	return formID, nil
 }

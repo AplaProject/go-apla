@@ -305,6 +305,9 @@ func (mgr *OBSManager) initOBSDir(obsName string) error {
 }
 
 func InitOBSManager() {
+	if !conf.Config.IsOBSMaster() {
+		return
+	}
 
 	execPath, err := os.Executable()
 	if err != nil {
