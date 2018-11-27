@@ -90,9 +90,10 @@ type ExtFuncInfo struct {
 
 // FieldInfo describes the field of the data structure
 type FieldInfo struct {
-	Name string
-	Type reflect.Type
-	Tags string
+	Name     string
+	Type     reflect.Type
+	Original uint32
+	Tags     string
 }
 
 // ContainsTag returns whether the tag is contained in this field

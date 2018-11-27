@@ -115,6 +115,29 @@ func TestDataContract(t *testing.T) {
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting type of the data field [Ln:3 Col:13]"}`)
 }
 
+func TestTypesContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := `cnt` + crypto.RandSeq(4)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {
+			Float float
+			Addr  address
+			Arr   array
+			Map   map
+		}
+		action { $result = Sprintf("%v=%v=%v=%v", $Float, $Addr, $Arr, $Map) }
+		}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	_, msg, err := postTxResult(name, &url.Values{"Float": {"1.23"}, "Addr": {"-1334343423"},
+		"Arr": {`[23,"tt"]`}, "Map": {`{"k" : "v"}`}})
+	assert.NoError(t, err)
+	if msg != `1.23=-1334343423=[23 tt]=map[k:v]` {
+		t.Error(`Wrong msg`, msg)
+	}
+}
+
 func TestNewContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
