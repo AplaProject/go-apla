@@ -645,6 +645,11 @@ func fFieldLine(buf *[]*Block, state int, lexem *Lexem) error {
 	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == nil {
 		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
 	}
+	for i, field := range *tx {
+		if field.Tags == `_` {
+			(*tx)[i].Tags = ``
+		}
+	}
 	return nil
 }
 
@@ -656,7 +661,7 @@ func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 	for i, field := range *tx {
 		if field.Type == reflect.TypeOf(nil) {
 			(*tx)[i].Type = lexem.Value.(reflect.Type)
-			(*tx)[i].Tags = ``
+			(*tx)[i].Original = lexem.Ext
 		}
 	}
 	return nil
@@ -664,17 +669,15 @@ func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
-	if (*tx)[len(*tx)-1].Tags == `_` {
-		(*tx)[len(*tx)-1].Tags = ``
-	}
 	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type == nil || len((*tx)[len(*tx)-1].Tags) != 0 {
 		return fmt.Errorf(eDataTag, lexem.Line, lexem.Column)
 	}
 	for i := len(*tx) - 1; i >= 0; i-- {
-		if len((*tx)[i].Tags) == 0 {
+		if i == len(*tx)-1 || (*tx)[i].Tags == `_` {
 			(*tx)[i].Tags = lexem.Value.(string)
-			break
+			continue
 		}
+		break
 	}
 	return nil
 }

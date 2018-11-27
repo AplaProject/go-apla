@@ -57,7 +57,7 @@ var errEmptyTemplate = errors.New("Empty template")
 
 func initVars(r *http.Request) *map[string]string {
 	client := getClient(r)
-	r.ParseForm()
+	r.ParseMultipartForm(multipartBuf)
 
 	vars := make(map[string]string)
 	for name := range r.Form {
