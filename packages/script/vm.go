@@ -549,9 +549,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	if namemap != nil {
 		for key, item := range namemap {
 			params := (*block.Info.(*FuncInfo).Names)[key]
-			if params.Variadic {
-
-			}
 			for i, value := range item {
 				if params.Variadic && i >= len(params.Params)-1 {
 					off := varoff + params.Offset[len(params.Params)-1]
