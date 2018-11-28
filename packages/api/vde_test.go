@@ -286,7 +286,6 @@ func TestHTTPRequest(t *testing.T) {
 			action {
 				var ret string 
 				var pars, heads, json map
-				$ret_table = DBFind("tables").Columns("id").Where("name=$", "notable")
 				ret = HTTPRequest("http://www.instagram.com/", "GET", heads, pars)
 				if !Contains(ret, "react-root") {
 					error "instagram error"
@@ -302,24 +301,61 @@ func TestHTTPRequest(t *testing.T) {
 				if json["menu"] != "myobsmenu" {
 					error "Wrong obs menu"
 				}
-				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `contract/OBSFunctions?obs=true", "GET", heads, pars)
-				json = JSONDecode(ret)
-				if json["name"] != "@1OBSFunctions" {
-					error "Wrong obs contract"
-				}
 			}}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
 
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {rnd}, "Value": {`Page`}, "Menu": {`myobsmenu`},
-		"Conditions": {`true`}, `obs`: {`true`}}
+
+	form = url.Values{
+		"Name":          {rnd},
+		"Value":         {`Page`},
+		"Menu":          {`myobsmenu`},
+		"Conditions":    {`true`},
+		`ApplicationId`: {`1`},
+	}
+
 	if err := postTx(`NewPage`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(rnd, &url.Values{`obs`: {`true`}, `Auth`: {gAuth}}); err != nil {
+
+	fmt.Println("gauth", gAuth)
+
+	if err := postTx(rnd, &url.Values{`Auth`: {gAuth}}); err != nil { //
+		t.Error(err)
+		return
+	}
+}
+
+func TestHTTPPostJSON(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+			data {
+				Data string
+			}
+			action {
+				var ret string
+				var headers, json map
+				headers["Content-Type"] = "Application/json"
+				ret = HTTPPostJSON("http://localhost:3000/ping", headers, $Data)
+				json = JSONDecode(ret)
+				Println(json)
+			}
+		}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
+
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(rnd, &url.Values{"Data": {`{"string_value": "my string", "int_value": 1}`}}); err != nil { //`Auth`: {gAuth}}
 		t.Error(err)
 		return
 	}
@@ -435,16 +471,6 @@ func TestCron(t *testing.T) {
 		return
 	}
 
-	err := postTx("NewCron", &url.Values{
-		"Cron":       {"60 * * * *"},
-		"Contract":   {"TestCron"},
-		"Conditions": {`ContractConditions("MainCondition")`},
-		"obs":        {"true"},
-	})
-	if err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }` {
-		t.Error(err)
-	}
-
 	postTx("NewContract", &url.Values{
 		"Value": {`
 			contract TestCron {
@@ -459,7 +485,7 @@ func TestCron(t *testing.T) {
 	})
 
 	till := time.Now().Format(time.RFC3339)
-	err = postTx("NewCron", &url.Values{
+	err := postTx("NewCron", &url.Values{
 		"Cron":       {"* * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
