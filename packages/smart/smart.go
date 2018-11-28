@@ -1050,7 +1050,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 		cntrctOwnerInfo := sc.TxContract.Block.Info.(*script.ContractInfo).Owner
 
-		if cntrctOwnerInfo.WalletID > 0 {
+		if cntrctOwnerInfo.WalletID != 0 {
 			fromID = cntrctOwnerInfo.WalletID
 			sc.TxSmart.TokenEcosystem = cntrctOwnerInfo.TokenID
 		} else if len(sc.TxSmart.PayOver) > 0 {
@@ -1080,7 +1080,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 			return retError(err)
 		}
 
-		if cntrctOwnerInfo.WalletID <= 0 &&
+		if cntrctOwnerInfo.WalletID == 0 &&
 			!bytes.Equal(wallet.PublicKey, payWallet.PublicKey) &&
 			!bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) &&
 			sc.TxSmart.SignedBy == 0 {
