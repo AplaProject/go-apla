@@ -1062,12 +1062,16 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 			fuelRate = fuelRate.Add(payOver)
 		}
-		var sp model.StateParameter
+		var (
+			sp             model.StateParameter
+			isEcosysWallet bool
+		)
 		sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
 		if found, err := sp.Get(sc.DbTransaction, "ecosystem_wallet"); err != nil {
 			return retError(err)
 		} else if found && len(sp.Value) > 0 {
 			fromID = AddressToID(sp.Value)
+			isEcosysWallet = true
 		}
 
 		payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
@@ -1080,7 +1084,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 			return retError(err)
 		}
 
-		if cntrctOwnerInfo.WalletID == 0 &&
+		if cntrctOwnerInfo.WalletID == 0 && !isEcosysWallet &&
 			!bytes.Equal(wallet.PublicKey, payWallet.PublicKey) &&
 			!bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) &&
 			sc.TxSmart.SignedBy == 0 {
