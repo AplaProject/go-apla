@@ -2,7 +2,6 @@ package block
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -85,11 +84,14 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 	}
 	buffer := bytes.Buffer{}
 	for _, rollbackTx := range blockRollbackTxs {
-		rollbackTxBytes, err := json.Marshal(rollbackTx)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback_tx to json")
-			return err
-		}
+		rollbackTxBytes := append(rollbackTx.TxHash, []byte(rollbackTx.NameTable)...)
+		rollbackTxBytes = append(rollbackTxBytes, []byte(rollbackTx.TableID)...)
+		rollbackTxBytes = append(rollbackTxBytes, []byte(rollbackTx.Data)...)
+		/*		rollbackTxBytes, err := json.Marshal(rollbackTx)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback_tx to json")
+					return err
+				}*/
 
 		buffer.Write(rollbackTxBytes)
 	}
