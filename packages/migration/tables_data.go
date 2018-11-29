@@ -170,7 +170,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
     (next_id('1_tables'), 'notifications',
         '{
             "insert": "ContractAccess(\"@1NotificationsSend\", \"@1CheckNodesBan\", \"@1NotificationsBroadcast\")",
-            "update": "ContractAccess(\"@1NotificationsSend\", \"@1NotificationsClose\", \"@1NotificationsProcess\")",
+            "update": "ContractAccess(\"@1NotificationsSend\", \"@1NotificationsClose\", \"@1NotificationsProcess\", \"@1NotificationsUpdateParams\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
@@ -180,7 +180,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "date_start_processing": "ContractAccess(\"@1NotificationsClose\",\"@1NotificationsProcess\")",
             "notification": "false",
             "page_name": "false",
-            "page_params": "false",
+            "page_params": "ContractAccess(\"@1NotificationsUpdateParams\")",
             "closed": "ContractAccess(\"@1NotificationsClose\")",
             "date_created": "false",
             "recipient": "false",
