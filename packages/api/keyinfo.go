@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
@@ -81,6 +82,14 @@ func keyInfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		}
 		keysList = append(keysList, keyRes)
 	}
+
+	if len(keysList) == 0 && syspar.IsTestMode() {
+		keysList = append(keysList, keyInfoResult{
+			Ecosystem: converter.Int64ToStr(ids[0]),
+			Name:      names[0],
+		})
+	}
+
 	data.result = &keysList
 	return
 }
