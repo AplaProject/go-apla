@@ -52,18 +52,11 @@ func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var ids []int64
-	var names []string
-	var err error
-
-	if !conf.Config.IsSupportingOBS() {
-		if ids, names, err = model.GetAllSystemStatesIDs(); err != nil {
-			errorResponse(w, err)
-			return
-		}
-	} else {
-		ids = append(ids, 1)
-		names = append(names, "Platform ecosystem")
+	ecosysLookup := BuildEcosystemLookupGetter()
+	ids, names, err := ecosysLookup.GetEcosystemLookup()
+	if err != nil {
+		errorResponse(w, err)
+		return
 	}
 
 	var (
@@ -121,4 +114,28 @@ func getEcosystemKey(keyID, ecosystemID int64) (bool, error) {
 	key := &model.Key{}
 	key.SetTablePrefix(ecosystemID)
 	return key.Get(keyID)
+}
+
+type EcosystemLookupGetter interface {
+	GetEcosystemLookup() ([]int64, []string, error)
+}
+
+type BCEcosysLookupGetter struct{}
+
+func (g BCEcosysLookupGetter) GetEcosystemLookup() ([]int64, []string, error) {
+	return model.GetAllSystemStatesIDs()
+}
+
+type OBSEcosystemLookupGetter struct{}
+
+func (g OBSEcosystemLookupGetter) GetEcosystemLookup() ([]int64, []string, error) {
+	return []int64{1}, []string{"Platform ecosystem"}, nil
+}
+
+func BuildEcosystemLookupGetter() EcosystemLookupGetter {
+	if conf.Config.IsSupportingOBS() {
+		return OBSEcosystemLookupGetter{}
+	}
+
+	return BCEcosysLookupGetter{}
 }
