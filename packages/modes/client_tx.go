@@ -49,12 +49,12 @@ func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte) (stri
 	return string(converter.BinToHex(rtx.Hash())), nil
 }
 
-type obsTxPreprocessor struct {
-	logger *log.Entry
-	keyID  int64
+type ObsTxPreprocessor struct {
+	Logger *log.Entry
+	KeyID  int64
 }
 
-func (p obsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
+func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
 
 	tx, err := transaction.UnmarshallTransaction(bytes.NewBuffer(txData))
 	if err != nil {
@@ -66,7 +66,7 @@ func (p obsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, err
 		BlockID:  1,
 		Hash:     tx.TxHash,
 		Time:     time.Now().Unix(),
-		WalletID: p.keyID,
+		WalletID: p.KeyID,
 		Type:     tx.TxType,
 	}
 
@@ -82,7 +82,7 @@ func (p obsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, err
 	}
 
 	if err := ts.UpdateBlockMsg(nil, 1, res, tx.TxHash); err != nil {
-		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
+		p.Logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
 		return "", err
 	}
 
@@ -91,9 +91,9 @@ func (p obsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, err
 
 func GetClientTxPreprocessor(logger *log.Entry, keyID int64) ClientTxPreprocessor {
 	if conf.Config.IsSupportingOBS() {
-		return obsTxPreprocessor{
-			logger: logger,
-			keyID:  keyID,
+		return ObsTxPreprocessor{
+			Logger: logger,
+			KeyID:  keyID,
 		}
 	}
 

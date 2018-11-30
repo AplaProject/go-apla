@@ -28,6 +28,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -177,23 +178,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
 		} else {
-			if !conf.Config.IsSupportingOBS() {
-				if err := tx.CreateTransaction(txData, txHash, sc.KeyID); err != nil {
-					log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
-				}
-			} else {
-				proc := obsTxPreprocessor{
-					logger: logger,
-					keyID:  wallet,
-				}
-
-				_, err := proc.ProcessClientTranstaction(txData)
-				if err != nil {
-					log.WithFields(log.Fields{"error": consts.ContractError}).Error("on run internal NewUser")
-				}
-			}
+			runSC(txData, txHash, sc.KeyID, logger, wallet)
 		}
-
 	}
 
 	if len(publicKey) == 0 {
@@ -354,4 +340,22 @@ func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
 		}
 	}
 	return role, nil
+}
+
+func runSC(data, hash []byte, keyID int64, logger *log.Entry, wallet int64) {
+	if !conf.Config.IsSupportingOBS() {
+		if err := tx.CreateTransaction(data, hash, keyID); err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+		}
+	} else {
+		proc := modes.ObsTxPreprocessor{
+			Logger: logger,
+			KeyID:  wallet,
+		}
+
+		_, err := proc.ProcessClientTranstaction(data)
+		if err != nil {
+			log.WithFields(log.Fields{"error": consts.ContractError}).Error("on run internal NewUser")
+		}
+	}
 }
