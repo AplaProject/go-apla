@@ -4,11 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	log "github.com/sirupsen/logrus"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
 )
 
 const (
@@ -63,8 +60,11 @@ func (f *ecosystemForm) Validate(r *http.Request) error {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	ecosysID, err := validateEcosysID(f.EcosystemID, client.EcosystemID, logger)
+	ecosysID, err := modes.ValidateEcosysID(f.EcosystemID, client.EcosystemID, logger)
 	if err != nil {
+		if err == modes.ErrEcosystemNotFound {
+			err = errEcosystem.Errorf(f.EcosystemID)
+		}
 		return err
 	}
 
@@ -72,27 +72,4 @@ func (f *ecosystemForm) Validate(r *http.Request) error {
 	f.EcosystemPrefix = converter.Int64ToStr(f.EcosystemID)
 
 	return nil
-}
-
-func validateEcosysID(formID, clientID int64, logger *log.Entry) (int64, error) {
-	if conf.Config.IsSupportingOBS() {
-		return consts.DefaultOBS, nil
-	}
-
-	if formID <= 0 {
-		return clientID, nil
-	}
-
-	count, err := model.GetNextID(nil, "1_ecosystems")
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id of ecosystems")
-		return 0, err
-	}
-
-	if formID >= count {
-		logger.WithFields(log.Fields{"state_id": formID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
-		return 0, errEcosystem.Errorf(formID)
-	}
-
-	return formID, nil
 }

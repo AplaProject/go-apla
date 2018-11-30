@@ -56,9 +56,6 @@ func BlocksCollection(ctx context.Context, d *daemon) error {
 
 func InitialLoad(logger *log.Entry) error {
 
-	if conf.Config.IsSupportingOBS() {
-		return nil
-	}
 	// check for initial load
 	toLoad, err := needLoad(logger)
 	if err != nil {

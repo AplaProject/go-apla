@@ -21,14 +21,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
 
 	"github.com/dgrijalva/jwt-go"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -91,32 +88,11 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 	}
 
 	sID := converter.StrToInt64(claims.EcosystemID)
-	name, err := GetEcosystemName(sID)
+	name, err := modes.GetEcosystemName(sID)
 	if err != nil {
 		return nil, err
 	}
 
 	client.EcosystemName = name
 	return client, nil
-}
-
-func GetEcosystemName(id int64) (string, error) {
-	if conf.Config.IsSupportingOBS() {
-		return "Platform ecosystem", nil
-	}
-
-	ecosystem := &model.Ecosystem{}
-	found, err := ecosystem.Get(id)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
-		return "", err
-	}
-
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "id": id, "error": errEcosystemNotFound}).Error("ecosystem not found")
-		return "", err
-	}
-
-	return ecosystem.Name, nil
-
 }

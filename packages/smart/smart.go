@@ -390,16 +390,25 @@ func loadContractList(list []model.Contract) error {
 	return nil
 }
 
+func defineVMType() script.VMType {
+
+	if conf.Config.IsOBS() {
+		return script.VMTypeOBS
+	}
+
+	if conf.Config.IsOBSMaster() {
+		return script.VMTypeOBSMaster
+	}
+
+	return script.VMTypeSmart
+}
+
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts() error {
 	vm := GetVM()
 
-	vmt := script.VMTypeSmart
-	if conf.Config.IsOBS() {
-		vmt = script.VMTypeOBS
-	} else if conf.Config.IsOBSMaster() {
-		vmt = script.VMTypeOBSMaster
-	}
+	vmt := defineVMType()
+
 	EmbedFuncs(vm, vmt)
 
 	contract := &model.Contract{}

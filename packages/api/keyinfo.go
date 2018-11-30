@@ -20,11 +20,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -52,7 +52,7 @@ func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ecosysLookup := BuildEcosystemLookupGetter()
+	ecosysLookup := modes.BuildEcosystemLookupGetter()
 	ids, names, err := ecosysLookup.GetEcosystemLookup()
 	if err != nil {
 		errorResponse(w, err)
@@ -114,28 +114,4 @@ func getEcosystemKey(keyID, ecosystemID int64) (bool, error) {
 	key := &model.Key{}
 	key.SetTablePrefix(ecosystemID)
 	return key.Get(keyID)
-}
-
-type EcosystemLookupGetter interface {
-	GetEcosystemLookup() ([]int64, []string, error)
-}
-
-type BCEcosysLookupGetter struct{}
-
-func (g BCEcosysLookupGetter) GetEcosystemLookup() ([]int64, []string, error) {
-	return model.GetAllSystemStatesIDs()
-}
-
-type OBSEcosystemLookupGetter struct{}
-
-func (g OBSEcosystemLookupGetter) GetEcosystemLookup() ([]int64, []string, error) {
-	return []int64{1}, []string{"Platform ecosystem"}, nil
-}
-
-func BuildEcosystemLookupGetter() EcosystemLookupGetter {
-	if conf.Config.IsSupportingOBS() {
-		return OBSEcosystemLookupGetter{}
-	}
-
-	return BCEcosysLookupGetter{}
 }
