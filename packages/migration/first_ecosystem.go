@@ -6,6 +6,7 @@ DROP TABLE IF EXISTS "1_ecosystems";
 CREATE TABLE "1_ecosystems" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"name"	varchar(255) NOT NULL DEFAULT '',
+		"info" jsonb,
 		"is_valued" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
