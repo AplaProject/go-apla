@@ -84,8 +84,8 @@ func (c *Contract) ToMap() (v map[string]string) {
 }
 
 // GetByApp returns all contracts belonging to selected app
-func (c *Contract) GetByApp(appID int64) ([]Contract, error) {
+func (c *Contract) GetByApp(appID int64, ecosystemID int64) ([]Contract, error) {
 	var result []Contract
-	err := DBConn.Select("id, name").Where("app_id = ?", appID).Find(&result).Error
+	err := DBConn.Select("id, name").Where("app_id = ? and ecosystem = ?", appID, ecosystemID).Find(&result).Error
 	return result, err
 }

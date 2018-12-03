@@ -48,24 +48,23 @@ func getAppContentHandler(w http.ResponseWriter, r *http.Request) {
 	p := &model.Page{}
 	c := &model.Contract{}
 	appID := converter.StrToInt64(params["appID"])
-	bi.SetTablePrefix(form.EcosystemPrefix)
-	p.SetTablePrefix(form.EcosystemPrefix)
+	ecosystemID := converter.StrToInt64(form.EcosystemPrefix)
 
-	blocks, err := bi.GetByApp(appID)
+	blocks, err := bi.GetByApp(appID, ecosystemID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block interfaces by appID")
 		errorResponse(w, err)
 		return
 	}
 
-	pages, err := p.GetByApp(appID)
+	pages, err := p.GetByApp(appID, ecosystemID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting pages by appID")
 		errorResponse(w, err)
 		return
 	}
 
-	contracts, err := c.GetByApp(appID)
+	contracts, err := c.GetByApp(appID, ecosystemID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting pages by appID")
 		errorResponse(w, err)

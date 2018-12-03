@@ -39,8 +39,8 @@ func (p *Page) Count() (count int64, err error) {
 }
 
 // GetByApp returns all pages belonging to selected app
-func (p *Page) GetByApp(appID int64) ([]Page, error) {
+func (p *Page) GetByApp(appID int64, ecosystemID int64) ([]Page, error) {
 	var result []Page
-	err := DBConn.Select("id, name").Where("app_id = ?", appID).Find(&result).Error
+	err := DBConn.Select("id, name").Where("app_id = ? and ecosystem = ?", appID, ecosystemID).Find(&result).Error
 	return result, err
 }
