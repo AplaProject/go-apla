@@ -125,7 +125,7 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 
 // TxParser writes transactions into the queue
 func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx []byte, myTx bool) error {
-	t, err := UnmarshallTransaction(bytes.NewBuffer(binaryTx))
+	t, err := UnmarshallTransaction(bytes.NewBuffer(binaryTx), true)
 	if err != nil {
 		MarkTransactionBad(dbTransaction, hash, err.Error())
 		return err

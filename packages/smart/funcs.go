@@ -2255,9 +2255,7 @@ func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
 			data.Contract = contract.Name
 			txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 			if txInfo != nil {
-				if data.Params, err = FillTxData(*txInfo, smartTx.Params); err != nil {
-					return
-				}
+				data.Params = smartTx.Params
 			}
 			break
 		}
