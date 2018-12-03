@@ -115,7 +115,7 @@ func getBlocksTxInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := map[int64][]TxInfo{}
 	for _, blockModel := range blocks {
-		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1)
+		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1, false)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "bolck_id": blockModel.ID}).Error("on unmarshalling block")
 			errorResponse(w, err)
@@ -210,7 +210,7 @@ func getBlocksDetailedInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := map[int64]BlockDetailedInfo{}
 	for _, blockModel := range blocks {
-		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1)
+		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1, false)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "bolck_id": blockModel.ID}).Error("on unmarshalling block")
 			errorResponse(w, err)

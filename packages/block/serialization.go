@@ -62,7 +62,7 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	return buf.Bytes(), nil
 }
 
-func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
+func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock, fillData bool) (*Block, error) {
 	header, err := utils.ParseBlockHeader(blockBuffer, !firstBlock)
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error)
 		}
 
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		t, err := transaction.UnmarshallTransaction(bufTransaction)
+		t, err := transaction.UnmarshallTransaction(bufTransaction, fillData)
 		if err != nil {
 			if t != nil && t.TxHash != nil {
 				transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
