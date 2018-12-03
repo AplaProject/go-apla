@@ -1,4 +1,4 @@
-package smart
+package queryBuilder
 
 import (
 	"encoding/hex"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/types"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,8 +45,7 @@ type SQLQueryBuilder struct {
 	Fields       []string
 	FieldValues  []interface{}
 	stringValues []string
-	WhereFields  []string
-	WhereValues  []string
+	Where        *types.Map
 	KeyTableChkr KeyTableChecker
 	whereExpr    string
 }
@@ -64,7 +65,7 @@ func (b *SQLQueryBuilder) prepare() error {
 			b.Table = `1_` + b.keyName
 
 			if contains, ecosysIndx := isParamsContainsEcosystem(b.Fields, b.FieldValues); contains {
-				if b.WhereFields == nil {
+				if b.Where.IsEmpty() {
 					b.keyEcosystem = fmt.Sprint(b.FieldValues[ecosysIndx])
 				}
 			} else {
@@ -134,36 +135,30 @@ func (b *SQLQueryBuilder) GetSQLSelectFieldsExpr() (string, error) {
 }
 
 func (b *SQLQueryBuilder) GetSQLWhereExpr() (string, error) {
-	if err := b.prepare(); err != nil {
+	var err error
+
+	if err = b.prepare(); err != nil {
 		return "", err
 	}
-
-	if b.WhereFields == nil || b.WhereValues == nil {
+	if b.Where.IsEmpty() {
 		return "", nil
 	}
-
 	if b.whereExpr != "" {
 		return b.whereExpr, nil
 	}
-
-	expressions := make([]string, 0, len(b.WhereFields))
-	for i := 0; i < len(b.WhereFields); i++ {
-		if val := converter.StrToInt64(b.WhereValues[i]); val != 0 {
-			expressions = append(expressions, b.WhereFields[i]+" = "+escapeSingleQuotes(b.WhereValues[i]))
-		} else {
-			expressions = append(expressions, b.WhereFields[i]+" = "+wrapString(escapeSingleQuotes(b.WhereValues[i]), "'"))
+	if b.isKeyTable {
+		if _, isEcosystem := b.Where.Get(`ecosystem`); !isEcosystem {
+			b.Where.Set(`ecosystem`, converter.StrToInt64(b.keyEcosystem))
 		}
 	}
-
-	if b.isKeyTable {
-		expressions = append(expressions, fmt.Sprintf("ecosystem = '%s'", b.keyEcosystem))
+	b.whereExpr, err = GetWhere(b.Where)
+	if err != nil {
+		return ``, err
 	}
-
-	if len(expressions) > 0 {
-		b.whereExpr = " WHERE " + strings.Join(expressions, " AND ") + " "
+	if len(b.whereExpr) > 0 {
+		b.whereExpr = " WHERE " + b.whereExpr
 		return b.whereExpr, nil
 	}
-
 	return "", nil
 }
 
@@ -266,17 +261,6 @@ func (b *SQLQueryBuilder) GetSQLInsertQuery(idGetter NextIDGetter) (string, erro
 
 		insFields = append(insFields, colname)
 		insValues = append(insValues, fmt.Sprintf(`'%s'::jsonb`, string(out)))
-	}
-
-	if b.WhereFields != nil && b.WhereValues != nil {
-		for i := 0; i < len(b.WhereFields); i++ {
-			if b.WhereFields[i] == `id` {
-				isID = true
-				b.tableID = b.WhereValues[i]
-			}
-			insFields = append(insFields, b.WhereFields[i])
-			insValues = append(insValues, escapeSingleQuotes(b.WhereValues[i]))
-		}
 	}
 
 	if !isID {
@@ -434,4 +418,8 @@ func getFieldIndex(fields []string, name string) int {
 
 func (b *SQLQueryBuilder) GetEcosystem() string {
 	return b.keyEcosystem
+}
+
+func (b *SQLQueryBuilder) IsEmptyWhere() bool {
+	return len(b.whereExpr) == 0
 }

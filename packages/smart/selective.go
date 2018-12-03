@@ -23,6 +23,8 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
+	"github.com/GenesisKernel/go-genesis/packages/types"
+
 	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
 	log "github.com/sirupsen/logrus"
 )
@@ -44,7 +46,7 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 }
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
+	table string, inWhere *types.Map, generalRollback bool, exists bool) (int64, string, error) {
 
 	var (
 		cost            int64
@@ -63,8 +65,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		Table:        table,
 		Fields:       fields,
 		FieldValues:  ivalues,
-		WhereFields:  whereFields,
-		WhereValues:  whereValues,
+		Where:        inWhere,
 		KeyTableChkr: model.KeyTableChecker{},
 	}
 
@@ -78,7 +79,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "whereF": whereFields, "whereV": whereValues}).Error("getting query total cost")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "where": inWhere}).Error("getting query total cost")
 		return 0, "", err
 	}
 
@@ -89,12 +90,19 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	cost += selectCost
-	if exists && len(logData) == 0 {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "whereF": whereFields, "whereV": whereValues, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
-		return 0, "", errUpdNotExistRecord
+	if exists {
+		if len(logData) == 0 {
+			logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "where": inWhere, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
+			return 0, "", errUpdNotExistRecord
+		}
+		if sqlBuilder.IsEmptyWhere() {
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"error": errWhereUpdate}).Error("update without where")
+			return 0, "", errWhereUpdate
+		}
 	}
 
-	if whereFields != nil && len(logData) > 0 {
+	if !sqlBuilder.Where.IsEmpty() && len(logData) > 0 {
 		var err error
 		rollbackInfoStr, err = sqlBuilder.GenerateRollBackInfoString(logData)
 		if err != nil {
@@ -165,13 +173,18 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 	table string) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, nil, !sc.VDE && sc.Rollback, false)
+	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, !sc.VDE && sc.Rollback, false)
+}
+
+func (sc *SmartContract) updateWhere(fields []string, values []interface{},
+	table string, where *types.Map) (int64, string, error) {
+	return sc.selectiveLoggingAndUpd(fields, values, table, where, !sc.VDE && sc.Rollback, true)
 }
 
 func (sc *SmartContract) update(fields []string, values []interface{},
 	table string, whereField string, whereValue interface{}) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
-		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
+	return sc.updateWhere(fields, values, table, types.LoadMap(map[string]interface{}{
+		whereField: fmt.Sprint(whereValue)}))
 }
 
 func shortString(raw string, length int) string {
