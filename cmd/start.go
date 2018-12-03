@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/daylight"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/daylight"
 	"github.com/spf13/cobra"
 )
 

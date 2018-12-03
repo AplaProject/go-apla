@@ -4,10 +4,10 @@ go:
   - 1.9.x
   - master
 
-go_import_path: github.com/GenesisKernel/go-genesis
+go_import_path: github.com/AplaProject/go-apla
 
 
 install: true
 
-script: go build github.com/GenesisKernel/go-genesis
+script: go build github.com/AplaProject/go-apla
 
