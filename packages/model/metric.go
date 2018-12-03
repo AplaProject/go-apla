@@ -55,7 +55,7 @@ func GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock string) ([]i
 	rows, err := DBConn.Table(tableNameMetrics).Select("key,"+aggregateFunc+"(value)").
 		Where("metric = ? AND time >= EXTRACT(EPOCH FROM TIMESTAMP '"+timeBlock+"' - CAST(? AS INTERVAL))",
 			metric, timeInterval).Order("id").
-		Group("key").Rows()
+		Group("key, id").Rows()
 	if err != nil {
 		return nil, err
 	}
