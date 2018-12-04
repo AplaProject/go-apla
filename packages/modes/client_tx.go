@@ -102,3 +102,23 @@ func GetClientTxPreprocessor(logger *log.Entry, keyID int64) ClientTxPreprocesso
 		keyID:  keyID,
 	}
 }
+
+func RunSmartContract(data, hash []byte, keyID int64, logger *log.Entry, wallet int64) error {
+	if !conf.Config.IsSupportingOBS() {
+		if err := tx.CreateTransaction(data, hash, keyID); err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+			return err
+		}
+		return nil
+	}
+
+	proc := GetClientTxPreprocessor(logger, wallet)
+
+	_, err := proc.ProcessClientTranstaction(data)
+	if err != nil {
+		log.WithFields(log.Fields{"error": consts.ContractError}).Error("on run internal NewUser")
+		return err
+	}
+
+	return nil
+}
