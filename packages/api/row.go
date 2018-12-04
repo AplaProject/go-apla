@@ -1,28 +1,41 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,24 +43,59 @@ type rowResult struct {
 	Value map[string]string `json:"value"`
 }
 
-func row(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	cols := `*`
-	if len(data.params[`columns`].(string)) > 0 {
-		cols = converter.EscapeName(data.params[`columns`].(string))
+type rowForm struct {
+	Columns string `schema:"columns"`
+}
+
+func (f *rowForm) Validate(r *http.Request) error {
+	if len(f.Columns) > 0 {
+		f.Columns = converter.EscapeName(f.Columns)
 	}
-	var table string
-	name := data.params[`name`].(string)
-	if model.FirstEcosystemTables[name] {
-		table = `1_` + name
-	} else {
-		table = converter.ParseTable(name, data.ecosystemId)
-	}
-	row, err := model.GetOneRow(`SELECT `+cols+` FROM "`+table+`" WHERE id = ?`, data.params[`id`].(string)).String()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": name, "id": data.params["id"].(string)}).Error("getting one row")
-		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
+	return nil
+}
+
+func getRowHandler(w http.ResponseWriter, r *http.Request) {
+	form := &rowForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
-	data.result = &rowResult{Value: row}
-	return
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
+	q := model.GetDB(nil).Limit(1)
+	table := params["name"]
+	if model.FirstEcosystemTables[table] {
+		q = q.Table("1_"+table).Where("id = ? and ecosystem = ?", params["id"], client.EcosystemID)
+	} else {
+		q = q.Table(converter.ParseTable(table, client.EcosystemID)).Where("id = ?", params["id"])
+	}
+
+	if len(form.Columns) > 0 {
+		q = q.Select(form.Columns)
+	}
+
+	rows, err := q.Rows()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
+		errorResponse(w, errQuery)
+		return
+	}
+
+	result, err := model.GetResult(rows)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
+	if len(result) == 0 {
+		errorResponse(w, errNotFound)
+		return
+	}
+
+	jsonResponse(w, &rowResult{
+		Value: result[0],
+	})
 }

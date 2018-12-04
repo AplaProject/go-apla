@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
@@ -21,10 +33,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -46,55 +59,59 @@ type tableResult struct {
 	Columns    []columnInfo `json:"columns"`
 }
 
-func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var result tableResult
+func getTableHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+	client := getClient(r)
+	prefix := client.Prefix()
 
-	prefix := getPrefix(data)
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	_, err = table.Get(nil, strings.ToLower(data.params[`name`].(string)))
+
+	_, err := table.Get(nil, strings.ToLower(params["name"]))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
 
-	if len(table.Name) > 0 {
-		var perm map[string]string
-		err := json.Unmarshal([]byte(table.Permissions), &perm)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		var cols map[string]string
-		err = json.Unmarshal([]byte(table.Columns), &cols)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		columns := make([]columnInfo, 0)
-		for key, value := range cols {
-			colType, err := model.GetColumnType(prefix+`_`+data.params[`name`].(string), key)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
-				return errorAPI(w, err.Error(), http.StatusInternalServerError)
-			}
-			columns = append(columns, columnInfo{Name: key, Perm: value,
-				Type: colType})
-		}
-		result = tableResult{
-			Name:       table.Name,
-			Insert:     perm[`insert`],
-			NewColumn:  perm[`new_column`],
-			Update:     perm[`update`],
-			Read:       perm[`read`],
-			Filter:     perm[`filter`],
-			Conditions: table.Conditions,
-			AppID:      converter.Int64ToStr(table.AppID),
-			Columns:    columns,
-		}
-	} else {
-		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
+	if len(table.Name) == 0 {
+		errorResponse(w, errTableNotFound.Errorf(params["name"]))
+		return
 	}
-	data.result = &result
-	return
+
+	var columnsMap map[string]string
+	err = json.Unmarshal([]byte(table.Columns), &columnsMap)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
+		errorResponse(w, err)
+		return
+	}
+
+	columns := make([]columnInfo, 0)
+	for key, value := range columnsMap {
+		colType, err := model.GetColumnType(prefix+`_`+params["name"], key)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
+			errorResponse(w, err)
+			return
+		}
+		columns = append(columns, columnInfo{
+			Name: key,
+			Perm: value,
+			Type: colType,
+		})
+	}
+
+	jsonResponse(w, &tableResult{
+		Name:       table.Name,
+		Insert:     table.Permissions.Insert,
+		NewColumn:  table.Permissions.NewColumn,
+		Update:     table.Permissions.Update,
+		Read:       table.Permissions.Read,
+		Filter:     table.Permissions.Filter,
+		Conditions: table.Conditions,
+		AppID:      converter.Int64ToStr(table.AppID),
+		Columns:    columns,
+	})
 }

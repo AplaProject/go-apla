@@ -1,6 +1,34 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package migration
 
-var blocksDataSQL = `INSERT INTO "1_blocks" (id, name, value, conditions, ecosystem) VALUES
+var firstEcosystemBlocksDataSQL = `INSERT INTO "1_blocks" (id, name, value, conditions, app_id, ecosystem) VALUES
 		(next_id('1_blocks'), 'admin_link', 'If(#sort#==1){
     SetVar(sort_name, "{id:1}")
 }.ElseIf(#sort#==2){
@@ -65,7 +93,7 @@ Form(){
             }
         }
     }
-}', 'ContractConditions("MainCondition")', '%[1]d'),
+}', 'ContractConditions("@1DeveloperCondition")', '1', '1'),
 		(next_id('1_blocks'), 'export_info', 'DBFind(@1buffer_data).Columns("value->app_id,value->app_name,value->menu_name,value->menu_id,value->count_menu").Where({key:''export'', member_id: #key_id#,ecosystem:#ecosystem_id#}).Vars(buffer)
 
 If(#buffer_value_app_id# > 0){
@@ -265,7 +293,7 @@ Div(panel panel-primary){
             }
         }
     }
-}', 'ContractConditions("MainCondition")', '%[1]d'),
+}', 'ContractConditions("@1DeveloperCondition")', '1', '1'),
 		(next_id('1_blocks'), 'export_link', 'If(And(#res_type#!="pages",#res_type#!="blocks",#res_type#!="menu",#res_type#!="parameters",#res_type#!="languages",#res_type#!="contracts",#res_type#!="tables")){
     SetVar(res_type, "pages")
 }
@@ -312,7 +340,7 @@ Div(breadcrumb){
     }.Else{
         LinkPage(Body: "$@1tables$", Page: @1export_resources,, "res_type=tables")
     }
-}', 'ContractConditions("MainCondition")', '%[1]d'),
+}', 'ContractConditions("@1DeveloperCondition")', '1', '1'),
 		(next_id('1_blocks'), 'pager', 'DBFind(#pager_table#).Where(#pager_where#).Count(records_count)
     
 SetVar(previous_page, Calculate(Exp: #current_page# - 1, Type: int))
@@ -387,10 +415,10 @@ Div(){
             Button(Body: Em(Class: fa fa-angle-double-right), Class: btn btn-default, Page: #pager_page#, PageParams: "current_page=#last_page#,sort=#sort#,width=#width#,page_params=#page_params#")
         }
     }
-}.Style("div {display:inline-block;}")', 'ContractConditions("MainCondition")', '%[1]d'),
+}.Style("div {display:inline-block;}")', 'ContractConditions("@1DeveloperCondition")', '1', '1'),
 		(next_id('1_blocks'), 'pager_header', 'If(#current_page# > 0){}.Else{
     SetVar(current_page, 1)
 }
 SetVar(pager_offset, Calculate(Exp: (#current_page# - 1) * #pager_limit#, Type: int))
-SetVar(current_page, #current_page#)', 'ContractConditions("MainCondition")', '%[1]d');
+SetVar(current_page, #current_page#)', 'ContractConditions("@1DeveloperCondition")', '1', '1');
 `

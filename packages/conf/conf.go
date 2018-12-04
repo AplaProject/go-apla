@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package conf
 
 import (
@@ -12,7 +40,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 )
 
 // HostPort endpoint in form "str:int"
@@ -28,11 +56,12 @@ func (h HostPort) Str() string {
 
 // DBConfig database connection parameters
 type DBConfig struct {
-	Name     string
-	Host     string // ipaddr, hostname, or "0.0.0.0"
-	Port     int    // must be in range 1..65535
-	User     string
-	Password string
+	Name        string
+	Host        string // ipaddr, hostname, or "0.0.0.0"
+	Port        int    // must be in range 1..65535
+	User        string
+	Password    string
+	LockTimeout int // lock_timeout in milliseconds
 }
 
 // StatsDConfig statd connection parameters
@@ -78,17 +107,18 @@ type GlobalConfig struct {
 	KeyID        int64  `toml:"-"`
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`
+	FuncBench    bool   `toml:"-"`
 
-	PidFilePath    string
-	LockFilePath   string
-	DataDir        string // application work dir (cwd by default)
-	KeysDir        string // place for private keys files: NodePrivateKey, PrivateKey
-	TempDir        string // temporary dir
-	FirstBlockPath string
-	TLS            bool   // TLS is on/off. It is required for https
-	TLSCert        string // TLSCert is a filepath of the fullchain of certificate.
-	TLSKey         string // TLSKey is a filepath of the private key.
-	VDEMode        string
+	PidFilePath           string
+	LockFilePath          string
+	DataDir               string // application work dir (cwd by default)
+	KeysDir               string // place for private keys files: NodePrivateKey, PrivateKey
+	TempDir               string // temporary dir
+	FirstBlockPath        string
+	TLS                   bool   // TLS is on/off. It is required for https
+	TLSCert               string // TLSCert is a filepath of the fullchain of certificate.
+	TLSKey                string // TLSKey is a filepath of the private key.
+	VDEMode               string
 	HTTPServerMaxBodySize int64
 
 	MaxPageGenerationTime int64 // in milliseconds

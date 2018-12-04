@@ -1,67 +1,93 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
 import (
 	"net/http"
-	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/gorilla/mux"
 
 	log "github.com/sirupsen/logrus"
 )
 
 type appParamsResult struct {
-	App  string       `json:"app_id"`
-	List []paramValue `json:"list"`
+	App  string        `json:"app_id"`
+	List []paramResult `json:"list"`
 }
 
-func appParams(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var (
-		result appParamsResult
-		names  map[string]bool
-	)
-	_, prefix, err := checkEcosystem(w, data, logger)
-	if err != nil {
-		return err
+type appParamsForm struct {
+	ecosystemForm
+	paramsForm
+}
+
+func (f *appParamsForm) Validate(r *http.Request) error {
+	return f.ecosystemForm.Validate(r)
+}
+
+func getAppParamsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &appParamsForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
+
+	params := mux.Vars(r)
+	logger := getLogger(r)
+
 	ap := &model.AppParam{}
-	ap.SetTablePrefix(prefix)
-	list, err := ap.GetAllAppParameters(converter.StrToInt64(data.params[`appid`].(string)))
+	ap.SetTablePrefix(form.EcosystemPrefix)
+
+	list, err := ap.GetAllAppParameters(converter.StrToInt64(params["appID"]))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all app parameters")
 	}
-	result.List = make([]paramValue, 0)
-	if len(data.params[`names`].(string)) > 0 {
-		names = make(map[string]bool)
-		for _, item := range strings.Split(data.params[`names`].(string), `,`) {
-			names[item] = true
-		}
+
+	result := &appParamsResult{
+		App:  params["appID"],
+		List: make([]paramResult, 0),
 	}
+
+	acceptNames := form.AcceptNames()
 	for _, item := range list {
-		if names != nil && !names[item.Name] {
+		if !acceptNames[item.Name] {
 			continue
 		}
-		result.List = append(result.List, paramValue{ID: converter.Int64ToStr(item.ID),
-			Name: item.Name, Value: item.Value, Conditions: item.Conditions})
+		result.List = append(result.List, paramResult{
+			ID:         converter.Int64ToStr(item.ID),
+			Name:       item.Name,
+			Value:      item.Value,
+			Conditions: item.Conditions,
+		})
 	}
-	result.App = data.params[`appid`].(string)
-	data.result = &result
-	return
+
+	jsonResponse(w, result)
 }

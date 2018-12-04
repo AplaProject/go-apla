@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
@@ -22,13 +34,13 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/block"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/transaction"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -38,11 +50,13 @@ type sendTxResult struct {
 	Hashes map[string]string `json:"hashes"`
 }
 
-func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, key string) ([]byte, error) {
+func getTxData(r *http.Request, key string) ([]byte, error) {
+	logger := getLogger(r)
+
 	file, _, err := r.FormFile(key)
 	if err != nil {
 		logger.WithFields(log.Fields{"error": err}).Error("request.FormFile")
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	defer file.Close()
 
@@ -55,26 +69,32 @@ func getTxData(w http.ResponseWriter, r *http.Request, data *apiData, logger *lo
 	return txData, nil
 }
 
-func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	if block.IsKeyBanned(data.keyId) {
-		return errorAPI(w, "E_BANNED", http.StatusBadRequest, block.BannedTill(data.keyId))
+func sendTxHandler(w http.ResponseWriter, r *http.Request) {
+	client := getClient(r)
+
+	if block.IsKeyBanned(client.KeyID) {
+		errorResponse(w, errBannded.Errorf(block.BannedTill(client.KeyID)))
+		return
 	}
 
 	err := r.ParseMultipartForm(multipartBuf)
 	if err != nil {
-		return errorAPI(w, err, http.StatusBadRequest)
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
 	result := &sendTxResult{Hashes: make(map[string]string)}
 	for key := range r.MultipartForm.File {
-		txData, err := getTxData(w, r, data, logger, key)
+		txData, err := getTxData(r, key)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 
-		hash, err := handlerTx(w, r, data, logger, txData)
+		hash, err := txHandler(r, txData)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Hashes[key] = hash
 	}
@@ -82,19 +102,19 @@ func sendTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.E
 	for key := range r.Form {
 		txData, err := hex.DecodeString(r.FormValue(key))
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 
-		hash, err := handlerTx(w, r, data, logger, txData)
+		hash, err := txHandler(r, txData)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Hashes[key] = hash
 	}
 
-	data.result = result
-
-	return nil
+	jsonResponse(w, result)
 }
 
 type contractResult struct {
@@ -104,27 +124,30 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func handlerTx(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, txData []byte) (string, error) {
+func txHandler(r *http.Request, txData []byte) (string, error) {
+	client := getClient(r)
+	logger := getLogger(r)
+
 	if int64(len(txData)) > syspar.GetMaxTxSize() {
 		logger.WithFields(log.Fields{"type": consts.ParameterExceeded, "max_size": syspar.GetMaxTxSize(), "size": len(txData)}).Error("transaction size exceeds max size")
-		block.BadTxForBan(data.keyId)
-		return "", errorAPI(w, "E_LIMITTXSIZE", http.StatusBadRequest, len(txData))
+		block.BadTxForBan(client.KeyID)
+		return "", errLimitTxSize.Errorf(len(txData))
 	}
 
 	rtx := &transaction.RawTransaction{}
 	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 	smartTx := tx.SmartContract{}
 	if err := msgpack.Unmarshal(rtx.Payload(), &smartTx); err != nil {
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
-	if smartTx.Header.KeyID != data.keyId {
-		return "", errorAPI(w, "E_DIFKEY", http.StatusBadRequest)
+	if smartTx.Header.KeyID != client.KeyID {
+		return "", errDiffKey
 	}
-	if err := model.SendTx(rtx, data.keyId); err != nil {
+	if err := model.SendTx(rtx, client.KeyID); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
-		return "", errorAPI(w, err, http.StatusInternalServerError)
+		return "", err
 	}
 
 	return string(converter.BinToHex(rtx.Hash())), nil

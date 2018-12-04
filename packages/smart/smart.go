@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package smart
 
@@ -22,17 +34,16 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -239,11 +250,19 @@ func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []s
 }
 
 func VMGetContractByID(vm *script.VM, id int32) *Contract {
-	idcont := id // - CNTOFF
+	var tableID int64
+	if id > consts.ShiftContractID {
+		tableID = int64(id - consts.ShiftContractID)
+		id = int32(tableID + vm.ShiftContract)
+	}
+	idcont := id
 	if len(vm.Children) <= int(idcont) {
 		return nil
 	}
 	if vm.Children[idcont] == nil || vm.Children[idcont].Type != script.ObjContract {
+		return nil
+	}
+	if tableID > 0 && vm.Children[idcont].Info.(*script.ContractInfo).Owner.TableID != tableID {
 		return nil
 	}
 	return &Contract{Name: vm.Children[idcont].Info.(*script.ContractInfo).Name,
@@ -358,23 +377,51 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
+func loadContractList(list []model.Contract) error {
+	if smartVM.ShiftContract == 0 {
+		LoadSysFuncs(smartVM, 1)
+		smartVM.ShiftContract = int64(len(smartVM.Children) - 1)
+	}
+
+	for _, item := range list {
+		clist, err := script.ContractsList(item.Value)
+		if err != nil {
+			return err
+		}
+		owner := script.OwnerInfo{
+			StateID:  uint32(item.EcosystemID),
+			Active:   false,
+			TableID:  item.ID,
+			WalletID: item.WalletID,
+			TokenID:  item.TokenID,
+		}
+		if err = Compile(item.Value, &owner); err != nil {
+			logErrorValue(err, consts.EvalError, "Load Contract", strings.Join(clist, `,`))
+		}
+	}
+	return nil
+}
+
 // LoadContracts reads and compiles contracts from smart_contracts tables
-func LoadContracts(transaction *model.DbTransaction) error {
-	ecosystemsIds, _, err := model.GetAllSystemStatesIDs()
+func LoadContracts() error {
+	contract := &model.Contract{}
+	count, err := contract.Count()
 	if err != nil {
-		return logErrorDB(err, "selecting ids from ecosystems")
+		return logErrorDB(err, "getting count of contracts")
 	}
 
 	defer ExternOff()
-
-	for _, ecosystemID := range ecosystemsIds {
-		prefix := strconv.FormatInt(ecosystemID, 10)
-		if err := LoadContract(transaction, prefix); err != nil {
+	var offset int64
+	listCount := int64(consts.ContractList)
+	for ; offset < count; offset += listCount {
+		list, err := contract.GetList(offset, listCount)
+		if err != nil {
+			return logErrorDB(err, "getting list of contracts")
+		}
+		if err = loadContractList(list); err != nil {
 			return err
 		}
 	}
-
-	ExternOff()
 	return nil
 }
 
@@ -460,44 +507,22 @@ func ConditionById(table string, validate bool) {
 }
 
 // LoadContract reads and compiles contract of new state
-func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
-	var contracts []map[string]string
-	contracts, err = model.GetAllTransaction(transaction,
-		`select * from "1_contracts" where ecosystem = ? order by id`, -1, prefix)
-	if err != nil {
-		return logErrorDB(err, "selecting all transactions from contracts")
-	}
-	state := uint32(converter.StrToInt64(prefix))
-	LoadSysFuncs(smartVM, int(state))
-	for _, item := range contracts {
-		list, err := script.ContractsList(item[`value`])
-		if err != nil {
-			return err
-		}
-		names := strings.Join(list, `,`)
-		owner := script.OwnerInfo{
-			StateID:  state,
-			Active:   item[`active`] == `1`,
-			TableID:  converter.StrToInt64(item[`id`]),
-			WalletID: converter.StrToInt64(item[`wallet_id`]),
-			TokenID:  converter.StrToInt64(item[`token_id`]),
-		}
-		if err = Compile(item[`value`], &owner); err != nil {
-			logErrorValue(err, consts.EvalError, "Load Contract", names)
-		}
-	}
+func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error) {
+	contract := &model.Contract{}
 
+	defer ExternOff()
+	list, err := contract.GetFromEcosystem(transaction, ecosystem)
+	if err != nil {
+		return logErrorDB(err, "selecting all contracts from ecosystem")
+	}
+	if err = loadContractList(list); err != nil {
+		return err
+	}
 	return
 }
 
 func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
-	var contracts []map[string]string
 
-	contracts, err = model.GetAllTransaction(transaction,
-		`select * from "1_contracts" where ecosystem=? order by id`, -1, prefix)
-	if err != nil {
-		return err
-	}
 	state := converter.StrToInt64(prefix)
 	vm := GetVM()
 
@@ -507,25 +532,29 @@ func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err erro
 	} else if conf.Config.IsVDEMaster() {
 		vmt = script.VMTypeVDEMaster
 	}
-
 	EmbedFuncs(vm, vmt)
+	defer ExternOff()
+
+	contract := &model.Contract{}
+	list, err := contract.GetFromEcosystem(transaction, state)
+	if err != nil {
+		return logErrorDB(err, "selecting all contracts from ecosystem")
+	}
 	LoadSysFuncs(vm, int(state))
-	for _, item := range contracts {
-		list, err := script.ContractsList(item[`value`])
+	for _, item := range list {
+		clist, err := script.ContractsList(item.Value)
 		if err != nil {
 			return err
 		}
-		names := strings.Join(list, `,`)
 		owner := script.OwnerInfo{
 			StateID:  uint32(state),
 			Active:   false,
-			TableID:  converter.StrToInt64(item[`id`]),
+			TableID:  item.ID,
 			WalletID: 0,
 			TokenID:  0,
 		}
-
-		if err = vmCompile(vm, item[`value`], &owner); err != nil {
-			logErrorValue(err, consts.EvalError, "Load VDE Contract", names)
+		if err = vmCompile(vm, item.Value, &owner); err != nil {
+			logErrorValue(err, consts.EvalError, "Load VDE Contract", strings.Join(clist, `,`))
 		}
 	}
 

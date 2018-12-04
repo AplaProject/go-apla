@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package script
 
@@ -23,8 +35,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/types"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -117,6 +129,24 @@ const (
 	msgInfo    = `info`
 )
 
+const (
+	DtBool uint32 = iota + 1
+	DtBytes
+	DtInt
+	DtAddress
+	DtArray
+	DtMap
+	DtMoney
+	DtFloat
+	DtString
+	DtFile
+)
+
+type typeInfo struct {
+	Original uint32
+	Type     reflect.Type
+}
+
 var (
 	// The list of key words
 	keywords = map[string]uint32{`contract`: keyContract, `func`: keyFunc, `return`: keyReturn,
@@ -128,23 +158,24 @@ var (
 
 	// list of available types
 	// The list of types which save the corresponding 'reflect' type
-	typesMap = map[string]reflect.Type{
-		`bool`:    reflect.TypeOf(true),
-		`bytes`:   reflect.TypeOf([]byte{}),
-		`int`:     reflect.TypeOf(int64(0)),
-		`address`: reflect.TypeOf(uint64(0)),
-		`array`:   reflect.TypeOf([]interface{}{}),
-		`map`:     reflect.TypeOf(&types.Map{}),
-		`money`:   reflect.TypeOf(decimal.New(0, 0)),
-		`float`:   reflect.TypeOf(float64(0.0)),
-		`string`:  reflect.TypeOf(``),
-		`file`:    reflect.TypeOf(&types.Map{}),
+	typesMap = map[string]typeInfo{
+		`bool`:    {DtBool, reflect.TypeOf(true)},
+		`bytes`:   {DtBytes, reflect.TypeOf([]byte{})},
+		`int`:     {DtInt, reflect.TypeOf(int64(0))},
+		`address`: {DtAddress, reflect.TypeOf(int64(0))},
+		`array`:   {DtArray, reflect.TypeOf([]interface{}{})},
+		`map`:     {DtMap, reflect.TypeOf(&types.Map{})},
+		`money`:   {DtMoney, reflect.TypeOf(decimal.New(0, 0))},
+		`float`:   {DtFloat, reflect.TypeOf(float64(0.0))},
+		`string`:  {DtString, reflect.TypeOf(``)},
+		`file`:    {DtFile, reflect.TypeOf(&types.Map{})},
 	}
 )
 
 // Lexem contains information about language item
 type Lexem struct {
-	Type   uint32      // Type of the lexem
+	Type   uint32 // Type of the lexem
+	Ext    uint32
 	Value  interface{} // Value of lexem
 	Line   uint32      // Line of the lexem
 	Column uint32      // Position inside the line
@@ -217,6 +248,7 @@ func lexParser(input []rune) (Lexems, error) {
 			// We do not start a stack for symbols but memorize the displacement when the parse of lexeme began.
 			// To get a string of a lexeme we take a substring from the initial displacement to the current one.
 			// We immediately write a string as values, a number or a binary representation of operations.
+			var ext uint32
 			lexOff := off
 			if (flags & lexfPop) != 0 {
 				lexOff = start
@@ -229,7 +261,7 @@ func lexParser(input []rune) (Lexems, error) {
 				name := string(input[lexOff:right])
 				if name != `else` && name != `elif` {
 					for i := 0; i < ifbuf[len(ifbuf)-1].count; i++ {
-						lexems = append(lexems, &Lexem{lexSys | (uint32('}') << 8),
+						lexems = append(lexems, &Lexem{lexSys | (uint32('}') << 8), 0,
 							uint32('}'), line, lexOff - offline + 1})
 					}
 					ifbuf = ifbuf[:len(ifbuf)-1]
@@ -304,9 +336,9 @@ func lexParser(input []rune) (Lexems, error) {
 						value = keyID
 					case keyElif:
 						if len(ifbuf) > 0 {
-							lexems = append(lexems, &Lexem{lexKeyword | (keyElse << 8),
+							lexems = append(lexems, &Lexem{lexKeyword | (keyElse << 8), 0,
 								uint32(keyElse), line, lexOff - offline + 1},
-								&Lexem{lexSys | ('{' << 8), uint32('{'), line, lexOff - offline + 1})
+								&Lexem{lexSys | ('{' << 8), 0, uint32('{'), line, lexOff - offline + 1})
 							lexID = lexKeyword | (keyIf << 8)
 							value = uint32(keyIf)
 							ifbuf[len(ifbuf)-1].count++
@@ -315,7 +347,7 @@ func lexParser(input []rune) (Lexems, error) {
 						if len(lexems) > 0 {
 							lexf := *lexems[len(lexems)-1]
 							if lexf.Type&0xff != lexKeyword || lexf.Value.(uint32) != keyFunc {
-								lexems = append(lexems, &Lexem{lexKeyword | (keyFunc << 8),
+								lexems = append(lexems, &Lexem{lexKeyword | (keyFunc << 8), 0,
 									keyFunc, line, lexOff - offline + 1})
 							}
 						}
@@ -333,15 +365,16 @@ func lexParser(input []rune) (Lexems, error) {
 						lexID = lexKeyword | (keyID << 8)
 						value = keyID
 					}
-				} else if typeID, ok := typesMap[name]; ok {
+				} else if tInfo, ok := typesMap[name]; ok {
 					lexID = lexType
-					value = typeID
+					value = tInfo.Type
+					ext = tInfo.Original
 				} else {
 					value = name
 				}
 			}
 			if lexID != lexComment {
-				lexems = append(lexems, &Lexem{lexID, value, line, lexOff - offline + 1})
+				lexems = append(lexems, &Lexem{lexID, ext, value, line, lexOff - offline + 1})
 			}
 		}
 		if (flags & lexfPush) != 0 {
@@ -352,4 +385,13 @@ func lexParser(input []rune) (Lexems, error) {
 		}
 	}
 	return lexems, nil
+}
+
+func OriginalToString(original uint32) string {
+	for key, v := range typesMap {
+		if v.Original == original {
+			return key
+		}
+	}
+	return ``
 }

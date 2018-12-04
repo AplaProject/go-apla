@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package smart
 
@@ -21,9 +33,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/shopspring/decimal"
 
 	log "github.com/sirupsen/logrus"
@@ -73,6 +86,10 @@ func marshalJSON(v interface{}, comment string) (out []byte, err error) {
 }
 
 func validateAccess(funcName string, sc *SmartContract, contracts ...string) error {
+	if conf.Config.FuncBench {
+		return nil
+	}
+
 	if !accessContracts(sc, contracts...) {
 		err := fmt.Errorf(eAccessContract, funcName, strings.Join(contracts, ` or `))
 		return logError(err, consts.IncorrectCallingContract, err.Error())
@@ -90,23 +107,33 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 			index = fitem.Name
 		)
 
-		if _, ok := params[index]; !ok && fitem.ContainsTag(script.TagOptional) {
-			txData[index] = getFieldDefaultValue(fitem.Type.String())
-			continue
+		if _, ok := params[index]; !ok {
+			if fitem.ContainsTag(script.TagOptional) {
+				txData[index] = getFieldDefaultValue(fitem.Original)
+				continue
+			}
+			return nil, fmt.Errorf(eParamNotFound, index)
 		}
 
-		switch fitem.Type.String() {
-		case "bool":
+		switch fitem.Original {
+		case script.DtBool:
 			if v, ok = params[index].(bool); !ok {
 				err = fmt.Errorf("Invalid bool type")
 				break
 			}
-		case "float64":
-			if v, ok = params[index].(float64); !ok {
+		case script.DtFloat:
+			switch val := params[index].(type) {
+			case float64:
+				v = val
+			case uint64:
+				v = float64(val)
+			case int64:
+				v = float64(val)
+			default:
 				err = fmt.Errorf("Invalid float type")
 				break
 			}
-		case "int64":
+		case script.DtInt, script.DtAddress:
 			switch t := params[index].(type) {
 			case int64:
 				v = t
@@ -115,7 +142,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 			default:
 				err = fmt.Errorf("Invalid int type")
 			}
-		case script.Decimal:
+		case script.DtMoney:
 			var s string
 			if s, ok = params[index].(string); !ok {
 				err = fmt.Errorf("Invalid money type")
@@ -125,22 +152,33 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 			if err != nil {
 				break
 			}
-		case "string":
+		case script.DtString:
 			if v, ok = params[index].(string); !ok {
 				err = fmt.Errorf("Invalid string type")
 				break
 			}
-		case "[]uint8":
+		case script.DtBytes:
 			if v, ok = params[index].([]byte); !ok {
 				err = fmt.Errorf("Invalid bytes type")
 				break
 			}
-		case "[]interface {}":
+		case script.DtArray:
 			if v, ok = params[index].([]interface{}); !ok {
 				err = fmt.Errorf("Invalid array type")
 				break
 			}
-		case script.File:
+		case script.DtMap:
+			var val map[interface{}]interface{}
+			if val, ok = params[index].(map[interface{}]interface{}); !ok {
+				err = fmt.Errorf("Invalid map type")
+				break
+			}
+			vMap := types.NewMap()
+			for key, item := range val {
+				vMap.Set(fmt.Sprint(key), item)
+			}
+			v = vMap
+		case script.DtFile:
 			var val map[interface{}]interface{}
 			if val, ok = params[index].(map[interface{}]interface{}); !ok {
 				err = fmt.Errorf("Invalid file type")
@@ -168,23 +206,25 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 	return txData, nil
 }
 
-func getFieldDefaultValue(fieldType string) interface{} {
+func getFieldDefaultValue(fieldType uint32) interface{} {
 	switch fieldType {
-	case "bool":
+	case script.DtBool:
 		return false
-	case "float64":
+	case script.DtFloat:
 		return float64(0)
-	case "int64":
+	case script.DtInt, script.DtAddress:
 		return int64(0)
-	case script.Decimal:
+	case script.DtMoney:
 		return decimal.New(0, consts.MoneyDigits)
-	case "string":
+	case script.DtString:
 		return ""
-	case "[]uint8":
+	case script.DtBytes:
 		return []byte{}
-	case "[]interface {}":
+	case script.DtArray:
 		return []interface{}{}
-	case script.File:
+	case script.DtMap:
+		return types.NewMap()
+	case script.DtFile:
 		return types.NewFile()
 	}
 	return nil
