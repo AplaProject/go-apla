@@ -1,3 +1,5 @@
+// +build linux freebsd darwin
+// +build 386 amd64
 // Apla Software includes an integrated development
 // environment with a multi-level system for the management
 // of access rights to data, interfaces, and Smart contracts. The

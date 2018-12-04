@@ -1,3 +1,4 @@
+// +build windows
 // Apla Software includes an integrated development
 // environment with a multi-level system for the management
 // of access rights to data, interfaces, and Smart contracts. The
@@ -25,8 +26,6 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
-
-// +build windows
 
 package daylight
 
