@@ -9,6 +9,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils"
 
+	"github.com/GenesisKernel/go-genesis/packages/registry/block"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -88,20 +89,25 @@ func (m *Manager) rollbackBlock() error {
 }
 
 func (m *Manager) startMultiTx() (*MultiTransaction, error) {
+	undo := newUndoLog(m.undoStore)
+
 	ldbTx, err := blockchain.DB.OpenTransaction()
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("starting leveldb transaction")
 		return nil, utils.ErrInfo(err)
 	}
 
-	//dbTransaction, err := model.StartTransaction()
-	//if err != nil {
-	//	log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
-	//	return utils.ErrInfo(err)
-	//}
+	dbTransaction, err := model.StartTransaction()
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
+		return nil, utils.ErrInfo(err)
+	}
 
-	log := newUndoLog(m.undoStore)
-	return &MultiTransaction{Metadata: model.MetadataRegistry.Begin(log), BlockChain: ldbTx, log: log}, nil
+	return &MultiTransaction{
+		Metadata:   model.MetadataRegistry.Begin(undo),
+		BlockChain: block.NewBlockRegistry(ldbTx, undo),
+		log:        undo,
+	}, nil
 }
 
 type MultiTransaction struct {
@@ -110,4 +116,8 @@ type MultiTransaction struct {
 	UsersRegistry *model.DbTransaction
 
 	log types.StateStorage
+}
+
+func (mt *MultiTransaction) RollbackTx() error {
+
 }

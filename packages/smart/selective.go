@@ -24,6 +24,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
 	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,6 +41,12 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 	if err != nil {
 		return logErrorDB(err, "creating rollback tx")
 	}
+
+	sc.UndoLog.Save(types.State{
+		Transaction: sc.TxHash,
+		DBType:      types.DBTypeUsers,
+	})
+
 	return nil
 }
 

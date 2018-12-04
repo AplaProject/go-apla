@@ -138,17 +138,17 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.DuplicateObject}).Info("first block already exists")
 			return
 		}
-
-		b := &blockchain.Block{
-			Header:       header,
-			Transactions: []*blockchain.Transaction{smartTx},
-		}
-		blockBin, err := b.Marshal()
+		txs := []*blockchain.Transaction{smartTx}
+		hsh, err := smartTx.Hash()
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return
 		}
-		err = block.InsertBlockWOForks(blockBin, true, false)
+
+		b := &blockchain.Block{
+			Header:   header,
+			TxHashes: [][]byte{hsh},
+		}
+		err = block.InsertBlockWOForks(b, txs, true, false)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Fatal("inserting first block")
 			return

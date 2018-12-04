@@ -34,7 +34,11 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
 		return err
 	}
-	b, err := block.FromBlockchainBlock(blockModel, hash, ldbTx)
+	txs, err := blockModel.Transactions(ldbTx)
+	if err != nil {
+		return err
+	}
+	b, err := block.FromBlockchainBlock(blockModel, txs, hash, ldbTx)
 	if err != nil {
 		return err
 	}

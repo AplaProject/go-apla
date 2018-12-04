@@ -51,7 +51,7 @@ func (b PlayableBlock) GetLogger() *log.Entry {
 }
 
 // PlayBlockSafe is inserting block safely
-func (b *PlayableBlock) PlaySafe() error {
+func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 	logger := b.GetLogger()
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
@@ -66,21 +66,27 @@ func (b *PlayableBlock) PlaySafe() error {
 	b.LDBTX = ldbtx
 	metaDbTx := model.MetadataRegistry.Begin(ldbtx)
 
-	err = b.Play(dbTransaction, ldbtx, metaDbTx)
+	err = b.Play(dbTransaction, txs, ldbtx, metaDbTx)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
-		transactions := []*blockchain.Transaction{}
+		txs = []*blockchain.Transaction{}
+		txHashes := [][]byte{}
 		for _, tr := range doneTx {
 			bTx, err := tr.ToBlockchainTransaction()
 			if err != nil {
 				return err
 			}
-			transactions = append(transactions, bTx)
+			txHash, err := bTx.Hash()
+			if err != nil {
+				return err
+			}
+			txHashes = append(txHashes, txHash)
+			txs = append(txs, bTx)
 		}
 		bBlock := &blockchain.Block{
-			Header:       &b.Header,
-			Transactions: transactions,
-			PrevHash:     b.PrevHash,
+			Header:   &b.Header,
+			TxHashes: txHashes,
+			PrevHash: b.PrevHash,
 		}
 		mrklRoot, err := bBlock.GetMrklRoot()
 		bData, err := bBlock.Marshal()
@@ -115,11 +121,11 @@ func (b *PlayableBlock) PlaySafe() error {
 		return err
 	}
 
-	bBlock, err := b.ToBlockchainBlock()
+	bBlock, _, err := b.ToBlockchainBlock()
 	if err != nil {
 		return err
 	}
-	if err := bBlock.Insert(ldbtx); err != nil {
+	if err := bBlock.Insert(ldbtx, txs); err != nil {
 		dbTransaction.Rollback()
 		ldbtx.Discard()
 		return err
@@ -155,14 +161,14 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	}
 
 	var err error
-	b.PrevHeader, err = GetBlockDataFromBlockChain(nil, b.Hash)
+	b.PrevHeader, err = GetBlockDataFromBlockChain(nil, b.PrevHash)
 	if err != nil {
 		return utils.ErrInfo(fmt.Errorf("can't get block %d", b.Header.BlockID-1))
 	}
 	return nil
 }
 
-func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.Transaction, memdb types.MetadataRegistryReaderWriter) error {
+func (b *PlayableBlock) Play(txs []*blockchain.Transaction, mt types.MultiTransaction) error {
 	logger := b.GetLogger()
 	limits := NewLimits(b)
 
@@ -181,16 +187,10 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, ldbtx *leveldb.
 		var (
 			err error
 		)
-		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
-		t.MetaDb = memdb
+		t.MultiTx = mt
 
-		blockchain.IncrementTxAttemptCount(ldbtx, t.TxHash)
-		err = dbTransaction.Savepoint(curTx)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
-			return err
-		}
+		blockchain.IncrementTxAttemptCount(nil, t.TxHash)
 		var flush []smart.FlushInfo
 		msg, flush, err := t.Play()
 		if err == nil && t.TxSmart != nil {
@@ -387,57 +387,57 @@ func (b PlayableBlock) ForSign() string {
 }
 
 // InsertBlockWOForks is inserting blocks
-func InsertBlockWOForks(data []byte, genBlock, firstBlock bool) error {
-	block, err := ProcessBlockWherePrevFromBlockchainTable(data, !firstBlock, nil)
+func InsertBlockWOForks(block *blockchain.Block, txs []*blockchain.Transaction, genBlock, firstBlock bool) error {
+	pBlock, err := ProcessBlockWherePrevFromBlockchainTable(block, txs, !firstBlock, nil)
 	if err != nil {
 		return err
 	}
-	block.GenBlock = genBlock
-	if err := block.Check(); err != nil {
+	pBlock.GenBlock = genBlock
+	if err := pBlock.Check(); err != nil {
 		return err
 	}
 
-	err = block.PlaySafe()
+	err = pBlock.PlaySafe(txs)
 	if err != nil {
 		return err
 	}
 
-	log.WithFields(log.Fields{"block_id": block.Header.BlockID}).Debug("block was inserted successfully")
+	log.WithFields(log.Fields{"block_id": pBlock.Header.BlockID}).Debug("block was inserted successfully")
 	return nil
 }
 
 // ProcessBlockWherePrevFromBlockchainTable is processing block with in table previous block
-func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool, ldbtx *leveldb.Transaction) (*PlayableBlock, error) {
+func ProcessBlockWherePrevFromBlockchainTable(block *blockchain.Block, txs []*blockchain.Transaction, checkSize bool, ldbtx *leveldb.Transaction) (*PlayableBlock, error) {
+	data, err := block.Marshal()
+	if err != nil {
+		return nil, err
+	}
 	if checkSize && int64(len(data)) > syspar.GetMaxBlockSize() {
 		log.WithFields(log.Fields{"check_size": checkSize, "size": len(data), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
 		return nil, utils.ErrInfo(fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]`))
 	}
 
-	blockModel := &blockchain.Block{}
-	if err := blockModel.Unmarshal(data); err != nil {
-		return nil, err
-	}
 	hash, err := crypto.DoubleHash(data)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("Hashing block data")
 		return nil, err
 	}
-	block, err := FromBlockchainBlock(blockModel, hash, ldbtx)
+	pBlock, err := FromBlockchainBlock(block, txs, hash, ldbtx)
 	if err != nil {
 		return nil, err
 	}
-	block.BinData = data
+	pBlock.BinData = data
 
-	if err := block.readPreviousBlockFromBlockchainTable(); err != nil {
+	if err := pBlock.readPreviousBlockFromBlockchainTable(); err != nil {
 		return nil, err
 	}
 
-	return block, nil
+	return pBlock, nil
 }
 
-func FromBlockchainBlock(b *blockchain.Block, hash []byte, ldbtx *leveldb.Transaction) (*PlayableBlock, error) {
-	transactions := make([]*transaction.Transaction, 0)
-	for _, tx := range b.Transactions {
+func FromBlockchainBlock(b *blockchain.Block, txs []*blockchain.Transaction, hash []byte, ldbtx *leveldb.Transaction) (*PlayableBlock, error) {
+	transactions := []*transaction.Transaction{}
+	for _, tx := range txs {
 		t, err := transaction.FromBlockchainTransaction(tx)
 		if err != nil {
 			if t != nil && t.TxHash != nil {
@@ -457,18 +457,24 @@ func FromBlockchainBlock(b *blockchain.Block, hash []byte, ldbtx *leveldb.Transa
 	}, nil
 }
 
-func (b *PlayableBlock) ToBlockchainBlock() (*blockchain.Block, error) {
-	txs := []*blockchain.Transaction{}
+func (b *PlayableBlock) ToBlockchainBlock() (*blockchain.Block, []*blockchain.Transaction, error) {
+	txHashes := [][]byte{}
+	transactions := []*blockchain.Transaction{}
 	for _, tx := range b.Transactions {
 		bTx, err := tx.ToBlockchainTransaction()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-		txs = append(txs, bTx)
+		transactions = append(transactions, bTx)
+		hash, err := bTx.Hash()
+		if err != nil {
+			return nil, nil, err
+		}
+		txHashes = append(txHashes, hash)
 	}
 	return &blockchain.Block{
-		Header:       &b.Header,
-		PrevHash:     b.PrevHash,
-		Transactions: txs,
-	}, nil
+		Header:   &b.Header,
+		PrevHash: b.PrevHash,
+		TxHashes: txHashes,
+	}, transactions, nil
 }

@@ -127,6 +127,14 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if len(trs) == 0 {
 		return nil
 	}
+	hashes := [][]byte{}
+	for _, tx := range trs {
+		hsh, err := tx.Hash()
+		if err != nil {
+			return err
+		}
+		hashes = append(hashes, hsh)
+	}
 
 	header := &blockchain.BlockHeader{
 		BlockID:      prevBlock.Header.BlockID + 1,
@@ -136,17 +144,12 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		NodePosition: nodePosition,
 		Version:      consts.BLOCK_VERSION,
 	}
-	bBlock := blockchain.Block{
-		Header:       header,
-		Transactions: trs,
+	bBlock := &blockchain.Block{
+		Header:   header,
+		TxHashes: hashes,
 	}
 
-	blockBin, err := bBlock.Marshal()
-	if err != nil {
-		return err
-	}
-
-	err = block.InsertBlockWOForks(blockBin, true, false)
+	err = block.InsertBlockWOForks(bBlock, txs, true, false)
 	if err != nil {
 		return err
 	}

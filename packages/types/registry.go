@@ -4,6 +4,9 @@ package types
 
 import (
 	"encoding/json"
+
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
+	"github.com/GenesisKernel/go-genesis/packages/model"
 )
 
 type MetaRegistryType int8
@@ -86,6 +89,7 @@ type DBType int8
 
 const (
 	DBTypeMeta DBType = iota
+	DBTypeUsers
 	DBTypeBlockChain
 )
 
@@ -103,4 +107,10 @@ type StateStorage interface {
 
 type StateApplier interface {
 	Apply(State) error
+}
+
+type MultiTransaction interface {
+	GetMetadataRegistry() MetadataRegistryReaderWriter
+	GetBlockChainRegistry() blockchain.LevelDBGetterPutterDeleter
+	GetUsersRegistry() *model.DbTransaction
 }

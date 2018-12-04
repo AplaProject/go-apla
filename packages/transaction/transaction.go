@@ -42,8 +42,7 @@ type Transaction struct {
 	TxContract    *smart.Contract
 	TxHeader      *blockchain.TxHeader
 	tx            custom.TransactionInterface
-	DbTransaction *model.DbTransaction
-	MetaDb        types.MetadataRegistryReaderWriter
+	MultiTx       types.MultiTransaction
 	Rand          *rand.Rand
 	SysUpdate     bool
 	LdbTx         *leveldb.Transaction
