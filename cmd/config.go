@@ -1,18 +1,18 @@
 package cmd
 
 import (
+	"fmt"
+	"math/rand"
+	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"path/filepath"
-
-	"fmt"
-
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
 )
 
 // configCmd represents the config command
@@ -31,6 +31,7 @@ var configCmd = &cobra.Command{
 		if configPath == "" {
 			configPath = filepath.Join(conf.Config.DataDir, consts.DefaultConfigFile)
 		}
+		conf.Config.NetworkID = rand.New(rand.NewSource(time.Now().Unix())).Int63()
 
 		err = viper.Unmarshal(&conf.Config)
 		if err != nil {
@@ -140,6 +141,7 @@ func init() {
 	configCmd.Flags().Int64Var(&conf.Config.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
 	configCmd.Flags().StringVar(&conf.Config.VDEMode, "vdeMode", "none", "VDE running mode")
+	configCmd.Flags().Int64Var(&conf.Config.NetworkID, "networkID", 1, "Network ID")
 
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
 	viper.BindPFlag("LockFilePath", configCmd.Flags().Lookup("lock"))
@@ -154,4 +156,5 @@ func init() {
 	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
 	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
 	viper.BindPFlag("VDEMode", configCmd.Flags().Lookup("vdeMode"))
+	viper.BindPFlag("NetworkID", configCmd.Flags().Lookup("networkID"))
 }

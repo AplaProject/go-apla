@@ -35,6 +35,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
@@ -726,7 +727,7 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 			Header: tx.Header{
 				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
 				KeyID:       converter.StrToInt64((*vars)[`key_id`]),
-				NetworkID:   consts.NETWORK_ID,
+				NetworkID:   conf.Config.NetworkID,
 			},
 		},
 	}

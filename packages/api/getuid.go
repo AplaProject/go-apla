@@ -33,6 +33,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 
@@ -49,11 +50,12 @@ type getUIDResult struct {
 	EcosystemID string `json:"ecosystem_id,omitempty"`
 	KeyID       string `json:"key_id,omitempty"`
 	Address     string `json:"address,omitempty"`
+	NetworkID   string `json:"network,omitempty"`
 }
 
 func getUIDHandler(w http.ResponseWriter, r *http.Request) {
 	result := new(getUIDResult)
-
+	result.NetworkID = converter.Int64ToStr(conf.Config.NetworkID)
 	token := getToken(r)
 	if token != nil {
 		if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {

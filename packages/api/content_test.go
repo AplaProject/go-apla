@@ -29,11 +29,40 @@
 package api
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"net/url"
 	"testing"
 
+	"github.com/AplaProject/go-apla/packages/crypto"
+
 	"github.com/stretchr/testify/assert"
 )
+
+func TestContentHash(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`page`)
+	assert.NoError(t, postTx(`NewPage`, &url.Values{
+		"ApplicationId": {`1`},
+		"Name":          {name},
+		"Value":         {`Div(Body: "New value of parameter - test")`},
+		"Menu":          {`default_menu`},
+		"Conditions":    {"true"},
+	}))
+	urls := "content/page/" + name
+	var ret contentResult
+	assert.NoError(t, sendPost(urls, &url.Values{}, &ret))
+	out, err := json.Marshal(ret)
+	assert.NoError(t, err)
+	hash, err := crypto.Hash(out)
+	urls = "content/hash/" + name
+	var hret hashResult
+	assert.NoError(t, sendPost(urls, &url.Values{}, &hret))
+	if hex.EncodeToString(hash) != hret.Hash {
+		t.Error(`wrong hash`, hex.EncodeToString(hash), hret.Hash)
+	}
+}
 
 func TestContent(t *testing.T) {
 	assert.NoError(t, keyLogin(1))

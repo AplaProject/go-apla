@@ -38,9 +38,6 @@ const VERSION = "1.2.0"
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1
 
-// NETWORK_ID is id of network
-const NETWORK_ID = 1
-
 // DEFAULT_TCP_PORT used when port number missed in host addr
 const DEFAULT_TCP_PORT = 7078
 
