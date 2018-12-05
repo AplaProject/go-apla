@@ -102,6 +102,10 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(txt, "те").(txt1, "ещё")P(#txt# #txt1#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":"те ещё"}]}]`},
+	{`Span(Body: "те").(Body: "ещё")`,
+		`[{"tag":"span","children":[{"tag":"text","text":"те"}]},{"tag":"span","children":[{"tag":"text","text":"ещё"}]}]`},
 	{`SetVar(mykey,0266-5397-0542-4815-0876)Div(){AddressToId(#mykey#)=AddressToId()}`,
 		`[{"tag":"div","children":[{"tag":"text","text":"2665397054248150876"},{"tag":"text","text":"="}]}]`},
 	{`SetVar(t,7)

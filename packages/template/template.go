@@ -667,8 +667,9 @@ func process(input string, owner *node, workspace *Workspace) {
 		params         *[][]rune
 		tailpars       *[]*[][]rune
 	)
+	inrune := []rune(input)
 	name := make([]rune, 0, 128)
-	for off, ch := range input {
+	for off, ch := range inrune {
 		if shift > 0 {
 			shift--
 			continue
@@ -681,11 +682,12 @@ func process(input string, owner *node, workspace *Workspace) {
 				appendText(owner, macro(string(name[:nameOff]), workspace.Vars))
 				name = name[:0]
 				nameOff = 0
-				params, shift, tailpars = getFunc(input[off:], curFunc)
+				params, shift, tailpars = getFunc(string(inrune[off:]), curFunc)
 				callFunc(&curFunc, owner, workspace, params, tailpars)
-				for off+shift+3 < len(input) && input[off+shift+1:off+shift+3] == `.(` {
+				for off+shift+3 < len([]rune(input)) &&
+					string(inrune[off+shift+1:off+shift+3]) == `.(` {
 					var next int
-					params, next, tailpars = getFunc(input[off+shift+2:], curFunc)
+					params, next, tailpars = getFunc(string(inrune[off+shift+2:]), curFunc)
 					callFunc(&curFunc, owner, workspace, params, tailpars)
 					shift += next + 2
 				}
