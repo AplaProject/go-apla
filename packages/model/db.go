@@ -225,8 +225,14 @@ func ExecSchema() error {
 
 // UpdateSchema run update migrations
 func UpdateSchema() error {
-	if _, _, found, err := blockchain.GetLastBlock(nil); !found {
+	var found bool
+	var err error
+	if _, _, found, err = blockchain.GetLastBlock(nil); err != nil {
 		return err
+	}
+	if !found {
+		log.Info("Do not updating schema, because first block does not found")
+		return nil
 	}
 	return migration.UpdateMigrate(&MigrationHistory{})
 }

@@ -121,6 +121,12 @@ const DefaultConfigFile = "config.toml"
 // DefaultWorkdirName name of working directory
 const DefaultWorkdirName = "genesis-data"
 
+// DefaultQueuesDirName name of working directory
+const DefaultQueuesDirName = "queues"
+
+// DefaultQueuesDirName name of working directory
+const DefaultBlockchainDBDirName = "blockchain"
+
 // DefaultPidFilename is default filename of pid file
 const DefaultPidFilename = "go-genesis.pid"
 

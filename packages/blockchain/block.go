@@ -324,6 +324,9 @@ func GetFirstBlock(tx *leveldb.Transaction) (*BlockWithHash, bool, error) {
 
 func GetLastBlock(tx *leveldb.Transaction) (*Block, []byte, bool, error) {
 	hash, err := GetDB(tx).Get([]byte(lastBlockKey), nil)
+	if err == leveldb.ErrNotFound {
+		return nil, nil, false, nil
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting last block key")
 		return nil, nil, false, err

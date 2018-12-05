@@ -86,6 +86,8 @@ type GlobalConfig struct {
 	DataDir               string // application work dir (cwd by default)
 	KeysDir               string // place for private keys files: NodePrivateKey, PrivateKey
 	TempDir               string // temporary dir
+	BlockchainDBDir       string // dir for storing blockchain in leveldb
+	QueuesDir             string // dir for storing leveldb queues
 	FirstBlockPath        string
 	TLS                   bool   // TLS is on/off. It is required for https
 	TLSCert               string // TLSCert is a filepath of the fullchain of certificate.
@@ -218,6 +220,14 @@ func FillRuntimePaths() error {
 
 	if Config.LockFilePath == "" {
 		Config.LockFilePath = filepath.Join(Config.DataDir, consts.DefaultLockFilename)
+	}
+
+	if Config.BlockchainDBDir == "" {
+		Config.BlockchainDBDir = filepath.Join(Config.DataDir, consts.DefaultBlockchainDBDirName)
+	}
+
+	if Config.QueuesDir == "" {
+		Config.QueuesDir = filepath.Join(Config.DataDir, consts.DefaultQueuesDirName)
 	}
 
 	return nil

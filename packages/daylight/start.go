@@ -224,7 +224,7 @@ func Start() {
 		Exit(1)
 	}
 
-	if err := utils.MakeDirectory("queues"); err != nil {
+	if err := utils.MakeDirectory(conf.Config.QueuesDir); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError, "dir": "queues"}).Error("can't create directory for queues")
 		Exit(1)
 	}
@@ -247,7 +247,7 @@ func Start() {
 		Exit(1)
 	}
 
-	if err := blockchain.Init("blockchain"); err != nil {
+	if err := blockchain.Init(conf.Config.BlockchainDBDir); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
 		Exit(1)
 	}

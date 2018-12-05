@@ -84,8 +84,8 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 		return err
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("last block not found")
-		return errors.New("Info block not found")
+		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Info("last block not found")
+		return nil
 	}
 
 	if lastBlock.Header.BlockID >= maxBlockID {

@@ -115,7 +115,7 @@ var generateFirstBlockCmd = &cobra.Command{
 		if err := smart.LoadSysContract(nil); err != nil {
 			return
 		}
-		if err := blockchain.Init("blockchain"); err != nil {
+		if err := blockchain.Init(conf.Config.BlockchainDBDir); err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
 			return
 		}

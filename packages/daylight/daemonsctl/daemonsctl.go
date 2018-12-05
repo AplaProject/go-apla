@@ -3,6 +3,7 @@ package daemonsctl
 import (
 	"context"
 
+	"github.com/GenesisKernel/go-genesis/packages/blockchain"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/daemons"
@@ -35,10 +36,17 @@ func RunAllDaemons(ctx context.Context) error {
 
 	}
 
-	log.Info("load contracts")
-	if err := smart.LoadContracts(); err != nil {
-		log.Errorf("Load Contracts error: %s", err)
+	_, _, found, err := blockchain.GetLastBlock(nil)
+	if err != nil {
+		log.WithError(err).Error("Getting first block")
 		return err
+	}
+	if found {
+		log.Info("load contracts")
+		if err := smart.LoadContracts(); err != nil {
+			log.Errorf("Load Contracts error: %s", err)
+			return err
+		}
 	}
 
 	log.Info("start daemons")
