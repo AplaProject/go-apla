@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
@@ -21,11 +33,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
 type txinfoResult struct {
@@ -34,20 +46,26 @@ type txinfoResult struct {
 	Data    *smart.TxInfo `json:"data,omitempty"`
 }
 
+type txInfoForm struct {
+	nopeValidator
+	ContractInfo bool   `schema:"contractinfo"`
+	Data         string `schema:"data"`
+}
+
 type multiTxInfoResult struct {
 	Results map[string]*txinfoResult `json:"results"`
 }
 
-func getTxInfo(txHash string, w http.ResponseWriter, cntInfo bool) (*txinfoResult, error) {
+func getTxInfo(r *http.Request, txHash string, cntInfo bool) (*txinfoResult, error) {
 	var status txinfoResult
 	hash, err := hex.DecodeString(txHash)
 	if err != nil {
-		return nil, errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+		return nil, errHashWrong
 	}
 	ltx := &model.LogTransaction{Hash: hash}
 	found, err := ltx.GetByHash(hash)
 	if err != nil {
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	if !found {
 		return &status, nil
@@ -56,7 +74,7 @@ func getTxInfo(txHash string, w http.ResponseWriter, cntInfo bool) (*txinfoResul
 	var confirm model.Confirmation
 	found, err = confirm.GetConfirmation(ltx.Block)
 	if err != nil {
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	if found {
 		status.Confirm = int(confirm.Good)
@@ -64,37 +82,53 @@ func getTxInfo(txHash string, w http.ResponseWriter, cntInfo bool) (*txinfoResul
 	if cntInfo {
 		status.Data, err = smart.TransactionData(ltx.Block, hash)
 		if err != nil {
-			return nil, errorAPI(w, err, http.StatusInternalServerError)
+			return nil, err
 		}
 	}
 	return &status, nil
 }
 
-func txinfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	status, err := getTxInfo(data.params[`hash`].(string), w, data.params[`contractinfo`].(int64) > 0)
-	if err != nil {
-		return err
+func getTxInfoHandler(w http.ResponseWriter, r *http.Request) {
+	form := &txInfoForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
-	data.result = &status
-	return nil
+
+	params := mux.Vars(r)
+	status, err := getTxInfo(r, params["hash"], form.ContractInfo)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
+	jsonResponse(w, status)
 }
 
-func txinfoMulti(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func getTxInfoMultiHandler(w http.ResponseWriter, r *http.Request) {
+	form := &txInfoForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
 	result := &multiTxInfoResult{}
 	result.Results = map[string]*txinfoResult{}
 	var request struct {
 		Hashes []string `json:"hashes"`
 	}
-	if err := json.Unmarshal([]byte(data.params["data"].(string)), &request); err != nil {
-		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+	if err := json.Unmarshal([]byte(form.Data), &request); err != nil {
+		errorResponse(w, errHashWrong)
+		return
 	}
 	for _, hash := range request.Hashes {
-		status, err := getTxInfo(hash, w, data.params[`contractinfo`].(int64) > 0)
+		status, err := getTxInfo(r, hash, form.ContractInfo)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Results[hash] = status
 	}
-	data.result = result
-	return nil
+
+	jsonResponse(w, result)
 }

@@ -1,30 +1,39 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -34,48 +43,45 @@ type contractsResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var limit int
+func getContractsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &paginatorForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
-	table := `1_contracts`
+	client := getClient(r)
+	logger := getLogger(r)
 
-	where := fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
+	contract := &model.Contract{}
+	contract.EcosystemID = client.EcosystemID
 
-	count, err := model.GetRecordsCountTx(nil, table, where)
+	count, err := contract.CountByEcosystem()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table records count")
+		errorResponse(w, err)
+		return
 	}
 
-	if data.params[`limit`].(int64) > 0 {
-		limit = int(data.params[`limit`].(int64))
-	} else {
-		limit = 25
-	}
-	list, err := model.GetAll(fmt.Sprintf(`select * from "%s" where %s order by id desc offset %d `, table, where, data.params[`offset`].(int64)), limit)
+	contracts, err := contract.GetListByEcosystem(form.Offset, form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
-	for ind, val := range list {
-		if val[`wallet_id`] == `NULL` {
-			list[ind][`wallet_id`] = ``
-			list[ind][`address`] = ``
-		} else {
-			list[ind][`address`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
-		}
-		if val[`active`] == `NULL` {
-			list[ind][`active`] = ``
-		}
-		cntlist, err := script.ContractsList(val[`value`])
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("getting contract list")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		list[ind][`name`] = strings.Join(cntlist, `,`)
+
+	list := make([]map[string]string, len(contracts))
+	for i, c := range contracts {
+		list[i] = c.ToMap()
+		list[i]["address"] = converter.AddressToString(c.WalletID)
 	}
-	data.result = &listResult{
-		Count: converter.Int64ToStr(count), List: list,
+
+	if len(list) == 0 {
+		list = nil
 	}
-	return
+
+	jsonResponse(w, &listResult{
+		Count: converter.Int64ToStr(count),
+		List:  list,
+	})
 }

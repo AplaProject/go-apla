@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package transaction
 
 import (
@@ -6,15 +34,15 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/transaction/custom"
+	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -126,7 +154,7 @@ func (t Transaction) GetLogger() *log.Entry {
 var txCache = &transactionCache{cache: make(map[string]*Transaction)}
 
 // UnmarshallTransaction is unmarshalling transaction
-func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
+func UnmarshallTransaction(buffer *bytes.Buffer, fillData bool) (*Transaction, error) {
 	rtx := &RawTransaction{}
 	if err := rtx.Unmarshall(buffer); err != nil {
 		return nil, err
@@ -147,7 +175,7 @@ func UnmarshallTransaction(buffer *bytes.Buffer) (*Transaction, error) {
 	if IsContractTransaction(rtx.Type()) {
 		t.TxSignature = rtx.Signature()
 		// skip byte with transaction type
-		if err := t.parseFromContract(); err != nil {
+		if err := t.parseFromContract(fillData); err != nil {
 			return nil, err
 		}
 		// struct transaction (only first block transaction for now)
@@ -201,7 +229,7 @@ func (t *Transaction) fillTxData(fieldInfos []*script.FieldInfo, params map[stri
 	return nil
 }
 
-func (t *Transaction) parseFromContract() error {
+func (t *Transaction) parseFromContract(fillData bool) error {
 	smartTx := tx.SmartContract{}
 	if err := msgpack.Unmarshal(t.TxBinaryData, &smartTx); err != nil {
 		log.WithFields(log.Fields{"tx_hash": t.TxHash, "error": err, "type": consts.UnmarshallingError}).Error("unmarshalling smart tx msgpack")
@@ -225,8 +253,12 @@ func (t *Transaction) parseFromContract() error {
 	txInfo := contract.Block.Info.(*script.ContractInfo).Tx
 
 	if txInfo != nil {
-		if err := t.fillTxData(*txInfo, smartTx.Params); err != nil {
-			return err
+		if fillData {
+			if err := t.fillTxData(*txInfo, smartTx.Params); err != nil {
+				return err
+			}
+		} else {
+			t.TxData = smartTx.Params
 		}
 	}
 
@@ -236,7 +268,7 @@ func (t *Transaction) parseFromContract() error {
 // CheckTransaction is checking transaction
 func CheckTransaction(data []byte) (*tx.Header, error) {
 	trBuff := bytes.NewBuffer(data)
-	t, err := UnmarshallTransaction(trBuff)
+	t, err := UnmarshallTransaction(trBuff, true)
 	if err != nil {
 		return nil, err
 	}
