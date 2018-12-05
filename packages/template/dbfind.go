@@ -127,9 +127,22 @@ main:
 		case '{', '[':
 			par, off := parseObject(in[i:])
 			if mapMode {
-				ret.(map[string]interface{})[key] = par
-				key = ``
+				if len(key) == 0 {
+					switch v := par.(type) {
+					case map[string]interface{}:
+						for ikey, ival := range v {
+							ret.(map[string]interface{})[ikey] = ival
+						}
+					}
+				} else {
+					ret.(map[string]interface{})[key] = par
+					key = ``
+				}
 			} else {
+				if len(key) > 0 {
+					par = map[string]interface{}{key: par}
+					key = ``
+				}
 				ret = append(ret.([]interface{}), par)
 			}
 			i += off
@@ -137,10 +150,8 @@ main:
 		case '"':
 			quote = !quote
 		case ':':
-			if mapMode {
-				key = trimString(in[start:i])
-				start = i + 1
-			}
+			key = trimString(in[start:i])
+			start = i + 1
 		case ',':
 			val := trimString(in[start:i])
 			if len(val) > 0 {
@@ -148,7 +159,12 @@ main:
 					ret.(map[string]interface{})[key] = val
 					key = ``
 				} else {
-					ret = append(ret.([]interface{}), val)
+					if len(key) > 0 {
+						ret = append(ret.([]interface{}), map[string]interface{}{key: val})
+						key = ``
+					} else {
+						ret = append(ret.([]interface{}), val)
+					}
 				}
 			}
 			start = i + 1
@@ -159,7 +175,12 @@ main:
 			if mapMode {
 				ret.(map[string]interface{})[key] = last
 			} else {
-				ret = append(ret.([]interface{}), last)
+				if len(key) > 0 {
+					ret = append(ret.([]interface{}), map[string]interface{}{key: last})
+					key = ``
+				} else {
+					ret = append(ret.([]interface{}), last)
+				}
 			}
 		}
 	}

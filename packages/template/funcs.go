@@ -602,7 +602,7 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`where`] != nil {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
-			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
+			inWhere, _ := parseObject([]rune(where))
 			where, err = qb.GetWhere(types.LoadMap(inWhere.(map[string]interface{})))
 			if err != nil {
 				return err.Error()

@@ -136,10 +136,24 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			return like(`like '%%%s'`, v)
 		case `$begin`:
 			return like(`like '%s%%'`, v)
+		case `$ilike`:
+			return like(`ilike '%%%s%%'`, v)
+		case `$iend`:
+			return like(`ilike '%%%s'`, v)
+		case `$ibegin`:
+			return like(`ilike '%s%%'`, v)
 		case `$and`:
-			return logic(`and`, v)
+			icond, err := logic(`and`, v)
+			if err != nil {
+				return ``, err
+			}
+			cond = append(cond, icond)
 		case `$or`:
-			return logic(`or`, v)
+			icond, err := logic(`or`, v)
+			if err != nil {
+				return ``, err
+			}
+			cond = append(cond, icond)
 		case `$in`:
 			return in(`in`, v)
 		case `$nin`:
@@ -172,7 +186,7 @@ func GetWhere(inWhere *types.Map) (string, error) {
 						}
 						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
 					default:
-						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
+						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(avalue)))
 					}
 				}
 				if len(acond) > 0 {
