@@ -1,16 +1,16 @@
-package lexer
+package parser
 
 import (
 	"bytes"
-	gotoken "go/token"
+	"fmt"
+	"go/token"
 	"unicode"
-
-	"github.com/GenesisKernel/go-genesis/packages/simvolio/token"
 
 	"github.com/cznic/golex/lex"
 )
 
-//go:generate golex -o lexer_scan.go lexer.l
+//go:generate goyacc -o parser.go parser.y
+//go:generate golex -o lexer_scan.go lex.l
 
 const (
 	classUnicodeLeter = iota + 0x80
@@ -36,25 +36,42 @@ func runeClass(r rune) int {
 
 type lexer struct {
 	*lex.Lexer
+
+	result interface{}
+	err    error
 }
 
-func (l *lexer) char(r token.TokenType) lex.Char {
+func (l *lexer) char(r int) lex.Char {
 	return lex.NewChar(l.First.Pos(), rune(r))
 }
 
-func (l *lexer) Scan() lex.Char {
-	return l.scan()
+func (l *lexer) Lex(lval *yySymType) int {
+	c := l.scan(lval)
+
+	if c.Rune == lex.RuneEOF {
+		return 0
+	}
+
+	return int(c.Rune)
+}
+
+func (l *lexer) Error(err string) {
+	l.err = fmt.Errorf("%s: %s", l.FilePosition(), err)
+}
+
+func (l *lexer) FilePosition() token.Position {
+	return l.File.Position(l.First.Pos())
 }
 
 func NewLexer(filename string, src string) (*lexer, error) {
-	fs := gotoken.NewFileSet()
+	fs := token.NewFileSet()
 	file := fs.AddFile(filename, -1, len(src))
 	buf := bytes.NewBufferString(src)
 
-	lx, err := lex.New(file, buf, lex.RuneClass(runeClass))
+	l, err := lex.New(file, buf, lex.RuneClass(runeClass))
 	if err != nil {
 		return nil, err
 	}
 
-	return &lexer{lx}, nil
+	return &lexer{l, nil, nil}, nil
 }
