@@ -113,7 +113,7 @@ func getSectionsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		if item["status"] == "2" {
+		if item["status"] == consts.StatusMainPage {
 			roles := &model.Role{}
 			roles.SetTablePrefix("1")
 			role, err := roles.Get(nil, client.RoleID)
@@ -123,11 +123,11 @@ func getSectionsHandler(w http.ResponseWriter, r *http.Request) {
 				errorResponse(w, err)
 				return
 			}
-			if role == true {
+			if role == true && roles.DefaultPage != "" {
 				item["default_page"] = roles.DefaultPage
 			}
 		}
-		
+
 		item["title"] = language.LangMacro(item["title"], int(client.EcosystemID), form.Lang)
 		sections = append(sections, item)
 	}
