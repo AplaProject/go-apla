@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 )
 
 // This constants contains values of transactions priority

@@ -16,7 +16,7 @@
 
 package model
 
-import "github.com/GenesisKernel/go-genesis/packages/converter"
+import "github.com/AplaProject/go-apla/packages/converter"
 
 // Contract represents record of 1_contracts table
 type Contract struct {

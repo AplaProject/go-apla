@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/AplaProject/go-apla/packages/network"
 )
 
 var inputs = make([][]byte, 0, 100)

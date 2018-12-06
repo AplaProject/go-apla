@@ -19,9 +19,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/language"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/language"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )

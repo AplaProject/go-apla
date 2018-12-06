@@ -19,7 +19,7 @@ package main
 import (
 	"runtime"
 
-	"github.com/GenesisKernel/go-genesis/cmd"
+	"github.com/AplaProject/go-apla/cmd"
 )
 
 func main() {

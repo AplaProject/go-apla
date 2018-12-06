@@ -2,7 +2,7 @@
 
 package block
 
-import "github.com/GenesisKernel/go-genesis/packages/blockchain"
+import "github.com/AplaProject/go-apla/packages/blockchain"
 
 const lastNBlocks = 5
 

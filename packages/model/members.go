@@ -1,6 +1,6 @@
 package model
 
-import "github.com/GenesisKernel/go-genesis/packages/converter"
+import "github.com/AplaProject/go-apla/packages/converter"
 
 // Member represents a ecosystem member
 type Member struct {

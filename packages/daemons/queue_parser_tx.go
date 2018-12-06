@@ -19,8 +19,8 @@ package daemons
 import (
 	"context"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/transaction"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/network"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/network"
+	"github.com/AplaProject/go-apla/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
 

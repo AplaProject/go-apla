@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 // SingleResult is a structure for the single result

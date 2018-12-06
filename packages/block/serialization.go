@@ -2,7 +2,7 @@ package block
 
 /*
 import (
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
 )

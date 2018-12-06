@@ -17,9 +17,9 @@
 package rollback
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"

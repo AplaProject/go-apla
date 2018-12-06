@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 // RolesParticipants represents record of {prefix}roles_participants table

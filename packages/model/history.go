@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/shopspring/decimal"
 )
 

@@ -22,7 +22,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 
 	log "github.com/sirupsen/logrus"
 )

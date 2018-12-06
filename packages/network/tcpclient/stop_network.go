@@ -1,8 +1,8 @@
 package tcpclient
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/network"
 )
 
 func SendStopNetwork(addr string, req *network.StopNetworkRequest) error {

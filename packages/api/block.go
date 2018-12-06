@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/block"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"

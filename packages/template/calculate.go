@@ -23,7 +23,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/shopspring/decimal"
 )
 

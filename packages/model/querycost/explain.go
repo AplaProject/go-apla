@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -1,7 +1,7 @@
 package querycost
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	"errors"
 	"github.com/stretchr/testify/assert"

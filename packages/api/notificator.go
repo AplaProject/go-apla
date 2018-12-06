@@ -20,9 +20,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/notificator"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/notificator"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -3,13 +3,13 @@ package daemonsctl
 import (
 	"context"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/network/tcpserver"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	conf "github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/daemons"
+	"github.com/AplaProject/go-apla/packages/network/tcpserver"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )

@@ -1,7 +1,7 @@
 package packages
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/blockchain"
 )
 
 // RemoteBlockService allow returns max block from host and find host with maxBlockID

@@ -3,8 +3,8 @@ package transaction
 import (
 	"errors"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/queue"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/queue"
 )
 
 var ErrDuplicatedTx = errors.New("Duplicated transaction")

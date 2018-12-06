@@ -1,7 +1,7 @@
 package custom
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/blockchain"
 )
 
 // TransactionInterface is parsing transactions

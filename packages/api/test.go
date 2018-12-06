@@ -19,7 +19,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/AplaProject/go-apla/packages/smart"
 
 	"github.com/gorilla/mux"
 )

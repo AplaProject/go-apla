@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/scheduler"
-	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/scheduler"
+	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 
 	log "github.com/sirupsen/logrus"
 )

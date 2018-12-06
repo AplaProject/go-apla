@@ -20,10 +20,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
-	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/model/querycost"
+	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
 	log "github.com/sirupsen/logrus"
 )
 

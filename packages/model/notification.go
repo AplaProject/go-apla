@@ -3,7 +3,7 @@ package model
 import (
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 const (

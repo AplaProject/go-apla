@@ -19,11 +19,11 @@ package daemons
 import (
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/daylight/system"
+	"github.com/AplaProject/go-apla/packages/daylight/system"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )

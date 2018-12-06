@@ -19,7 +19,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"

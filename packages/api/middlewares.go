@@ -6,9 +6,9 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/statsd"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/service"
+	"github.com/AplaProject/go-apla/packages/statsd"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"

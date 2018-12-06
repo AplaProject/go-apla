@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 )
 
 func getVersionHandler(w http.ResponseWriter, r *http.Request) {

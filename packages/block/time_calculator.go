@@ -3,9 +3,9 @@ package block
 import (
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/blockchain"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
 )
 
 type BlockTimeCounter struct {

@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/types"
 	"time"
 )
 

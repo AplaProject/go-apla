@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 
 	"github.com/spf13/cobra"
 )

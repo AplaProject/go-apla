@@ -3,8 +3,8 @@ package api
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
 )
 
 func getContract(r *http.Request, name string) *smart.Contract {

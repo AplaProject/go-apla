@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/converter"
 )
 
 // Language is model
