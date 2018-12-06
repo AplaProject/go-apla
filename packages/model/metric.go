@@ -82,8 +82,8 @@ func GetEcosystemTxPerDay(timeBlock int64) ([]*EcosystemTx, error) {
 func GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock string) ([]interface{}, error) {
 	rows, err := DBConn.Table(tableNameMetrics).Select("key,"+aggregateFunc+"(value)").
 		Where("metric = ? AND time >= EXTRACT(EPOCH FROM TIMESTAMP '"+timeBlock+"' - CAST(? AS INTERVAL))",
-			metric, timeInterval).
-		Group("key").Rows()
+			metric, timeInterval).Order("id").
+		Group("key, id").Rows()
 	if err != nil {
 		return nil, err
 	}
