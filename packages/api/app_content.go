@@ -26,60 +26,67 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package daemons
+package api
 
 import (
-	"context"
-	"fmt"
-	"time"
+	"net/http"
+
+	"github.com/gorilla/mux"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/scheduler"
-	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func loadContractTasks() error {
-	stateIDs, _, err := model.GetAllSystemStatesIDs()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("get all system states ids")
-		return err
-	}
-
-	for _, stateID := range stateIDs {
-		if !model.IsTable(fmt.Sprintf("%d_cron", stateID)) {
-			return nil
-		}
-
-		c := model.Cron{}
-		c.SetTablePrefix(fmt.Sprintf("%d", stateID))
-		tasks, err := c.GetAllCronTasks()
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("get all cron tasks")
-			return err
-		}
-
-		for _, cronTask := range tasks {
-			err = scheduler.UpdateTask(&scheduler.Task{
-				ID:       cronTask.UID(),
-				CronSpec: cronTask.Cron,
-				Handler: &contract.ContractHandler{
-					Contract: cronTask.Contract,
-				},
-			})
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+type appContentResult struct {
+	Blocks    []model.BlockInterface `json:"blocks"`
+	Pages     []model.Page           `json:"pages"`
+	Contracts []model.Contract       `json:"contracts"`
 }
 
-// Scheduler starts contracts on schedule
-func Scheduler(ctx context.Context, d *daemon) error {
-	d.sleepTime = time.Hour
-	return loadContractTasks()
+func getAppContentHandler(w http.ResponseWriter, r *http.Request) {
+	form := &ecosystemForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	logger := getLogger(r)
+	params := mux.Vars(r)
+
+	bi := &model.BlockInterface{}
+	p := &model.Page{}
+	c := &model.Contract{}
+	appID := converter.StrToInt64(params["appID"])
+	bi.SetTablePrefix(form.EcosystemPrefix)
+	p.SetTablePrefix(form.EcosystemPrefix)
+
+	blocks, err := bi.GetByApp(appID)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block interfaces by appID")
+		errorResponse(w, err)
+		return
+	}
+
+	pages, err := p.GetByApp(appID)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting pages by appID")
+		errorResponse(w, err)
+		return
+	}
+
+	contracts, err := c.GetByApp(appID)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting pages by appID")
+		errorResponse(w, err)
+		return
+	}
+
+	jsonResponse(w, &appContentResult{
+		Blocks:    blocks,
+		Pages:     pages,
+		Contracts: contracts,
+	})
 }
