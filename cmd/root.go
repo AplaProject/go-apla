@@ -12,8 +12,8 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "go-genesis",
-	Short: "Genesis application",
+	Use:   "go-apla",
+	Short: "Apla application",
 }
 
 func init() {
@@ -46,7 +46,7 @@ func defautConfigPath() string {
 		log.WithError(err).Fatal("getting cur wd")
 	}
 
-	return filepath.Join(p, "genesis-data", "config.toml")
+	return filepath.Join(p, "apla-data", "config.toml")
 }
 
 // Load the configuration from file

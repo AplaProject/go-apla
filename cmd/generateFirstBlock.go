@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"io/ioutil"
 	"time"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/queue"
 	"github.com/AplaProject/go-apla/packages/smart"
@@ -50,7 +50,7 @@ var generateFirstBlockCmd = &cobra.Command{
 				log.WithError(err).WithFields(log.Fields{"key": kName, "filepath": filepath}).Fatal("Reading key data")
 			}
 
-			decodedKey, err := hex.DecodeString(string(data))
+			decodedKey, err := crypto.HexToPub(string(data))
 			if err != nil {
 				log.WithError(err).Fatalf("converting %s from hex", kName)
 			}

@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package model
 
@@ -20,14 +32,16 @@ import "github.com/AplaProject/go-apla/packages/converter"
 
 // Contract represents record of 1_contracts table
 type Contract struct {
-	ID          int64
-	Name        string
-	Value       string
-	WalletID    int64
-	TokenID     int64
-	Conditions  string
-	AppID       int64
-	EcosystemID int64 `gorm:"column:ecosystem"`
+	tableName   string
+	ID          int64  `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Value       string `json:"value,omitempty"`
+	WalletID    int64  `json:"wallet_id,omitempty"`
+	Active      bool   `json:"active,omitempty"`
+	TokenID     int64  `json:"token_id,omitempty"`
+	Conditions  string `json:"conditions,omitempty"`
+	AppID       int64  `json:"app_id,omitempty"`
+	EcosystemID int64  `gorm:"column:ecosystem" json:"ecosystem_id,omitempty"`
 }
 
 // TableName returns name of table
@@ -79,4 +93,11 @@ func (c *Contract) ToMap() (v map[string]string) {
 	v["app_id"] = converter.Int64ToStr(c.AppID)
 	v["ecosystem_id"] = converter.Int64ToStr(c.EcosystemID)
 	return
+}
+
+// GetByApp returns all contracts belonging to selected app
+func (c *Contract) GetByApp(appID int64) ([]Contract, error) {
+	var result []Contract
+	err := DBConn.Select("id, name").Where("app_id = ?", appID).Find(&result).Error
+	return result, err
 }

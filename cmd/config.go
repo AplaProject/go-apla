@@ -69,9 +69,9 @@ func init() {
 	// DB
 	configCmd.Flags().StringVar(&conf.Config.DB.Host, "dbHost", "127.0.0.1", "DB host")
 	configCmd.Flags().IntVar(&conf.Config.DB.Port, "dbPort", 5432, "DB port")
-	configCmd.Flags().StringVar(&conf.Config.DB.Name, "dbName", "genesis", "DB name")
+	configCmd.Flags().StringVar(&conf.Config.DB.Name, "dbName", "apla", "DB name")
 	configCmd.Flags().StringVar(&conf.Config.DB.User, "dbUser", "postgres", "DB username")
-	configCmd.Flags().StringVar(&conf.Config.DB.Password, "dbPassword", "genesis", "DB password")
+	configCmd.Flags().StringVar(&conf.Config.DB.Password, "dbPassword", "apla", "DB password")
 	configCmd.Flags().IntVar(&conf.Config.DB.LockTimeout, "dbLockTimeout", 5000, "DB lock timeout")
 	viper.BindPFlag("DB.Name", configCmd.Flags().Lookup("dbName"))
 	viper.BindPFlag("DB.Host", configCmd.Flags().Lookup("dbHost"))
@@ -83,7 +83,7 @@ func init() {
 	// StatsD
 	configCmd.Flags().StringVar(&conf.Config.StatsD.Host, "statsdHost", "127.0.0.1", "StatsD host")
 	configCmd.Flags().IntVar(&conf.Config.StatsD.Port, "statsdPort", 8125, "StatsD port")
-	configCmd.Flags().StringVar(&conf.Config.StatsD.Name, "statsdName", "genesis", "StatsD name")
+	configCmd.Flags().StringVar(&conf.Config.StatsD.Name, "statsdName", "apla", "StatsD name")
 	viper.BindPFlag("StatsD.Host", configCmd.Flags().Lookup("statsdHost"))
 	viper.BindPFlag("StatsD.Port", configCmd.Flags().Lookup("statsdPort"))
 	viper.BindPFlag("StatsD.Name", configCmd.Flags().Lookup("statsdName"))
@@ -99,7 +99,7 @@ func init() {
 	configCmd.Flags().StringVar(&conf.Config.Log.LogLevel, "logLevel", "ERROR", "Log verbosity (DEBUG | INFO | WARN | ERROR)")
 	configCmd.Flags().StringVar(&conf.Config.Log.LogFormat, "logFormat", "text", "log format, could be text|json")
 	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Facility, "syslogFacility", "kern", "syslog facility")
-	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Tag, "syslogTag", "go-genesis", "syslog program tag")
+	configCmd.Flags().StringVar(&conf.Config.Log.Syslog.Tag, "syslogTag", "go-apla", "syslog program tag")
 	viper.BindPFlag("Log.LogTo", configCmd.Flags().Lookup("logTo"))
 	viper.BindPFlag("Log.LogLevel", configCmd.Flags().Lookup("logLevel"))
 	viper.BindPFlag("Log.LogFormat", configCmd.Flags().Lookup("logFormat"))
@@ -124,13 +124,13 @@ func init() {
 
 	// Etc
 	configCmd.Flags().StringVar(&conf.Config.PidFilePath, "pid", "",
-		fmt.Sprintf("Genesis pid file name (default dataDir/%s)", consts.DefaultPidFilename),
+		fmt.Sprintf("Apla pid file name (default dataDir/%s)", consts.DefaultPidFilename),
 	)
 	configCmd.Flags().StringVar(&conf.Config.LockFilePath, "lock", "",
-		fmt.Sprintf("Genesis lock file name (default dataDir/%s)", consts.DefaultLockFilename),
+		fmt.Sprintf("Apla lock file name (default dataDir/%s)", consts.DefaultLockFilename),
 	)
 	configCmd.Flags().StringVar(&conf.Config.KeysDir, "keysDir", "", "Keys directory (default dataDir)")
-	configCmd.Flags().StringVar(&conf.Config.DataDir, "dataDir", "", "Data directory (default cwd/genesis-data)")
+	configCmd.Flags().StringVar(&conf.Config.DataDir, "dataDir", "", "Data directory (default cwd/apla-data)")
 	configCmd.Flags().StringVar(&conf.Config.TempDir, "tempDir", "", "Temporary directory (default temporary directory of OS)")
 	configCmd.Flags().StringVar(&conf.Config.FirstBlockPath, "firstBlock", "", "First block path (default dataDir/1block)")
 	configCmd.Flags().BoolVar(&conf.Config.TLS, "tls", false, "Enable https")
