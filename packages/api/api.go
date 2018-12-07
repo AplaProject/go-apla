@@ -25,6 +25,7 @@ import (
 	"github.com/gorilla/schema"
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 )
 
 const (
@@ -32,6 +33,14 @@ const (
 	multipartFormData = "multipart/form-data"
 	contentType       = "Content-Type"
 )
+
+type Mode struct {
+	EcosysIDValidator  types.EcosystemIDValidator
+	EcosysNameGetter   types.EcosystemNameGetter
+	EcosysLookupGetter types.EcosystemLookupGetter
+	ContractRunner     types.SmartContractRunner
+	ClientTxProcessor  types.ClientTxPreprocessor
+}
 
 // Client represents data of client
 type Client struct {

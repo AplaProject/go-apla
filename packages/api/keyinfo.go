@@ -24,7 +24,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/modes"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -41,7 +40,7 @@ type keyInfoResult struct {
 	Roles     []roleInfo `json:"roles,omitempty"`
 }
 
-func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
+func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
@@ -52,8 +51,7 @@ func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ecosysLookup := modes.BuildEcosystemLookupGetter()
-	ids, names, err := ecosysLookup.GetEcosystemLookup()
+	ids, names, err := m.EcosysLookupGetter.GetEcosystemLookup()
 	if err != nil {
 		errorResponse(w, err)
 		return

@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/GenesisKernel/go-genesis/packages/types"
+
 	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/modes"
 )
 
 const (
@@ -54,15 +55,15 @@ func (f *paramsForm) AcceptNames() map[string]bool {
 type ecosystemForm struct {
 	EcosystemID     int64  `schema:"ecosystem"`
 	EcosystemPrefix string `schema:"-"`
+	Validator       types.EcosystemIDValidator
 }
 
 func (f *ecosystemForm) Validate(r *http.Request) error {
 	client := getClient(r)
-	logger := getLogger(r)
 
-	ecosysID, err := modes.ValidateEcosysID(f.EcosystemID, client.EcosystemID, logger)
+	ecosysID, err := f.Validator.Validate(f.EcosystemID, client.EcosystemID)
 	if err != nil {
-		if err == modes.ErrEcosystemNotFound {
+		if err == ErrEcosystemNotFound {
 			err = errEcosystem.Errorf(f.EcosystemID)
 		}
 		return err

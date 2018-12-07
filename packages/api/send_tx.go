@@ -24,7 +24,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/block"
 	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/modes"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -52,7 +51,7 @@ func getTxData(r *http.Request, key string) ([]byte, error) {
 	return txData, nil
 }
 
-func sendTxHandler(w http.ResponseWriter, r *http.Request) {
+func (m Mode) sendTxHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 
 	if block.IsKeyBanned(client.KeyID) {
@@ -74,7 +73,7 @@ func sendTxHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		hash, err := txHandler(r, txData)
+		hash, err := txHandler(r, txData, m)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -89,7 +88,7 @@ func sendTxHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		hash, err := txHandler(r, txData)
+		hash, err := txHandler(r, txData, m)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -107,7 +106,7 @@ type contractResult struct {
 	Result  string         `json:"result,omitempty"`
 }
 
-func txHandler(r *http.Request, txData []byte) (string, error) {
+func txHandler(r *http.Request, txData []byte, m Mode) (string, error) {
 	client := getClient(r)
 	logger := getLogger(r)
 
@@ -117,9 +116,8 @@ func txHandler(r *http.Request, txData []byte) (string, error) {
 		return "", errLimitTxSize.Errorf(len(txData))
 	}
 
-	p := modes.GetClientTxPreprocessor(logger, client.KeyID)
-
-	hash, err := p.ProcessClientTranstaction(txData)
+	m.ClientTxProcessor.SetLogger(logger)
+	hash, err := m.ClientTxProcessor.ProcessClientTranstaction(txData, client.KeyID)
 	if err != nil {
 		return "", err
 	}

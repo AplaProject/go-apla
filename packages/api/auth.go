@@ -23,7 +23,7 @@ import (
 
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/modes"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -71,7 +71,7 @@ func parseJWTToken(header string) (*jwt.Token, error) {
 	})
 }
 
-func getClientFromToken(token *jwt.Token) (*Client, error) {
+func getClientFromToken(token *jwt.Token, ecosysNameService types.EcosystemNameGetter) (*Client, error) {
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
 		return nil, nil
@@ -88,7 +88,7 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 	}
 
 	sID := converter.StrToInt64(claims.EcosystemID)
-	name, err := modes.GetEcosystemName(sID)
+	name, err := ecosysNameService.GetEcosystemName(sID)
 	if err != nil {
 		return nil, err
 	}

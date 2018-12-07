@@ -10,6 +10,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/model"
 	"github.com/GenesisKernel/go-genesis/packages/transaction"
+	"github.com/GenesisKernel/go-genesis/packages/types"
 	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
@@ -17,16 +18,15 @@ import (
 
 var ErrDiffKey = errors.New("Different keys")
 
-type ClientTxPreprocessor interface {
-	ProcessClientTranstaction([]byte) (string, error)
-}
-
 type blockchainTxPreprocessor struct {
 	logger *log.Entry
-	keyID  int64
 }
 
-func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
+func (p blockchainTxPreprocessor) SetLogger(logger *log.Entry) {
+	p.logger = logger
+}
+
+func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64) (string, error) {
 	rtx := &transaction.RawTransaction{}
 	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
 		return "", err
@@ -37,11 +37,11 @@ func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte) (stri
 		return "", err
 	}
 
-	if smartTx.Header.KeyID != p.keyID {
+	if smartTx.Header.KeyID != key {
 		return "", ErrDiffKey
 	}
 
-	if err := model.SendTx(rtx, p.keyID); err != nil {
+	if err := model.SendTx(rtx, key); err != nil {
 		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return "", err
 	}
@@ -50,15 +50,18 @@ func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte) (stri
 }
 
 type ObsTxPreprocessor struct {
-	Logger *log.Entry
-	KeyID  int64
+	logger *log.Entry
 }
 
-func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, error) {
+func (p ObsTxPreprocessor) SetLogger(logger *log.Entry) {
+	p.logger = logger
+}
+
+func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64) (string, error) {
 
 	tx, err := transaction.UnmarshallTransaction(bytes.NewBuffer(txData))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on unmarshaling user tx")
+		p.logger.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on unmarshaling user tx")
 		return "", err
 	}
 
@@ -66,59 +69,82 @@ func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte) (string, err
 		BlockID:  1,
 		Hash:     tx.TxHash,
 		Time:     time.Now().Unix(),
-		WalletID: p.KeyID,
+		WalletID: key,
 		Type:     tx.TxType,
 	}
 
 	if err := ts.Create(); err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating tx status")
+		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating tx status")
 		return "", err
 	}
 
 	res, _, err := tx.CallOBSContract()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on execution contract")
+		p.logger.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on execution contract")
 		return "", err
 	}
 
 	if err := ts.UpdateBlockMsg(nil, 1, res, tx.TxHash); err != nil {
-		p.Logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
+		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
 		return "", err
 	}
 
 	return string(converter.BinToHex(tx.TxHash)), nil
 }
 
-func GetClientTxPreprocessor(logger *log.Entry, keyID int64) ClientTxPreprocessor {
+func GetClientTxPreprocessor() types.ClientTxPreprocessor {
 	if conf.Config.IsSupportingOBS() {
-		return ObsTxPreprocessor{
-			Logger: logger,
-			KeyID:  keyID,
-		}
+		return ObsTxPreprocessor{}
 	}
 
-	return blockchainTxPreprocessor{
-		logger: logger,
-		keyID:  keyID,
-	}
+	return blockchainTxPreprocessor{}
 }
 
-func RunSmartContract(data, hash []byte, keyID int64, logger *log.Entry, wallet int64) error {
-	if !conf.Config.IsSupportingOBS() {
-		if err := tx.CreateTransaction(data, hash, keyID); err != nil {
-			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
-			return err
-		}
-		return nil
-	}
+// BlockchainSCRunner implementls SmartContractRunner for blockchain mode
+type BlockchainSCRunner struct {
+	logger *log.Entry
+}
 
-	proc := GetClientTxPreprocessor(logger, wallet)
+func (runner BlockchainSCRunner) SetLogger(logger *log.Entry) {
+	runner.logger = logger
+}
 
-	_, err := proc.ProcessClientTranstaction(data)
-	if err != nil {
-		log.WithFields(log.Fields{"error": consts.ContractError}).Error("on run internal NewUser")
+// RunContract runs smart contract on blockchain mode
+func (runner BlockchainSCRunner) RunContract(data, hash []byte, keyID int64) error {
+	if err := tx.CreateTransaction(data, hash, keyID); err != nil {
+		runner.logger.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return err
 	}
 
 	return nil
+}
+
+// OBSSCRunner implementls SmartContractRunner for obs mode
+type OBSSCRunner struct {
+	logger *log.Entry
+}
+
+func (runner OBSSCRunner) SetLogger(logger *log.Entry) {
+	runner.logger = logger
+}
+
+// RunContract runs smart contract on obs mode
+func (runner OBSSCRunner) RunContract(data, hash []byte, keyID int64) error {
+	proc := GetClientTxPreprocessor()
+	_, err := proc.ProcessClientTranstaction(data, keyID)
+	if err != nil {
+		runner.logger.WithFields(log.Fields{"error": consts.ContractError}).Error("on run internal NewUser")
+		return err
+	}
+
+	return nil
+}
+
+// GetSmartContractRunner returns mode boundede implementation of SmartContractRunner
+func GetSmartContractRunner() types.SmartContractRunner {
+	if !conf.Config.IsSupportingOBS() {
+		return BlockchainSCRunner{}
+	}
+
+	return OBSSCRunner{}
 }

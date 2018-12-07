@@ -28,14 +28,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func getAppParamHandler(w http.ResponseWriter, r *http.Request) {
-	form := &ecosystemForm{}
+func (m Mode) GetAppParamHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+	m.EcosysIDValidator.SetLogger(logger)
+
+	form := &ecosystemForm{
+		Validator: m.EcosysIDValidator,
+	}
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	logger := getLogger(r)
 	params := mux.Vars(r)
 
 	ap := &model.AppParam{}

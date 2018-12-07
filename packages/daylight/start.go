@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/api"
 	conf "github.com/GenesisKernel/go-genesis/packages/conf"
 	"github.com/GenesisKernel/go-genesis/packages/consts"
 	"github.com/GenesisKernel/go-genesis/packages/converter"
@@ -35,6 +34,7 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
 	logtools "github.com/GenesisKernel/go-genesis/packages/log"
 	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/GenesisKernel/go-genesis/packages/modes"
 	"github.com/GenesisKernel/go-genesis/packages/network/httpserver"
 	"github.com/GenesisKernel/go-genesis/packages/obsmanager"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
@@ -148,8 +148,7 @@ func delPidFile() {
 }
 
 func initRoutes(listenHost string) {
-	handler := api.NewRouter()
-	handler = api.WithCors(handler)
+	handler := modes.RegisterRoutes()
 	handler = httpserver.NewMaxBodyReader(handler, conf.Config.HTTPServerMaxBodySize)
 
 	if conf.Config.TLS {

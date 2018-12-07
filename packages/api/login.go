@@ -28,7 +28,6 @@ import (
 	"github.com/GenesisKernel/go-genesis/packages/converter"
 	"github.com/GenesisKernel/go-genesis/packages/crypto"
 	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/modes"
 	"github.com/GenesisKernel/go-genesis/packages/publisher"
 	"github.com/GenesisKernel/go-genesis/packages/script"
 	"github.com/GenesisKernel/go-genesis/packages/smart"
@@ -88,7 +87,7 @@ type rolesResult struct {
 	RoleName string `json:"role_name"`
 }
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		publicKey []byte
 		wallet    int64
@@ -178,7 +177,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
 		} else {
-			modes.RunSmartContract(txData, txHash, sc.KeyID, logger, wallet)
+			m.ContractRunner.SetLogger(logger)
+			m.ContractRunner.RunContract(txData, txHash, sc.KeyID)
 		}
 	}
 
