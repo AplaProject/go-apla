@@ -168,9 +168,10 @@ func getPage(r *http.Request) (result *contentResult, err error) {
 
 	logger := getLogger(r)
 
+	client := getClient(r)
 	menu := &model.Menu{}
 	menu.SetTablePrefix(prefix)
-	_, err = menu.Get(page.Menu)
+	_, err = menu.Get(client.Prefix())
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
 		return nil, errServer
