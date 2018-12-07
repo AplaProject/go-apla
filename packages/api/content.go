@@ -147,7 +147,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 	}
 	menu := &model.Menu{}
 	menu.SetTablePrefix(prefix)
-	_, err = menu.Get(page.Menu)
+	_, err = menu.Get(getPrefix(data))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
 		return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
