@@ -85,6 +85,7 @@ func initVars(r *http.Request) *map[string]string {
 		vars[`ecosystem_name`] = client.EcosystemName
 	} else {
 		vars[`ecosystem_id`] = vars[`ecosystem`]
+		delete(vars, "ecosystem")
 		if len(vars[`keyID`]) > 0 {
 			vars[`key_id`] = vars[`keyID`]
 		} else {
