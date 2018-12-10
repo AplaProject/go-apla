@@ -1,8 +1,8 @@
 package modes
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/types"
 )
 
 func GetDaemonListFactory() types.DaemonListFactory {

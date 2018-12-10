@@ -3,8 +3,8 @@ package modes
 import (
 	"net/http"
 
-	"github.com/GenesisKernel/go-genesis/packages/api"
-	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/AplaProject/go-apla/packages/api"
+	"github.com/AplaProject/go-apla/packages/conf"
 )
 
 func RegisterRoutes() http.Handler {
