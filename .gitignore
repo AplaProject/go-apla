@@ -101,6 +101,7 @@ Temporary Items
 genesis-data
 packages/api/key
 go-genesis
+go-apla
 1block
 NodePrivateKey
 PrivateKey
@@ -113,20 +114,6 @@ config.toml
 packages/static/
 public/
 
-tools/update_client/update.priv
-tools/update_client/update.pub
-tools/update_client/update_client
-tools/update_server/update.db
-tools/update_server/update.db.lock
-tools/update_server/update.priv
-tools/update_server/update.pub
-tools/update_server/update_server
-
 .vscode/
-genesis-data/go-genesis.lock
-genesis-data/go-genesis.pid
-genesis-data2/g.lock
-genesis-data2/go-genesis.lock
-genesis-data2/go-genesis.pid
+./*-data/
 packages/api/helper_test.go
-node1-data/go-genesis.lock

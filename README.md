@@ -1,18 +1,18 @@
-[![Throughput Graph](https://graphs.waffle.io/GenesisKernel/go-genesis/throughput.svg)](https://waffle.io/GenesisKernel/go-genesis/metrics/throughput)
+[![Throughput Graph](https://graphs.waffle.io/AplaProject/go-apla/throughput.svg)](https://waffle.io/AplaProject/go-apla/metrics/throughput)
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Go Report Card](https://goreportcard.com/badge/github.com/GenesisKernel/go-genesis)](https://goreportcard.com/report/github.com/GenesisKernel/go-genesis)
-[![Build Status](https://travis-ci.org/GenesisKernel/go-genesis.svg?branch=master)](https://travis-ci.org/GenesisKernel/go-genesis)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://genesiskernel.readthedocs.io/en/latest/)
-[![](https://tokei.rs/b1/github/GenesisKernel/go-genesis)](https://github.com/GenesisKernel/go-genesis)
-![](https://reposs.herokuapp.com/?path=GenesisKernel/go-genesis&style=flat)
+[![Go Report Card](https://goreportcard.com/badge/github.com/AplaProject/go-apla)](https://goreportcard.com/report/github.com/AplaProject/go-apla)
+[![Build Status](https://travis-ci.org/AplaProject/go-apla.svg?branch=master)](https://travis-ci.org/AplaProject/go-apla)
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg?style=flat)](http://aplakernel.readthedocs.io/en/latest/)
+[![](https://tokei.rs/b1/github/AplaProject/go-apla)](https://github.com/AplaProject/go-apla)
+![](https://reposs.herokuapp.com/?path=AplaProject/go-apla&style=flat)
 [![API Reference](
 https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/68747470733a2f2f676f646f632e6f72672f6769746875622e636f6d2f676f6c616e672f6764646f3f7374617475732e737667
-)](https://godoc.org/github.com/GenesisKernel/go-genesis)
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-genesis?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+)](https://godoc.org/github.com/AplaProject/go-apla)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/go-apla?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Slack Status](https://slack.apla.io/badge.svg)](https://slack.apla.io)
 
-# Genesis Getting Started Guide
+# Apla Getting Started Guide
 
 ## Table of contents
 
@@ -37,24 +37,24 @@ https://camo.githubusercontent.com/915b7be44ada53c290eb157634330494ebe3e30a/6874
 
 ## Overview <a name="overview"></a>
 
- Genesis is a platform which was developed for building digital ecosystems. Go-genesis is a backend for Genesis blockchain platform.
+ Apla is a platform which was developed for building digital ecosystems. Go-apla is a backend for Apla blockchain platform.
 
-Genesis Blockchain Platform consists of two main components:
+Apla Blockchain Platform consists of two main components:
 
 - Backend
 
   Contains:
   - Centrifugo notification service
-  - Go-Genesis kernel service (includes Genesis TCP and API servers)
+  - Go-Apla kernel service (includes Apla TCP and API servers)
   - PostgreSQL database
 
 - Frontend
 
-  Molis client is the frontend for Genesis. It can be built as a native OS application or a web-application.
+  Molis client is the frontend for Apla. It can be built as a native OS application or a web-application.
 
 In a production environment, each of these components (backend and frontend) can be deployed on different hosts and operating systems.
 
-In this guide we will deploy Genesis Blockchain Platform based on three nodes with the same OS on the test ICT-infrastructure and build Molis client.
+In this guide we will deploy Apla Blockchain Platform based on three nodes with the same OS on the test ICT-infrastructure and build Molis client.
 
 As a node OS we will use:
  - Debian 9 (Stretch) 64-bit [official distributive](https://www.debian.org/CD/http-ftp/#stable)
@@ -68,65 +68,65 @@ For testing purposes, all of these hosts are connected to each other in a simple
 |:---------:|-----------|-------------|
 | 1 | PostgreSQL | 127.0.0.1:5432|
 | 1 | Centrifugo | 10.10.99.1:8000|
-| 1 | Go-Genesis (TCP-server) | 10.10.99.1:7078|
-| 1 | Go-Genesis (API-server) | 10.10.99.1:7079|
+| 1 | Go-Apla (TCP-server) | 10.10.99.1:7078|
+| 1 | Go-Apla (API-server) | 10.10.99.1:7079|
 | 2 | PostgreSQL | 127.0.0.1:5432|
 | 2 | Centrifugo | 10.10.99.2:8000|
-| 2 | Go-Genesis (TCP-server) | 10.10.99.2:7078|
-| 2 | Go-Genesis (API-server) | 10.10.99.2:7079|
+| 2 | Go-Apla (TCP-server) | 10.10.99.2:7078|
+| 2 | Go-Apla (API-server) | 10.10.99.2:7079|
 | 3 | PostgreSQL | 127.0.0.1:5432|
 | 3 | Centrifugo | 10.10.99.3:8000|
-| 3 | Go-Genesis (TCP-server) | 10.10.99.3:7078|
-| 3 | Go-Genesis (API-server) | 10.10.99.3:7079|
+| 3 | Go-Apla (TCP-server) | 10.10.99.3:7078|
+| 3 | Go-Apla (API-server) | 10.10.99.3:7079|
 
 ## ***Backend Install*** <a name="backend-install"></a>
 
-In  this section we will deploy Genesis Backend components.
+In  this section we will deploy Apla Backend components.
 
-Genesis Blockchain Platform backend consists of three main components:
+Apla Blockchain Platform backend consists of three main components:
 
 1) **PostgreSQL database system**
 
-Each Genesis node use PostgreSQL database system for store its current state database.
+Each Apla node use PostgreSQL database system for store its current state database.
 
 In a testing environment, you can deploy just one instance of PostgreSQL database system for all nodes. In this case, you must create PostgreSQL databases for each node. All nodes will connect to their databases located on one PostgreSQL instance.
 
-In a production environment, it is not recommended to have one PostgreSQL database system for all nodes. Each Genesis node must have its own instance of PostgreSQL and should connect only to it. It is not necessary to deploy this instance on the same host with other backend components.
+In a production environment, it is not recommended to have one PostgreSQL database system for all nodes. Each Apla node must have its own instance of PostgreSQL and should connect only to it. It is not necessary to deploy this instance on the same host with other backend components.
 
-For testing purposes, in this guide, we will deploy PostgreSQL on each Genesis node.
+For testing purposes, in this guide, we will deploy PostgreSQL on each Apla node.
 
 2) **Centrifugo notification server**
 
-Centrifugo is a notification service which receives notifications from Go-Genesis TCP-server and sends them to the frontend (Molis client), so that users can see status of their transactions.
+Centrifugo is a notification service which receives notifications from Go-Apla TCP-server and sends them to the frontend (Molis client), so that users can see status of their transactions.
 
-Centrifugo is a unified notification service for all nodes in Genesis Blockchain Platform. When Molis client connects to Go-Genesis API-service, it receives the IP-address of Centrifugo host and connects to it via a websocket.
+Centrifugo is a unified notification service for all nodes in Apla Blockchain Platform. When Molis client connects to Go-Apla API-service, it receives the IP-address of Centrifugo host and connects to it via a websocket.
 
 In a testing environment, you can deploy centrifugo service on the same host with other backend components. It can be a single centrifugo service for all nodes, or each node may connect to its own centrifugo instance.
 
 In a production environment, you must have at least several dedicated centrifugo hosts.
 
-For testing purposes, in this guide, we will deploy Centrifugo service on each Genesis node.
+For testing purposes, in this guide, we will deploy Centrifugo service on each Apla node.
 
-3) **Go-Genesis**
+3) **Go-Apla**
 
-Go-Genesis is the kernel of a Genesis node. It consists of two services: TCP-server and API-server.
+Go-Apla is the kernel of a Apla node. It consists of two services: TCP-server and API-server.
 
-TCP-server is responsible for Genesis nodes interconnection.
+TCP-server is responsible for Apla nodes interconnection.
 
 API-server is responsible for connections with Molis clients.
 
-In a testing environment, you can deploy Go-Genesis service with other backend components on one host.
+In a testing environment, you can deploy Go-Apla service with other backend components on one host.
 
-In a production environment, you must deploy Go-Genesis services on dedicated hosts.
+In a production environment, you must deploy Go-Apla services on dedicated hosts.
 
-For testing purposes, in this guide, we will deploy Go-Genesis services on the same host with other backend components.
+For testing purposes, in this guide, we will deploy Go-Apla services on the same host with other backend components.
 
 
 ## Backend Install for Debian OS <a name="backend-install-deb"></a>
 
 ### Backend Software Prerequisites <a name="backend-software-prerequisites-deb"></a>
 
-Before installing Genesis Backend components, you need to install additional software.
+Before installing Apla Backend components, you need to install additional software.
 
 #### Install sudo
 
@@ -165,21 +165,21 @@ Some of used packages can be downloaded from the official Debian repository. Ins
 $ sudo apt install -y git curl apt-transport-https build-essential
 ```
 
-#### Create a directory for Genesis
+#### Create a directory for Apla
 
-For Debian 9 OS, it is recommended to store all software used by Genesis Blockchain Platform in a special directory.
+For Debian 9 OS, it is recommended to store all software used by Apla Blockchain Platform in a special directory.
 
-In this guide, we will use /opt/genesis directory, but you can change it to your own.
+In this guide, we will use /opt/apla directory, but you can change it to your own.
 
 1) Make directory and go to it:
 
 ```bash
-sudo mkdir /opt/genesis && cd /opt/genesis
+sudo mkdir /opt/apla && cd /opt/apla
 ```
 2) Make your user owner of this directory:
 
 ```bash
-sudo chown user /opt/genesis/
+sudo chown user /opt/apla/
 ```
 
 #### Install Go Language
@@ -199,7 +199,7 @@ tar -xvf go1.10.1.linux-amd64.tar.gz && sudo mv go /usr/local/
 3) Export Go environment variables:
 
 ```bash
-export GOROOT=/usr/local/go && export GOPATH=/opt/genesis/ && export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
+export GOROOT=/usr/local/go && export GOPATH=/opt/apla/ && export PATH=$GOPATH/bin:$GOROOT/bin:$PATH
 ```
 
 4) Remove the temporary file:
@@ -244,15 +244,15 @@ By default, after installing Debian 9, there are no firewall rules. But if you w
 sudo apt install -y postgresql
 ```
 
-2) Change user's password postgres to Genesis' default. You can set your own password, but then you also must change it in the node configuration file config.toml.
+2) Change user's password postgres to Apla' default. You can set your own password, but then you also must change it in the node configuration file config.toml.
 
 ```bash
-sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'genesis'"
+sudo -u postgres psql -c "ALTER USER postgres WITH PASSWORD 'apla'"
 ```
 
-3) Create a node current state database, for example 'genesisdb':
+3) Create a node current state database, for example 'apladb':
 ```
-$ sudo -u postgres psql -c "CREATE DATABASE genesisdb"
+$ sudo -u postgres psql -c "CREATE DATABASE apladb"
 ```
 
 #### Install Centrifugo <a name="install-centrifugo-deb"></a>
@@ -277,49 +277,49 @@ $ echo '{"secret":"CENT_SECRET"}' > centrifugo/config.json
 
 You can set your own "secret", but then you also must change it in node configuration file config.toml.
 
-#### Install Go-Genesis
+#### Install Go-Apla
 
-1) Create go-genesis and node1 directories:
+1) Create go-apla and node1 directories:
 ```
-$ mkdir go-genesis && cd go-genesis && mkdir node1
+$ mkdir go-apla && cd go-apla && mkdir node1
 ```
-2) Download and build the latest release of Go-Genesis from [GitHub](https://github.com/GenesisKernel/go-genesis/releases), and then copy it into the go-genesis directory:
+2) Download and build the latest release of Go-Apla from [GitHub](https://github.com/AplaProject/go-apla/releases), and then copy it into the go-apla directory:
 
 ```bash
-go get -v github.com/GenesisKernel/go-genesis && cp $GOPATH/bin/go-genesis /opt/genesis
+go get -v github.com/AplaProject/go-apla && cp $GOPATH/bin/go-apla /opt/apla
 ```
 
 
 3) Create Node 1 configuration file, all used network settings (IP-adresses and ports) are described in [Overview](#overview):
 
 ```bash
-./go-genesis config --dataDir=/opt/genesis/go-genesis/node1 --dbName=genesisdb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
+./go-apla config --dataDir=/opt/apla/go-apla/node1 --dbName=apladb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
 ```
 Where:
 
-- --dbName - database name 'genesisdb' that was created in section [Install PostgreSQL](#install-postgres-deb)
+- --dbName - database name 'apladb' that was created in section [Install PostgreSQL](#install-postgres-deb)
 - --centSecret - Centrifugo secret 'CENT_SECRET' that was created in section [Install Centrifugo](#install-centrifugo-deb)
 - --centUrl=ht&#8203;tp://10.10.99.1:8000 - used IP address and port of Centrifugo of Node 1
 - --httpHost=10.10.99.1 - used IP address and port of API-server of Node 1
 - --tcpHost=10.10.99.1 - used IP address and port of TCP-server of Node 1
-- Other usage and flags of go-genesis are described in [documentation](http://genesiskernel.readthedocs.io/en/latest/)
+- Other usage and flags of go-apla are described in [documentation](http://aplakernel.readthedocs.io/en/latest/)
 
 4) Generate Node 1 keys:
 
 ```bash
-$ ./go-genesis generateKeys --config=node1/config.toml
+$ ./go-apla generateKeys --config=node1/config.toml
 ```
 
 5) Generate the first block:
 
 ```bash
-$ ./go-genesis generateFirstBlock --config=node1/config.toml
+$ ./go-apla generateFirstBlock --config=node1/config.toml
 ```
 
 6) Initialize the database:
 
 ```bash
-./go-genesis initDatabase --config=node1/config.toml
+./go-apla initDatabase --config=node1/config.toml
 ```
 
 
@@ -333,14 +333,14 @@ This section is under development.
 To start the first node you must start two services:
 
 -	centrifugo
--	go-genesis
+-	go-apla
 
 If you did not create these services, you can just execute binary files from their directories in different consoles.
 
 1) Execute centrifugo file:
 
 ```bash
-$ cd /opt/genesis/centrifugo && ./centrifugo -a 10.10.99.1 --config=config.json
+$ cd /opt/apla/centrifugo && ./centrifugo -a 10.10.99.1 --config=config.json
 ```
 
 Where:
@@ -348,24 +348,24 @@ Where:
  - 10.10.99.1 - IP-address of Node 1
  - --config=config.json - path to centrifugo configuration file 'config.json'
 
-2) Execute go-genesis file in another console:
+2) Execute go-apla file in another console:
 
 ```bash
-$ cd /opt/genesis/go-genesis/ && ./go-genesis start --config=node1/config.toml
+$ cd /opt/apla/go-apla/ && ./go-apla start --config=node1/config.toml
 ```
 
 Now, you can connect to your node via Molis client.
 
 ### Other Nodes Deployment <a name="other-nodes-deployment-deb"></a>
 
-Deployment of the second node and others is similar to the first node, but has some differences in creation of go-genesis config.toml file.
+Deployment of the second node and others is similar to the first node, but has some differences in creation of go-apla config.toml file.
 
 For each other node deployment you must repeat the following steps:
 
 - Install Backend Software Prerequisites
 - Install PostgreSQL
 - Install Centrifugo
-- Install Go-Genesis
+- Install Go-Apla
 
 #### Other Nodes Configuration
 
@@ -374,42 +374,42 @@ In this example we will configure Node 2. Other Nodes can be configured in the s
 1) Copy file of the first block to Node 2. For example, you can do it via scp on Node 2:
 
 ```bash
-scp user@10.10.99.1:/opt/genesis/go-genesis/node1/first /opt/genesis/go-genesis/node2/
+scp user@10.10.99.1:/opt/apla/go-apla/node1/first /opt/apla/go-apla/node2/
 ```
 
 2) Create Node 2 configuration file:
 
 ```bash
 
-./go-genesis config --dataDir=/opt/genesis/go-genesis/node2 --dbName=genesisdb  --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
+./go-apla config --dataDir=/opt/apla/go-apla/node2 --dbName=apladb  --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
 ```
 
 Where:
 
-- --dbName - database name 'genesisdb' that was created in section [Install PostgreSQL](#install-postgres-deb)
+- --dbName - database name 'apladb' that was created in section [Install PostgreSQL](#install-postgres-deb)
 - --centSecret - Centrifugo secret 'CENT_SECRET' that was created in section [Install Centrifugo](#install-centrifugo-deb)
 - --centUrl=ht&#8203;tp://10.10.99.2:8000 - used IP address and port of Centrifugo of Node 2
 - --httpHost=10.10.99.2 - used IP address and port of API-server of Node 2
 - --tcpHost=10.10.99.2 - used IP address and port of TCP-server of Node 2
 - --nodesAddr=10.10.99.1 - IP-address of Node 1
-- Other usage and flags of go-genesis are described in [documentation](http://genesiskernel.readthedocs.io/en/latest/)
+- Other usage and flags of go-apla are described in [documentation](http://aplakernel.readthedocs.io/en/latest/)
 
 3) Generate Node 2 keys:
 
 ```bash
-./go-genesis generateKeys --config=node2/config.toml
+./go-apla generateKeys --config=node2/config.toml
 ```
 
 4) Initialize the database:
 
 ```bash
-./go-genesis initDatabase --config=node2/config.toml
+./go-apla initDatabase --config=node2/config.toml
 ```
 
 5) Start Node 2:
 
 ```bash
-./go-genesis start --config=node2/config.toml
+./go-apla start --config=node2/config.toml
 ```
 
 Ignore the showed errors. If you start node with log level "INFO", you'll see that node starts downloading blocks.
@@ -514,7 +514,7 @@ Now, all nodes are connected to each other.
 
 ### Backend Software Prerequisites <a name="backend-software-prerequisites-win"></a>
 
-Before installing Genesis Backend components, you need to install additional software. To do this, you must have administrators privileges.
+Before installing Apla Backend components, you need to install additional software. To do this, you must have administrators privileges.
 
 #### Install Go Language
 
@@ -530,7 +530,7 @@ Before installing Genesis Backend components, you need to install additional sof
 
 #### Install MinGW
 
-You must install MinGW software only if you want to build Genesis backend from source code.
+You must install MinGW software only if you want to build Apla backend from source code.
 
 1) Download the latest MinGW-W64 from its [site](https://sourceforge.net/projects/mingw-w64/).
 
@@ -586,18 +586,18 @@ In Windows Server firewall settings, you must allow the following incoming conne
 - specify a default installation directory
 - specify all selected components
 - specify default data directory
-- set a password for the database superuser (postgres), for example 'genesis'
+- set a password for the database superuser (postgres), for example 'apla'
 - specify the default port 5432 the server must listen on (you can set your own port, but also you must change it in node configuration file config.toml)
 - select a default locale to be used by the new database cluster
 - after the setup wizard is completed, don’t launch stack builder
 
-3) Run pgAdmin4 app and create current state database for the node, for example 'genesisdb'
+3) Run pgAdmin4 app and create current state database for the node, for example 'apladb'
 
 #### Install Centrifugo <a name="install-centrifugo-win"></a>
 
 1) Download Centrifugo-1.7.9-windows-amd64.zip from [GitHub](https://github.com/centrifugal/centrifugo/releases/).
 
-2) Unzip archive to your Centrifugo folder inside Genesis directory
+2) Unzip archive to your Centrifugo folder inside Apla directory
 
 3) By any text editor, create Centrifugo configuration file config.json in the centrifugo directory. Add the following line to config.json file:
 
@@ -607,52 +607,52 @@ In Windows Server firewall settings, you must allow the following incoming conne
 
 You can set your own "secret", but also you must change it in node configuration file config.toml.
 
-#### Install Go-Genesis
+#### Install Go-Apla
 
-1) In Genesis directory, create go-genesis directory and node folder inside it.
+1) In Apla directory, create go-apla directory and node folder inside it.
 
-2) Download Go-Genesis from [GitHub](https://github.com/GenesisKernel/go-genesis/releases) or build latest release by command line:
+2) Download Go-Apla from [GitHub](https://github.com/AplaProject/go-apla/releases) or build latest release by command line:
 ```
-> cd C:\Genesis\go-genesis
-> go get -v github.com/GenesisKernel/go-genesis
-> go build github.com/GenesisKernel/go-genesis
+> cd C:\Apla\go-apla
+> go get -v github.com/AplaProject/go-apla
+> go build github.com/AplaProject/go-apla
 ```
 
-After that, go-genesis.exe file will appear in go-genesis directory.
+After that, go-apla.exe file will appear in go-apla directory.
 
-Usage and flags of go-genesis.exe file are described in [documentation](http://genesiskernel.readthedocs.io/en/latest/).
+Usage and flags of go-apla.exe file are described in [documentation](http://aplakernel.readthedocs.io/en/latest/).
 
 3) Create Node 1 config.toml configuration file. All used network settings (IP-adresses and ports) are described in [Overview](#overview).
 
 ```
-> go-genesis.exe config --dataDir=C:\Genesis\go-genesis\node --dbName=genesisdb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
+> go-apla.exe config --dataDir=C:\Apla\go-apla\node --dbName=apladb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.1:8000 --httpHost=10.10.99.1 --tcpHost=10.10.99.1
 ```
 
 Where:
 
-- --dbName - database name 'genesisdb' that was created in section [Install PostgreSQL](#install-postgres-win)
+- --dbName - database name 'apladb' that was created in section [Install PostgreSQL](#install-postgres-win)
 - --centSecret - Centrifugo secret 'CENT_SECRET' that was created in section [Install Centrifugo](#install-centrifugo-win)
 - --centUrl=ht&#8203;tp://10.10.99.1:8000 - used IP address and port of Centrifugo of Node 1
 - --httpHost=10.10.99.1 - used IP address and port of API-server of Node 1
 - --tcpHost=10.10.99.1 - used IP address and port of TCP-server of Node 1
-- Other usage and flags of go-genesis are described in [documentation](http://genesiskernel.readthedocs.io/en/latest/)
+- Other usage and flags of go-apla are described in [documentation](http://aplakernel.readthedocs.io/en/latest/)
 
 4) Generate Node 1 keys:
 
 ```
-> go-genesis.exe generateKeys --config=node\config.toml
+> go-apla.exe generateKeys --config=node\config.toml
 ```
 
 5) Generate the first block:
 
 ```
-> go-genesis.exe generateFirstBlock --config=node\config.toml
+> go-apla.exe generateFirstBlock --config=node\config.toml
 ```
 
 6) Initialize the database:
 
 ```
-> go-genesis.exe initDatabase --config=node\config.toml
+> go-apla.exe initDatabase --config=node\config.toml
 ```
 
 #### Create services for backend components
@@ -665,7 +665,7 @@ This section is under development.
 To start the first node you must start two services:
 
 - centrifugo
-- go-genesis
+- go-apla
 
 If you did not create these services, you can just execute .exe files from its directories in different command prompts.
 
@@ -680,24 +680,24 @@ Where:
  - 10.10.99.1 - IP-address of Node 1
  - --config=config.json - path to centrifugo configuration file 'config.json'
 
-2) Run go-genesis.exe:
+2) Run go-apla.exe:
 
 ```
-> go-genesis.exe start --config=node\config.toml
+> go-apla.exe start --config=node\config.toml
 ```
 
 Now, you can connect to your node via Molis client.
 
 ### Other Nodes Deployment <a name="other-nodes-deployment-win"></a>
 
-Deployment of the second node and others is similar to the first node, but has some differences in creation of go-genesis config.toml file.
+Deployment of the second node and others is similar to the first node, but has some differences in creation of go-apla config.toml file.
 
 For each other node deployment you should repeat the following steps:
 
 - Install Backend Software Prerequisites
 - Install PostgreSQL
 - Install Centrifugo
-- Install Go-Genesis
+- Install Go-Apla
 
 #### Other Nodes Configuration
 
@@ -708,33 +708,33 @@ In this example we will configure Node 2. Other Nodes can be configured in the s
 2) Create Node 2 config.toml configuration file:
 
 ```
-> go-genesis.exe config --dataDir=C:\Genesis\go-genesis\node --dbName=genesisdb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
+> go-apla.exe config --dataDir=C:\Apla\go-apla\node --dbName=apladb --privateBlockchain=true --centSecret="CENT_SECRET" --centUrl=http://10.10.99.2:8000 --httpHost=10.10.99.2 --tcpHost=10.10.99.2 --nodesAddr=10.10.99.1
 ```
 
 Where:
 
-- --dbName - database name 'genesisdb' that was created in section [Install PostgreSQL](#install-postgres-win)
+- --dbName - database name 'apladb' that was created in section [Install PostgreSQL](#install-postgres-win)
 - --centSecret - Centrifugo secret 'CENT_SECRET' that was created in section [Install Centrifugo](#install-centrifugo-win)
 - --centUrl=ht&#8203;tp://10.10.99.2:8000 - used IP address and port of Centrifugo of Node 2
 - --httpHost=10.10.99.2 - used IP address and port of API-server of Node 2
 - --tcpHost=10.10.99.2 - used IP address and port of TCP-server of Node 2
 - --nodesAddr=10.10.99.1 - IP-address of Node 1
-- Other usage and flags of go-genesis are described in [documentation](http://genesiskernel.readthedocs.io/en/latest/)
+- Other usage and flags of go-apla are described in [documentation](http://aplakernel.readthedocs.io/en/latest/)
 
 3) Generate Node 2 keys:
 ```
-> go-genesis.exe generateKeys --config=node\config.toml
+> go-apla.exe generateKeys --config=node\config.toml
 ```
 
 4) Initialize the database:
 ```
-> go-genesis.exe initDatabase --config=node\config.toml
+> go-apla.exe initDatabase --config=node\config.toml
 ```
 
 5) Start Node 2 services:
 ```
 > centrifugo.exe -a 10.10.99.2 --config=config.json
-> go-genesis.exe start --config=node\config.toml
+> go-apla.exe start --config=node\config.toml
 ```
 
 Ignore the showed errors. If you start node with log level "INFO", you'll see that node starts downloading blocks.
@@ -841,7 +841,7 @@ Now, all nodes are connected to each other.
 
 ## ***Frontend Install*** <a name="frontend-install"></a>
 
-Molis client is the frontend for Genesis Blockchain Platform.
+Molis client is the frontend for Apla Blockchain Platform.
 
 First, to work with the system, you must build Molis client, then you can deploy it to your users.
 
@@ -877,7 +877,7 @@ sudo apt install -y nodejs
 1) Download Yarn version 1.7.0 from [GitHub](https://github.com/yarnpkg/yarn/releases) or via command line:
 
 ```bash
-$ cd /opt/genesis &&  wget https://github.com/yarnpkg/yarn/releases/download/v1.7.0/yarn_1.7.0_all.deb
+$ cd /opt/apla &&  wget https://github.com/yarnpkg/yarn/releases/download/v1.7.0/yarn_1.7.0_all.deb
 ```
 
 2) Install Yarn:
@@ -888,16 +888,16 @@ $ sudo dpkg -i yarn_1.7.0_all.deb && rm yarn_1.7.0_all.deb
 
 ### Build Molis App <a name="build-molis-app-deb"></a>
 
-1) Download latest release of Molis from [GitHub](https://github.com/GenesisKernel/genesis-front) via git:
+1) Download latest release of Molis from [GitHub](https://github.com/AplaProject/apla-front) via git:
 
 ```bash
-git clone https://github.com/GenesisKernel/genesis-front.git
+git clone https://github.com/AplaProject/apla-front.git
 ```
 
 2) Install Molis dependencies via Yarn:
 
 ```bash
-cd genesis-front/ && yarn install
+cd apla-front/ && yarn install
 ```
 
 
@@ -931,7 +931,7 @@ All used network settings (IP-adresses and ports) are described in [Overview](#o
 3) Build the desktop app with Yarn:
 
 ```bash
-$ cd /opt/genesis/genesis-front && yarn build-desktop
+$ cd /opt/apla/apla-front && yarn build-desktop
 ```
 
 4) Then desktop app must be packed to the AppImage:
@@ -951,7 +951,7 @@ After that, your application will be ready to use, but its connection settings c
 2) Build the web app:
 
 ```bash
-$ cd /opt/genesis/genesis-front/ && yarn build
+$ cd /opt/apla/apla-front/ && yarn build
 ```
 
 After building, redistributable files will be placed to the '/build' directory. You can serve it with any web-server of your choice. Settings.json file must be also placed there. Note that you do not need to build your application again if your connection settings will change. Instead, edit the settings.json file and restart web-server.
@@ -982,22 +982,22 @@ After this, your Molis Web App will be available at: ``http://localhost:5000``
 
 ### Build Molis <a name="build-molis-app-win"></a>
 
-1) Download the latest release of Molis from [GitHub](https://github.com/GenesisKernel/genesis-front) via git:
+1) Download the latest release of Molis from [GitHub](https://github.com/AplaProject/apla-front) via git:
 
 ```
-> git clone https://github.com/GenesisKernel/genesis-front.git
+> git clone https://github.com/AplaProject/apla-front.git
 ```
 
 2) Install Molis dependencies via Yarn:
 
 ```
-> cd genesis-front
+> cd apla-front
 > yarn install
 ```
 
 #### Build Molis Desktop App
 
-1) Create a settings.json file in genesis-front/public directory, which contains connections information about full nodes.
+1) Create a settings.json file in apla-front/public directory, which contains connections information about full nodes.
 
 2) Edit settings.json file in any text editor and add the required settings in this format:
 
@@ -1030,7 +1030,7 @@ All used network settings (IP-adresses and ports) are described in [Overview](#o
 > yarn release --publish never -w
 ```
 
-After that, your application will be ready to execute at genesis-front\releases directory, but its connection settings can not be changed in the future. If these settings will change, you must build a new version of the application.
+After that, your application will be ready to execute at apla-front\releases directory, but its connection settings can not be changed in the future. If these settings will change, you must build a new version of the application.
 
 #### Build Molis Web App
 

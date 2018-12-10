@@ -1,6 +1,6 @@
 package obs
 
-import "github.com/GenesisKernel/go-genesis/packages/consts"
+import "github.com/AplaProject/go-apla/packages/consts"
 
 var rolesDataSQL = `
 INSERT INTO "1_roles" ("id", "default_page", "role_name", "deleted", "role_type", "creator","roles_access", "ecosystem") VALUES

@@ -4,10 +4,10 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/network"
-	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/network"
+	"github.com/AplaProject/go-apla/packages/network/tcpclient"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

@@ -11,10 +11,10 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
 	pConf "github.com/rpoletaev/supervisord/config"
 	"github.com/rpoletaev/supervisord/process"
 	log "github.com/sirupsen/logrus"
