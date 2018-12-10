@@ -117,3 +117,4 @@ public/
 .vscode/
 ./*-data/
 packages/api/helper_test.go
+node1-data/go-genesis.lock

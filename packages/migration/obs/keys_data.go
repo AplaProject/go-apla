@@ -1,7 +1,7 @@
 package obs
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 )
 
 var keysDataSQL = `
