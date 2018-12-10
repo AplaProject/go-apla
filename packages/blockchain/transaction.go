@@ -286,7 +286,7 @@ func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...str
 		return nil, err
 	}
 
-	if smartTx.Header.PublicKey, err = hex.DecodeString(pubKey); err != nil {
+	if smartTx.Header.PublicKey, err = crypto.HexToPub(pubKey); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
 		return nil, err
 	}
