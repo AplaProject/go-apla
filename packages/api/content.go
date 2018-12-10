@@ -141,13 +141,13 @@ func pageValue(w http.ResponseWriter, data *apiData, logger *log.Entry) (*model.
 }
 
 func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	page, prefix, err := pageValue(w, data, logger)
+	page, _, err := pageValue(w, data, logger)
 	if err != nil {
 		return err
 	}
 	menu := &model.Menu{}
-	menu.SetTablePrefix(prefix)
-	_, err = menu.Get(getPrefix(data))
+	menu.SetTablePrefix(getPrefix(data))
+	_, err = menu.Get(page.Menu)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
 		return errorAPI(w, `E_SERVER`, http.StatusInternalServerError)
