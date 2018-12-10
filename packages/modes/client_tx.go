@@ -59,7 +59,7 @@ func (p ObsTxPreprocessor) SetLogger(logger *log.Entry) {
 
 func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64) (string, error) {
 
-	tx, err := transaction.UnmarshallTransaction(bytes.NewBuffer(txData))
+	tx, err := transaction.UnmarshallTransaction(bytes.NewBuffer(txData), true)
 	if err != nil {
 		p.logger.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on unmarshaling user tx")
 		return "", err
