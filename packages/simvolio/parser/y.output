@@ -25,21 +25,21 @@ state 1
 	top_declaration  goto 7
 
 state 2
-	translation_unit:  top_declaration.    (95)
+	translation_unit:  top_declaration.    (108)
 
-	.  reduce 95 (src line 300)
+	.  reduce 108 (src line 319)
 
 
 state 3
-	top_declaration:  function_declaration.    (93)
+	top_declaration:  function_declaration.    (106)
 
-	.  reduce 93 (src line 295)
+	.  reduce 106 (src line 314)
 
 
 state 4
-	top_declaration:  contract_declaration.    (94)
+	top_declaration:  contract_declaration.    (107)
 
-	.  reduce 94 (src line 297)
+	.  reduce 107 (src line 316)
 
 
 state 5
@@ -58,9 +58,9 @@ state 6
 
 
 state 7
-	translation_unit:  translation_unit top_declaration.    (96)
+	translation_unit:  translation_unit top_declaration.    (109)
 
-	.  reduce 96 (src line 302)
+	.  reduce 109 (src line 321)
 
 
 state 8
@@ -140,60 +140,76 @@ state 14
 	.  reduce 61 (src line 218)
 
 
-15: shift/reduce conflict (shift 67(0), red'n 73(0)) on IDENT
-15: shift/reduce conflict (shift 68(0), red'n 73(0)) on INT
-15: shift/reduce conflict (shift 69(0), red'n 73(0)) on STRING
-15: shift/reduce conflict (shift 63(0), red'n 73(0)) on ADD
-15: shift/reduce conflict (shift 64(0), red'n 73(0)) on SUB
-15: shift/reduce conflict (shift 58(0), red'n 73(0)) on INC
-15: shift/reduce conflict (shift 59(0), red'n 73(0)) on DEC
-15: shift/reduce conflict (shift 65(0), red'n 73(0)) on NOT
-15: shift/reduce conflict (shift 70(0), red'n 73(0)) on LPAREN
-15: shift/reduce conflict (shift 15(0), red'n 73(0)) on LBRACE
-15: shift/reduce conflict (shift 40(0), red'n 73(0)) on RBRACE
-15: shift/reduce conflict (shift 5(0), red'n 73(0)) on FUNC
-15: shift/reduce conflict (shift 50(0), red'n 73(0)) on VAR
-15: shift/reduce conflict (shift 52(0), red'n 73(0)) on RETURN
+15: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+15: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+15: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+15: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+15: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+15: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+15: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+15: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+15: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+15: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+15: shift/reduce conflict (shift 40(0), red'n 75(0)) on RBRACE
+15: shift/reduce conflict (shift 5(0), red'n 75(0)) on FUNC
+15: shift/reduce conflict (shift 52(0), red'n 75(0)) on VAR
+15: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+15: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+15: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+15: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+15: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+15: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+15: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+15: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
 state 15
 	compound_statement:  LBRACE.RBRACE 
 	compound_statement:  LBRACE.block_item_list RBRACE 
-	expression_statement: .    (73)
+	expression_statement: .    (75)
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	LBRACE  shift 15
 	RBRACE  shift 40
 	FUNC  shift 5
-	VAR  shift 50
-	RETURN  shift 52
+	VAR  shift 52
+	IF  shift 54
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
 	.  error
 
-	primary_expression  goto 62
-	expression  goto 51
-	postfix_expression  goto 57
-	assignment_expression  goto 53
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 	variable_declaration  goto 46
 	function_declaration  goto 45
 	compound_statement  goto 47
 	declaration  goto 43
 	statement  goto 44
 	expression_statement  goto 48
-	jump_statement  goto 49
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
 	block_item_list  goto 41
 	block_item  goto 42
 
@@ -268,8 +284,8 @@ state 27
 	variable_specifier:  variable_specifier.COMMA IDENT ELLIPSIS 
 	function_argument_list:  LPAREN variable_specifier.RPAREN 
 
-	COMMA  shift 73
-	RPAREN  shift 74
+	COMMA  shift 82
+	RPAREN  shift 83
 	.  error
 
 
@@ -277,7 +293,7 @@ state 28
 	ident_list:  ident_list.COMMA IDENT 
 	variable_specifier:  ident_list.type 
 
-	COMMA  shift 75
+	COMMA  shift 84
 	T_BOOL  shift 17
 	T_INT  shift 18
 	T_FLOAT  shift 19
@@ -289,7 +305,7 @@ state 28
 	T_FILE  shift 25
 	.  error
 
-	type  goto 76
+	type  goto 85
 
 state 29
 	ident_list:  IDENT.    (51)
@@ -301,7 +317,7 @@ state 30
 	contract_specifiers:  contract_specifiers.contract_specifier 
 	contract_declaration:  CONTRACT IDENT LBRACE contract_specifiers.RBRACE 
 
-	RBRACE  shift 78
+	RBRACE  shift 87
 	DATA  shift 37
 	CONDITION  shift 38
 	ACTION  shift 39
@@ -312,49 +328,49 @@ state 30
 	contract_argument_declaration  goto 33
 	contract_condition_declaration  goto 34
 	contract_action_declaration  goto 35
-	contract_specifier  goto 77
+	contract_specifier  goto 86
 
 state 31
-	contract_declaration:  CONTRACT IDENT LBRACE RBRACE.    (92)
+	contract_declaration:  CONTRACT IDENT LBRACE RBRACE.    (105)
 
-	.  reduce 92 (src line 292)
+	.  reduce 105 (src line 311)
 
 
 state 32
-	contract_specifiers:  contract_specifier.    (89)
+	contract_specifiers:  contract_specifier.    (102)
 
-	.  reduce 89 (src line 285)
+	.  reduce 102 (src line 304)
 
 
 state 33
-	contract_specifier:  contract_argument_declaration.    (85)
+	contract_specifier:  contract_argument_declaration.    (98)
 
-	.  reduce 85 (src line 278)
+	.  reduce 98 (src line 297)
 
 
 state 34
-	contract_specifier:  contract_condition_declaration.    (86)
+	contract_specifier:  contract_condition_declaration.    (99)
 
-	.  reduce 86 (src line 280)
+	.  reduce 99 (src line 299)
 
 
 state 35
-	contract_specifier:  contract_action_declaration.    (87)
+	contract_specifier:  contract_action_declaration.    (100)
 
-	.  reduce 87 (src line 281)
+	.  reduce 100 (src line 300)
 
 
 state 36
-	contract_specifier:  function_declaration.    (88)
+	contract_specifier:  function_declaration.    (101)
 
-	.  reduce 88 (src line 282)
+	.  reduce 101 (src line 301)
 
 
 state 37
 	contract_argument_declaration:  DATA.LBRACE contract_argument_list RBRACE 
 	contract_argument_declaration:  DATA.LBRACE RBRACE 
 
-	LBRACE  shift 79
+	LBRACE  shift 88
 	.  error
 
 
@@ -364,7 +380,7 @@ state 38
 	LBRACE  shift 15
 	.  error
 
-	compound_statement  goto 80
+	compound_statement  goto 89
 
 state 39
 	contract_action_declaration:  ACTION.compound_statement 
@@ -372,86 +388,102 @@ state 39
 	LBRACE  shift 15
 	.  error
 
-	compound_statement  goto 81
+	compound_statement  goto 90
 
 state 40
-	compound_statement:  LBRACE RBRACE.    (67)
+	compound_statement:  LBRACE RBRACE.    (69)
 
-	.  reduce 67 (src line 232)
+	.  reduce 69 (src line 234)
 
 
-41: shift/reduce conflict (shift 67(0), red'n 73(0)) on IDENT
-41: shift/reduce conflict (shift 68(0), red'n 73(0)) on INT
-41: shift/reduce conflict (shift 69(0), red'n 73(0)) on STRING
-41: shift/reduce conflict (shift 63(0), red'n 73(0)) on ADD
-41: shift/reduce conflict (shift 64(0), red'n 73(0)) on SUB
-41: shift/reduce conflict (shift 58(0), red'n 73(0)) on INC
-41: shift/reduce conflict (shift 59(0), red'n 73(0)) on DEC
-41: shift/reduce conflict (shift 65(0), red'n 73(0)) on NOT
-41: shift/reduce conflict (shift 70(0), red'n 73(0)) on LPAREN
-41: shift/reduce conflict (shift 15(0), red'n 73(0)) on LBRACE
-41: shift/reduce conflict (shift 82(0), red'n 73(0)) on RBRACE
-41: shift/reduce conflict (shift 5(0), red'n 73(0)) on FUNC
-41: shift/reduce conflict (shift 50(0), red'n 73(0)) on VAR
-41: shift/reduce conflict (shift 52(0), red'n 73(0)) on RETURN
+41: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+41: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+41: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+41: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+41: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+41: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+41: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+41: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+41: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+41: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+41: shift/reduce conflict (shift 91(0), red'n 75(0)) on RBRACE
+41: shift/reduce conflict (shift 5(0), red'n 75(0)) on FUNC
+41: shift/reduce conflict (shift 52(0), red'n 75(0)) on VAR
+41: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+41: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+41: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+41: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+41: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+41: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+41: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+41: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
 state 41
 	compound_statement:  LBRACE block_item_list.RBRACE 
 	block_item_list:  block_item_list.block_item 
-	expression_statement: .    (73)
+	expression_statement: .    (75)
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	LBRACE  shift 15
-	RBRACE  shift 82
+	RBRACE  shift 91
 	FUNC  shift 5
-	VAR  shift 50
-	RETURN  shift 52
+	VAR  shift 52
+	IF  shift 54
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
 	.  error
 
-	primary_expression  goto 62
-	expression  goto 51
-	postfix_expression  goto 57
-	assignment_expression  goto 53
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 	variable_declaration  goto 46
 	function_declaration  goto 45
 	compound_statement  goto 47
 	declaration  goto 43
 	statement  goto 44
 	expression_statement  goto 48
-	jump_statement  goto 49
-	block_item  goto 83
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
+	block_item  goto 92
 
 state 42
-	block_item_list:  block_item.    (69)
+	block_item_list:  block_item.    (71)
 
-	.  reduce 69 (src line 237)
+	.  reduce 71 (src line 239)
 
 
 state 43
-	block_item:  declaration.    (71)
+	block_item:  declaration.    (73)
 
-	.  reduce 71 (src line 242)
+	.  reduce 73 (src line 244)
 
 
 state 44
-	block_item:  statement.    (72)
+	block_item:  statement.    (74)
 
-	.  reduce 72 (src line 244)
+	.  reduce 74 (src line 246)
 
 
 state 45
@@ -479,361 +511,524 @@ state 48
 
 
 state 49
-	statement:  jump_statement.    (66)
+	statement:  selection_statement.    (66)
 
 	.  reduce 66 (src line 229)
 
 
 state 50
+	statement:  iteration_statement.    (67)
+
+	.  reduce 67 (src line 230)
+
+
+state 51
+	statement:  jump_statement.    (68)
+
+	.  reduce 68 (src line 231)
+
+
+state 52
 	variable_declaration:  VAR.ident_list type 
 
 	IDENT  shift 29
 	.  error
 
-	ident_list  goto 84
-
-state 51
-	expression:  expression.COMMA assignment_expression 
-	expression_statement:  expression.    (74)
-
-	COMMA  shift 85
-	.  reduce 74 (src line 249)
-
-
-52: shift/reduce conflict (shift 67(0), red'n 75(0)) on IDENT
-52: shift/reduce conflict (shift 68(0), red'n 75(0)) on INT
-52: shift/reduce conflict (shift 69(0), red'n 75(0)) on STRING
-52: shift/reduce conflict (shift 63(0), red'n 75(0)) on ADD
-52: shift/reduce conflict (shift 64(0), red'n 75(0)) on SUB
-52: shift/reduce conflict (shift 58(0), red'n 75(0)) on INC
-52: shift/reduce conflict (shift 59(0), red'n 75(0)) on DEC
-52: shift/reduce conflict (shift 65(0), red'n 75(0)) on NOT
-52: shift/reduce conflict (shift 70(0), red'n 75(0)) on LPAREN
-state 52
-	jump_statement:  RETURN.    (75)
-	jump_statement:  RETURN.expression 
-
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
-	.  reduce 75 (src line 252)
-
-	primary_expression  goto 62
-	expression  goto 86
-	postfix_expression  goto 57
-	assignment_expression  goto 53
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	ident_list  goto 93
 
 state 53
+	expression:  expression.COMMA assignment_expression 
+	expression_statement:  expression.    (76)
+
+	COMMA  shift 94
+	.  reduce 76 (src line 251)
+
+
+state 54
+	selection_statement:  IF.LPAREN expression RPAREN statement 
+	selection_statement:  IF.LPAREN expression RPAREN statement ELSE statement 
+	selection_statement:  IF.expression statement 
+	selection_statement:  IF.expression ELSE statement 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 95
+	.  error
+
+	primary_expression  goto 71
+	expression  goto 96
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+state 55
+	iteration_statement:  WHILE.expression statement 
+	iteration_statement:  WHILE.LPAREN expression RPAREN statement 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 98
+	.  error
+
+	primary_expression  goto 71
+	expression  goto 97
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+state 56
+	jump_statement:  CONTINUE.    (83)
+
+	.  reduce 83 (src line 266)
+
+
+state 57
+	jump_statement:  BREAK.    (84)
+
+	.  reduce 84 (src line 268)
+
+
+state 58
+	jump_statement:  INFO.expression 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	.  error
+
+	primary_expression  goto 71
+	expression  goto 99
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+state 59
+	jump_statement:  WARNING.expression 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	.  error
+
+	primary_expression  goto 71
+	expression  goto 100
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+state 60
+	jump_statement:  ERROR.expression 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	.  error
+
+	primary_expression  goto 71
+	expression  goto 101
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+61: shift/reduce conflict (shift 76(0), red'n 88(0)) on IDENT
+61: shift/reduce conflict (shift 77(0), red'n 88(0)) on INT
+61: shift/reduce conflict (shift 78(0), red'n 88(0)) on STRING
+61: shift/reduce conflict (shift 72(0), red'n 88(0)) on ADD
+61: shift/reduce conflict (shift 73(0), red'n 88(0)) on SUB
+61: shift/reduce conflict (shift 67(0), red'n 88(0)) on INC
+61: shift/reduce conflict (shift 68(0), red'n 88(0)) on DEC
+61: shift/reduce conflict (shift 74(0), red'n 88(0)) on NOT
+61: shift/reduce conflict (shift 79(0), red'n 88(0)) on LPAREN
+state 61
+	jump_statement:  RETURN.    (88)
+	jump_statement:  RETURN.expression 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	.  reduce 88 (src line 272)
+
+	primary_expression  goto 71
+	expression  goto 102
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+state 62
 	expression:  assignment_expression.    (40)
 
 	.  reduce 40 (src line 177)
 
 
-state 54
+state 63
 	logical_or_expression:  logical_or_expression.OR logical_and_expression 
 	assignment_expression:  logical_or_expression.    (37)
 
-	OR  shift 87
+	OR  shift 103
 	.  reduce 37 (src line 169)
 
 
-state 55
+state 64
 	multiplicative_expression:  unary_expression.    (18)
 	assignment_expression:  unary_expression.assignment_operator assignment_expression 
 
-	ASSIGN  shift 89
+	ASSIGN  shift 105
 	.  reduce 18 (src line 132)
 
-	assignment_operator  goto 88
+	assignment_operator  goto 104
 
-state 56
+state 65
 	logical_and_expression:  logical_and_expression.AND equality_expression 
 	logical_or_expression:  logical_and_expression.    (35)
 
-	AND  shift 90
+	AND  shift 106
 	.  reduce 35 (src line 164)
 
 
-57: shift/reduce conflict (shift 92(0), red'n 11(0)) on LPAREN
-state 57
+66: shift/reduce conflict (shift 108(0), red'n 11(0)) on LPAREN
+state 66
 	postfix_expression:  postfix_expression.LBRAKET expression RBRAKET 
 	postfix_expression:  postfix_expression.LPAREN RPAREN 
 	postfix_expression:  postfix_expression.LPAREN argument_expression_list RPAREN 
 	unary_expression:  postfix_expression.    (11)
 
-	LPAREN  shift 92
-	LBRAKET  shift 91
+	LPAREN  shift 108
+	LBRAKET  shift 107
 	.  reduce 11 (src line 119)
 
 
-state 58
+state 67
 	unary_expression:  INC.unary_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 93
-	unary_operator  goto 60
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 109
+	unary_operator  goto 69
 
-state 59
+state 68
 	unary_expression:  DEC.unary_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 94
-	unary_operator  goto 60
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 110
+	unary_operator  goto 69
 
-state 60
+state 69
 	unary_expression:  unary_operator.unary_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 95
-	unary_operator  goto 60
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 111
+	unary_operator  goto 69
 
-state 61
+state 70
 	equality_expression:  equality_expression.EQ relational_expression 
 	equality_expression:  equality_expression.NOT_EQ relational_expression 
 	logical_and_expression:  equality_expression.    (33)
 
-	EQ  shift 96
-	NOT_EQ  shift 97
+	EQ  shift 112
+	NOT_EQ  shift 113
 	.  reduce 33 (src line 159)
 
 
-state 62
+state 71
 	postfix_expression:  primary_expression.    (5)
 
 	.  reduce 5 (src line 107)
 
 
-state 63
+state 72
 	unary_operator:  ADD.    (15)
 
 	.  reduce 15 (src line 126)
 
 
-state 64
+state 73
 	unary_operator:  SUB.    (16)
 
 	.  reduce 16 (src line 128)
 
 
-state 65
+state 74
 	unary_operator:  NOT.    (17)
 
 	.  reduce 17 (src line 129)
 
 
-state 66
+state 75
 	relational_expression:  relational_expression.LT additive_expression 
 	relational_expression:  relational_expression.GT additive_expression 
 	relational_expression:  relational_expression.LTE additive_expression 
 	relational_expression:  relational_expression.GTE additive_expression 
 	equality_expression:  relational_expression.    (30)
 
-	LT  shift 98
-	GT  shift 99
-	LTE  shift 100
-	GTE  shift 101
+	LT  shift 114
+	GT  shift 115
+	LTE  shift 116
+	GTE  shift 117
 	.  reduce 30 (src line 153)
 
 
-state 67
+state 76
 	primary_expression:  IDENT.    (1)
 
 	.  reduce 1 (src line 100)
 
 
-state 68
+state 77
 	primary_expression:  INT.    (2)
 
 	.  reduce 2 (src line 102)
 
 
-state 69
+state 78
 	primary_expression:  STRING.    (3)
 
 	.  reduce 3 (src line 103)
 
 
-state 70
+state 79
 	primary_expression:  LPAREN.expression RPAREN 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	expression  goto 102
-	postfix_expression  goto 57
-	assignment_expression  goto 53
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	expression  goto 118
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 
-71: shift/reduce conflict (shift 103(0), red'n 25(0)) on ADD
-71: shift/reduce conflict (shift 104(0), red'n 25(0)) on SUB
-state 71
+80: shift/reduce conflict (shift 119(0), red'n 25(0)) on ADD
+80: shift/reduce conflict (shift 120(0), red'n 25(0)) on SUB
+state 80
 	additive_expression:  additive_expression.ADD multiplicative_expression 
 	additive_expression:  additive_expression.SUB multiplicative_expression 
 	relational_expression:  additive_expression.    (25)
 
-	ADD  shift 103
-	SUB  shift 104
+	ADD  shift 119
+	SUB  shift 120
 	.  reduce 25 (src line 145)
 
 
-state 72
+state 81
 	multiplicative_expression:  multiplicative_expression.MUL unary_expression 
 	multiplicative_expression:  multiplicative_expression.DIV unary_expression 
 	multiplicative_expression:  multiplicative_expression.MOD unary_expression 
 	additive_expression:  multiplicative_expression.    (22)
 
-	MUL  shift 105
-	DIV  shift 106
-	MOD  shift 107
+	MUL  shift 121
+	DIV  shift 122
+	MOD  shift 123
 	.  reduce 22 (src line 139)
 
 
-state 73
+state 82
 	variable_specifier:  variable_specifier COMMA.ident_list type 
 	variable_specifier:  variable_specifier COMMA.IDENT ELLIPSIS 
 
-	IDENT  shift 109
+	IDENT  shift 125
 	.  error
 
-	ident_list  goto 108
+	ident_list  goto 124
 
-state 74
+state 83
 	function_argument_list:  LPAREN variable_specifier RPAREN.    (58)
 
 	.  reduce 58 (src line 210)
 
 
-state 75
+state 84
 	ident_list:  ident_list COMMA.IDENT 
 
-	IDENT  shift 110
+	IDENT  shift 126
 	.  error
 
 
-state 76
+state 85
 	variable_specifier:  ident_list type.    (54)
 
 	.  reduce 54 (src line 202)
 
 
-state 77
-	contract_specifiers:  contract_specifiers contract_specifier.    (90)
+state 86
+	contract_specifiers:  contract_specifiers contract_specifier.    (103)
 
-	.  reduce 90 (src line 287)
-
-
-state 78
-	contract_declaration:  CONTRACT IDENT LBRACE contract_specifiers RBRACE.    (91)
-
-	.  reduce 91 (src line 290)
+	.  reduce 103 (src line 306)
 
 
-state 79
+state 87
+	contract_declaration:  CONTRACT IDENT LBRACE contract_specifiers RBRACE.    (104)
+
+	.  reduce 104 (src line 309)
+
+
+state 88
 	contract_argument_declaration:  DATA LBRACE.contract_argument_list RBRACE 
 	contract_argument_declaration:  DATA LBRACE.RBRACE 
 
-	IDENT  shift 114
-	RBRACE  shift 112
+	IDENT  shift 130
+	RBRACE  shift 128
 	.  error
 
-	contract_argument  goto 113
-	contract_argument_list  goto 111
+	contract_argument  goto 129
+	contract_argument_list  goto 127
 
-state 80
-	contract_condition_declaration:  CONDITION compound_statement.    (83)
+state 89
+	contract_condition_declaration:  CONDITION compound_statement.    (96)
 
-	.  reduce 83 (src line 272)
-
-
-state 81
-	contract_action_declaration:  ACTION compound_statement.    (84)
-
-	.  reduce 84 (src line 275)
+	.  reduce 96 (src line 291)
 
 
-state 82
-	compound_statement:  LBRACE block_item_list RBRACE.    (68)
+state 90
+	contract_action_declaration:  ACTION compound_statement.    (97)
 
-	.  reduce 68 (src line 234)
-
-
-state 83
-	block_item_list:  block_item_list block_item.    (70)
-
-	.  reduce 70 (src line 239)
+	.  reduce 97 (src line 294)
 
 
-state 84
+state 91
+	compound_statement:  LBRACE block_item_list RBRACE.    (70)
+
+	.  reduce 70 (src line 236)
+
+
+state 92
+	block_item_list:  block_item_list block_item.    (72)
+
+	.  reduce 72 (src line 241)
+
+
+state 93
 	ident_list:  ident_list.COMMA IDENT 
 	variable_declaration:  VAR ident_list.type 
 
-	COMMA  shift 75
+	COMMA  shift 84
 	T_BOOL  shift 17
 	T_INT  shift 18
 	T_FLOAT  shift 19
@@ -845,434 +1040,644 @@ state 84
 	T_FILE  shift 25
 	.  error
 
-	type  goto 115
+	type  goto 131
 
-state 85
+state 94
 	expression:  expression COMMA.assignment_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	assignment_expression  goto 116
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	assignment_expression  goto 132
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 
-state 86
+state 95
+	primary_expression:  LPAREN.expression RPAREN 
+	selection_statement:  IF LPAREN.expression RPAREN statement 
+	selection_statement:  IF LPAREN.expression RPAREN statement ELSE statement 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	.  error
+
+	primary_expression  goto 71
+	expression  goto 133
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+96: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+96: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+96: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+96: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+96: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+96: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+96: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+96: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+96: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+96: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+96: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+96: shift/reduce conflict (shift 135(0), red'n 75(0)) on ELSE
+96: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+96: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+96: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+96: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+96: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+96: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+96: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
+state 96
 	expression:  expression.COMMA assignment_expression 
-	jump_statement:  RETURN expression.    (76)
+	selection_statement:  IF expression.statement 
+	selection_statement:  IF expression.ELSE statement 
+	expression_statement: .    (75)
 
-	COMMA  shift 85
-	.  reduce 76 (src line 254)
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	COMMA  shift 94
+	LPAREN  shift 79
+	LBRACE  shift 15
+	IF  shift 54
+	ELSE  shift 135
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
+	.  reduce 75 (src line 249)
+
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+	compound_statement  goto 47
+	statement  goto 134
+	expression_statement  goto 48
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
+
+97: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+97: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+97: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+97: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+97: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+97: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+97: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+97: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+97: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+97: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+97: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+97: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+97: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+97: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+97: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+97: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+97: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+97: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
+state 97
+	expression:  expression.COMMA assignment_expression 
+	iteration_statement:  WHILE expression.statement 
+	expression_statement: .    (75)
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	COMMA  shift 94
+	LPAREN  shift 79
+	LBRACE  shift 15
+	IF  shift 54
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
+	.  reduce 75 (src line 249)
+
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+	compound_statement  goto 47
+	statement  goto 136
+	expression_statement  goto 48
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
+
+state 98
+	primary_expression:  LPAREN.expression RPAREN 
+	iteration_statement:  WHILE LPAREN.expression RPAREN statement 
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	.  error
+
+	primary_expression  goto 71
+	expression  goto 137
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+
+state 99
+	expression:  expression.COMMA assignment_expression 
+	jump_statement:  INFO expression.    (85)
+
+	COMMA  shift 94
+	.  reduce 85 (src line 269)
 
 
-state 87
+state 100
+	expression:  expression.COMMA assignment_expression 
+	jump_statement:  WARNING expression.    (86)
+
+	COMMA  shift 94
+	.  reduce 86 (src line 270)
+
+
+state 101
+	expression:  expression.COMMA assignment_expression 
+	jump_statement:  ERROR expression.    (87)
+
+	COMMA  shift 94
+	.  reduce 87 (src line 271)
+
+
+state 102
+	expression:  expression.COMMA assignment_expression 
+	jump_statement:  RETURN expression.    (89)
+
+	COMMA  shift 94
+	.  reduce 89 (src line 273)
+
+
+state 103
 	logical_or_expression:  logical_or_expression OR.logical_and_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 117
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 138
 
-state 88
+state 104
 	assignment_expression:  unary_expression assignment_operator.assignment_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	assignment_expression  goto 119
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	assignment_expression  goto 140
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 
-state 89
+state 105
 	assignment_operator:  ASSIGN.    (39)
 
 	.  reduce 39 (src line 174)
 
 
-state 90
+state 106
 	logical_and_expression:  logical_and_expression AND.equality_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 120
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 141
 
-state 91
+state 107
 	postfix_expression:  postfix_expression LBRAKET.expression RBRAKET 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	expression  goto 121
-	postfix_expression  goto 57
-	assignment_expression  goto 53
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	expression  goto 142
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 
-state 92
+state 108
 	postfix_expression:  postfix_expression LPAREN.RPAREN 
 	postfix_expression:  postfix_expression LPAREN.argument_expression_list RPAREN 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
-	RPAREN  shift 122
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	RPAREN  shift 143
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	argument_expression_list  goto 123
-	assignment_expression  goto 124
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	argument_expression_list  goto 144
+	assignment_expression  goto 145
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 
-state 93
+state 109
 	unary_expression:  INC unary_expression.    (12)
 
 	.  reduce 12 (src line 121)
 
 
-state 94
+state 110
 	unary_expression:  DEC unary_expression.    (13)
 
 	.  reduce 13 (src line 122)
 
 
-state 95
+state 111
 	unary_expression:  unary_operator unary_expression.    (14)
 
 	.  reduce 14 (src line 123)
 
 
-state 96
+state 112
 	equality_expression:  equality_expression EQ.relational_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 125
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 146
 
-state 97
+state 113
 	equality_expression:  equality_expression NOT_EQ.relational_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 126
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 147
 
-state 98
+state 114
 	relational_expression:  relational_expression LT.additive_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 127
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 148
 
-state 99
+state 115
 	relational_expression:  relational_expression GT.additive_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 128
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 149
 
-state 100
+state 116
 	relational_expression:  relational_expression LTE.additive_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 129
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 150
 
-state 101
+state 117
 	relational_expression:  relational_expression GTE.additive_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 130
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 151
 
-state 102
+state 118
 	primary_expression:  LPAREN expression.RPAREN 
 	expression:  expression.COMMA assignment_expression 
 
-	COMMA  shift 85
-	RPAREN  shift 131
+	COMMA  shift 94
+	RPAREN  shift 152
 	.  error
 
 
-state 103
+state 119
 	additive_expression:  additive_expression ADD.multiplicative_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 132
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 153
 
-state 104
+state 120
 	additive_expression:  additive_expression SUB.multiplicative_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 118
-	unary_operator  goto 60
-	multiplicative_expression  goto 133
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 139
+	unary_operator  goto 69
+	multiplicative_expression  goto 154
 
-state 105
+state 121
 	multiplicative_expression:  multiplicative_expression MUL.unary_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 134
-	unary_operator  goto 60
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 155
+	unary_operator  goto 69
 
-state 106
+state 122
 	multiplicative_expression:  multiplicative_expression DIV.unary_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 135
-	unary_operator  goto 60
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 156
+	unary_operator  goto 69
 
-state 107
+state 123
 	multiplicative_expression:  multiplicative_expression MOD.unary_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	unary_expression  goto 136
-	unary_operator  goto 60
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	unary_expression  goto 157
+	unary_operator  goto 69
 
-state 108
+state 124
 	ident_list:  ident_list.COMMA IDENT 
 	variable_specifier:  variable_specifier COMMA ident_list.type 
 
-	COMMA  shift 75
+	COMMA  shift 84
 	T_BOOL  shift 17
 	T_INT  shift 18
 	T_FLOAT  shift 19
@@ -1284,45 +1689,45 @@ state 108
 	T_FILE  shift 25
 	.  error
 
-	type  goto 137
+	type  goto 158
 
-state 109
+state 125
 	ident_list:  IDENT.    (51)
 	variable_specifier:  variable_specifier COMMA IDENT.ELLIPSIS 
 
-	ELLIPSIS  shift 138
+	ELLIPSIS  shift 159
 	.  reduce 51 (src line 194)
 
 
-state 110
+state 126
 	ident_list:  ident_list COMMA IDENT.    (52)
 
 	.  reduce 52 (src line 196)
 
 
-state 111
+state 127
 	contract_argument_list:  contract_argument_list.contract_argument 
 	contract_argument_declaration:  DATA LBRACE contract_argument_list.RBRACE 
 
-	IDENT  shift 114
-	RBRACE  shift 140
+	IDENT  shift 130
+	RBRACE  shift 161
 	.  error
 
-	contract_argument  goto 139
+	contract_argument  goto 160
 
-state 112
-	contract_argument_declaration:  DATA LBRACE RBRACE.    (82)
+state 128
+	contract_argument_declaration:  DATA LBRACE RBRACE.    (95)
 
-	.  reduce 82 (src line 269)
-
-
-state 113
-	contract_argument_list:  contract_argument.    (79)
-
-	.  reduce 79 (src line 262)
+	.  reduce 95 (src line 288)
 
 
-state 114
+state 129
+	contract_argument_list:  contract_argument.    (92)
+
+	.  reduce 92 (src line 281)
+
+
+state 130
 	contract_argument:  IDENT.type STRING 
 	contract_argument:  IDENT.type 
 
@@ -1337,296 +1742,646 @@ state 114
 	T_FILE  shift 25
 	.  error
 
-	type  goto 141
+	type  goto 162
 
-state 115
+state 131
 	variable_declaration:  VAR ident_list type.    (53)
 
 	.  reduce 53 (src line 199)
 
 
-state 116
+state 132
 	expression:  expression COMMA assignment_expression.    (41)
 
 	.  reduce 41 (src line 179)
 
 
-state 117
+state 133
+	primary_expression:  LPAREN expression.RPAREN 
+	expression:  expression.COMMA assignment_expression 
+	selection_statement:  IF LPAREN expression.RPAREN statement 
+	selection_statement:  IF LPAREN expression.RPAREN statement ELSE statement 
+
+	COMMA  shift 94
+	RPAREN  shift 163
+	.  error
+
+
+state 134
+	selection_statement:  IF expression statement.    (79)
+
+	.  reduce 79 (src line 257)
+
+
+135: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+135: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+135: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+135: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+135: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+135: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+135: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+135: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+135: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+135: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+135: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+135: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+135: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+135: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+135: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+135: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+135: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+135: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
+state 135
+	selection_statement:  IF expression ELSE.statement 
+	expression_statement: .    (75)
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	LBRACE  shift 15
+	IF  shift 54
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
+	.  reduce 75 (src line 249)
+
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+	compound_statement  goto 47
+	statement  goto 164
+	expression_statement  goto 48
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
+
+state 136
+	iteration_statement:  WHILE expression statement.    (81)
+
+	.  reduce 81 (src line 261)
+
+
+state 137
+	primary_expression:  LPAREN expression.RPAREN 
+	expression:  expression.COMMA assignment_expression 
+	iteration_statement:  WHILE LPAREN expression.RPAREN statement 
+
+	COMMA  shift 94
+	RPAREN  shift 165
+	.  error
+
+
+state 138
 	logical_and_expression:  logical_and_expression.AND equality_expression 
 	logical_or_expression:  logical_or_expression OR logical_and_expression.    (36)
 
-	AND  shift 90
+	AND  shift 106
 	.  reduce 36 (src line 166)
 
 
-state 118
+state 139
 	multiplicative_expression:  unary_expression.    (18)
 
 	.  reduce 18 (src line 132)
 
 
-state 119
+state 140
 	assignment_expression:  unary_expression assignment_operator assignment_expression.    (38)
 
 	.  reduce 38 (src line 171)
 
 
-state 120
+state 141
 	equality_expression:  equality_expression.EQ relational_expression 
 	equality_expression:  equality_expression.NOT_EQ relational_expression 
 	logical_and_expression:  logical_and_expression AND equality_expression.    (34)
 
-	EQ  shift 96
-	NOT_EQ  shift 97
+	EQ  shift 112
+	NOT_EQ  shift 113
 	.  reduce 34 (src line 161)
 
 
-state 121
+state 142
 	postfix_expression:  postfix_expression LBRAKET expression.RBRAKET 
 	expression:  expression.COMMA assignment_expression 
 
-	COMMA  shift 85
-	RBRAKET  shift 142
+	COMMA  shift 94
+	RBRAKET  shift 166
 	.  error
 
 
-state 122
+state 143
 	postfix_expression:  postfix_expression LPAREN RPAREN.    (7)
 
 	.  reduce 7 (src line 110)
 
 
-state 123
+state 144
 	postfix_expression:  postfix_expression LPAREN argument_expression_list.RPAREN 
 	argument_expression_list:  argument_expression_list.COMMA assignment_expression 
 
-	COMMA  shift 144
-	RPAREN  shift 143
+	COMMA  shift 168
+	RPAREN  shift 167
 	.  error
 
 
-state 124
+state 145
 	argument_expression_list:  assignment_expression.    (9)
 
 	.  reduce 9 (src line 114)
 
 
-state 125
+state 146
 	relational_expression:  relational_expression.LT additive_expression 
 	relational_expression:  relational_expression.GT additive_expression 
 	relational_expression:  relational_expression.LTE additive_expression 
 	relational_expression:  relational_expression.GTE additive_expression 
 	equality_expression:  equality_expression EQ relational_expression.    (31)
 
-	LT  shift 98
-	GT  shift 99
-	LTE  shift 100
-	GTE  shift 101
+	LT  shift 114
+	GT  shift 115
+	LTE  shift 116
+	GTE  shift 117
 	.  reduce 31 (src line 155)
 
 
-state 126
+state 147
 	relational_expression:  relational_expression.LT additive_expression 
 	relational_expression:  relational_expression.GT additive_expression 
 	relational_expression:  relational_expression.LTE additive_expression 
 	relational_expression:  relational_expression.GTE additive_expression 
 	equality_expression:  equality_expression NOT_EQ relational_expression.    (32)
 
-	LT  shift 98
-	GT  shift 99
-	LTE  shift 100
-	GTE  shift 101
+	LT  shift 114
+	GT  shift 115
+	LTE  shift 116
+	GTE  shift 117
 	.  reduce 32 (src line 156)
 
 
-127: shift/reduce conflict (shift 103(0), red'n 26(0)) on ADD
-127: shift/reduce conflict (shift 104(0), red'n 26(0)) on SUB
-state 127
+148: shift/reduce conflict (shift 119(0), red'n 26(0)) on ADD
+148: shift/reduce conflict (shift 120(0), red'n 26(0)) on SUB
+state 148
 	additive_expression:  additive_expression.ADD multiplicative_expression 
 	additive_expression:  additive_expression.SUB multiplicative_expression 
 	relational_expression:  relational_expression LT additive_expression.    (26)
 
-	ADD  shift 103
-	SUB  shift 104
+	ADD  shift 119
+	SUB  shift 120
 	.  reduce 26 (src line 147)
 
 
-128: shift/reduce conflict (shift 103(0), red'n 27(0)) on ADD
-128: shift/reduce conflict (shift 104(0), red'n 27(0)) on SUB
-state 128
+149: shift/reduce conflict (shift 119(0), red'n 27(0)) on ADD
+149: shift/reduce conflict (shift 120(0), red'n 27(0)) on SUB
+state 149
 	additive_expression:  additive_expression.ADD multiplicative_expression 
 	additive_expression:  additive_expression.SUB multiplicative_expression 
 	relational_expression:  relational_expression GT additive_expression.    (27)
 
-	ADD  shift 103
-	SUB  shift 104
+	ADD  shift 119
+	SUB  shift 120
 	.  reduce 27 (src line 148)
 
 
-129: shift/reduce conflict (shift 103(0), red'n 28(0)) on ADD
-129: shift/reduce conflict (shift 104(0), red'n 28(0)) on SUB
-state 129
+150: shift/reduce conflict (shift 119(0), red'n 28(0)) on ADD
+150: shift/reduce conflict (shift 120(0), red'n 28(0)) on SUB
+state 150
 	additive_expression:  additive_expression.ADD multiplicative_expression 
 	additive_expression:  additive_expression.SUB multiplicative_expression 
 	relational_expression:  relational_expression LTE additive_expression.    (28)
 
-	ADD  shift 103
-	SUB  shift 104
+	ADD  shift 119
+	SUB  shift 120
 	.  reduce 28 (src line 149)
 
 
-130: shift/reduce conflict (shift 103(0), red'n 29(0)) on ADD
-130: shift/reduce conflict (shift 104(0), red'n 29(0)) on SUB
-state 130
+151: shift/reduce conflict (shift 119(0), red'n 29(0)) on ADD
+151: shift/reduce conflict (shift 120(0), red'n 29(0)) on SUB
+state 151
 	additive_expression:  additive_expression.ADD multiplicative_expression 
 	additive_expression:  additive_expression.SUB multiplicative_expression 
 	relational_expression:  relational_expression GTE additive_expression.    (29)
 
-	ADD  shift 103
-	SUB  shift 104
+	ADD  shift 119
+	SUB  shift 120
 	.  reduce 29 (src line 150)
 
 
-state 131
+state 152
 	primary_expression:  LPAREN expression RPAREN.    (4)
 
 	.  reduce 4 (src line 104)
 
 
-state 132
+state 153
 	multiplicative_expression:  multiplicative_expression.MUL unary_expression 
 	multiplicative_expression:  multiplicative_expression.DIV unary_expression 
 	multiplicative_expression:  multiplicative_expression.MOD unary_expression 
 	additive_expression:  additive_expression ADD multiplicative_expression.    (23)
 
-	MUL  shift 105
-	DIV  shift 106
-	MOD  shift 107
+	MUL  shift 121
+	DIV  shift 122
+	MOD  shift 123
 	.  reduce 23 (src line 141)
 
 
-state 133
+state 154
 	multiplicative_expression:  multiplicative_expression.MUL unary_expression 
 	multiplicative_expression:  multiplicative_expression.DIV unary_expression 
 	multiplicative_expression:  multiplicative_expression.MOD unary_expression 
 	additive_expression:  additive_expression SUB multiplicative_expression.    (24)
 
-	MUL  shift 105
-	DIV  shift 106
-	MOD  shift 107
+	MUL  shift 121
+	DIV  shift 122
+	MOD  shift 123
 	.  reduce 24 (src line 142)
 
 
-state 134
+state 155
 	multiplicative_expression:  multiplicative_expression MUL unary_expression.    (19)
 
 	.  reduce 19 (src line 134)
 
 
-state 135
+state 156
 	multiplicative_expression:  multiplicative_expression DIV unary_expression.    (20)
 
 	.  reduce 20 (src line 135)
 
 
-state 136
+state 157
 	multiplicative_expression:  multiplicative_expression MOD unary_expression.    (21)
 
 	.  reduce 21 (src line 136)
 
 
-state 137
+state 158
 	variable_specifier:  variable_specifier COMMA ident_list type.    (55)
 
 	.  reduce 55 (src line 204)
 
 
-state 138
+state 159
 	variable_specifier:  variable_specifier COMMA IDENT ELLIPSIS.    (56)
 
 	.  reduce 56 (src line 205)
 
 
-state 139
-	contract_argument_list:  contract_argument_list contract_argument.    (80)
+state 160
+	contract_argument_list:  contract_argument_list contract_argument.    (93)
 
-	.  reduce 80 (src line 264)
-
-
-state 140
-	contract_argument_declaration:  DATA LBRACE contract_argument_list RBRACE.    (81)
-
-	.  reduce 81 (src line 267)
+	.  reduce 93 (src line 283)
 
 
-state 141
+state 161
+	contract_argument_declaration:  DATA LBRACE contract_argument_list RBRACE.    (94)
+
+	.  reduce 94 (src line 286)
+
+
+state 162
 	contract_argument:  IDENT type.STRING 
-	contract_argument:  IDENT type.    (78)
+	contract_argument:  IDENT type.    (91)
 
-	STRING  shift 145
-	.  reduce 78 (src line 259)
+	STRING  shift 169
+	.  reduce 91 (src line 278)
 
 
-state 142
+163: shift/reduce conflict (shift 76(0), red'n 4(0)) on IDENT
+163: shift/reduce conflict (shift 77(0), red'n 4(0)) on INT
+163: shift/reduce conflict (shift 78(0), red'n 4(0)) on STRING
+163: shift/reduce conflict (shift 72(0), red'n 4(0)) on ADD
+163: shift/reduce conflict (shift 73(0), red'n 4(0)) on SUB
+163: shift/reduce conflict (shift 67(0), red'n 4(0)) on INC
+163: shift/reduce conflict (shift 68(0), red'n 4(0)) on DEC
+163: shift/reduce conflict (shift 74(0), red'n 4(0)) on NOT
+163: shift/reduce conflict (shift 79(0), red'n 4(0)) on LPAREN
+163: shift/reduce conflict (shift 15(0), red'n 4(0)) on LBRACE
+163: shift/reduce conflict (shift 54(0), red'n 4(0)) on IF
+163: shift/reduce conflict (shift 55(0), red'n 4(0)) on WHILE
+163: shift/reduce conflict (shift 57(0), red'n 4(0)) on BREAK
+163: shift/reduce conflict (shift 56(0), red'n 4(0)) on CONTINUE
+163: shift/reduce conflict (shift 58(0), red'n 4(0)) on INFO
+163: shift/reduce conflict (shift 59(0), red'n 4(0)) on WARNING
+163: shift/reduce conflict (shift 60(0), red'n 4(0)) on ERROR
+163: shift/reduce conflict (shift 61(0), red'n 4(0)) on RETURN
+163: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+163: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+163: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+163: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+163: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+163: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+163: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+163: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+163: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+163: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+ 163: reduce/reduce conflict  (red'ns 4 and 75) on RBRACE
+ 163: reduce/reduce conflict  (red'ns 4 and 75) on FUNC
+ 163: reduce/reduce conflict  (red'ns 4 and 75) on VAR
+163: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+ 163: reduce/reduce conflict  (red'ns 4 and 75) on ELSE
+163: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+163: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+163: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+163: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+163: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+163: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+163: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
+state 163
+	primary_expression:  LPAREN expression RPAREN.    (4)
+	selection_statement:  IF LPAREN expression RPAREN.statement 
+	selection_statement:  IF LPAREN expression RPAREN.statement ELSE statement 
+	expression_statement: .    (75)
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	LBRACE  shift 15
+	IF  shift 54
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
+	.  reduce 4 (src line 104)
+
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+	compound_statement  goto 47
+	statement  goto 170
+	expression_statement  goto 48
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
+
+state 164
+	selection_statement:  IF expression ELSE statement.    (80)
+
+	.  reduce 80 (src line 258)
+
+
+165: shift/reduce conflict (shift 76(0), red'n 4(0)) on IDENT
+165: shift/reduce conflict (shift 77(0), red'n 4(0)) on INT
+165: shift/reduce conflict (shift 78(0), red'n 4(0)) on STRING
+165: shift/reduce conflict (shift 72(0), red'n 4(0)) on ADD
+165: shift/reduce conflict (shift 73(0), red'n 4(0)) on SUB
+165: shift/reduce conflict (shift 67(0), red'n 4(0)) on INC
+165: shift/reduce conflict (shift 68(0), red'n 4(0)) on DEC
+165: shift/reduce conflict (shift 74(0), red'n 4(0)) on NOT
+165: shift/reduce conflict (shift 79(0), red'n 4(0)) on LPAREN
+165: shift/reduce conflict (shift 15(0), red'n 4(0)) on LBRACE
+165: shift/reduce conflict (shift 54(0), red'n 4(0)) on IF
+165: shift/reduce conflict (shift 55(0), red'n 4(0)) on WHILE
+165: shift/reduce conflict (shift 57(0), red'n 4(0)) on BREAK
+165: shift/reduce conflict (shift 56(0), red'n 4(0)) on CONTINUE
+165: shift/reduce conflict (shift 58(0), red'n 4(0)) on INFO
+165: shift/reduce conflict (shift 59(0), red'n 4(0)) on WARNING
+165: shift/reduce conflict (shift 60(0), red'n 4(0)) on ERROR
+165: shift/reduce conflict (shift 61(0), red'n 4(0)) on RETURN
+165: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+165: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+165: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+165: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+165: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+165: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+165: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+165: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+165: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+165: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+ 165: reduce/reduce conflict  (red'ns 4 and 75) on RBRACE
+ 165: reduce/reduce conflict  (red'ns 4 and 75) on FUNC
+ 165: reduce/reduce conflict  (red'ns 4 and 75) on VAR
+165: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+ 165: reduce/reduce conflict  (red'ns 4 and 75) on ELSE
+165: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+165: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+165: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+165: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+165: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+165: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+165: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
+state 165
+	primary_expression:  LPAREN expression RPAREN.    (4)
+	iteration_statement:  WHILE LPAREN expression RPAREN.statement 
+	expression_statement: .    (75)
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	LBRACE  shift 15
+	IF  shift 54
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
+	.  reduce 4 (src line 104)
+
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+	compound_statement  goto 47
+	statement  goto 171
+	expression_statement  goto 48
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
+
+state 166
 	postfix_expression:  postfix_expression LBRAKET expression RBRAKET.    (6)
 
 	.  reduce 6 (src line 109)
 
 
-state 143
+state 167
 	postfix_expression:  postfix_expression LPAREN argument_expression_list RPAREN.    (8)
 
 	.  reduce 8 (src line 111)
 
 
-state 144
+state 168
 	argument_expression_list:  argument_expression_list COMMA.assignment_expression 
 
-	IDENT  shift 67
-	INT  shift 68
-	STRING  shift 69
-	ADD  shift 63
-	SUB  shift 64
-	INC  shift 58
-	DEC  shift 59
-	NOT  shift 65
-	LPAREN  shift 70
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
 	.  error
 
-	primary_expression  goto 62
-	postfix_expression  goto 57
-	assignment_expression  goto 146
-	unary_expression  goto 55
-	unary_operator  goto 60
-	multiplicative_expression  goto 72
-	additive_expression  goto 71
-	relational_expression  goto 66
-	equality_expression  goto 61
-	logical_and_expression  goto 56
-	logical_or_expression  goto 54
+	primary_expression  goto 71
+	postfix_expression  goto 66
+	assignment_expression  goto 172
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
 
-state 145
-	contract_argument:  IDENT type STRING.    (77)
+state 169
+	contract_argument:  IDENT type STRING.    (90)
 
-	.  reduce 77 (src line 257)
+	.  reduce 90 (src line 276)
 
 
-state 146
+170: shift/reduce conflict (shift 173(0), red'n 77(0)) on ELSE
+state 170
+	selection_statement:  IF LPAREN expression RPAREN statement.    (77)
+	selection_statement:  IF LPAREN expression RPAREN statement.ELSE statement 
+
+	ELSE  shift 173
+	.  reduce 77 (src line 254)
+
+
+state 171
+	iteration_statement:  WHILE LPAREN expression RPAREN statement.    (82)
+
+	.  reduce 82 (src line 263)
+
+
+state 172
 	argument_expression_list:  argument_expression_list COMMA assignment_expression.    (10)
 
 	.  reduce 10 (src line 116)
 
-Rule not reduced: expression_statement:  
 
-67 terminals, 39 nonterminals
-97 grammar rules, 147/8000 states
-48 shift/reduce, 0 reduce/reduce conflicts reported
-88 working sets used
-memory: parser 307/120000
-77 extra closures
-368 shift entries, 1 exceptions
-87 goto entries
-160 entries saved by goto default
-Optimizer space used: output 231/120000
-231 table entries, 24 zero
-maximum spread: 67, maximum offset: 144
+173: shift/reduce conflict (shift 76(0), red'n 75(0)) on IDENT
+173: shift/reduce conflict (shift 77(0), red'n 75(0)) on INT
+173: shift/reduce conflict (shift 78(0), red'n 75(0)) on STRING
+173: shift/reduce conflict (shift 72(0), red'n 75(0)) on ADD
+173: shift/reduce conflict (shift 73(0), red'n 75(0)) on SUB
+173: shift/reduce conflict (shift 67(0), red'n 75(0)) on INC
+173: shift/reduce conflict (shift 68(0), red'n 75(0)) on DEC
+173: shift/reduce conflict (shift 74(0), red'n 75(0)) on NOT
+173: shift/reduce conflict (shift 79(0), red'n 75(0)) on LPAREN
+173: shift/reduce conflict (shift 15(0), red'n 75(0)) on LBRACE
+173: shift/reduce conflict (shift 54(0), red'n 75(0)) on IF
+173: shift/reduce conflict (shift 55(0), red'n 75(0)) on WHILE
+173: shift/reduce conflict (shift 57(0), red'n 75(0)) on BREAK
+173: shift/reduce conflict (shift 56(0), red'n 75(0)) on CONTINUE
+173: shift/reduce conflict (shift 58(0), red'n 75(0)) on INFO
+173: shift/reduce conflict (shift 59(0), red'n 75(0)) on WARNING
+173: shift/reduce conflict (shift 60(0), red'n 75(0)) on ERROR
+173: shift/reduce conflict (shift 61(0), red'n 75(0)) on RETURN
+state 173
+	selection_statement:  IF LPAREN expression RPAREN statement ELSE.statement 
+	expression_statement: .    (75)
+
+	IDENT  shift 76
+	INT  shift 77
+	STRING  shift 78
+	ADD  shift 72
+	SUB  shift 73
+	INC  shift 67
+	DEC  shift 68
+	NOT  shift 74
+	LPAREN  shift 79
+	LBRACE  shift 15
+	IF  shift 54
+	WHILE  shift 55
+	BREAK  shift 57
+	CONTINUE  shift 56
+	INFO  shift 58
+	WARNING  shift 59
+	ERROR  shift 60
+	RETURN  shift 61
+	.  reduce 75 (src line 249)
+
+	primary_expression  goto 71
+	expression  goto 53
+	postfix_expression  goto 66
+	assignment_expression  goto 62
+	unary_expression  goto 64
+	unary_operator  goto 69
+	multiplicative_expression  goto 81
+	additive_expression  goto 80
+	relational_expression  goto 75
+	equality_expression  goto 70
+	logical_and_expression  goto 65
+	logical_or_expression  goto 63
+	compound_statement  goto 47
+	statement  goto 174
+	expression_statement  goto 48
+	selection_statement  goto 49
+	iteration_statement  goto 50
+	jump_statement  goto 51
+
+state 174
+	selection_statement:  IF LPAREN expression RPAREN statement ELSE statement.    (78)
+
+	.  reduce 78 (src line 256)
+
+
+67 terminals, 41 nonterminals
+110 grammar rules, 175/8000 states
+208 shift/reduce, 8 reduce/reduce conflicts reported
+90 working sets used
+memory: parser 549/120000
+111 extra closures
+564 shift entries, 1 exceptions
+103 goto entries
+340 entries saved by goto default
+Optimizer space used: output 390/120000
+390 table entries, 73 zero
+maximum spread: 67, maximum offset: 173

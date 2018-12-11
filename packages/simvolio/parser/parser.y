@@ -226,6 +226,8 @@ declaration
 statement
     : compound_statement
     | expression_statement
+    | selection_statement
+    | iteration_statement
     | jump_statement
     ;
 
@@ -249,8 +251,25 @@ expression_statement
     | expression
     ;
 
+selection_statement
+    : IF LPAREN expression RPAREN statement
+    | IF LPAREN expression RPAREN statement ELSE statement
+    | IF expression statement
+    | IF expression ELSE statement
+    ;
+
+iteration_statement
+    : WHILE expression statement
+    | WHILE LPAREN expression RPAREN statement
+    ;
+
 jump_statement
-    : RETURN
+    : CONTINUE
+    | BREAK
+    | INFO expression
+    | WARNING expression
+    | ERROR expression
+    | RETURN
     | RETURN expression
     ;
 
