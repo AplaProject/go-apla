@@ -146,7 +146,7 @@ func getPage(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.
 		return err
 	}
 	menu := &model.Menu{}
-	menu.SetTablePrefix(getPrefix(data))
+	menu.SetTablePrefix(converter.Int64ToStr(data.ecosystemId))
 	_, err = menu.Get(page.Menu)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
