@@ -748,3 +748,45 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 	}
 	return out
 }
+
+func splitArray(in []rune) []string {
+	var quote, trim rune
+	var off int
+	ret := make([]string, 0, 32)
+	if in[0] == '[' && in[len(in)-1] == ']' {
+		in = in[1 : len(in)-1]
+	}
+	for i, ch := range in {
+		if ch == quote {
+			quote = 0
+			continue
+		}
+		if quote != 0 {
+			continue
+		}
+		if ch == '"' || ch == '`' || ch == '\'' {
+			quote = ch
+			if off == i {
+				trim = ch
+				off++
+			}
+		}
+		if ch == ',' {
+			end := i
+			if in[i-1] == trim {
+				end--
+			}
+			ret = append(ret, strings.TrimSpace(string(in[off:end])))
+			off = i + 1
+			trim = 0
+		}
+	}
+	if off < len(in) {
+		end := len(in)
+		if in[len(in)-1] == trim {
+			end--
+		}
+		ret = append(ret, strings.TrimSpace(string(in[off:end])))
+	}
+	return ret
+}
