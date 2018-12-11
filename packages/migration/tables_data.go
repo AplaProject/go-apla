@@ -49,12 +49,12 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
     (next_id('1_tables'), 'keys',
         '{
             "insert": "true",
-            "update": "ContractAccess(\"@1TokensTransfer\",\"@1TokensLockoutMember\",\"@1MultiwalletCreate\")",
+            "update": "ContractAccess(\"@1TokensTransfer\",\"@1TokensLockoutMember\",\"@1MultiwalletCreate\",\"@1TeCreate\",\"@1TeBurn\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
             "pub": "false",
-            "amount": "ContractAccess(\"@1TokensTransfer\")",
+            "amount": "ContractAccess(\"@1TokensTransfer\",\"@1TeCreate\",\"@1TeBurn\")",
             "maxpay": "ContractConditions(\"@1AdminCondition\")",
             "deleted": "ContractConditions(\"@1AdminCondition\")",
             "blocked": "ContractAccess(\"@1TokensLockoutMember\")",
@@ -65,7 +65,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
     ),
     (next_id('1_tables'), 'history',
         '{
-            "insert": "ContractAccess(\"@1TokensTransfer\")",
+            "insert": "ContractAccess(\"@1TokensTransfer\",\"@1TeCreate\",\"@1TeBurn\")",
             "update": "ContractConditions(\"@1AdminCondition\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',

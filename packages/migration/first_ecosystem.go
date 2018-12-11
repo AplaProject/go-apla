@@ -35,7 +35,11 @@ CREATE TABLE "1_ecosystems" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"name"	varchar(255) NOT NULL DEFAULT '',
 		"info" jsonb,
-		"is_valued" bigint NOT NULL DEFAULT '0'
+		"is_valued" bigint NOT NULL DEFAULT '0',
+		"emission_amount" jsonb,
+		"token_title" varchar(255),
+		"type_emission" bigint NOT NULL DEFAULT '0',
+		"type_withdraw" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
 
