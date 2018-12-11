@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package template
 
 import (
@@ -5,7 +33,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -99,9 +127,22 @@ main:
 		case '{', '[':
 			par, off := parseObject(in[i:])
 			if mapMode {
-				ret.(map[string]interface{})[key] = par
-				key = ``
+				if len(key) == 0 {
+					switch v := par.(type) {
+					case map[string]interface{}:
+						for ikey, ival := range v {
+							ret.(map[string]interface{})[ikey] = ival
+						}
+					}
+				} else {
+					ret.(map[string]interface{})[key] = par
+					key = ``
+				}
 			} else {
+				if len(key) > 0 {
+					par = map[string]interface{}{key: par}
+					key = ``
+				}
 				ret = append(ret.([]interface{}), par)
 			}
 			i += off
@@ -109,10 +150,8 @@ main:
 		case '"':
 			quote = !quote
 		case ':':
-			if mapMode {
-				key = trimString(in[start:i])
-				start = i + 1
-			}
+			key = trimString(in[start:i])
+			start = i + 1
 		case ',':
 			val := trimString(in[start:i])
 			if len(val) > 0 {
@@ -120,7 +159,12 @@ main:
 					ret.(map[string]interface{})[key] = val
 					key = ``
 				} else {
-					ret = append(ret.([]interface{}), val)
+					if len(key) > 0 {
+						ret = append(ret.([]interface{}), map[string]interface{}{key: val})
+						key = ``
+					} else {
+						ret = append(ret.([]interface{}), val)
+					}
 				}
 			}
 			start = i + 1
@@ -131,7 +175,12 @@ main:
 			if mapMode {
 				ret.(map[string]interface{})[key] = last
 			} else {
-				ret = append(ret.([]interface{}), last)
+				if len(key) > 0 {
+					ret = append(ret.([]interface{}), map[string]interface{}{key: last})
+					key = ``
+				} else {
+					ret = append(ret.([]interface{}), last)
+				}
 			}
 		}
 	}

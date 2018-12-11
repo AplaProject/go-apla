@@ -1,6 +1,6 @@
 package model
 
-import "github.com/GenesisKernel/go-genesis/packages/types"
+import "github.com/AplaProject/go-apla/packages/types"
 
 var registries = []types.RegistryModel{
 	&KeySchema{},

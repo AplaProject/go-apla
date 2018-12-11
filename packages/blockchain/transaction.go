@@ -4,10 +4,10 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -286,7 +286,7 @@ func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...str
 		return nil, err
 	}
 
-	if smartTx.Header.PublicKey, err = hex.DecodeString(pubKey); err != nil {
+	if smartTx.Header.PublicKey, err = crypto.HexToPub(pubKey); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
 		return nil, err
 	}

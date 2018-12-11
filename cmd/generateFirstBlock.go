@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"io/ioutil"
 	"time"
 
@@ -9,14 +8,15 @@ import (
 
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/queue"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/AplaProject/go-apla/packages/block"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/queue"
+	"github.com/AplaProject/go-apla/packages/smart"
 
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
@@ -50,7 +50,7 @@ var generateFirstBlockCmd = &cobra.Command{
 				log.WithError(err).WithFields(log.Fields{"key": kName, "filepath": filepath}).Fatal("Reading key data")
 			}
 
-			decodedKey, err := hex.DecodeString(string(data))
+			decodedKey, err := crypto.HexToPub(string(data))
 			if err != nil {
 				log.WithError(err).Fatalf("converting %s from hex", kName)
 			}
@@ -115,7 +115,7 @@ var generateFirstBlockCmd = &cobra.Command{
 		if err := smart.LoadSysContract(nil); err != nil {
 			return
 		}
-		if err := blockchain.Init("blockchain"); err != nil {
+		if err := blockchain.Init(conf.Config.BlockchainDBDir); err != nil {
 			log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("can't create blockchain db")
 			return
 		}

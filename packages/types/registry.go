@@ -5,8 +5,7 @@ package types
 import (
 	"encoding/json"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/blockchain"
 )
 
 type MetaRegistryType int8
@@ -112,5 +111,10 @@ type StateApplier interface {
 type MultiTransaction interface {
 	GetMetadataRegistry() MetadataRegistryReaderWriter
 	GetBlockChainRegistry() blockchain.LevelDBGetterPutterDeleter
-	GetUsersRegistry() *model.DbTransaction
+	GetUsersRegistry() DBTransaction
+}
+
+type DBTransaction interface {
+	Rollback() error
+	Commit() error
 }

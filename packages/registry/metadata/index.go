@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/storage/kv"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/pkg/errors"
 )
 

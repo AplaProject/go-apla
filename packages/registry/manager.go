@@ -3,13 +3,13 @@ package registry
 import (
 	"sync"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/types"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/types"
+	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/GenesisKernel/go-genesis/packages/registry/block"
+	"github.com/AplaProject/go-apla/packages/registry/block"
 	log "github.com/sirupsen/logrus"
 )
 

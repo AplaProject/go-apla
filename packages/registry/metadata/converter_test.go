@@ -3,7 +3,7 @@ package metadata
 import (
 	"testing"
 
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

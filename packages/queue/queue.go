@@ -1,11 +1,13 @@
 package queue
 
 import (
+	"path/filepath"
+
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+
 	"github.com/beeker1121/goque"
-
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
@@ -18,7 +20,7 @@ type TransactionQueue struct {
 func (tq *TransactionQueue) Init(name string) error {
 	var err error
 	tq.name = name
-	tq.queue, err = goque.OpenQueue("queues/" + name)
+	tq.queue, err = goque.OpenQueue(filepath.Join(conf.Config.QueuesDir, name))
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError, "name": name}).Error("opening queue")
 		return err
@@ -137,7 +139,7 @@ type BlockQueue struct {
 
 func (bq *BlockQueue) Init(name string) error {
 	var err error
-	bq.queue, err = goque.OpenQueue("queues/" + name)
+	bq.queue, err = goque.OpenQueue(filepath.Join(conf.Config.QueuesDir, name))
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError, "name": name}).Error("opening queue")
 		return err
@@ -224,7 +226,7 @@ type QueueBlockQueue struct {
 
 func (bq *QueueBlockQueue) Init(name string) error {
 	var err error
-	bq.queue, err = goque.OpenQueue("queues/" + name)
+	bq.queue, err = goque.OpenQueue(filepath.Join(conf.Config.QueuesDir, name))
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.QueueError, "name": name}).Error("opening queue")
 		return err

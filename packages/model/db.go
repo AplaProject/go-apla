@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/migration"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
-	"github.com/GenesisKernel/go-genesis/packages/queue"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/migration"
+	"github.com/AplaProject/go-apla/packages/migration/vde"
+	"github.com/AplaProject/go-apla/packages/queue"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
 
 	// Postgresql driver
 
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/types"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
@@ -229,8 +229,14 @@ func ExecSchema() error {
 
 // UpdateSchema run update migrations
 func UpdateSchema() error {
-	if _, _, found, err := blockchain.GetLastBlock(nil); !found {
+	var found bool
+	var err error
+	if _, _, found, err = blockchain.GetLastBlock(nil); err != nil {
 		return err
+	}
+	if !found {
+		log.Info("Do not updating schema, because first block does not found")
+		return nil
 	}
 	return migration.UpdateMigrate(&MigrationHistory{})
 }

@@ -3,8 +3,8 @@ package metadata
 import (
 	"testing"
 
-	"github.com/GenesisKernel/go-genesis/packages/storage/kv"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/storage/kv"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

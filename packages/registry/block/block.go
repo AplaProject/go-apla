@@ -1,8 +1,8 @@
 package block
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/syndtr/goleveldb/leveldb/util"

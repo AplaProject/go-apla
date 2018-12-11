@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package smart
 
@@ -20,11 +32,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/model/querycost"
-	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/model/querycost"
+	"github.com/AplaProject/go-apla/packages/types"
+
+	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -51,7 +64,7 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 }
 
 func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []interface{},
-	table string, whereFields, whereValues []string, generalRollback bool, exists bool) (int64, string, error) {
+	table string, inWhere *types.Map, generalRollback bool, exists bool) (int64, string, error) {
 
 	var (
 		cost            int64
@@ -70,8 +83,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		Table:        table,
 		Fields:       fields,
 		FieldValues:  ivalues,
-		WhereFields:  whereFields,
-		WhereValues:  whereValues,
+		Where:        inWhere,
 		KeyTableChkr: model.KeyTableChecker{},
 	}
 
@@ -85,7 +97,7 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "whereF": whereFields, "whereV": whereValues}).Error("getting query total cost")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "where": inWhere}).Error("getting query total cost")
 		return 0, "", err
 	}
 
@@ -96,12 +108,19 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	cost += selectCost
-	if exists && len(logData) == 0 {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "whereF": whereFields, "whereV": whereValues, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
-		return 0, "", errUpdNotExistRecord
+	if exists {
+		if len(logData) == 0 {
+			logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "where": inWhere, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
+			return 0, "", errUpdNotExistRecord
+		}
+		if sqlBuilder.IsEmptyWhere() {
+			logger.WithFields(log.Fields{"type": consts.NotFound,
+				"error": errWhereUpdate}).Error("update without where")
+			return 0, "", errWhereUpdate
+		}
 	}
 
-	if whereFields != nil && len(logData) > 0 {
+	if !sqlBuilder.Where.IsEmpty() && len(logData) > 0 {
 		var err error
 		rollbackInfoStr, err = sqlBuilder.GenerateRollBackInfoString(logData)
 		if err != nil {
@@ -172,13 +191,18 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 func (sc *SmartContract) insert(fields []string, ivalues []interface{},
 	table string) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, nil, !sc.VDE && sc.Rollback, false)
+	return sc.selectiveLoggingAndUpd(fields, ivalues, table, nil, !sc.VDE && sc.Rollback, false)
+}
+
+func (sc *SmartContract) updateWhere(fields []string, values []interface{},
+	table string, where *types.Map) (int64, string, error) {
+	return sc.selectiveLoggingAndUpd(fields, values, table, where, !sc.VDE && sc.Rollback, true)
 }
 
 func (sc *SmartContract) update(fields []string, values []interface{},
 	table string, whereField string, whereValue interface{}) (int64, string, error) {
-	return sc.selectiveLoggingAndUpd(fields, values, table, []string{whereField},
-		[]string{fmt.Sprint(whereValue)}, !sc.VDE && sc.Rollback, true)
+	return sc.updateWhere(fields, values, table, types.LoadMap(map[string]interface{}{
+		whereField: fmt.Sprint(whereValue)}))
 }
 
 func shortString(raw string, length int) string {

@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/syndtr/goleveldb/leveldb"
 
 	log "github.com/sirupsen/logrus"
@@ -324,6 +324,9 @@ func GetFirstBlock(tx *leveldb.Transaction) (*BlockWithHash, bool, error) {
 
 func GetLastBlock(tx *leveldb.Transaction) (*Block, []byte, bool, error) {
 	hash, err := GetDB(tx).Get([]byte(lastBlockKey), nil)
+	if err == leveldb.ErrNotFound {
+		return nil, nil, false, nil
+	}
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("getting last block key")
 		return nil, nil, false, err

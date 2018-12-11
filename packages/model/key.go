@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/GenesisKernel/memdb"
 	"github.com/fatih/structs"
 	"github.com/mitchellh/mapstructure"

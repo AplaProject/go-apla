@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package smart
 
@@ -29,31 +41,27 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
-	"github.com/GenesisKernel/go-genesis/packages/blockchain"
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/scheduler"
-	"github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/service"
-	qb "github.com/GenesisKernel/go-genesis/packages/smart/queryBuilder"
-
-	"github.com/GenesisKernel/go-genesis/packages/types"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
-
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/blockchain"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/scheduler"
+	"github.com/AplaProject/go-apla/packages/scheduler/contract"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/service"
+	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
+	"github.com/AplaProject/go-apla/packages/types"
+	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/vdemanager"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -220,6 +228,8 @@ var (
 		"TransactionInfo":              100,
 		"DelTable":                     100,
 		"DelColumn":                    100,
+		"HexToPub":                     20,
+		"PubToHex":                     20,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -346,6 +356,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DelTable":                     DelTable,
 		"DelColumn":                    DelColumn,
 		"Throw":                        Throw,
+		"HexToPub":                     crypto.HexToPub,
+		"PubToHex":                     PubToHex,
 	}
 
 	switch vt {
@@ -887,22 +899,23 @@ func DBInsert(sc *SmartContract, tblname string, values *types.Map) (qcost int64
 	tblname = GetTableName(sc, tblname)
 	if model.IsMetaRegistry(tblname) {
 		// TODO check access table rights
-		model, err := sc.MetaDb.CreateFromParams(tblname, values)
-		if err != nil {
-			err = logError(err, consts.ConversionError, "filling metaregistry model")
-		}
-		if err = sc.MetaDb.Insert(
-			nil, // TODO
-			&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.Header.EcosystemID, 10)}},
-			model.GetPrimaryKey(),
-			model,
-		); err != nil {
-			err = logErrorDB(err, "inserting new meta value")
-			return 0, 0, nil
-		}
+		// TODO types.Map
+		// model, err := sc.MetaDb.CreateFromParams(tblname, values)
+		// if err != nil {
+		// 	err = logError(err, consts.ConversionError, "filling metaregistry model")
+		// }
+		// if err = sc.MetaDb.Insert(
+		// 	nil, // TODO
+		// 	&types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.Header.EcosystemID, 10)}},
+		// 	model.GetPrimaryKey(),
+		// 	model,
+		// ); err != nil {
+		// 	err = logErrorDB(err, "inserting new meta value")
+		// 	return 0, 0, nil
+		// }
 
-		// TODO ret
-		return sc.MetaDb.Price(), 0, nil
+		// // TODO ret
+		// return sc.MetaDb.Price(), 0, nil
 	}
 
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
@@ -950,39 +963,6 @@ func PrepareColumns(columns []string) string {
 		colList = append(colList, icol)
 	}
 	return strings.Join(colList, `,`)
-}
-
-func PrepareWhere(where string) string {
-	whereSlice := regexp.MustCompile(`->([\w\d_]+)`).FindAllStringSubmatchIndex(where, -1)
-	startWhere := 0
-	out := ``
-	for i := 0; i < len(whereSlice); i++ {
-		slice := whereSlice[i]
-		if len(slice) != 4 {
-			continue
-		}
-		if i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
-			colsWhere := []string{where[slice[2]:slice[3]]}
-			from := slice[0]
-			for i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
-				i++
-				slice = whereSlice[i]
-				if len(slice) != 4 {
-					break
-				}
-				colsWhere = append(colsWhere, where[slice[2]:slice[3]])
-			}
-			out += fmt.Sprintf(`%s::jsonb#>>'{%s}'`, where[startWhere:from], strings.Join(colsWhere, `,`))
-			startWhere = slice[3]
-		} else {
-			out += fmt.Sprintf(`%s->>'%s'`, where[startWhere:slice[0]], where[slice[2]:slice[3]])
-			startWhere = slice[3]
-		}
-	}
-	if len(out) > 0 {
-		return out + where[startWhere:]
-	}
-	return where
 }
 
 func GetColumns(inColumns interface{}) ([]string, error) {
@@ -1067,140 +1047,6 @@ func GetOrder(inOrder interface{}) (string, error) {
 	return strings.Join(orders, `,`), nil
 }
 
-func GetWhere(inWhere *types.Map) (string, error) {
-	var (
-		where string
-		cond  []string
-	)
-	if inWhere == nil {
-		inWhere = types.NewMap()
-	}
-	escape := func(value interface{}) string {
-		return strings.Replace(fmt.Sprint(value), `'`, `''`, -1)
-	}
-	oper := func(action string, v interface{}) (string, error) {
-		switch value := v.(type) {
-		default:
-			return fmt.Sprintf(`%s '%s'`, action, escape(value)), nil
-		}
-	}
-	like := func(pattern string, v interface{}) (string, error) {
-		switch value := v.(type) {
-		default:
-			return fmt.Sprintf(pattern, escape(value)), nil
-		}
-	}
-	in := func(action string, v interface{}) (ret string, err error) {
-		switch value := v.(type) {
-		case []interface{}:
-			var list []string
-			for _, ival := range value {
-				list = append(list, escape(ival))
-			}
-			if len(list) > 0 {
-				ret = fmt.Sprintf(`%s ('%s')`, action, strings.Join(list, `', '`))
-			}
-		}
-		return
-	}
-	logic := func(action string, v interface{}) (ret string, err error) {
-		switch value := v.(type) {
-		case []interface{}:
-			var list []string
-			for _, ival := range value {
-				switch avalue := ival.(type) {
-				case *types.Map:
-					where, err := GetWhere(avalue)
-					if err != nil {
-						return ``, err
-					}
-					list = append(list, where)
-				}
-			}
-			if len(list) > 0 {
-				ret = fmt.Sprintf(`(%s)`, strings.Join(list, ` `+action+` `))
-			}
-		}
-		return
-	}
-	for _, key := range inWhere.Keys() {
-		v, _ := inWhere.Get(key)
-		key = PrepareWhere(converter.Sanitize(strings.ToLower(key), `->$`))
-		switch key {
-		case `$like`:
-			return like(`like '%%%s%%'`, v)
-		case `$end`:
-			return like(`like '%%%s'`, v)
-		case `$begin`:
-			return like(`like '%s%%'`, v)
-		case `$and`:
-			return logic(`and`, v)
-		case `$or`:
-			return logic(`or`, v)
-		case `$in`:
-			return in(`in`, v)
-		case `$nin`:
-			return in(`not in`, v)
-		case `$eq`:
-			return oper(`=`, v)
-		case `$neq`:
-			return oper(`!=`, v)
-		case `$gt`:
-			return oper(`>`, v)
-		case `$gte`:
-			return oper(`>=`, v)
-		case `$lt`:
-			return oper(`<`, v)
-		case `$lte`:
-			return oper(`<=`, v)
-		default:
-			if !strings.Contains(key, `>`) && len(key) > 0 {
-				key = `"` + key + `"`
-			}
-			switch value := v.(type) {
-			case []interface{}:
-				var acond []string
-				for _, iarr := range value {
-					switch avalue := iarr.(type) {
-					case *types.Map:
-						ret, err := GetWhere(avalue)
-						if err != nil {
-							return ``, err
-						}
-						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
-					default:
-						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
-					}
-				}
-				if len(acond) > 0 {
-					cond = append(cond, fmt.Sprintf(`(%s)`, strings.Join(acond, ` and `)))
-				}
-			case *types.Map:
-				ret, err := GetWhere(value)
-				if err != nil {
-					return ``, err
-				}
-				cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
-			default:
-				ival := escape(value)
-				if ival == `$isnull` {
-					ival = fmt.Sprintf(`%s is null`, key)
-				} else {
-					ival = fmt.Sprintf(`%s = '%s'`, key, ival)
-				}
-				cond = append(cond, ival)
-			}
-		}
-	}
-	if len(cond) > 0 {
-		where = strings.Join(cond, ` and `)
-		if err := qb.CheckNow(where); err != nil {
-			return ``, err
-		}
-	}
-	return where, nil
-}
-
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
 func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64, inOrder interface{},
 	offset, limit int64, inWhere *types.Map) (int64, []interface{}, error) {
@@ -1220,7 +1066,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err != nil {
 		return 0, nil, err
 	}
-	where, err := GetWhere(inWhere)
+	where, err := qb.GetWhere(inWhere)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -1244,7 +1090,8 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	}
 
 	if model.IsMetaRegistry(tblname) {
-		return metadbSelect(sc, tblname, columns, id, order, offset, limit, sc.TxSmart.Header.EcosystemID, inWhere)
+		// TODO *types.Map
+		// return metadbSelect(sc, tblname, columns, id, order, offset, limit, sc.TxSmart.Header.EcosystemID, inWhere)
 	}
 
 	rows, err = model.GetDB(sc.DbTransaction).Table(ecosysTblName).Select(PrepareColumns(columns)).
@@ -1344,7 +1191,7 @@ func metadbSelect(sc *SmartContract, tblname string, inColumns []string, id int6
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+func DBUpdateExt(sc *SmartContract, tblname string, where *types.Map,
 	values *types.Map) (qcost int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
@@ -1364,40 +1211,41 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	}
 
 	if model.IsMetaRegistry(tblname) {
-		registry := &types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.Header.EcosystemID, 10)}}
+		// TODO: fixed
+		// registry := &types.Registry{Name: tblname, Ecosystem: &types.Ecosystem{Name: strconv.FormatInt(sc.TxSmart.Header.EcosystemID, 10)}}
 
-		model, err := sc.MetaDb.GetModel(registry, value.(string))
-		if err != nil {
-			return 0, err
-		}
+		// model, err := sc.MetaDb.GetModel(registry, value.(string))
+		// if err != nil {
+		// 	return 0, err
+		// }
 
-		err = sc.MetaDb.UpdateFromParams(tblname, model, values)
-		if err != nil {
-			err = logError(err, consts.ConversionError, "filling metaregistry model with new values")
-			return 0, err
-		}
+		// err = sc.MetaDb.UpdateFromParams(tblname, model, values)
+		// if err != nil {
+		// 	err = logError(err, consts.ConversionError, "filling metaregistry model with new values")
+		// 	return 0, err
+		// }
 
-		if err = sc.MetaDb.Update(
-			nil, // TODO
-			registry,
-			model.GetPrimaryKey(),
-			model,
-		); err != nil {
-			err = logErrorDB(err, "inserting new meta value")
-			return 0, err
-		}
+		// if err = sc.MetaDb.Update(
+		// 	nil, // TODO
+		// 	registry,
+		// 	model.GetPrimaryKey(),
+		// 	model,
+		// ); err != nil {
+		// 	err = logErrorDB(err, "inserting new meta value")
+		// 	return 0, err
+		// }
 
-		// TODO ret
-		return sc.MetaDb.Price(), nil
+		// // TODO ret
+		// return sc.MetaDb.Price(), nil
 	}
 
-	qcost, _, err = sc.update(columns, val, ecosysTableName, column, fmt.Sprint(value))
+	qcost, _, err = sc.updateWhere(columns, val, tblname, where)
 	return
 }
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, values *types.Map) (qcost int64, err error) {
-	return DBUpdateExt(sc, tblname, `id`, id, values)
+	return DBUpdateExt(sc, tblname, types.LoadMap(map[string]interface{}{`id`: id}), values)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
@@ -1815,8 +1663,8 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 	if err = validateAccess(`SetPubKey`, sc, nNewUser); err != nil {
 		return
 	}
-	if len(pubKey) == consts.PubkeySizeLength*2 {
-		pubKey, err = hex.DecodeString(string(pubKey))
+	if len(pubKey) >= consts.PubkeySizeLength*2 {
+		pubKey, err = crypto.HexToPub(string(pubKey))
 		if err != nil {
 			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
 		}
@@ -2677,4 +2525,14 @@ func (throw *ThrowError) Error() string {
 
 func Throw(code, errText string) error {
 	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
+}
+
+func PubToHex(in interface{}) (ret string) {
+	switch v := in.(type) {
+	case string:
+		ret = crypto.PubToHex([]byte(v))
+	case []byte:
+		ret = crypto.PubToHex(v)
+	}
+	return
 }

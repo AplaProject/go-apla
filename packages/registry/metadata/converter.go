@@ -3,8 +3,8 @@ package metadata
 import (
 	"reflect"
 
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/types"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/pkg/errors"
 )
 

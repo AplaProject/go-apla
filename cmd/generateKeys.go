@@ -8,9 +8,9 @@ import (
 
 	"os"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -76,7 +76,7 @@ func createKeyPair(privFilename, pubFilename string) (priv, pub []byte, err erro
 		return
 	}
 
-	err = createFile(pubFilename, []byte(hex.EncodeToString(pub)))
+	err = createFile(pubFilename, []byte(crypto.PubToHex(pub)))
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "path": pubFilename}).Error("creating public key")
 		return
