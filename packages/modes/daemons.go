@@ -17,6 +17,12 @@ type BlockchainDaemonsListsFactory struct{}
 
 func (f BlockchainDaemonsListsFactory) GetDaemonsList() []string {
 	return []string{
+		"BlocksCollection",
+		"BlockGenerator",
+		"QueueParserTx",
+		"QueueParserBlocks",
+		"Disseminator",
+		"Confirmations",
 		"Scheduler",
 	}
 }
@@ -25,12 +31,6 @@ type OBSDaemonsListFactory struct{}
 
 func (f OBSDaemonsListFactory) GetDaemonsList() []string {
 	return []string{
-		"BlocksCollection",
-		"BlockGenerator",
-		"QueueParserTx",
-		"QueueParserBlocks",
-		"Disseminator",
-		"Confirmations",
 		"Scheduler",
 	}
 }
