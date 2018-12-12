@@ -39,6 +39,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/api"
 	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -162,6 +163,7 @@ func delPidFile() {
 
 func initRoutes(listenHost string) {
 	handler := modes.RegisterRoutes()
+	handler = api.WithCors(handler)
 	handler = httpserver.NewMaxBodyReader(handler, conf.Config.HTTPServerMaxBodySize)
 
 	if conf.Config.TLS {
