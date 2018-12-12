@@ -98,6 +98,14 @@ func (sc SmartContract) GetLogger() *log.Entry {
 	return log.WithFields(log.Fields{"obs": sc.OBS, "name": name})
 }
 
+func InitVM() {
+	vm := GetVM()
+
+	vmt := defineVMType()
+
+	EmbedFuncs(vm, vmt)
+}
+
 func newVM() *script.VM {
 	vm := script.NewVM()
 	vm.Extern = true
@@ -417,12 +425,6 @@ func defineVMType() script.VMType {
 
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts() error {
-	vm := GetVM()
-
-	vmt := defineVMType()
-
-	EmbedFuncs(vm, vmt)
-
 	contract := &model.Contract{}
 	count, err := contract.Count()
 	if err != nil {

@@ -50,6 +50,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/network/httpserver"
 	"github.com/AplaProject/go-apla/packages/obsmanager"
 	"github.com/AplaProject/go-apla/packages/publisher"
+	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/statsd"
 	"github.com/AplaProject/go-apla/packages/utils"
 
@@ -252,6 +253,7 @@ func Start() {
 	}
 	defer delPidFile()
 
+	smart.InitVM()
 	if model.DBConn != nil {
 		if err := model.UpdateSchema(); err != nil {
 			log.WithFields(log.Fields{"error": err}).Error("on running update migrations")
