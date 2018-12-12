@@ -259,6 +259,15 @@ func (t *Transaction) parseFromContract(fillData bool) error {
 			}
 		} else {
 			t.TxData = smartTx.Params
+			for key, item := range t.TxData {
+				if v, ok := item.(map[interface{}]interface{}); ok {
+					imap := make(map[string]interface{})
+					for ikey, ival := range v {
+						imap[fmt.Sprint(ikey)] = ival
+					}
+					t.TxData[key] = imap
+				}
+			}
 		}
 	}
 
