@@ -220,7 +220,15 @@ func Start() {
 		}
 	}
 
-	log.WithFields(log.Fields{"mode": conf.Config.VDEMode}).Info("Node running mode")
+	mode := conf.Config.VDEMode
+	if mode == consts.NoneVDE {
+		if syspar.IsPrivateBlockchain() {
+			mode = `Private`
+		} else {
+			mode = `Public`
+		}
+	}
+	log.WithFields(log.Fields{"mode": mode}).Info("Node running mode")
 	if conf.Config.FuncBench {
 		log.Warning("Warning! Access checking is disabled in some built-in functions")
 	}
