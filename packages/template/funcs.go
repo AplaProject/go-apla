@@ -332,7 +332,7 @@ func addressIDTag(par parFunc) string {
 	}
 	id := smart.AddressToID(processToText(par, macro(address, par.Workspace.Vars)))
 	if id == 0 {
-		return `address is invalid`
+		return `0`
 	}
 	return converter.Int64ToStr(id)
 }
