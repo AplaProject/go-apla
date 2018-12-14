@@ -52,19 +52,25 @@ func authRequire(next func(w http.ResponseWriter, r *http.Request)) func(w http.
 		}
 
 		logger := getLogger(r)
+		if logger == nil {
+			logger = log.WithFields(log.Fields{"path": r.URL})
+		}
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
 		errorResponse(w, errUnauthorized)
 	}
 }
 
+func loggerFromRequest(r *http.Request) *log.Entry {
+	return log.WithFields(log.Fields{
+		"headers":  r.Header,
+		"path":     r.URL.Path,
+		"protocol": r.Proto,
+		"remote":   r.RemoteAddr,
+	})
+}
 func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := log.WithFields(log.Fields{
-			"headers":  r.Header,
-			"path":     r.URL.Path,
-			"protocol": r.Proto,
-			"remote":   r.RemoteAddr,
-		})
+		logger := loggerFromRequest(r)
 		logger.Info("received http request")
 		r = setLogger(r, logger)
 		next.ServeHTTP(w, r)

@@ -58,6 +58,9 @@ func setLogger(r *http.Request, log *log.Entry) *http.Request {
 
 func getLogger(r *http.Request) *log.Entry {
 	if v := getContext(r, contextKeyLogger); v != nil {
+		if v == nil {
+			v = loggerFromRequest(r)
+		}
 		return v.(*log.Entry)
 	}
 	return nil
