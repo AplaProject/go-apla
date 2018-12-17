@@ -8,14 +8,12 @@ import (
 
 // ClientTxPreprocessor procees tx from client
 type ClientTxPreprocessor interface {
-	ProcessClientTranstaction([]byte, int64) (string, error)
-	SetLogger(*log.Entry)
+	ProcessClientTranstaction([]byte, int64, *log.Entry) (string, error)
 }
 
 // SmartContractRunner run serialized contract
 type SmartContractRunner interface {
-	RunContract(data, hash []byte, keyID int64) error
-	SetLogger(*log.Entry)
+	RunContract(data, hash []byte, keyID int64, le *log.Entry) error
 }
 
 type DaemonListFactory interface {
@@ -27,8 +25,7 @@ type EcosystemLookupGetter interface {
 }
 
 type EcosystemIDValidator interface {
-	Validate(id, clientID int64) (int64, error)
-	SetLogger(*log.Entry)
+	Validate(id, clientID int64, le *log.Entry) (int64, error)
 }
 
 // DaemonLoader allow implement different ways for loading daemons

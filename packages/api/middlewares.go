@@ -52,9 +52,6 @@ func authRequire(next func(w http.ResponseWriter, r *http.Request)) func(w http.
 		}
 
 		logger := getLogger(r)
-		if logger == nil {
-			logger = log.WithFields(log.Fields{"path": r.URL})
-		}
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("wallet is empty")
 		errorResponse(w, errUnauthorized)
 	}

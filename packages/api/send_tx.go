@@ -128,8 +128,7 @@ func txHandler(r *http.Request, txData []byte, m Mode) (string, error) {
 		return "", errLimitTxSize.Errorf(len(txData))
 	}
 
-	m.ClientTxProcessor.SetLogger(logger)
-	hash, err := m.ClientTxProcessor.ProcessClientTranstaction(txData, client.KeyID)
+	hash, err := m.ClientTxProcessor.ProcessClientTranstaction(txData, client.KeyID, logger)
 	if err != nil {
 		return "", err
 	}

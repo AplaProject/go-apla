@@ -18,22 +18,18 @@ import (
 
 var ErrDiffKey = errors.New("Different keys")
 
-type blockchainTxPreprocessor struct {
-	logger *log.Entry
-}
+type blockchainTxPreprocessor struct{}
 
-func (p blockchainTxPreprocessor) SetLogger(logger *log.Entry) {
-	p.logger = logger
-}
-
-func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64) (string, error) {
+func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64, le *log.Entry) (string, error) {
 	rtx := &transaction.RawTransaction{}
 	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
+		le.WithFields(log.Fields{"error": err}).Error("on unmarshalling to raw tx")
 		return "", err
 	}
 
 	smartTx := tx.SmartContract{}
 	if err := msgpack.Unmarshal(rtx.Payload(), &smartTx); err != nil {
+		le.WithFields(log.Fields{"error": err}).Error("on unmarshalling to sc")
 		return "", err
 	}
 
@@ -42,26 +38,20 @@ func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte, key i
 	}
 
 	if err := model.SendTx(rtx, key); err != nil {
-		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
+		le.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return "", err
 	}
 
 	return string(converter.BinToHex(rtx.Hash())), nil
 }
 
-type ObsTxPreprocessor struct {
-	logger *log.Entry
-}
+type ObsTxPreprocessor struct{}
 
-func (p ObsTxPreprocessor) SetLogger(logger *log.Entry) {
-	p.logger = logger
-}
-
-func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64) (string, error) {
+func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64, le *log.Entry) (string, error) {
 
 	tx, err := transaction.UnmarshallTransaction(bytes.NewBuffer(txData), true)
 	if err != nil {
-		p.logger.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on unmarshaling user tx")
+		le.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on unmarshaling user tx")
 		return "", err
 	}
 
@@ -74,18 +64,18 @@ func (p ObsTxPreprocessor) ProcessClientTranstaction(txData []byte, key int64) (
 	}
 
 	if err := ts.Create(); err != nil {
-		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating tx status")
+		le.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on creating tx status")
 		return "", err
 	}
 
 	res, _, err := tx.CallOBSContract()
 	if err != nil {
-		p.logger.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on execution contract")
+		le.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("on execution contract")
 		return "", err
 	}
 
 	if err := ts.UpdateBlockMsg(nil, 1, res, tx.TxHash); err != nil {
-		p.logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
+		le.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": tx.TxHash}).Error("updating transaction status block id")
 		return "", err
 	}
 
@@ -101,18 +91,12 @@ func GetClientTxPreprocessor() types.ClientTxPreprocessor {
 }
 
 // BlockchainSCRunner implementls SmartContractRunner for blockchain mode
-type BlockchainSCRunner struct {
-	logger *log.Entry
-}
-
-func (runner BlockchainSCRunner) SetLogger(logger *log.Entry) {
-	runner.logger = logger
-}
+type BlockchainSCRunner struct{}
 
 // RunContract runs smart contract on blockchain mode
-func (runner BlockchainSCRunner) RunContract(data, hash []byte, keyID int64) error {
+func (runner BlockchainSCRunner) RunContract(data, hash []byte, keyID int64, le *log.Entry) error {
 	if err := tx.CreateTransaction(data, hash, keyID); err != nil {
-		runner.logger.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+		le.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
 		return err
 	}
 
@@ -120,20 +104,14 @@ func (runner BlockchainSCRunner) RunContract(data, hash []byte, keyID int64) err
 }
 
 // OBSSCRunner implementls SmartContractRunner for obs mode
-type OBSSCRunner struct {
-	logger *log.Entry
-}
-
-func (runner OBSSCRunner) SetLogger(logger *log.Entry) {
-	runner.logger = logger
-}
+type OBSSCRunner struct{}
 
 // RunContract runs smart contract on obs mode
-func (runner OBSSCRunner) RunContract(data, hash []byte, keyID int64) error {
+func (runner OBSSCRunner) RunContract(data, hash []byte, keyID int64, le *log.Entry) error {
 	proc := GetClientTxPreprocessor()
-	_, err := proc.ProcessClientTranstaction(data, keyID)
+	_, err := proc.ProcessClientTranstaction(data, keyID, le)
 	if err != nil {
-		runner.logger.WithFields(log.Fields{"error": consts.ContractError}).Error("on run internal NewUser")
+		le.WithFields(log.Fields{"error": consts.ContractError}).Error("on run internal NewUser")
 		return err
 	}
 

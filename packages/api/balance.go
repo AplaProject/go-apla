@@ -46,7 +46,6 @@ type balanceResult struct {
 
 func (m Mode) getBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	logger := getLogger(r)
-	m.EcosysIDValidator.SetLogger(logger)
 	form := &ecosystemForm{
 		Validator: m.EcosysIDValidator,
 	}

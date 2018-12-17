@@ -37,13 +37,29 @@ import (
 
 const corsMaxAge = 600
 
-// Route sets routing pathes
-func (m Mode) SetCommonRoutes(r *mux.Router) {
-	r.StrictSlash(true)
-	r.Use(loggerMiddleware, recoverMiddleware, statsdMiddleware)
+type Router struct {
+	main        *mux.Router
+	apiVersions map[string]*mux.Router
+}
 
-	// api router with prefix path
-	api := r.PathPrefix("/api/v2").Subrouter()
+func (r Router) GetAPI() *mux.Router {
+	return r.main
+}
+
+func (r Router) GetAPIVersion(preffix string) *mux.Router {
+	return r.apiVersions[preffix]
+}
+
+func (r Router) NewVersion(preffix string) *mux.Router {
+	api := r.main.PathPrefix(preffix).Subrouter()
+	r.apiVersions[preffix] = api
+	return api
+}
+
+// Route sets routing pathes
+func (m Mode) SetCommonRoutes(r Router) {
+	api := r.NewVersion("/api/v2")
+
 	api.Use(nodeStateMiddleware, tokenMiddleware, m.clientMiddleware)
 
 	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", getDataHandler).Methods("GET")
@@ -78,10 +94,8 @@ func (m Mode) SetCommonRoutes(r *mux.Router) {
 	api.HandleFunc("/txstatus", authRequire(getTxStatusHandler)).Methods("POST")
 }
 
-func (m Mode) SetBlockchainRoutes(r *mux.Router) {
-	api := r.PathPrefix("/api/v2").Subrouter()
-	api.Use(nodeStateMiddleware, tokenMiddleware, m.clientMiddleware)
-
+func (m Mode) SetBlockchainRoutes(r Router) {
+	api := r.GetAPIVersion("/api/v2")
 	api.HandleFunc("/txinfo/{hash}", authRequire(getTxInfoHandler)).Methods("GET")
 	api.HandleFunc("/txinfomultiple", authRequire(getTxInfoMultiHandler)).Methods("GET")
 	api.HandleFunc("/appparam/{appID}/{name}", authRequire(m.GetAppParamHandler)).Methods("GET")
@@ -99,10 +113,17 @@ func (m Mode) SetBlockchainRoutes(r *mux.Router) {
 	api.HandleFunc("/ecosystemname", getEcosystemNameHandler).Methods("GET")
 }
 
-func NewRouter(m Mode) *mux.Router {
+func NewRouter(m Mode) Router {
 	r := mux.NewRouter()
-	m.SetCommonRoutes(r)
-	return r
+	r.StrictSlash(true)
+	r.Use(loggerMiddleware, recoverMiddleware, statsdMiddleware)
+
+	api := Router{
+		main:        r,
+		apiVersions: make(map[string]*mux.Router),
+	}
+	m.SetCommonRoutes(api)
+	return api
 }
 
 func WithCors(h http.Handler) http.Handler {

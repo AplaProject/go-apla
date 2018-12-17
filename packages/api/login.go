@@ -189,8 +189,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
 		} else {
-			m.ContractRunner.SetLogger(logger)
-			m.ContractRunner.RunContract(txData, txHash, sc.KeyID)
+			m.ContractRunner.RunContract(txData, txHash, sc.KeyID, logger)
 		}
 	}
 

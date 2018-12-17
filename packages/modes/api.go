@@ -20,5 +20,6 @@ func RegisterRoutes() http.Handler {
 	if !conf.Config.IsSupportingOBS() {
 		m.SetBlockchainRoutes(r)
 	}
-	return r
+
+	return r.GetAPI()
 }
