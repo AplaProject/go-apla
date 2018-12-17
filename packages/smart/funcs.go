@@ -859,12 +859,21 @@ func GetColumns(inColumns interface{}) ([]string, error) {
 	return columns, nil
 }
 
-func GetOrder(inOrder interface{}) (string, error) {
-	var orders []string
+func GetOrder(tblname string, inOrder interface{}) (string, error) {
+	var (
+		orders            []string
+		isID, isEcosystem bool
+	)
 
 	sanitize := func(in string, value interface{}) {
 		in = converter.Sanitize(strings.ToLower(in), ``)
 		if len(in) > 0 {
+			if in == `id` {
+				isID = true
+			}
+			if in == `ecosystem` {
+				isEcosystem = true
+			}
 			in = `"` + in + `"`
 			if fmt.Sprint(value) == `-1` {
 				in += ` desc`
@@ -904,8 +913,11 @@ func GetOrder(inOrder interface{}) (string, error) {
 			}
 		}
 	}
-	if len(orders) == 0 {
-		orders = []string{`id`}
+	if v, ok := model.FirstEcosystemTables[tblname[2:]]; ok && !v && !isEcosystem {
+		orders = append(orders, `ecosystem`)
+	}
+	if !isID {
+		orders = append(orders, `id`)
 	}
 	if err := qb.CheckNow(orders...); err != nil {
 		return ``, err
@@ -928,7 +940,8 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err != nil {
 		return 0, nil, err
 	}
-	order, err = GetOrder(inOrder)
+	tblname = GetTableName(sc, tblname)
+	order, err = GetOrder(tblname, inOrder)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -946,7 +959,6 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if limit < 0 || limit > 250 {
 		limit = 250
 	}
-	tblname = GetTableName(sc, tblname)
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil {
 		return 0, nil, err

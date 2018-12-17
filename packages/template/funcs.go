@@ -614,19 +614,6 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`whereid`] != nil {
 		where = fmt.Sprintf(` id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
-	if par.Node.Attr[`order`] != nil {
-		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
-		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
-			inColumns, _ = parseObject([]rune(order))
-		} else {
-			inColumns = order
-		}
-		order, err = smart.GetOrder(inColumns)
-		if err != nil {
-			return err.Error()
-		}
-		order = ` order by ` + order
-	}
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
 	}
@@ -651,6 +638,21 @@ func dbfindTag(par parFunc) string {
 	sc := par.Workspace.SmartContract
 	tblname := converter.ParseTable(strings.Trim(macro((*par.Pars)[`Name`], par.Workspace.Vars), `"`), state)
 	tblname = strings.ToLower(tblname)
+
+	inColumns = ``
+	if par.Node.Attr[`order`] != nil {
+		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
+			inColumns, _ = parseObject([]rune(order))
+		} else {
+			inColumns = order
+		}
+	}
+	order, err = smart.GetOrder(tblname, inColumns)
+	if err != nil {
+		return err.Error()
+	}
+	order = ` order by ` + order
 
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
