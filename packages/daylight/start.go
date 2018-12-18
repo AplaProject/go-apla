@@ -219,16 +219,6 @@ func Start() {
 			Exit(1)
 		}
 	}
-
-	mode := conf.Config.VDEMode
-	if mode == consts.NoneVDE {
-		if syspar.IsPrivateBlockchain() {
-			mode = `Private`
-		} else {
-			mode = `Public`
-		}
-	}
-	log.WithFields(log.Fields{"mode": mode}).Info("Node running mode")
 	if conf.Config.FuncBench {
 		log.Warning("Warning! Access checking is disabled in some built-in functions")
 	}
@@ -242,6 +232,15 @@ func Start() {
 	}
 
 	initGorm(conf.Config.DB)
+	mode := conf.Config.VDEMode
+	if mode == consts.NoneVDE {
+		if syspar.IsPrivateBlockchain() {
+			mode = `Private`
+		} else {
+			mode = `Public`
+		}
+	}
+	log.WithFields(log.Fields{"mode": mode}).Info("Node running mode")
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
 	killOld()
@@ -263,7 +262,6 @@ func Start() {
 		Exit(1)
 	}
 	defer delPidFile()
-
 	if model.DBConn != nil {
 		if err := model.UpdateSchema(); err != nil {
 			log.WithFields(log.Fields{"error": err}).Error("on running update migrations")
@@ -310,7 +308,6 @@ func Start() {
 			}
 		}
 	}
-
 	daemons.WaitForSignals()
 
 	initRoutes(conf.Config.HTTP.Str())
