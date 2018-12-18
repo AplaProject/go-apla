@@ -348,3 +348,14 @@ func getSourceHandler(w http.ResponseWriter, r *http.Request) {
 
 	jsonResponse(w, &contentResult{Tree: ret})
 }
+
+func getPageValidatorsCountHandler(w http.ResponseWriter, r *http.Request) {
+	page, _, err := pageValue(r)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
+	res := map[string]int64{"validate_count": page.ValidateCount}
+	jsonResponse(w, &res)
+}

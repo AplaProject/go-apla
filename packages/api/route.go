@@ -68,6 +68,7 @@ func setRoutes(r *mux.Router) {
 	api.HandleFunc("/version", getVersionHandler).Methods("GET")
 	api.HandleFunc("/config/{option}", getConfigOptionHandler).Methods("GET")
 
+	api.HandleFunc("/page/validators_count/{name}", getPageValidatorsCountHandler).Methods("GET")
 	api.HandleFunc("/content/source/{name}", authRequire(getSourceHandler)).Methods("POST")
 	api.HandleFunc("/content/page/{name}", authRequire(getPageHandler)).Methods("POST")
 	api.HandleFunc("/content/hash/{name}", getPageHashHandler).Methods("POST")
