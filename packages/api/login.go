@@ -40,7 +40,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/publisher"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -86,11 +85,9 @@ type loginResult struct {
 	EcosystemID string        `json:"ecosystem_id,omitempty"`
 	KeyID       string        `json:"key_id,omitempty"`
 	Address     string        `json:"address,omitempty"`
-	NotifyKey   string        `json:"notify_key,omitempty"`
 	IsNode      bool          `json:"isnode,omitempty"`
 	IsOwner     bool          `json:"isowner,omitempty"`
 	IsVDE       bool          `json:"vde,omitempty"`
-	Timestamp   string        `json:"timestamp,omitempty"`
 	Roles       []rolesResult `json:"roles,omitempty"`
 }
 
@@ -281,11 +278,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	claims.StandardClaims.ExpiresAt = time.Now().Add(time.Hour * 30 * 24).Unix()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		errorResponse(w, err)
-		return
-	}
-	result.NotifyKey, result.Timestamp, err = publisher.GetHMACSign(wallet)
-	if err != nil {
 		errorResponse(w, err)
 		return
 	}
