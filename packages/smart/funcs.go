@@ -2308,6 +2308,12 @@ func (throw *ThrowError) Error() string {
 }
 
 func Throw(code, errText string) error {
+	if len(errText) > script.MaxErrLen {
+		errText = errText[:script.MaxErrLen] + `...`
+	}
+	if len(code) > 32 {
+		code = code[:32]
+	}
 	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
 }
 

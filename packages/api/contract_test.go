@@ -66,6 +66,41 @@ func TestDBFindContract(t *testing.T) {
 	}
 }
 
+func TestErrorContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `err` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+			}
+			action { 
+				error("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt 
+				vestibulum eros. Curabitur fermentum pulvinar nibh, in maximus dolor tempor quis. 
+				Donec non nulla id ex lacinia bibendum eu a sapien. Nam eu mi feugiat, gravida 
+				erat ac, tincidunt dolor. Curabitur sed erat et felis turpis duis.")
+			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err := postTxResult(rnd, &url.Values{})
+	if len(err.Error()) > 250 {
+		t.Error(`Too long error`)
+	}
+	rnd += `1`
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
+		data {
+		}
+		action { 
+			Throw("This is a problem", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt 
+			vestibulum eros. Curabitur fermentum pulvinar nibh, in maximus dolor tempor quis. 
+			Donec non nulla id ex lacinia bibendum eu a sapien. Nam eu mi feugiat, gravida 
+			erat ac, tincidunt dolor. Curabitur sed erat et felis turpis duis.")
+		}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err = postTxResult(rnd, &url.Values{})
+	if len(err.Error()) > 250 {
+		t.Error(`Too long error`)
+	}
+}
+
 func TestUpdate_FullNodes(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -754,117 +789,6 @@ func TestNewTableWithEmptyName(t *testing.T) {
 	}
 
 	assert.EqualError(t, postTx("NewTable", &form), `{"type":"panic","error":"Column name cannot begin with digit"}`)
-}
-
-func TestActivateContracts(t *testing.T) {
-
-	wanted := func(name, want string) bool {
-		var ret getTestResult
-		err := sendPost(`test/`+name, nil, &ret)
-		if err != nil {
-			t.Error(err)
-			return false
-		}
-		if ret.Value != want {
-			t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
-			return false
-		}
-		return true
-	}
-
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-	rnd := `rnd` + crypto.RandSeq(6)
-	form := url.Values{`Value`: {`contract ` + rnd + ` {
-		    data {
-				Par string
-			}
-			action { Test("active",  $Par)}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	var ret getContractResult
-	err := sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if !ret.Active {
-		t.Error(fmt.Errorf(`Not activate ` + rnd))
-	}
-	var row rowResult
-	err = sendGet(`row/contracts/`+ret.TableID, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value[`active`] != `1` {
-		t.Error(fmt.Errorf(`row not activate ` + rnd))
-	}
-
-	if err := postTx(rnd, &url.Values{`Par`: {rnd}}); err != nil {
-		t.Error(err)
-		return
-	}
-	if !wanted(`active`, rnd) {
-		return
-	}
-}
-
-func TestDeactivateContracts(t *testing.T) {
-
-	wanted := func(name, want string) bool {
-		var ret getTestResult
-		return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
-	}
-
-	assert.NoError(t, keyLogin(1))
-
-	rnd := `rnd` + crypto.RandSeq(6)
-	form := url.Values{`Value`: {`contract ` + rnd + ` {
-		    data {
-				Par string
-			}
-			action { Test("active",  $Par)}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
-
-	var ret getContractResult
-	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
-
-	assert.NoError(t, postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}))
-	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
-	assert.True(t, ret.Active, `Not activate `+rnd)
-
-	var row rowResult
-	assert.NoError(t, sendGet(`row/contracts/`+ret.TableID, nil, &row))
-	assert.Equal(t, "1", row.Value[`active`], `row not activate `+rnd)
-
-	assert.NoError(t, postTx(rnd, &url.Values{`Par`: {rnd}}))
-
-	if !wanted(`active`, rnd) {
-		return
-	}
-
-	assert.NoError(t, postTx(`DeactivateContract`, &url.Values{`Id`: {ret.TableID}}))
-
-	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
-	assert.False(t, ret.Active, `Not deactivate `+rnd)
-
-	var row2 rowResult
-	assert.NoError(t, sendGet(`row/contracts/`+ret.TableID, nil, &row2))
-	assert.Equal(t, "0", row2.Value[`active`])
 }
 
 func TestContracts(t *testing.T) {
