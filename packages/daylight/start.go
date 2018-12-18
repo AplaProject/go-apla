@@ -232,15 +232,6 @@ func Start() {
 	}
 
 	initGorm(conf.Config.DB)
-	mode := conf.Config.VDEMode
-	if mode == consts.NoneVDE {
-		if syspar.IsPrivateBlockchain() {
-			mode = `Private`
-		} else {
-			mode = `Public`
-		}
-	}
-	log.WithFields(log.Fields{"mode": mode}).Info("Node running mode")
 	log.WithFields(log.Fields{"work_dir": conf.Config.DataDir, "version": consts.VERSION}).Info("started with")
 
 	killOld()

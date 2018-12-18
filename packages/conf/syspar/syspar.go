@@ -505,11 +505,6 @@ func GetFirstBlockData() (*consts.FirstBlock, error) {
 // IsPrivateBlockchain returns the value of private_blockchain system parameter or true
 func IsPrivateBlockchain() bool {
 	par := SysString(PrivateBlockchain)
-	if len(par) == 0 {
-		var sp model.SystemParameter
-		sp.Get(PrivateBlockchain)
-		par = sp.Value
-	}
 	return len(par) > 0 && par != `0` && par != `false`
 }
 

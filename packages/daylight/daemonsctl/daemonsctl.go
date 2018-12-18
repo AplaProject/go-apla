@@ -34,6 +34,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/block"
 	conf "github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/daemons"
 	"github.com/AplaProject/go-apla/packages/network/tcpserver"
 	"github.com/AplaProject/go-apla/packages/smart"
@@ -66,6 +67,18 @@ func RunAllDaemons(ctx context.Context) error {
 		}
 
 	}
+	mode := conf.Config.VDEMode
+	if mode == consts.NoneVDE {
+		if syspar.IsPrivateBlockchain() {
+			mode = `Private`
+		} else {
+			mode = `Public`
+		}
+	}
+	logLevel := log.GetLevel()
+	log.SetLevel(log.InfoLevel)
+	log.WithFields(log.Fields{"mode": mode, "nocontext": true}).Info("Node running mode")
+	log.SetLevel(logLevel)
 
 	log.Info("load contracts")
 	if err := smart.LoadContracts(); err != nil {
