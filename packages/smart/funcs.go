@@ -144,6 +144,13 @@ type SmartContract struct {
 	Notifications []NotifyInfo
 }
 
+var (
+	defaultSortOrder = map[string]string{
+		`keys`:    "ecosystem,id",
+		`members`: "ecosystem,id",
+	}
+)
+
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
 func (sc *SmartContract) AppendStack(fn string) error {
 	if sc.isAllowStack(fn) {
@@ -861,19 +868,14 @@ func GetColumns(inColumns interface{}) ([]string, error) {
 
 func GetOrder(tblname string, inOrder interface{}) (string, error) {
 	var (
-		orders            []string
-		isID, isEcosystem bool
+		orders []string
 	)
+	cols := make(map[string]bool)
 
 	sanitize := func(in string, value interface{}) {
 		in = converter.Sanitize(strings.ToLower(in), ``)
 		if len(in) > 0 {
-			if in == `id` {
-				isID = true
-			}
-			if in == `ecosystem` {
-				isEcosystem = true
-			}
+			cols[in] = true
 			in = `"` + in + `"`
 			if fmt.Sprint(value) == `-1` {
 				in += ` desc`
@@ -884,6 +886,13 @@ func GetOrder(tblname string, inOrder interface{}) (string, error) {
 		}
 	}
 
+	if v, ok := defaultSortOrder[tblname[2:]]; ok {
+		for _, item := range strings.Split(v, `,`) {
+			cols[item] = false
+		}
+	} else {
+		cols[`id`] = false
+	}
 	switch v := inOrder.(type) {
 	case string:
 		sanitize(v, nil)
@@ -913,11 +922,10 @@ func GetOrder(tblname string, inOrder interface{}) (string, error) {
 			}
 		}
 	}
-	if v, ok := model.FirstEcosystemTables[tblname[2:]]; ok && !v && !isEcosystem {
-		orders = append(orders, `ecosystem`)
-	}
-	if !isID {
-		orders = append(orders, `id`)
+	for key, state := range cols {
+		if !state {
+			orders = append(orders, key)
+		}
 	}
 	if err := qb.CheckNow(orders...); err != nil {
 		return ``, err
