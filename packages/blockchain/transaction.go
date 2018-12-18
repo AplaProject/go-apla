@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 
@@ -128,13 +129,13 @@ func (t Transaction) ForSign() string {
 }
 
 func (t Transaction) Marshal() ([]byte, error) {
-	var b []byte
-	var err error
-	if b, err = msgpack.Marshal(t); err != nil {
+	var buf bytes.Buffer
+	enc := msgpack.NewEncoder(&buf).SortMapKeys(true)
+	if err := enc.Encode(t); err != nil {
 		log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling tx")
 		return nil, err
 	}
-	return b, err
+	return buf.Bytes(), nil
 }
 
 func (t *Transaction) Unmarshal(b []byte) error {
@@ -147,12 +148,15 @@ func (t *Transaction) Unmarshal(b []byte) error {
 
 func (t Transaction) Hash() ([]byte, error) {
 	sign := t.Header.BinSignatures
+	tokenEcosystem := t.TokenEcosystem
 	t.Header.BinSignatures = nil
+	t.TokenEcosystem = 0
 	b, err := t.Marshal()
 	if err != nil {
 		return nil, err
 	}
 	t.Header.BinSignatures = sign
+	t.TokenEcosystem = tokenEcosystem
 	return crypto.DoubleHash(b)
 }
 
