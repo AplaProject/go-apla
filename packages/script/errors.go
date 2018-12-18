@@ -61,4 +61,5 @@ var (
 	errUnexpComma      = errors.New(`unexpected lexem; expecting comma`)
 	errUnexpValue      = errors.New(`unexpected lexem; expecting string, int value or variable`)
 	errCondWrite       = errors.New(`'conditions' cannot call contracts or functions which can modify the blockchain database.`)
+	errSelfAssignment  = errors.New(`self assignment`)
 )
