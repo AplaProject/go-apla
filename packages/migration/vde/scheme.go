@@ -45,7 +45,7 @@ func GetVDEScript() string {
 		sectionsDataSQL,
 		tablesDataSQL,
 		applicationsDataSQL,
-		keysDataSQL,
+		keysDataSQLVDE,
 		systemParametersDataSQL,
 	}
 

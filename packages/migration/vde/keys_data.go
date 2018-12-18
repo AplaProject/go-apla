@@ -28,8 +28,10 @@
 
 package vde
 
-import "github.com/AplaProject/go-apla/packages/consts"
+import (
+	"github.com/AplaProject/go-apla/packages/consts"
+)
 
-var keysDataSQL = `
-INSERT INTO "1_keys" (id, pub, blocked, ecosystem) VALUES (` + consts.GuestKey + `, '` + consts.GuestPublic + `', 1, '%[1]d');
+var keysDataSQLVDE = `
+INSERT INTO "1_keys" (id, pub, blocked, read_only, ecosystem) VALUES (` + consts.GuestKey + `, encode('%[4]x', 'HEX'), 0, 0, '%[1]d');
 `

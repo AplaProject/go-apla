@@ -240,6 +240,20 @@ func (t *Transaction) parseFromContract(fillData bool) error {
 	t.TxTime = smartTx.Time
 	t.TxKeyID = smartTx.KeyID
 
+	key := &model.Key{}
+	found, err := key.Get(smartTx.KeyID)
+	if found != true {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_key": t.TxKeyID}).Error("key ID not found")
+		return err
+	}
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_key": t.TxKeyID}).Error("DB error while getting transaction key")
+		return err
+	}
+	if key.ReadOnly == 1 {
+		return fmt.Errorf("transaction aborted because of read_only key")
+	}
+
 	contract := smart.GetContractByID(int32(smartTx.ID))
 	if contract == nil {
 		log.WithFields(log.Fields{"contract_id": smartTx.ID, "type": consts.NotFound}).Error("unknown contract")

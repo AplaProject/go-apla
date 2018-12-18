@@ -39,6 +39,7 @@ type Key struct {
 	Maxpay    string `gorm:"not null"`
 	Deleted   int64  `gorm:"not null"`
 	Blocked   int64  `gorm:"not null"`
+	ReadOnly  int64  `gorm:"not null"`
 }
 
 // SetTablePrefix is setting table prefix

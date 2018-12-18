@@ -33,7 +33,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.0"
+const VERSION = "1.2.3"
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = 1

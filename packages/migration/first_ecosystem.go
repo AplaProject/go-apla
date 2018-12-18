@@ -105,6 +105,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 	"multi" bigint NOT NULL DEFAULT '0',
 	"deleted" bigint NOT NULL DEFAULT '0',
 	"blocked" bigint NOT NULL DEFAULT '0',
+	"read_only" bigint NOT NULL DEFAULT '0',
 	"ecosystem" bigint NOT NULL DEFAULT '1'
 	);
 	ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "1_keys_pkey" PRIMARY KEY (ecosystem,id);

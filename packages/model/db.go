@@ -34,6 +34,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/converter"
+
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/migration"
@@ -209,7 +211,7 @@ func GetRecordsCountTx(db *DbTransaction, tableName, where string) (int64, error
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder, appID int64) error {
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder, appID int64, privateBlockchain uint64) error {
 	if id == 1 {
 		q := fmt.Sprintf(migration.GetCommonEcosystemScript())
 		if err := GetDB(db).Exec(q).Error; err != nil {
@@ -217,8 +219,9 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 			return err
 		}
 	}
-	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder, appID)
+	q := fmt.Sprintf(migration.GetEcosystemScript(privateBlockchain), id, wallet, name, founder, appID, converter.BinToHex([]byte(consts.GuestPublic)))
 	if err := GetDB(db).Exec(q).Error; err != nil {
+		fmt.Println(q)
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
 	}

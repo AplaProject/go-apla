@@ -28,6 +28,9 @@
 
 package migration
 
-import "github.com/AplaProject/go-apla/packages/consts"
+import (
+	"github.com/AplaProject/go-apla/packages/consts"
+)
 
-var keysDataSQL = `INSERT INTO "1_keys" (id, pub, blocked, ecosystem) VALUES (` + consts.GuestKey + `, '', 1, '%[1]d');`
+var keysDataSQLPublic = `INSERT INTO "1_keys" (id, pub, blocked, read_only, ecosystem) VALUES (` + consts.GuestKey + `, decode('%[6]s', 'HEX'), 0, 1, '%[1]d');`
+var keysDataSQLPrivate = `INSERT INTO "1_keys" (id, pub, blocked, read_only, ecosystem) VALUES (` + consts.GuestKey + `, decode('%[6]s', 'HEX'), 1, 0, '%[1]d');`

@@ -33,7 +33,7 @@ import (
 )
 
 // GetEcosystemScript returns script to create ecosystem
-func GetEcosystemScript() string {
+func GetEcosystemScript(privateBlockchain uint64) string {
 	scripts := []string{
 		contractsDataSQL,
 		menuDataSQL,
@@ -41,7 +41,12 @@ func GetEcosystemScript() string {
 		parametersDataSQL,
 		membersDataSQL,
 		sectionsDataSQL,
-		keysDataSQL,
+	}
+
+	if privateBlockchain == 1 {
+		scripts = append(scripts, keysDataSQLPrivate)
+	} else {
+		scripts = append(scripts, keysDataSQLPublic)
 	}
 
 	return strings.Join(scripts, "\r\n")

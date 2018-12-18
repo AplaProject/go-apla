@@ -186,10 +186,8 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	randBlock := rand.New(rand.NewSource(int64(seed)))
 
 	for curTx, t := range b.Transactions {
-		var (
-			msg string
-			err error
-		)
+		var msg string
+
 		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
 
