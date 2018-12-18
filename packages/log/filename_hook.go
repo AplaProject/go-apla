@@ -50,6 +50,10 @@ func (hook ContextHook) Levels() []logrus.Level {
 // Fire the log entry
 func (hook ContextHook) Fire(entry *logrus.Entry) error {
 	var pc []uintptr
+	if _, skip := entry.Data["nocontext"]; skip {
+		delete(entry.Data, "nocontext")
+		return nil
+	}
 	if conf.Config.Log.LogLevel == "DEBUG" {
 		pc = make([]uintptr, 15, 15)
 	} else {
