@@ -33,5 +33,5 @@ import (
 )
 
 var keysDataSQLVDE = `
-INSERT INTO "1_keys" (id, pub, blocked, read_only, ecosystem) VALUES (` + consts.GuestKey + `, encode('%[4]x', 'HEX'), 0, 0, '%[1]d');
+INSERT INTO "1_keys" (id, pub, blocked, read_only, ecosystem) VALUES (` + consts.GuestKey + `, decode('%[3]s', 'HEX'), 0, 0, '%[1]d');
 `
