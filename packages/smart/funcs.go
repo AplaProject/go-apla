@@ -1950,6 +1950,12 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
 	}
+	if len((*txs)[len(*txs)-1].Data) > 0 {
+		prev := rollbackList[len(rollbackList)-1].(*types.Map)
+		prev.Set(`block_id`, `1`)
+		prev.Set(`id`, ``)
+		prev.Set(`block_time`, ``)
+	}
 	if idRollback > 0 {
 		return []interface{}{}, nil
 	}
@@ -2302,6 +2308,12 @@ func (throw *ThrowError) Error() string {
 }
 
 func Throw(code, errText string) error {
+	if len(errText) > script.MaxErrLen {
+		errText = errText[:script.MaxErrLen] + `...`
+	}
+	if len(code) > 32 {
+		code = code[:32]
+	}
 	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
 }
 
