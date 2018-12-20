@@ -83,7 +83,7 @@ const (
 	SchedulerError           = "SchedulerError"
 	SyncProcess              = "SyncProcess"
 	WrongModeError           = "WrongModeError"
-	VDEManagerError          = "VDEManagerError"
+	OBSManagerError          = "OBSManagerError"
 	TCPClientError           = "TCPClientError"
 	BadTxError               = "BadTxError"
 	TimeCalcError            = "BlockTimeCounterError"

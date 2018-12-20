@@ -729,9 +729,9 @@ func parseArg(arg string, workspace *Workspace) (val string) {
 // Template2JSON converts templates to JSON data
 func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte {
 	root := node{}
-	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
+	isobs := (*vars)[`obs`] == `true` || (*vars)[`obs`] == `1`
 	sc := smart.SmartContract{
-		VDE: isvde,
+		OBS: isobs,
 		VM:  smart.GetVM(),
 		TxSmart: tx.SmartContract{
 			Header: tx.Header{

@@ -51,6 +51,7 @@ var updateMigrations = []*migration{
 	&migration{"1.1.5", updates.M115},
 	&migration{"1.2.0", updates.M120},
 	&migration{"1.2.1", updates.M121},
+	&migration{"1.2.2", updates.M122},
 	&migration{"1.2.3", updates.M123},
 }
 
