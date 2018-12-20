@@ -34,8 +34,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/conf"
-
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/network"
 	"github.com/AplaProject/go-apla/packages/service"
@@ -120,10 +118,6 @@ func HandleTCPRequest(rw net.Conn) {
 
 // TcpListener is listening tcp address
 func TcpListener(laddr string) error {
-
-	if conf.Config.IsSupportingVDE() {
-		return nil
-	}
 
 	if strings.HasPrefix(laddr, "127.") {
 		log.Warn("Listening at local address: ", laddr)

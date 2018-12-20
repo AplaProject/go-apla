@@ -1,11 +1,11 @@
 // +prop AppID = '1'
 // +prop Conditions = 'ContractConditions("MainCondition")'
-contract ListVDE {
+contract ListOBS {
 		data {}
 	
 		conditions {}
 	
 		action {
-			$result = GetVDEList()
+			$result = GetOBSList()
 		}
 	}

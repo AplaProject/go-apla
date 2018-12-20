@@ -29,7 +29,6 @@
 package api
 
 import (
-	"bytes"
 	"encoding/hex"
 	"io/ioutil"
 	"net/http"
@@ -37,13 +36,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/block"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/transaction"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/vmihailenco/msgpack.v2"
 )
 
 type sendTxResult struct {
@@ -69,7 +63,7 @@ func getTxData(r *http.Request, key string) ([]byte, error) {
 	return txData, nil
 }
 
-func sendTxHandler(w http.ResponseWriter, r *http.Request) {
+func (m Mode) sendTxHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 
 	if block.IsKeyBanned(client.KeyID) {
@@ -91,7 +85,7 @@ func sendTxHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		hash, err := txHandler(r, txData)
+		hash, err := txHandler(r, txData, m)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -106,7 +100,7 @@ func sendTxHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		hash, err := txHandler(r, txData)
+		hash, err := txHandler(r, txData, m)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -119,12 +113,12 @@ func sendTxHandler(w http.ResponseWriter, r *http.Request) {
 
 type contractResult struct {
 	Hash string `json:"hash"`
-	// These fields are used for VDE
+	// These fields are used for OBS
 	Message *txstatusError `json:"errmsg,omitempty"`
 	Result  string         `json:"result,omitempty"`
 }
 
-func txHandler(r *http.Request, txData []byte) (string, error) {
+func txHandler(r *http.Request, txData []byte, m Mode) (string, error) {
 	client := getClient(r)
 	logger := getLogger(r)
 
@@ -134,21 +128,10 @@ func txHandler(r *http.Request, txData []byte) (string, error) {
 		return "", errLimitTxSize.Errorf(len(txData))
 	}
 
-	rtx := &transaction.RawTransaction{}
-	if err := rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
-		return "", err
-	}
-	smartTx := tx.SmartContract{}
-	if err := msgpack.Unmarshal(rtx.Payload(), &smartTx); err != nil {
-		return "", err
-	}
-	if smartTx.Header.KeyID != client.KeyID {
-		return "", errDiffKey
-	}
-	if err := model.SendTx(rtx, client.KeyID); err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
+	hash, err := m.ClientTxProcessor.ProcessClientTranstaction(txData, client.KeyID, logger)
+	if err != nil {
 		return "", err
 	}
 
-	return string(converter.BinToHex(rtx.Hash())), nil
+	return hash, nil
 }

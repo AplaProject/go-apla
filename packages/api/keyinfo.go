@@ -52,7 +52,7 @@ type keyInfoResult struct {
 	Roles     []roleInfo `json:"roles,omitempty"`
 }
 
-func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
+func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
@@ -63,13 +63,16 @@ func getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ids, names, err := model.GetAllSystemStatesIDs()
+	ids, names, err := m.EcosysLookupGetter.GetEcosystemLookup()
 	if err != nil {
 		errorResponse(w, err)
 		return
 	}
 
-	var found bool
+	var (
+		found bool
+	)
+
 	for i, ecosystemID := range ids {
 		found, err = getEcosystemKey(keyID, ecosystemID)
 		if err != nil {

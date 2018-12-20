@@ -37,7 +37,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/migration"
-	"github.com/AplaProject/go-apla/packages/migration/vde"
+	"github.com/AplaProject/go-apla/packages/migration/obs"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -235,10 +235,15 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 	return nil
 }
 
-// ExecSchemaLocalData is executing schema with local data
-func ExecSchemaLocalData(id int, wallet int64) error {
-	if err := DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing vde script")
+// ExecOBSSchema is executing schema for off blockchainService
+func ExecOBSSchema(id int, wallet int64) error {
+	if !conf.Config.IsSupportingOBS() {
+		return nil
+	}
+
+	query := fmt.Sprintf(obs.GetOBSScript(), id, wallet)
+	if err := DBConn.Exec(query).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing obs script")
 		return err
 	}
 
@@ -486,11 +491,9 @@ func InitDB(cfg conf.DBConfig) error {
 		return err
 	}
 
-	if conf.Config.IsSupportingVDE() {
-		if err := ExecSchemaLocalData(consts.DefaultVDE, conf.Config.KeyID); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE schema")
-			return err
-		}
+	if err := ExecOBSSchema(consts.DefaultOBS, conf.Config.KeyID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating OBS schema")
+		return err
 	}
 
 	return nil

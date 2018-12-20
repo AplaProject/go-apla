@@ -98,7 +98,7 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
-genesis-data
+apla-data
 packages/api/key
 go-genesis
 go-apla
@@ -117,3 +117,4 @@ public/
 .vscode/
 ./*-data/
 packages/api/helper_test.go
+node1-data/go-genesis.lock
