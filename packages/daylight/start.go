@@ -275,7 +275,6 @@ func Start() {
 
 		obsmanager.InitOBSManager()
 	}
-
 	daemons.WaitForSignals()
 
 	initRoutes(conf.Config.HTTP.Str())

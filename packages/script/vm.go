@@ -64,6 +64,7 @@ const (
 	maxMapCount   = 100000
 	maxCallDepth  = 1000
 	memoryLimit   = 128 << 20 // 128 MB
+	MaxErrLen     = 150
 )
 
 var sysVars = map[string]struct{}{
@@ -471,7 +472,11 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 
 // SetVMError sets error of VM
 func SetVMError(eType string, eText interface{}) error {
-	out, err := json.Marshal(&VMError{Type: eType, Error: fmt.Sprintf(`%v`, eText)})
+	errText := fmt.Sprintf(`%v`, eText)
+	if len(errText) > MaxErrLen {
+		errText = errText[:MaxErrLen] + `...`
+	}
+	out, err := json.Marshal(&VMError{Type: eType, Error: errText})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling VMError")
 		out = []byte(`{"type": "panic", "error": "marshalling VMError"}`)
