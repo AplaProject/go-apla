@@ -455,7 +455,6 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		flag = 1
 	}
 	if err = model.ExecSchemaEcosystem(sc.DbTransaction, int(id), wallet, name, converter.StrToInt64(sp.Value), appID, flag); err != nil {
-		fmt.Println("111111")
 		return 0, logErrorDB(err, "executing ecosystem schema")
 	}
 

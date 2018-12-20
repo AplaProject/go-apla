@@ -242,12 +242,8 @@ func (t *Transaction) parseFromContract(fillData bool) error {
 
 	key := &model.Key{}
 	found, err := key.Get(smartTx.KeyID)
-	if found != true {
+	if !found {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_key": t.TxKeyID}).Error("key ID not found")
-		return err
-	}
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_key": t.TxKeyID}).Error("DB error while getting transaction key")
 		return err
 	}
 	if key.ReadOnly == 1 {
