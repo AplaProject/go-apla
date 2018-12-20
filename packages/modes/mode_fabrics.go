@@ -130,6 +130,13 @@ func (l BCDaemonLoader) Load(ctx context.Context) error {
 		syspar.SetFirstBlockData(data)
 	}
 
+	mode := "Public blockchain"
+	if syspar.IsPrivateBlockchain() {
+		mode = "Private Blockchain"
+	}
+
+	logMode(l.logger, mode)
+
 	l.logger.Info("load contracts")
 	if err := smart.LoadContracts(); err != nil {
 		log.Errorf("Load Contracts error: %s", err)
@@ -174,13 +181,14 @@ type OBSDaemonLoader struct {
 func (l OBSDaemonLoader) Load(ctx context.Context) error {
 
 	if err := syspar.SysUpdate(nil); err != nil {
-		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
+		l.logger.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
 		return err
 	}
 
+	logMode(l.logger, conf.Config.OBSMode)
 	l.logger.Info("load contracts")
 	if err := smart.LoadContracts(); err != nil {
-		log.Errorf("Load Contracts error: %s", err)
+		l.logger.Errorf("Load Contracts error: %s", err)
 		return err
 	}
 
@@ -202,4 +210,11 @@ func GetDaemonLoader() types.DaemonLoader {
 		logger:            log.WithFields(log.Fields{"loader": "blockchain_daemon_loader"}),
 		DaemonListFactory: BlockchainDaemonsListsFactory{},
 	}
+}
+
+func logMode(logger *log.Entry, mode string) {
+	logLevel := log.GetLevel()
+	log.SetLevel(log.InfoLevel)
+	logger.WithFields(log.Fields{"mode": mode}).Info("Node running mode")
+	log.SetLevel(logLevel)
 }
