@@ -37,6 +37,7 @@ import (
 	"github.com/gorilla/schema"
 
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/types"
 )
 
 const (
@@ -44,6 +45,14 @@ const (
 	multipartFormData = "multipart/form-data"
 	contentType       = "Content-Type"
 )
+
+type Mode struct {
+	EcosysIDValidator  types.EcosystemIDValidator
+	EcosysNameGetter   types.EcosystemNameGetter
+	EcosysLookupGetter types.EcosystemLookupGetter
+	ContractRunner     types.SmartContractRunner
+	ClientTxProcessor  types.ClientTxPreprocessor
+}
 
 // Client represents data of client
 type Client struct {

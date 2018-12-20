@@ -102,6 +102,10 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(tmp, 0#mytest#1)VarAsIs(txt, tmp)VarAsIs(txt2, #tmp#)VarAsIs(txt3, Some #mytest#)
+	 VarAsIs(txt4, #mytest# #tmp# #txt#)
+	  P(#txt# #txt2# #txt3# #txt4#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":"0Span(test)1 0Span(test)1 Some #mytest# #mytest# #tmp# #txt#"}]}]`},
 	{`SetVar(txt, "те").(txt1, "ещё")P(#txt# #txt1#)`,
 		`[{"tag":"p","children":[{"tag":"text","text":"те ещё"}]}]`},
 	{`Span(Body: "те").(Body: "ещё")`,

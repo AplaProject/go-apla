@@ -64,16 +64,6 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 	"Scheduler":         Scheduler,
 }
 
-var serverList = []string{
-	"BlocksCollection",
-	"BlockGenerator",
-	"QueueParserTx",
-	"QueueParserBlocks",
-	"Disseminator",
-	"Confirmations",
-	"Scheduler",
-}
-
 var rollbackList = []string{
 	"BlocksCollection",
 	"Confirmations",
@@ -122,7 +112,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 }
 
 // StartDaemons starts daemons
-func StartDaemons(ctx context.Context) {
+func StartDaemons(ctx context.Context, daemonsToStart []string) {
 	go WaitStopTime()
 
 	daemonsTable := make(map[string]string)
@@ -140,7 +130,6 @@ func StartDaemons(ctx context.Context) {
 	// utils.CancelFunc = cancel
 	// utils.ReturnCh = make(chan string)
 
-	daemonsToStart := getDaemonsToStart()
 	if conf.Config.TestRollBack {
 		daemonsToStart = rollbackList
 	}
@@ -165,14 +154,4 @@ func getHostPort(h string) string {
 		return h
 	}
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
-}
-
-func getDaemonsToStart() []string {
-	if conf.Config.IsSupportingVDE() {
-		return []string{
-			"Scheduler",
-		}
-	}
-
-	return serverList
 }

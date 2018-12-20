@@ -362,7 +362,7 @@ func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 // CallContract calls the contract functions according to the specified flags
 func (t *Transaction) CallContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
 	sc := smart.SmartContract{
-		VDE:           false,
+		OBS:           false,
 		Rollback:      true,
 		SysUpdate:     false,
 		VM:            smart.GetVM(),
@@ -387,6 +387,31 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
 		copy(flushRollback, sc.FlushRollback)
 	}
+	return
+}
+
+func (t *Transaction) CallOBSContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
+	sc := smart.SmartContract{
+		OBS:           true,
+		Rollback:      false,
+		SysUpdate:     false,
+		VM:            smart.GetVM(),
+		TxSmart:       *t.TxSmart,
+		TxData:        t.TxData,
+		TxContract:    t.TxContract,
+		TxCost:        t.TxCost,
+		TxUsedCost:    t.TxUsedCost,
+		BlockData:     t.BlockData,
+		TxHash:        t.TxHash,
+		TxSignature:   t.TxSignature,
+		TxSize:        int64(len(t.TxBinaryData)),
+		PublicKeys:    t.PublicKeys,
+		DbTransaction: t.DbTransaction,
+		Rand:          t.Rand,
+	}
+	resultContract, err = sc.CallContract()
+	t.SysUpdate = sc.SysUpdate
+	t.Notifications = sc.Notifications
 	return
 }
 
