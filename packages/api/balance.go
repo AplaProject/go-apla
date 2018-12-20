@@ -44,15 +44,18 @@ type balanceResult struct {
 	Money  string `json:"money"`
 }
 
-func getBalanceHandler(w http.ResponseWriter, r *http.Request) {
-	form := &ecosystemForm{}
+func (m Mode) getBalanceHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+	form := &ecosystemForm{
+		Validator: m.EcosysIDValidator,
+	}
+
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
 	params := mux.Vars(r)
-	logger := getLogger(r)
 
 	keyID := converter.StringToAddress(params["wallet"])
 	if keyID == 0 {

@@ -89,7 +89,7 @@ type loginResult struct {
 	NotifyKey   string        `json:"notify_key,omitempty"`
 	IsNode      bool          `json:"isnode,omitempty"`
 	IsOwner     bool          `json:"isowner,omitempty"`
-	IsVDE       bool          `json:"vde,omitempty"`
+	IsOBS       bool          `json:"obs,omitempty"`
 	Timestamp   string        `json:"timestamp,omitempty"`
 	Roles       []rolesResult `json:"roles,omitempty"`
 }
@@ -99,7 +99,7 @@ type rolesResult struct {
 	RoleName string `json:"role_name"`
 }
 
-func loginHandler(w http.ResponseWriter, r *http.Request) {
+func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	var (
 		publicKey []byte
 		wallet    int64
@@ -149,50 +149,47 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		publicKey = account.PublicKey
-	} else if !conf.Config.IsSupportingVDE() {
-		if syspar.IsTestMode() {
-			publicKey = form.PublicKey.Bytes()
-			if len(publicKey) == 0 {
-				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
-				errorResponse(w, errEmptyPublic)
-				return
-			}
+	} else {
+		if !conf.Config.IsSupportingOBS() && !syspar.IsTestMode() {
+			errorResponse(w, errKeyNotFound)
+		}
 
-			nodePrivateKey, err := utils.GetNodePrivateKey()
-			if err != nil || len(nodePrivateKey) < 1 {
-				if err == nil {
-					logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-				}
-				errorResponse(w, err)
-				return
-			}
-
-			contract := smart.GetContract("NewUser", 1)
-			sc := tx.SmartContract{
-				Header: tx.Header{
-					ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
-					Time:        time.Now().Unix(),
-					EcosystemID: 1,
-					KeyID:       conf.Config.KeyID,
-					NetworkID:   consts.NETWORK_ID,
-				},
-				Params: map[string]interface{}{
-					"NewPubkey": crypto.PubToHex(publicKey),
-				},
-			}
-
-			txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
-			} else {
-				err = tx.CreateTransaction(txData, txHash, sc.KeyID)
-				if err != nil {
-					logger.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
-				}
-			}
-		} else {
-			errorResponse(w, errKeyNotFound, http.StatusForbidden)
+		publicKey = form.PublicKey.Bytes()
+		if len(publicKey) == 0 {
+			logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("public key is empty")
+			errorResponse(w, errEmptyPublic)
 			return
+		}
+
+		nodePrivateKey, err := utils.GetNodePrivateKey()
+		if err != nil || len(nodePrivateKey) < 1 {
+			if err == nil {
+				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+			}
+
+			errorResponse(w, err)
+			return
+		}
+
+		contract := smart.GetContract("NewUser", 1)
+		sc := tx.SmartContract{
+			Header: tx.Header{
+				ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
+				Time:        time.Now().Unix(),
+				EcosystemID: 1,
+				KeyID:       conf.Config.KeyID,
+				NetworkID:   consts.NETWORK_ID,
+			},
+			Params: map[string]interface{}{
+				"NewPubkey": hex.EncodeToString(publicKey),
+			},
+		}
+
+		txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
+		} else {
+			m.ContractRunner.RunContract(txData, txHash, sc.KeyID, logger)
 		}
 	}
 
@@ -259,7 +256,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 		Address:     address,
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
-		IsVDE:       conf.Config.IsSupportingVDE(),
+		IsOBS:       conf.Config.IsSupportingOBS(),
 	}
 
 	claims := JWTClaims{
