@@ -159,7 +159,7 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]string, files 
 		var v interface{}
 		var forv string
 		var isforv bool
-		if _, ok := files[fitem.Name]; !ok && fitem.ContainsTag(script.TagOptional) {
+		if _, ok := files[fitem.Name]; !ok && fitem.ContainsTag(script.TagOptional) && len(params[fitem.Name]) == 0 {
 			resultParams[fitem.Name] = getFieldDefaultValue(fitem.Original)
 			continue
 		}

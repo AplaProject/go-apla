@@ -1072,7 +1072,12 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.PublicKeys = append(sc.PublicKeys, public)
 
 	var CheckSignResult bool
-	CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxHash, sc.TxSignature, false)
+	txHash, err := sc.TxSmart.Hash()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing tx")
+		return retError(err)
+	}
+	CheckSignResult, err = utils.CheckSign(sc.PublicKeys, txHash, sc.TxSignature, false)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
 		return retError(err)
