@@ -33,9 +33,9 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.0"
+const VERSION = "1.2.3"
 
-const BV_ROLLBACK_HASH = 1
+const BV_ROLLBACK_HASH = 2
 
 // BLOCK_VERSION is block version
 const BLOCK_VERSION = BV_ROLLBACK_HASH

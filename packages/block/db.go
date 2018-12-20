@@ -147,9 +147,12 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		validBlockTime = !exists
 	}
 	if validBlockTime {
-		err = b.Create(transaction)
-		if err != nil {
+		if err = b.Create(transaction); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
+			return err
+		}
+		if err = model.UpdRollbackHash(transaction, rollbackTxsHash); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")
 			return err
 		}
 	} else {

@@ -94,7 +94,7 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 
-		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
+		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
 			return err
