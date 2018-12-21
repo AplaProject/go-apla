@@ -150,8 +150,9 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		publicKey = account.PublicKey
 	} else {
-		if !conf.Config.IsSupportingOBS() && !syspar.IsTestMode() {
+		if !allowCreateUser(client) {
 			errorResponse(w, errKeyNotFound)
+			return
 		}
 
 		publicKey = form.PublicKey.Bytes()
@@ -351,4 +352,12 @@ func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
 		}
 	}
 	return role, nil
+}
+
+func allowCreateUser(c *Client) bool {
+	if conf.Config.IsSupportingOBS() {
+		return true
+	}
+
+	return syspar.IsTestMode() && c.EcosystemID == 1
 }
