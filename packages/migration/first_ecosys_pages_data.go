@@ -76,7 +76,8 @@ var firstEcosystemPagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, 
         }
         If(#import_id# > 0){
             Div(list-group-item text-right){
-                Button(Body: "Import", Class: btn btn-primary, Page: @1apps_list).CompositeContract(@1Import, "#import_value_data#")
+                VarAsIs(imp_data, "#import_value_data#")
+                Button(Body: "Import", Class: btn btn-primary, Page: @1apps_list).CompositeContract(@1Import, "#imp_data#")
             }
         }
     }
