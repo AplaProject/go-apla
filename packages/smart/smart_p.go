@@ -37,6 +37,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -134,10 +135,6 @@ type TxSignJSON struct {
 	Field   string    `json:"field"`
 	Title   string    `json:"title"`
 	Params  []SignRes `json:"params"`
-}
-
-func init() {
-	EmbedFuncs(smartVM, script.VMTypeSmart)
 }
 
 func getCostP(name string) int64 {
@@ -458,7 +455,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if err := LoadContract(sc.DbTransaction, id); err != nil {
 		return 0, err
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem", ID: id}); err != nil {
 			return 0, err
 		}
@@ -622,6 +619,10 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
+	if conf.Config.IsSupportingOBS() {
+		return nil, ErrNotImplementedOnOBS
+	}
+
 	timeBlock := time.Unix(sc.TxSmart.Time, 0).Format(`2006-01-02 15:04:05`)
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock)
 	if err != nil {
@@ -633,6 +634,10 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 // DBCollectMetrics returns actual values of all metrics
 // This function used to further store these values
 func DBCollectMetrics(sc *SmartContract) []interface{} {
+	if conf.Config.IsSupportingOBS() {
+		return nil
+	}
+
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,
 		metric.CollectMetricDataForEcosystemTx,

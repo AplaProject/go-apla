@@ -95,7 +95,15 @@ func (sc SmartContract) GetLogger() *log.Entry {
 	if sc.TxContract != nil {
 		name = sc.TxContract.Name
 	}
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
+	return log.WithFields(log.Fields{"obs": sc.OBS, "name": name})
+}
+
+func InitVM() {
+	vm := GetVM()
+
+	vmt := defineVMType()
+
+	EmbedFuncs(vm, vmt)
 }
 
 func newVM() *script.VM {
@@ -402,6 +410,19 @@ func loadContractList(list []model.Contract) error {
 	return nil
 }
 
+func defineVMType() script.VMType {
+
+	if conf.Config.IsOBS() {
+		return script.VMTypeOBS
+	}
+
+	if conf.Config.IsOBSMaster() {
+		return script.VMTypeOBSMaster
+	}
+
+	return script.VMTypeSmart
+}
+
 // LoadContracts reads and compiles contracts from smart_contracts tables
 func LoadContracts() error {
 	contract := &model.Contract{}
@@ -508,6 +529,7 @@ func ConditionById(table string, validate bool) {
 
 // LoadContract reads and compiles contract of new state
 func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error) {
+
 	contract := &model.Contract{}
 
 	defer ExternOff()
@@ -518,46 +540,6 @@ func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error)
 	if err = loadContractList(list); err != nil {
 		return err
 	}
-	return
-}
-
-func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
-
-	state := converter.StrToInt64(prefix)
-	vm := GetVM()
-
-	var vmt script.VMType
-	if conf.Config.IsVDE() {
-		vmt = script.VMTypeVDE
-	} else if conf.Config.IsVDEMaster() {
-		vmt = script.VMTypeVDEMaster
-	}
-	EmbedFuncs(vm, vmt)
-	defer ExternOff()
-
-	contract := &model.Contract{}
-	list, err := contract.GetFromEcosystem(transaction, state)
-	if err != nil {
-		return logErrorDB(err, "selecting all contracts from ecosystem")
-	}
-	LoadSysFuncs(vm, int(state))
-	for _, item := range list {
-		clist, err := script.ContractsList(item.Value)
-		if err != nil {
-			return err
-		}
-		owner := script.OwnerInfo{
-			StateID:  uint32(state),
-			Active:   false,
-			TableID:  item.ID,
-			WalletID: 0,
-			TokenID:  0,
-		}
-		if err = vmCompile(vm, item.Value, &owner); err != nil {
-			logErrorValue(err, consts.EvalError, "Load VDE Contract", strings.Join(clist, `,`))
-		}
-	}
-
 	return
 }
 
@@ -993,7 +975,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.AppendStack(sc.TxContract.Name)
 	sc.VM = GetVM()
 
-	if !sc.VDE {
+	if !sc.OBS {
 		toID = sc.BlockData.KeyID
 		fromID = sc.TxSmart.KeyID
 	}
@@ -1042,7 +1024,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		return retError(errIncorrectSign)
 	}
 
-	needPayment := sc.TxSmart.EcosystemID > 0 && !sc.VDE && !syspar.IsPrivateBlockchain()
+	needPayment := sc.TxSmart.EcosystemID > 0 && !sc.OBS && !syspar.IsPrivateBlockchain()
 	if needPayment {
 		if sc.TxSmart.TokenEcosystem == 0 {
 			sc.TxSmart.TokenEcosystem = 1

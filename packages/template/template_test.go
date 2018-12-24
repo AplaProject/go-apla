@@ -104,6 +104,10 @@ func TestJSON(t *testing.T) {
 var forTest = tplList{
 	{`P(#twxt# #some text# 2#some_par#1#toxt#)`,
 		`[{"tag":"p","children":[{"tag":"text","text":" #some text# 21"}]}]`},
+	{`SetVar(tmp, 0#mytest#1)VarAsIs(txt, tmp)VarAsIs(txt2, #tmp#)VarAsIs(txt3, Some #mytest#)
+	 VarAsIs(txt4, #mytest# #tmp# #txt#)
+	  P(#txt# #txt2# #txt3# #txt4#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":"0Span(test)1 0Span(test)1 Some #mytest# #mytest# #tmp# #txt#"}]}]`},
 	{`SetVar(txt, "те").(txt1, "ещё")P(#txt# #txt1#)`,
 		`[{"tag":"p","children":[{"tag":"text","text":"те ещё"}]}]`},
 	{`Span(Body: "те").(Body: "ещё")`,
@@ -161,7 +165,7 @@ var forTest = tplList{
 		`[{"tag":"addtoolbutton","attr":{"page":"default","popup":{"header":"Test","width":"50"},"title":"Open"}}]`},
 	{`SetVar(ok, OK)Input(Type: text, Value: #ok# Now(YY))Input(Type:text, Value: #ok# Some text)`,
 		`[{"tag":"input","attr":{"type":"text","value":"OK Now(YY)"}},{"tag":"input","attr":{"type":"text","value":"OK Some text"}}]`},
-	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"now","attr":{"format":"MMYY","interval":"1 day"}},{"tag":"now"}]`},
+	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"text","text":"Now(MMYY,1 day)Now()"}]`},
 	{`SetVar(digit, 2)Money(12345, #digit#)=Money(#digit#, #digit#)=Money(123456000, 7)=Money(12, -3)`,
 		`[{"tag":"text","text":"123.45"},{"tag":"text","text":"=0.02"},{"tag":"text","text":"=12.3456"},{"tag":"text","text":"=12000"}]`},
 	{`SetVar(textc, test)Code(P(Some #textc#))CodeAsIs(P(No Some #textc#))Div(){CodeAsIs(Text:#textc#)}`,

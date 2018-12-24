@@ -39,15 +39,19 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func getEcosystemParamHandler(w http.ResponseWriter, r *http.Request) {
-	form := &ecosystemForm{}
+func (m Mode) getEcosystemParamHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+
+	form := &ecosystemForm{
+		Validator: m.EcosysIDValidator,
+	}
+
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
 	params := mux.Vars(r)
-	logger := getLogger(r)
 
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(form.EcosystemPrefix)

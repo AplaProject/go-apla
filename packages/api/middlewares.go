@@ -57,14 +57,17 @@ func authRequire(next func(w http.ResponseWriter, r *http.Request)) func(w http.
 	}
 }
 
+func loggerFromRequest(r *http.Request) *log.Entry {
+	return log.WithFields(log.Fields{
+		"headers":  r.Header,
+		"path":     r.URL.Path,
+		"protocol": r.Proto,
+		"remote":   r.RemoteAddr,
+	})
+}
 func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger := log.WithFields(log.Fields{
-			"headers":  r.Header,
-			"path":     r.URL.Path,
-			"protocol": r.Proto,
-			"remote":   r.RemoteAddr,
-		})
+		logger := loggerFromRequest(r)
 		logger.Info("received http request")
 		r = setLogger(r, logger)
 		next.ServeHTTP(w, r)
@@ -131,13 +134,13 @@ func tokenMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func clientMiddleware(next http.Handler) http.Handler {
+func (m Mode) clientMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := getToken(r)
 		var client *Client
 		if token != nil { // get client from token
 			var err error
-			if client, err = getClientFromToken(token); err != nil {
+			if client, err = getClientFromToken(token, m.EcosysNameGetter); err != nil {
 				errorResponse(w, err)
 				return
 			}
