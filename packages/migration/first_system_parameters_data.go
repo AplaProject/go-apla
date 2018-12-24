@@ -95,5 +95,6 @@ INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES
 	('63','price_tx_data', '0', 'ContractAccess("@1UpdateSysParam")'),
 	('64', 'price_exec_contract_by_name', '0', 'ContractAccess("@1UpdateSysParam")'),
 	('65', 'price_exec_contract_by_id', '0', 'ContractAccess("@1UpdateSysParam")'),
-	('66','private_blockchain', '1', 'false');
+	('66','private_blockchain', '1', 'false'),
+	('67', 'common_wallet_for_reward', '0', 'ContractAccess("@1UpdateSysParam")');
 `

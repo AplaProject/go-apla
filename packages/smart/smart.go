@@ -1146,6 +1146,17 @@ func (sc *SmartContract) CallContract() (string, error) {
 		}
 	}
 
+	sp := &model.SystemParameter{}
+	_, err = sp.Get("common_wallet_for_reward")
+	if err != nil {
+		return retError(err)
+	}
+
+	sysID := converter.StrToInt64(sp.Value)
+	if sysID != 0 {
+		toID = sysID
+	}
+
 	if needPayment {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
