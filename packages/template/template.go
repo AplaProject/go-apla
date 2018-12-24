@@ -319,10 +319,8 @@ func replace(input string, level *[]string, vars *map[string]Var) string {
 				} else {
 					result = append(append(result, syschar), append(name, syschar)...)
 				}
-				isName = false
-			} else {
-				result = append(append(result, syschar), name...)
 			}
+			isName = false
 			name = name[:0]
 		} else {
 			isName = true
