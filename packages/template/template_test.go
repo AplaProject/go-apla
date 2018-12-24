@@ -102,6 +102,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`ArrayToSource(dat, [ "hello","1 2 3", "my name" , "is Billy" ])`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","hello"],["1","1 2 3"],["2","my name"],["3","is Billy"]],"source":"dat","types":["text","text"]}}]`},
 	{`SetVar(txt, "те").(txt1, "ещё")P(#txt# #txt1#)`,
 		`[{"tag":"p","children":[{"tag":"text","text":"те ещё"}]}]`},
 	{`Span(Body: "те").(Body: "ещё")`,
@@ -202,7 +204,7 @@ var forTest = tplList{
 	 JsonToSource(dat, {"param":"va lue", "obj": {"sub":"one"}, "arr":["one"], "empty": null})`,
 		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["empty",""],["obj","{\"sub\":\"one\"}"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
 	{`SetVar(arr,[1, 2, 3])ArrayToSource(src2, #arr#)ArrayToSource(src1, ["q","p"])ArrayToSource(src1, {"k":"v"})`,
-		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","2"],["2","3"]],"source":"src2","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","q"],["1","p"]],"source":"src1","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[],"source":"src1","types":["text","text"]}}]`},
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","2"],["2","3"]],"source":"src2","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","q"],["1","p"]],"source":"src1","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"k\":\"v\"}"]],"source":"src1","types":["text","text"]}}]`},
 	{`ArrayToSource(arr, [{"k1":"v1"},{"k2":"v2"}])ForList(arr){JsonToSource(json, #value#)}`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"k1\":\"v1\"}"],["1","{\"k2\":\"v2\"}"]],"source":"arr","types":["text","text"]}},{"tag":"forlist","attr":{"source":"arr"},"children":[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k1","v1"]],"source":"json","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k2","v2"]],"source":"json","types":["text","text"]}}]}]`},
 	{`Button(Body: addpage).CompositeContract().CompositeContract(NewPage, [{"param1": "Value 1"},

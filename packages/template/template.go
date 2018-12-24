@@ -756,12 +756,23 @@ func splitArray(in []rune) []string {
 	if in[0] == '[' && in[len(in)-1] == ']' {
 		in = in[1 : len(in)-1]
 	}
+	newPar := func(cur int) {
+		par := strings.TrimSpace(string(in[off:cur]))
+		if rune(par[len(par)-1]) == trim {
+			par = par[:len(par)-1]
+		}
+		ret = append(ret, par)
+	}
 	for i, ch := range in {
 		if ch == quote {
 			quote = 0
 			continue
 		}
 		if quote != 0 {
+			continue
+		}
+		if ch == ' ' && off == i {
+			off++
 			continue
 		}
 		if ch == '"' || ch == '`' || ch == '\'' {
@@ -772,21 +783,13 @@ func splitArray(in []rune) []string {
 			}
 		}
 		if ch == ',' {
-			end := i
-			if in[i-1] == trim {
-				end--
-			}
-			ret = append(ret, strings.TrimSpace(string(in[off:end])))
+			newPar(i)
 			off = i + 1
 			trim = 0
 		}
 	}
 	if off < len(in) {
-		end := len(in)
-		if in[len(in)-1] == trim {
-			end--
-		}
-		ret = append(ret, strings.TrimSpace(string(in[off:end])))
+		newPar(len(in))
 	}
 	return ret
 }
