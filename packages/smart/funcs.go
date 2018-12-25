@@ -870,12 +870,12 @@ func GetOrder(tblname string, inOrder interface{}) (string, error) {
 	var (
 		orders []string
 	)
-	cols := make(map[string]bool)
+	cols := types.NewMap()
 
 	sanitize := func(in string, value interface{}) {
 		in = converter.Sanitize(strings.ToLower(in), ``)
 		if len(in) > 0 {
-			cols[in] = true
+			cols.Set(in, true)
 			in = `"` + in + `"`
 			if fmt.Sprint(value) == `-1` {
 				in += ` desc`
@@ -888,10 +888,10 @@ func GetOrder(tblname string, inOrder interface{}) (string, error) {
 
 	if v, ok := defaultSortOrder[tblname[2:]]; ok {
 		for _, item := range strings.Split(v, `,`) {
-			cols[item] = false
+			cols.Set(item, false)
 		}
 	} else {
-		cols[`id`] = false
+		cols.Set(`id`, false)
 	}
 	switch v := inOrder.(type) {
 	case string:
@@ -922,8 +922,8 @@ func GetOrder(tblname string, inOrder interface{}) (string, error) {
 			}
 		}
 	}
-	for key, state := range cols {
-		if !state {
+	for _, key := range cols.Keys() {
+		if state, found := cols.Get(key); !found || !state.(bool) {
 			orders = append(orders, key)
 		}
 	}
