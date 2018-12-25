@@ -41,6 +41,8 @@ var migrations = []*migration{
 
 	// Initial schema
 	&migration{"0.1.6b9", migrationInitialSchema},
+
+	&migration{"0.1.7", updates.M123}, // duplicate of 1.2.3 version
 }
 
 var updateMigrations = []*migration{
@@ -48,6 +50,9 @@ var updateMigrations = []*migration{
 	&migration{"1.1.4", updates.M114},
 	&migration{"1.1.5", updates.M115},
 	&migration{"1.2.0", updates.M120},
+	&migration{"1.2.1", updates.M121},
+	&migration{"1.2.2", updates.M122},
+	&migration{"1.2.3", updates.M123},
 }
 
 type migration struct {

@@ -58,8 +58,8 @@ func (bi *BlockInterface) Get(name string) (bool, error) {
 }
 
 // GetByApp returns all interface blocks belonging to selected app
-func (bi *BlockInterface) GetByApp(appID int64) ([]BlockInterface, error) {
+func (bi *BlockInterface) GetByApp(appID int64, ecosystemID int64) ([]BlockInterface, error) {
 	var result []BlockInterface
-	err := DBConn.Select("id, name").Where("app_id = ?", appID).Find(&result).Error
+	err := DBConn.Select("id, name").Where("app_id = ? and ecosystem = ?", appID, ecosystemID).Find(&result).Error
 	return result, err
 }

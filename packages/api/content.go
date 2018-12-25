@@ -85,6 +85,7 @@ func initVars(r *http.Request) *map[string]string {
 		vars[`ecosystem_name`] = client.EcosystemName
 	} else {
 		vars[`ecosystem_id`] = vars[`ecosystem`]
+		delete(vars, "ecosystem")
 		if len(vars[`keyID`]) > 0 {
 			vars[`key_id`] = vars[`keyID`]
 		} else {
@@ -161,15 +162,16 @@ func pageValue(r *http.Request) (*model.Page, string, error) {
 }
 
 func getPage(r *http.Request) (result *contentResult, err error) {
-	page, prefix, err := pageValue(r)
+	page, _, err := pageValue(r)
 	if err != nil {
 		return nil, err
 	}
 
 	logger := getLogger(r)
 
+	client := getClient(r)
 	menu := &model.Menu{}
-	menu.SetTablePrefix(prefix)
+	menu.SetTablePrefix(client.Prefix())
 	_, err = menu.Get(page.Menu)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting page menu")
@@ -345,4 +347,15 @@ func getSourceHandler(w http.ResponseWriter, r *http.Request) {
 	ret := template.Template2JSON(page.Value, &timeout, vars)
 
 	jsonResponse(w, &contentResult{Tree: ret})
+}
+
+func getPageValidatorsCountHandler(w http.ResponseWriter, r *http.Request) {
+	page, _, err := pageValue(r)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
+	res := map[string]int64{"validate_count": page.ValidateCount}
+	jsonResponse(w, &res)
 }

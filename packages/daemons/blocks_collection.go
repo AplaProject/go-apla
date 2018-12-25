@@ -403,7 +403,9 @@ func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block,
 		count++
 
 		// check the signature
-		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, []byte(block.ForSign()), block.Header.Sign, true)
+		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey},
+			[]byte(block.Header.ForSign(block.PrevHeader, block.MrklRoot)),
+			block.Header.Sign, true)
 		if okSignErr == nil {
 			break
 		}
@@ -427,6 +429,7 @@ func processBlocks(blocks []*block.Block) error {
 
 		if prevBlocks[b.Header.BlockID-1] != nil {
 			b.PrevHeader.Hash = prevBlocks[b.Header.BlockID-1].Header.Hash
+			b.PrevHeader.RollbacksHash = prevBlocks[b.Header.BlockID-1].Header.RollbacksHash
 			b.PrevHeader.Time = prevBlocks[b.Header.BlockID-1].Header.Time
 			b.PrevHeader.BlockID = prevBlocks[b.Header.BlockID-1].Header.BlockID
 			b.PrevHeader.EcosystemID = prevBlocks[b.Header.BlockID-1].Header.EcosystemID
@@ -434,7 +437,7 @@ func processBlocks(blocks []*block.Block) error {
 			b.PrevHeader.NodePosition = prevBlocks[b.Header.BlockID-1].Header.NodePosition
 		}
 
-		hash, err := crypto.DoubleHash([]byte(b.ForSha()))
+		hash, err := crypto.DoubleHash([]byte(b.Header.ForSha(b.PrevHeader, b.MrklRoot)))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")
 		}

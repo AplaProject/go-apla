@@ -32,7 +32,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"sync"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -505,12 +504,8 @@ func GetFirstBlockData() (*consts.FirstBlock, error) {
 
 // IsPrivateBlockchain returns the value of private_blockchain system parameter or true
 func IsPrivateBlockchain() bool {
-	res, err := strconv.ParseBool(SysString(PrivateBlockchain))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParameterExceeded, "error": err}).Error("getting private_blockchain system parameters")
-		return true
-	}
-	return res
+	par := SysString(PrivateBlockchain)
+	return len(par) > 0 && par != `0` && par != `false`
 }
 
 func GetMaxCost() int64 {

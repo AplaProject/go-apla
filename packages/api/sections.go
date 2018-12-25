@@ -113,6 +113,21 @@ func getSectionsHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
+		if item["status"] == consts.StatusMainPage {
+			roles := &model.Role{}
+			roles.SetTablePrefix("1")
+			role, err := roles.Get(nil, client.RoleID)
+
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting role by id")
+				errorResponse(w, err)
+				return
+			}
+			if role == true && roles.DefaultPage != "" {
+				item["default_page"] = roles.DefaultPage
+			}
+		}
+
 		item["title"] = language.LangMacro(item["title"], int(client.EcosystemID), form.Lang)
 		sections = append(sections, item)
 	}

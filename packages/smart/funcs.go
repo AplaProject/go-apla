@@ -34,6 +34,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -53,6 +54,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/obsmanager"
 	"github.com/AplaProject/go-apla/packages/scheduler"
 	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 	"github.com/AplaProject/go-apla/packages/script"
@@ -60,7 +62,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
-	"github.com/AplaProject/go-apla/packages/vdemanager"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -71,6 +72,10 @@ const (
 	historyLimit              = 250
 	dateTimeFormat            = "2006-01-02 15:04:05"
 	contractTxType            = 128
+)
+
+var (
+	ErrNotImplementedOnOBS = errors.New("Contract not implemented on OBS")
 )
 
 type ThrowError struct {
@@ -121,7 +126,7 @@ type NotifyInfo struct {
 
 // SmartContract is storing smart contract data
 type SmartContract struct {
-	VDE           bool
+	OBS           bool
 	Rollback      bool
 	FullAccess    bool
 	SysUpdate     bool
@@ -352,10 +357,13 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Throw":                        Throw,
 		"HexToPub":                     crypto.HexToPub,
 		"PubToHex":                     PubToHex,
+		"UpdateNodesBan":               UpdateNodesBan,
+		"DBSelectMetrics":              DBSelectMetrics,
+		"DBCollectMetrics":             DBCollectMetrics,
 	}
 
 	switch vt {
-	case script.VMTypeVDE:
+	case script.VMTypeOBS:
 		f["HTTPRequest"] = HTTPRequest
 		f["GetMapKeys"] = GetMapKeys
 		f["SortedKeys"] = SortedKeys
@@ -365,7 +373,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["UpdateCron"] = UpdateCron
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
-	case script.VMTypeVDEMaster:
+	case script.VMTypeOBSMaster:
 		f["HTTPRequest"] = HTTPRequest
 		f["GetMapKeys"] = GetMapKeys
 		f["SortedKeys"] = SortedKeys
@@ -373,18 +381,15 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
 		f["UpdateCron"] = UpdateCron
-		f["CreateVDE"] = CreateVDE
-		f["DeleteVDE"] = DeleteVDE
-		f["StartVDE"] = StartVDE
-		f["StopVDEProcess"] = StopVDEProcess
-		f["GetVDEList"] = GetVDEList
+		f["CreateOBS"] = CreateOBS
+		f["DeleteOBS"] = DeleteOBS
+		f["StartOBS"] = StartOBS
+		f["StopOBSProcess"] = StopOBSProcess
+		f["GetOBSList"] = GetOBSList
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
-		f["UpdateNodesBan"] = UpdateNodesBan
-		f["DBSelectMetrics"] = DBSelectMetrics
-		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}
@@ -410,8 +415,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 			"NewMoney":         {},
 			"UpdateNodesBan":   {},
 			"UpdateCron":       {},
-			"CreateVDE":        {},
-			"DeleteVDE":        {},
+			"CreateOBS":        {},
+			"DeleteOBS":        {},
 			"DelColumn":        {},
 			"DelTable":         {},
 		},
@@ -591,7 +596,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions string, recip
 	}
 
 	if len(pars) > 0 {
-		if !sc.VDE {
+		if !sc.OBS {
 			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
 				return err
 			}
@@ -639,7 +644,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcos
 	if err = FlushContract(sc, root, id); err != nil {
 		return 0, err
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		err = SysRollback(sc, SysRollData{Type: "NewContract", Data: value})
 		if err != nil {
 			return 0, err
@@ -750,7 +755,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	if err != nil {
 		return logErrorDB(err, "insert table info")
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		if err = SysRollback(sc, SysRollData{Type: "NewTable", TableName: tableName}); err != nil {
 			return err
 		}
@@ -1436,7 +1441,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
 		`1_tables`, `id`, temp.ID)
-	if !sc.VDE {
+	if !sc.OBS {
 		return SysRollback(sc, SysRollData{Type: "NewColumn", TableName: tblname, Data: name})
 	}
 	return
@@ -1666,6 +1671,10 @@ func UpdateCron(sc *SmartContract, id int64) error {
 }
 
 func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
+	if conf.Config.IsSupportingOBS() {
+		return ErrNotImplementedOnOBS
+	}
+
 	now := time.Unix(timestamp, 0)
 
 	badBlocks := &model.BadBlocks{}
@@ -1841,29 +1850,29 @@ func BytesToString(src []byte) string {
 	return string(src)
 }
 
-// CreateVDE allow create new VDE throw vdemanager
-func CreateVDE(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
-	return vdemanager.Manager.CreateVDE(name, dbUser, dbPassword, int(port))
+// CreateOBS allow create new OBS throught obsmanager
+func CreateOBS(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
+	return obsmanager.Manager.CreateOBS(name, dbUser, dbPassword, int(port))
 }
 
-// DeleteVDE delete vde
-func DeleteVDE(sc *SmartContract, name string) error {
-	return vdemanager.Manager.DeleteVDE(name)
+// DeleteOBS delete obs
+func DeleteOBS(sc *SmartContract, name string) error {
+	return obsmanager.Manager.DeleteOBS(name)
 }
 
-// StartVDE run VDE process
-func StartVDE(sc *SmartContract, name string) error {
-	return vdemanager.Manager.StartVDE(name)
+// StartOBS run OBS process
+func StartOBS(sc *SmartContract, name string) error {
+	return obsmanager.Manager.StartOBS(name)
 }
 
-// StopVDEProcess stops VDE process
-func StopVDEProcess(sc *SmartContract, name string) error {
-	return vdemanager.Manager.StopVDE(name)
+// StopOBSProcess stops OBS process
+func StopOBSProcess(sc *SmartContract, name string) error {
+	return obsmanager.Manager.StopOBS(name)
 }
 
-// GetVDEList returns list VDE process with statuses
-func GetVDEList(sc *SmartContract) map[string]string {
-	list, _ := vdemanager.Manager.ListProcessWithPorts()
+// GetOBSList returns list OBS process with statuses
+func GetOBSList(sc *SmartContract) map[string]string {
+	list, _ := obsmanager.Manager.ListProcessWithPorts()
 	return list
 }
 
@@ -1950,6 +1959,12 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
 	}
+	if len((*txs)[len(*txs)-1].Data) > 0 {
+		prev := rollbackList[len(rollbackList)-1].(*types.Map)
+		prev.Set(`block_id`, `1`)
+		prev.Set(`id`, ``)
+		prev.Set(`block_time`, ``)
+	}
 	if idRollback > 0 {
 		return []interface{}{}, nil
 	}
@@ -1985,7 +2000,7 @@ func BlockTime(sc *SmartContract) string {
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
 	}
-	if sc.VDE {
+	if sc.OBS {
 		blockTime = time.Now().Unix()
 	}
 	return Date(dateTimeFormat, blockTime)
@@ -2189,7 +2204,7 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
 		`1_tables`, `id`, t.ID)
-	if !sc.VDE {
+	if !sc.OBS {
 		data := map[string]string{"name": name, "type": colType}
 		out, err := marshalJSON(data, `marshalling column info`)
 		if err != nil {
@@ -2239,7 +2254,7 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 	if err = model.DropTable(sc.DbTransaction, tblname); err != nil {
 		return
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		var (
 			out []byte
 		)
@@ -2302,6 +2317,12 @@ func (throw *ThrowError) Error() string {
 }
 
 func Throw(code, errText string) error {
+	if len(errText) > script.MaxErrLen {
+		errText = errText[:script.MaxErrLen] + `...`
+	}
+	if len(code) > 32 {
+		code = code[:32]
+	}
 	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
 }
 

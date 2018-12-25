@@ -84,8 +84,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
-				Test:              test,
-				PrivateBlockchain: pb,
+				Test:                  test,
+				PrivateBlockchain:     pb,
 			},
 		)
 
@@ -94,7 +94,10 @@ var generateFirstBlockCmd = &cobra.Command{
 			return
 		}
 
-		block, err := block.MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
+		block, err := block.MarshallBlock(header, [][]byte{tx}, &utils.BlockData{
+			Hash:          []byte(`0`),
+			RollbacksHash: []byte(`0`),
+		}, "")
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return
