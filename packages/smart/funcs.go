@@ -360,6 +360,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UpdateNodesBan":               UpdateNodesBan,
 		"DBSelectMetrics":              DBSelectMetrics,
 		"DBCollectMetrics":             DBCollectMetrics,
+		"StackOverflow":                StackOverflow,
 	}
 
 	switch vt {
