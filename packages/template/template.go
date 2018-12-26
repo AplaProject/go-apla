@@ -319,10 +319,8 @@ func replace(input string, level *[]string, vars *map[string]Var) string {
 				} else {
 					result = append(append(result, syschar), append(name, syschar)...)
 				}
-				isName = false
-			} else {
-				result = append(append(result, syschar), name...)
 			}
+			isName = false
 			name = name[:0]
 		} else {
 			isName = true
@@ -757,6 +755,51 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 		return []byte(err.Error())
 	}
 	return out
+}
+
+func splitArray(in []rune) []string {
+	var quote, trim rune
+	var off int
+	ret := make([]string, 0, 32)
+	if in[0] == '[' && in[len(in)-1] == ']' {
+		in = in[1 : len(in)-1]
+	}
+	newPar := func(cur int) {
+		par := strings.TrimSpace(string(in[off:cur]))
+		if rune(par[len(par)-1]) == trim {
+			par = par[:len(par)-1]
+		}
+		ret = append(ret, par)
+	}
+	for i, ch := range in {
+		if ch == quote {
+			quote = 0
+			continue
+		}
+		if quote != 0 {
+			continue
+		}
+		if ch == ' ' && off == i {
+			off++
+			continue
+		}
+		if ch == '"' || ch == '`' || ch == '\'' {
+			quote = ch
+			if off == i {
+				trim = ch
+				off++
+			}
+		}
+		if ch == ',' {
+			newPar(i)
+			off = i + 1
+			trim = 0
+		}
+	}
+	if off < len(in) {
+		newPar(len(in))
+	}
+	return ret
 }
 
 func setVar(par *Workspace, key, value string) {

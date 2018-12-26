@@ -136,6 +136,35 @@ func TestUpdate_FullNodes(t *testing.T) {
 		return
 	}
 }
+
+func TestCrashContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `crash` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+			data {}
+		
+			conditions {
+				$Recipient = Append([], "1")
+				$Recipient = Append($Recipient, "7")
+			}
+		
+			action {
+				var i int
+				var steps map
+				var list myarr q b array
+				while i < Len($Recipient) {
+					steps["recipient_role"] = JSONDecode($Recipient[i])
+					list[i] = Append(list, steps)
+					myarr = Split(list[i], ",")
+					i = i + 1
+				}
+			}
+		}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd, &url.Values{}), `{"type":"panic","error":"self assignment"}`)
+}
+
 func TestHardContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

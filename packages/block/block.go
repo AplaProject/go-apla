@@ -94,7 +94,7 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 
-		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
+		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
 			return err
@@ -375,7 +375,8 @@ func (b *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, []byte(b.ForSign()), b.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey},
+			[]byte(b.Header.ForSign(b.PrevHeader, b.MrklRoot)), b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
@@ -385,19 +386,6 @@ func (b *Block) CheckHash() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (b Block) ForSha() string {
-	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
-		b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time,
-		b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
-}
-
-// ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-func (b Block) ForSign() string {
-	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
-		b.Header.BlockID, b.PrevHeader.Hash, b.Header.Time, b.Header.EcosystemID,
-		b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 }
 
 // InsertBlockWOForks is inserting blocks

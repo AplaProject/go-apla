@@ -29,7 +29,6 @@
 package template
 
 import (
-	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -94,7 +93,6 @@ func init() {
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
-	funcs[`Now`] = tplFunc{defaultTag, defaultTag, `now`, `Format,Interval`}
 	funcs[`Money`] = tplFunc{moneyTag, defaultTag, `money`, `Exp,Digit`}
 	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
@@ -1285,18 +1283,8 @@ func arraytosourceTag(par parFunc) string {
 	data := make([][]string, 0, 16)
 	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
-	var out []json.RawMessage
-	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON Array to source")
-	}
-	for key, item := range out {
-		if item == nil {
-			item = []byte("")
-		}
-
-		item = bytes.Trim(item, `"`)
-
-		data = append(data, []string{fmt.Sprint(key), string(item)})
+	for key, item := range splitArray([]rune(macro((*par.Pars)[`Data`], par.Workspace.Vars))) {
+		data = append(data, []string{fmt.Sprint(key), item})
 	}
 	setAllAttr(par)
 	par.Node.Attr[`columns`] = &cols
