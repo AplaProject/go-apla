@@ -133,3 +133,12 @@ func (b *Block) GetNodeBlocksAtTime(from, to time.Time, node int64) ([]Block, er
 func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
 	return GetDB(transaction).Where("id = ?", id).Delete(Block{}).Error
 }
+
+func GetTxCount() (int64, error) {
+	var txCount int64
+	if err := DBConn.Raw("SELECT SUM(tx) tx_count FROM block_chain").Scan(&txCount).Error; err != nil {
+		return 0, err
+	}
+
+	return txCount, nil
+}

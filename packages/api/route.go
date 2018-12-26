@@ -93,10 +93,15 @@ func (m Mode) SetCommonRoutes(r Router) {
 	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST")
 	api.HandleFunc("/node/{name}", nodeContractHandler).Methods("POST")
 	api.HandleFunc("/txstatus", authRequire(getTxStatusHandler)).Methods("POST")
+	api.HandleFunc("/metrics/blocks", blocksCountHandler).Methods("GET")
+	api.HandleFunc("/metrics/transactions", txCountHandler).Methods("GET")
+	api.HandleFunc("/metrics/ecosystems", m.ecosysCountHandler).Methods("GET")
+	api.HandleFunc("/metrics/keys", keysCountHandler).Methods("GET")
 }
 
 func (m Mode) SetBlockchainRoutes(r Router) {
 	api := r.GetAPIVersion("/api/v2")
+	api.HandleFunc("/metrics/fullnodes", fullNodesCountHandler).Methods("GET")
 	api.HandleFunc("/txinfo/{hash}", authRequire(getTxInfoHandler)).Methods("GET")
 	api.HandleFunc("/txinfomultiple", authRequire(getTxInfoMultiHandler)).Methods("GET")
 	api.HandleFunc("/appparam/{appID}/{name}", authRequire(m.GetAppParamHandler)).Methods("GET")

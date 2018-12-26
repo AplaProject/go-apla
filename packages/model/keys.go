@@ -64,3 +64,9 @@ func (m *Key) Get(wallet int64) (bool, error) {
 func KeyTableName(prefix int64) string {
 	return fmt.Sprintf("%d_keys", prefix)
 }
+
+func GetKeysCount() (int64, error) {
+	var cnt int64
+	err := DBConn.Raw(`SELECT count(*) key_count FROM "1_keys" WHERE ecosystem = 1`).Scan(&cnt).Error
+	return cnt, err
+}
