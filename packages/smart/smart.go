@@ -30,11 +30,13 @@ package smart
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -43,6 +45,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/shopspring/decimal"
@@ -1140,7 +1143,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.TxFuel = before - ctrctExtend[`txcost`].(int64)
 	sc.TxUsedCost = decimal.New(sc.TxFuel+price, 0)
 	if ctrctExtend[`result`] != nil {
-		result = fmt.Sprint(ctrctExtend[`result`])
+		result = fmt.Sprint(convertBin(ctrctExtend[`result`]))
 		if len(result) > 255 {
 			result = result[:255]
 		}
@@ -1157,4 +1160,25 @@ func (sc *SmartContract) CallContract() (string, error) {
 	}
 
 	return result, nil
+}
+
+func convertBin(obj interface{}) interface{} {
+	switch v := obj.(type) {
+	case string:
+		if !utf8.ValidString(v) {
+			obj = hex.EncodeToString([]byte(v))
+		}
+	case []byte:
+		obj = hex.EncodeToString(v)
+	case []interface{}:
+		for i := 0; i < len(v); i++ {
+			v[i] = convertBin(v[i])
+		}
+	case *types.Map:
+		for _, key := range v.Keys() {
+			val, _ := v.Get(key)
+			v.Set(key, convertBin(val))
+		}
+	}
+	return obj
 }
