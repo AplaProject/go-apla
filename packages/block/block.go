@@ -42,6 +42,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/notificator"
 	"github.com/AplaProject/go-apla/packages/protocols"
+	"github.com/AplaProject/go-apla/packages/queue"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
@@ -172,6 +173,9 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 		} else {
 			notificator.UpdateNotifications(item.EcosystemID, item.List)
 		}
+	}
+	if err := queue.SendBlockQueue.Enqueue(bBlock); err != nil {
+		return err
 	}
 	return nil
 }

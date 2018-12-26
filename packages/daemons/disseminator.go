@@ -31,12 +31,11 @@ package daemons
 import (
 	"context"
 
-	"github.com/AplaProject/go-apla/packages/network/tcpclient"
-
 	"github.com/AplaProject/go-apla/packages/blockchain"
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/network/tcpclient"
 	"github.com/AplaProject/go-apla/packages/nodeban"
 	"github.com/AplaProject/go-apla/packages/queue"
 
@@ -72,15 +71,17 @@ func sendTransactions(ctx context.Context, logger *log.Entry) error {
 	// get unsent transactions
 	// form packet to send
 	return queue.SendTxQueue.ProcessAllItems(func(txs []*blockchain.Transaction) error {
-		hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
-		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
-			return err
-		}
+		if len(txs) > 0 {
+			hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+			if err != nil {
+				log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
+				return err
+			}
 
-		if err := tcpclient.SendTransacitionsToAll(ctx, hosts, txs); err != nil {
-			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
-			return err
+			if err := tcpclient.SendTransacitionsToAll(ctx, hosts, txs); err != nil {
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
+				return err
+			}
 		}
 		return nil
 	})

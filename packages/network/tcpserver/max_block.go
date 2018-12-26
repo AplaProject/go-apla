@@ -40,16 +40,17 @@ import (
 // Type10 sends the last block ID
 // blocksCollection daemon sends this request
 func Type10() (*network.MaxBlockResponse, error) {
+	var blockID int64 = 0
 	lastBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur blockID")
 		return nil, utils.ErrInfo(err)
 	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Debug("Can't found info block")
+	if found {
+		blockID = lastBlock.Header.BlockID
 	}
 
 	return &network.MaxBlockResponse{
-		BlockID: lastBlock.Header.BlockID,
+		BlockID: blockID,
 	}, nil
 }
