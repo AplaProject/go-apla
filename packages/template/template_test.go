@@ -102,6 +102,9 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(arr, [1, "hello", {"val": "123000000000000000000", "OK":{"time": "1545788052"}, "type": "emission"}, {"val": "555000000000000000000", "arr":["time", "1545788125"], "type": "emission"}, 23])
+	ArrayToSource(src, #arr#)`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","hello"],["2","{\"val\": \"123000000000000000000\", \"OK\":{\"time\": \"1545788052\"}, \"type\": \"emission\"}"],["3","{\"val\": \"555000000000000000000\", \"arr\":[\"time\", \"1545788125\"], \"type\": \"emission\"}"],["4","23"]],"source":"src","types":["text","text"]}}]`},
 	{`ArrayToSource(dat, [ "hello","1 2 3", "my name" , "is Billy" ])`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","hello"],["1","1 2 3"],["2","my name"],["3","is Billy"]],"source":"dat","types":["text","text"]}}]`},
 	{`P(#twxt# #some text# 2#some_par#1#toxt#)`,

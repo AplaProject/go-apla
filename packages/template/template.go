@@ -761,6 +761,7 @@ func splitArray(in []rune) []string {
 	var quote, trim rune
 	var off int
 	ret := make([]string, 0, 32)
+	brace := make([]rune, 0, 32)
 	if in[0] == '[' && in[len(in)-1] == ']' {
 		in = in[1 : len(in)-1]
 	}
@@ -772,6 +773,18 @@ func splitArray(in []rune) []string {
 		ret = append(ret, par)
 	}
 	for i, ch := range in {
+		if ch == '[' {
+			brace = append(brace, ']')
+		}
+		if ch == '{' {
+			brace = append(brace, '}')
+		}
+		if len(brace) > 0 {
+			if ch == brace[len(brace)-1] {
+				brace = brace[:len(brace)-1]
+			}
+			continue
+		}
 		if ch == quote {
 			quote = 0
 			continue
