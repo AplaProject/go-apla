@@ -241,6 +241,7 @@ func (t *Transaction) parseFromContract(fillData bool) error {
 	t.TxKeyID = smartTx.KeyID
 
 	key := &model.Key{}
+	key.SetTablePrefix(smartTx.EcosystemID)
 	found, err := key.Get(smartTx.KeyID)
 	if !found {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_key": t.TxKeyID}).Error("key ID not found")
