@@ -31,12 +31,9 @@ package api
 import (
 	"net/http"
 
-	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -69,22 +66,12 @@ func getRowHandler(w http.ResponseWriter, r *http.Request) {
 	logger := getLogger(r)
 
 	q := model.GetDB(nil).Limit(1)
-	table := params["name"]
 
-	table = converter.ParseTable(table, client.EcosystemID)
-	sc := smart.SmartContract{
-		OBS: conf.Config.IsSupportingOBS(),
-		VM:  smart.GetVM(),
-		TxSmart: tx.SmartContract{
-			Header: tx.Header{
-				EcosystemID: client.EcosystemID,
-				KeyID:       client.KeyID,
-				NetworkID:   consts.NETWORK_ID,
-			},
-		},
-	}
-	var err error
-	_, form.Columns, err = sc.CheckAccess(table, form.Columns)
+	var (
+		err   error
+		table string
+	)
+	table, form.Columns, err = checkAccess(params["name"], form.Columns, client)
 	if err != nil {
 		errorResponse(w, err)
 		return

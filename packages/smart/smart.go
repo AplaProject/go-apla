@@ -780,9 +780,11 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	return nil
 }
 
-func (sc *SmartContract) CheckAccess(table, columns string) (perm map[string]string,
+func (sc *SmartContract) CheckAccess(tableName, columns string, ecosystem int64) (table string, perm map[string]string,
 	cols string, err error) {
 	var collist []string
+
+	table = converter.ParseTable(tableName, ecosystem)
 	collist, err = GetColumns(columns)
 	if err != nil {
 		return

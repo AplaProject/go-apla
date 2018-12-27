@@ -33,7 +33,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
@@ -59,17 +58,7 @@ func (f *listForm) Validate(r *http.Request) error {
 	return f.rowForm.Validate(r)
 }
 
-func getListHandler(w http.ResponseWriter, r *http.Request) {
-	form := &listForm{}
-	if err := parseForm(r, form); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return
-	}
-
-	params := mux.Vars(r)
-	client := getClient(r)
-	logger := getLogger(r)
-
+func checkAccess(tableName, columns string, client *Client) (table string, cols string, err error) {
 	sc := smart.SmartContract{
 		OBS: conf.Config.IsSupportingOBS(),
 		VM:  smart.GetVM(),
@@ -81,17 +70,32 @@ func getListHandler(w http.ResponseWriter, r *http.Request) {
 			},
 		},
 	}
+	table, _, cols, err = sc.CheckAccess(tableName, columns, client.EcosystemID)
+	return
+}
 
-	table := params["name"]
-	q := model.GetTableQuery(table, client.EcosystemID)
+func getListHandler(w http.ResponseWriter, r *http.Request) {
+	form := &listForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
-	table = converter.ParseTable(table, client.EcosystemID)
-	var err error
-	_, form.Columns, err = sc.CheckAccess(table, form.Columns)
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
+	var (
+		err   error
+		table string
+	)
+	table, form.Columns, err = checkAccess(params["name"], form.Columns, client)
 	if err != nil {
 		errorResponse(w, err)
 		return
 	}
+	q := model.GetTableQuery(params["name"], client.EcosystemID)
+
 	if len(form.Columns) > 0 {
 		q = q.Select("id," + form.Columns)
 	}
