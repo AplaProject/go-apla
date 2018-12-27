@@ -31,7 +31,6 @@ package tcpserver
 import (
 	"net"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -41,21 +40,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	counter int64
-)
-
 // HandleTCPRequest proceed TCP requests
 func HandleTCPRequest(rw net.Conn) {
-	defer func() {
-		atomic.AddInt64(&counter, -1)
-	}()
-
-	count := atomic.AddInt64(&counter, +1)
-	if count > 20 {
-		return
-	}
-
 	dType := &network.RequestType{}
 	err := dType.Read(rw)
 	if err != nil {
