@@ -39,10 +39,10 @@
 			"revisionTime": "2017-11-13T16:34:30Z"
 		},
 		{
-			"checksumSHA1": "oDK90xKVOmk1i8eOMlZXvBZa1o4=",
+			"checksumSHA1": "w+eCziIMMkV91p4OExPIxaLmrSE=",
 			"path": "github.com/centrifugal/gocent",
-			"revision": "b5820d066a1dcfbffb20333d85e66f547bbbd1d9",
-			"revisionTime": "2017-04-19T07:17:51Z"
+			"revision": "dd2b1cb18557696ce3d2d88ca8931b959a301d48",
+			"revisionTime": "2018-11-22T11:22:54Z"
 		},
 		{
 			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
@@ -613,5 +613,5 @@
 			"revisionTime": "2018-02-23T19:12:37Z"
 		}
 	],
-	"rootPath": "github.com/GenesisKernel/go-genesis"
+	"rootPath": "github.com/AplaProject/go-apla"
 }

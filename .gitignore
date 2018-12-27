@@ -117,3 +117,5 @@ public/
 .vscode/
 ./*-data/
 packages/api/helper_test.go
+apla-data/go-apla.lock
+apla-data/go-apla.pid
