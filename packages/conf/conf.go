@@ -79,6 +79,14 @@ type CentrifugoConfig struct {
 	URL    string
 }
 
+// GocentConfig returns config in gocent format
+func (cc CentrifugoConfig) GocentConfig() gocent.Config {
+	return gocent.Config{
+		Key:  cc.Secret,
+		Addr: cc.URL,
+	}
+}
+
 // Syslog represents parameters of syslog
 type Syslog struct {
 	Facility string
@@ -130,7 +138,7 @@ type GlobalConfig struct {
 
 	DB            DBConfig
 	StatsD        StatsDConfig
-	Centrifugo    gocent.Config
+	Centrifugo    CentrifugoConfig
 	Log           LogConfig
 	TokenMovement TokenMovementConfig
 

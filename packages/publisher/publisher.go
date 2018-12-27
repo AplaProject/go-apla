@@ -29,6 +29,7 @@
 package publisher
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -67,9 +68,8 @@ var (
 )
 
 // InitCentrifugo client
-func InitCentrifugo(cfg conf.CentrifugoConfig) {
-	config = cfg
-	publisher = gocent.NewClient(cfg.URL, cfg.Secret, centrifugoTimeout)
+func InitCentrifugo(config conf.CentrifugoConfig) {
+	publisher = gocent.New(config.GocentConfig())
 }
 
 func GetHMACSign(userID int64) (string, string, error) {
@@ -87,8 +87,9 @@ func GetHMACSign(userID int64) (string, string, error) {
 }
 
 // Write is publishing data to server
-func Write(userID int64, data string) (bool, error) {
-	return publisher.Publish("client"+strconv.FormatInt(userID, 10), []byte(data))
+func Write(userID int64, data string) error {
+	ctx, _ := context.WithTimeout(context.Background(), centrifugoTimeout)
+	return publisher.Publish(ctx, "client"+strconv.FormatInt(userID, 10), []byte(data))
 }
 
 // GetStats returns Stats
