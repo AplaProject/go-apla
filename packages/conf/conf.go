@@ -35,6 +35,8 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/centrifugal/gocent"
+
 	"github.com/BurntSushi/toml"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -128,7 +130,7 @@ type GlobalConfig struct {
 
 	DB            DBConfig
 	StatsD        StatsDConfig
-	Centrifugo    CentrifugoConfig
+	Centrifugo    gocent.Config
 	Log           LogConfig
 	TokenMovement TokenMovementConfig
 
