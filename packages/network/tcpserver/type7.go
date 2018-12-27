@@ -49,7 +49,18 @@ func Type7(request *network.GetBodiesRequest, w net.Conn) error {
 	if request.ReverseOrder {
 		order = -1
 	}
-	blocks, err = blockchain.GetNBlocksFrom(nil, request.BlockHash, int(BlocksPerRequest), order)
+	blockHash := request.BlockHash
+	if string(request.BlockHash) == "" {
+		block, found, err := blockchain.GetFirstBlock(nil)
+		if err != nil {
+			return err
+		}
+		if !found {
+			return nil
+		}
+		blockHash = block.Hash
+	}
+	blocks, err = blockchain.GetNBlocksFrom(nil, blockHash, int(BlocksPerRequest), order)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "block_hash": request.BlockHash}).Error("Error getting 1000 blocks from block_hash")
 		if err := network.WriteInt(0, w); err != nil {

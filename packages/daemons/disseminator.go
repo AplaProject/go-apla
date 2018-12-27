@@ -89,31 +89,32 @@ func sendTransactions(ctx context.Context, logger *log.Entry) error {
 
 // send block and transactions hashes
 func sendBlockWithTxHashes(ctx context.Context, fullNodeID int64, logger *log.Entry) error {
-	return queue.SendTxQueue.ProcessAllItems(func(trs []*blockchain.Transaction) error {
-		block, isEmpty, err := queue.SendBlockQueue.Dequeue()
-		if err != nil {
-			return err
-		}
-		if isEmpty {
-			return nil
-		}
-		if len(trs) == 0 && block == nil {
-			// it's nothing to send
-			logger.Debug("nothing to send")
-			return nil
-		}
-
-		hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
-		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
-			return err
-		}
-
-		if err := tcpclient.SendFullBlockToAll(ctx, hosts, block, trs, fullNodeID); err != nil {
-			log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Warn("on sending block with hashes to all")
-			return err
-		}
+	block, isEmpty, err := queue.SendBlockQueue.Dequeue()
+	if err != nil {
+		return err
+	}
+	if isEmpty {
 		return nil
-	})
+	}
+	txs, err := block.Transactions(nil)
+	if err != nil {
+		return err
+	}
+	if len(txs) == 0 && block == nil {
+		// it's nothing to send
+		logger.Debug("nothing to send")
+		return nil
+	}
 
+	hosts, err := nodeban.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
+		return err
+	}
+
+	if err := tcpclient.SendFullBlockToAll(ctx, hosts, block, txs, fullNodeID); err != nil {
+		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Warn("on sending block with hashes to all")
+		return err
+	}
+	return nil
 }
