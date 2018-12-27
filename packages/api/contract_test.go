@@ -55,7 +55,7 @@ func TestBin(t *testing.T) {
 }`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	_, _, err := postTxResult(rnd, &url.Values{})
-	assert.NoError(t, err)
+	assert.EqualError(t, err, `{"type":"panic","error":"Result is not valid utf-8 string"}`)
 }
 
 func TestArray(t *testing.T) {
