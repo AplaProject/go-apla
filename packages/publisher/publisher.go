@@ -88,15 +88,18 @@ func GetHMACSign(userID int64) (string, string, error) {
 
 // Write is publishing data to server
 func Write(userID int64, data string) error {
-	ctx, _ := context.WithTimeout(context.Background(), centrifugoTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), centrifugoTimeout)
+	defer cancel()
 	return publisher.Publish(ctx, "client"+strconv.FormatInt(userID, 10), []byte(data))
 }
 
-// GetStats returns Stats
-func GetStats() (gocent.Stats, error) {
+// GetInfo returns Stats
+func GetInfo() (gocent.InfoResult, error) {
 	if publisher == nil {
-		return gocent.Stats{}, fmt.Errorf("publisher not initialized")
+		return gocent.InfoResult{}, fmt.Errorf("publisher not initialized")
 	}
 
-	return publisher.Stats()
+	ctx, cancel := context.WithTimeout(context.Background(), centrifugoTimeout)
+	defer cancel()
+	return publisher.Info(ctx)
 }

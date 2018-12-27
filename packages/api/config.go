@@ -73,7 +73,7 @@ func replaceHttpSchemeToWs(centrifugoURL string) string {
 func centrifugoAddressHandler(w http.ResponseWriter, r *http.Request) {
 	logger := getLogger(r)
 
-	if _, err := publisher.GetStats(); err != nil {
+	if _, err := publisher.GetInfo(); err != nil {
 		logger.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Warn("on getting centrifugo stats")
 		errorResponse(w, err)
 		return
