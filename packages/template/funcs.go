@@ -629,8 +629,8 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
 	}
-	if limit > 250 {
-		limit = 250
+	if limit > consts.DBFindLimit {
+		limit = consts.DBFindLimit
 	}
 	if par.Node.Attr[`offset`] != nil {
 		offset = fmt.Sprintf(` offset %d`, converter.StrToInt(par.Node.Attr[`offset`].(string)))

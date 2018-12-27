@@ -203,3 +203,5 @@ const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470
 const StatusMainPage = `2`
 
 const NoneVDE = "none"
+
+const DBFindLimit = 10000
