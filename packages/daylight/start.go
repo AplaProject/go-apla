@@ -237,6 +237,7 @@ func Start() {
 	killOld()
 
 	publisher.InitCentrifugo(conf.Config.Centrifugo)
+
 	initStatsd()
 
 	err = initLogs()

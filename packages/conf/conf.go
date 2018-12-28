@@ -82,7 +82,7 @@ type CentrifugoConfig struct {
 // GocentConfig returns config in gocent format
 func (cc CentrifugoConfig) GocentConfig() gocent.Config {
 	return gocent.Config{
-		Key:  cc.Secret,
+		Key:  "",
 		Addr: cc.URL,
 	}
 }
