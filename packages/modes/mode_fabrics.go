@@ -43,8 +43,6 @@ type BCEcosysIDValidator struct {
 	logger *log.Entry
 }
 
-func (v BCEcosysIDValidator) SetLogger(logger *log.Entry) {}
-
 func (v BCEcosysIDValidator) Validate(id, clientID int64, le *log.Entry) (int64, error) {
 	if clientID <= 0 {
 		return clientID, nil
