@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -1141,6 +1142,9 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.TxUsedCost = decimal.New(sc.TxFuel+price, 0)
 	if ctrctExtend[`result`] != nil {
 		result = fmt.Sprint(ctrctExtend[`result`])
+		if !utf8.ValidString(result) {
+			return retError(errNotValidUTF)
+		}
 		if len(result) > 255 {
 			result = result[:255]
 		}
