@@ -107,7 +107,7 @@ func (m Mode) SetBlockchainRoutes(r Router) {
 	api.HandleFunc("/maxblockid", getMaxBlockHandler).Methods("GET")
 	api.HandleFunc("/blocks", getBlocksTxInfoHandler).Methods("GET")
 	api.HandleFunc("/detailed_blocks", getBlocksDetailedInfoHandler).Methods("GET")
-	api.HandleFunc("/ecosystemparams", authRequire(getEcosystemParamsHandler)).Methods("GET")
+	api.HandleFunc("/ecosystemparams", authRequire(m.getEcosystemParamsHandler)).Methods("GET")
 	api.HandleFunc("/systemparams", authRequire(getSystemParamsHandler)).Methods("GET")
 	api.HandleFunc("/ecosystems", authRequire(getEcosystemsHandler)).Methods("GET")
 	api.HandleFunc("/ecosystemparam/{name}", authRequire(m.getEcosystemParamHandler)).Methods("GET")
