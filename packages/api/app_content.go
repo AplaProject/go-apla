@@ -46,8 +46,13 @@ type appContentResult struct {
 	Contracts []model.Contract       `json:"contracts"`
 }
 
-func getAppContentHandler(w http.ResponseWriter, r *http.Request) {
-	form := &ecosystemForm{}
+func (m Mode) getAppContentHandler(w http.ResponseWriter, r *http.Request) {
+	form := &appParamsForm{
+		ecosystemForm: ecosystemForm{
+			Validator: m.EcosysIDValidator,
+		},
+	}
+
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
