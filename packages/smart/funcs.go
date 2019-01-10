@@ -948,8 +948,8 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if limit == 0 {
 		limit = 25
 	}
-	if limit < 0 || limit > 250 {
-		limit = 250
+	if limit < 0 || limit > consts.DBFindLimit {
+		limit = consts.DBFindLimit
 	}
 	tblname = GetTableName(sc, tblname)
 	perm, err = sc.AccessTablePerm(tblname, `read`)
