@@ -11,23 +11,23 @@ import (
 )
 
 type blockMetric struct {
-	Count int64
+	Count int64 `json:"count"`
 }
 
 type txMetric struct {
-	Count int64
+	Count int64 `json:"count"`
 }
 
 type ecosysMetric struct {
-	Count int64
+	Count int64 `json:"count"`
 }
 
 type keyMetric struct {
-	Count int64
+	Count int64 `json:"count"`
 }
 
 type fullNodeMetric struct {
-	Count int64
+	Count int64 `json:"count"`
 }
 
 func blocksCountHandler(w http.ResponseWriter, r *http.Request) {
