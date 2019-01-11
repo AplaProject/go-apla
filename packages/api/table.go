@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -37,6 +37,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -58,55 +59,59 @@ type tableResult struct {
 	Columns    []columnInfo `json:"columns"`
 }
 
-func table(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var result tableResult
+func getTableHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+	client := getClient(r)
+	prefix := client.Prefix()
 
-	prefix := getPrefix(data)
 	table := &model.Table{}
 	table.SetTablePrefix(prefix)
-	_, err = table.Get(nil, strings.ToLower(data.params[`name`].(string)))
+
+	_, err := table.Get(nil, strings.ToLower(params["name"]))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
 
-	if len(table.Name) > 0 {
-		var perm map[string]string
-		err := json.Unmarshal([]byte(table.Permissions), &perm)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table permissions to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		var cols map[string]string
-		err = json.Unmarshal([]byte(table.Columns), &cols)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		columns := make([]columnInfo, 0)
-		for key, value := range cols {
-			colType, err := model.GetColumnType(prefix+`_`+data.params[`name`].(string), key)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
-				return errorAPI(w, err.Error(), http.StatusInternalServerError)
-			}
-			columns = append(columns, columnInfo{Name: key, Perm: value,
-				Type: colType})
-		}
-		result = tableResult{
-			Name:       table.Name,
-			Insert:     perm[`insert`],
-			NewColumn:  perm[`new_column`],
-			Update:     perm[`update`],
-			Read:       perm[`read`],
-			Filter:     perm[`filter`],
-			Conditions: table.Conditions,
-			AppID:      converter.Int64ToStr(table.AppID),
-			Columns:    columns,
-		}
-	} else {
-		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
+	if len(table.Name) == 0 {
+		errorResponse(w, errTableNotFound.Errorf(params["name"]))
+		return
 	}
-	data.result = &result
-	return
+
+	var columnsMap map[string]string
+	err = json.Unmarshal([]byte(table.Columns), &columnsMap)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshalling table columns to json")
+		errorResponse(w, err)
+		return
+	}
+
+	columns := make([]columnInfo, 0)
+	for key, value := range columnsMap {
+		colType, err := model.GetColumnType(prefix+`_`+params["name"], key)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column type from db")
+			errorResponse(w, err)
+			return
+		}
+		columns = append(columns, columnInfo{
+			Name: key,
+			Perm: value,
+			Type: colType,
+		})
+	}
+
+	jsonResponse(w, &tableResult{
+		Name:       table.Name,
+		Insert:     table.Permissions.Insert,
+		NewColumn:  table.Permissions.NewColumn,
+		Update:     table.Permissions.Update,
+		Read:       table.Permissions.Read,
+		Filter:     table.Permissions.Filter,
+		Conditions: table.Conditions,
+		AppID:      converter.Int64ToStr(table.AppID),
+		Columns:    columns,
+	})
 }

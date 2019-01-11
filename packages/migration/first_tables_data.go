@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -51,11 +51,12 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
     (next_id('1_tables'), 'ecosystems',
         '{
             "insert": "ContractAccess(\"@1NewEcosystem\")",
-            "update": "ContractAccess(\"@1EditEcosystemName\",\"@1VotingDecisionCheck\")",
+            "update": "ContractAccess(\"@1EditEcosystemName\",\"@1VotingDecisionCheck\",\"@1EcManageInfo\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
             "name": "ContractAccess(\"@1EditEcosystemName\")",
+            "info": "ContractAccess(\"@1EcManageInfo\")",
             "is_valued": "ContractAccess(\"@1VotingDecisionCheck\")"
         }',
         'ContractConditions("@1AdminCondition")'

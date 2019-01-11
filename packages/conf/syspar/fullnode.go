@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -29,7 +29,6 @@
 package syspar
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -39,6 +38,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -78,7 +78,7 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 	fn.APIAddress = data.APIAddress
 	fn.KeyID = converter.StrToInt64(data.KeyID.String())
 
-	if fn.PublicKey, err = hex.DecodeString(data.PublicKey); err != nil {
+	if fn.PublicKey, err = crypto.HexToPub(data.PublicKey); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.PublicKey}).Error("converting full nodes public key from hex")
 		return err
 	}
@@ -96,7 +96,7 @@ func (fn *FullNode) MarshalJSON() ([]byte, error) {
 		TCPAddress: fn.TCPAddress,
 		APIAddress: fn.APIAddress,
 		KeyID:      json.Number(strconv.FormatInt(fn.KeyID, 10)),
-		PublicKey:  hex.EncodeToString(fn.PublicKey),
+		PublicKey:  crypto.PubToHex(fn.PublicKey),
 		UnbanTime:  json.Number(strconv.FormatInt(fn.UnbanTime.Unix(), 10)),
 	}
 

@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -29,7 +29,6 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -49,56 +48,56 @@ type tablesResult struct {
 	List  []tableInfo `json:"list"`
 }
 
-func tables(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var (
-		result tablesResult
-		limit  int
-	)
+func getTablesHandler(w http.ResponseWriter, r *http.Request) {
+	form := &paginatorForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadGateway)
+		return
+	}
 
-	table := `1_tables`
-	where := fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
+	client := getClient(r)
+	logger := getLogger(r)
+	prefix := client.Prefix()
 
-	count, err := model.GetRecordsCountTx(nil, table, ``)
+	table := &model.Table{}
+	table.SetTablePrefix(prefix)
+
+	count, err := table.Count()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting records count from tables")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
-	}
-	if data.params[`limit`].(int64) > 0 {
-		limit = int(data.params[`limit`].(int64))
-	} else {
-		limit = 25
-	}
-	list, err := model.GetAll(fmt.Sprintf(`select name from "1_tables" where %s order by name offset %d `,
-		where, data.params[`offset`].(int64)), limit)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
 
-	result = tablesResult{
-		Count: count, List: make([]tableInfo, len(list)),
+	rows, err := model.GetDB(nil).Table(table.TableName()).Where("ecosystem = ?", client.EcosystemID).Offset(form.Offset).Limit(form.Limit).Rows()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
+		errorResponse(w, err)
+		return
+	}
+
+	list, err := model.GetResult(rows)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting names from tables")
+		errorResponse(w, err)
+		return
+	}
+
+	result := &tablesResult{
+		Count: count,
+		List:  make([]tableInfo, len(list)),
 	}
 	for i, item := range list {
-		var maxid int64
-		result.List[i].Name = item[`name`]
-		fullname := getPrefix(data) + `_` + item[`name`]
-		if item[`name`] == `keys` || item[`name`] == `members` {
-			err = model.DBConn.Table(fullname).Count(&maxid).Error
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")
-			}
-		} else {
-			maxid, err = model.GetNextID(nil, fullname)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id from table")
-			}
-			maxid--
-		}
+		err = model.GetTableQuery(item["name"], client.EcosystemID).Count(&count).Error
 		if err != nil {
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting count from table")
+			errorResponse(w, err)
+			return
 		}
-		result.List[i].Count = converter.Int64ToStr(maxid)
+
+		result.List[i].Name = item["name"]
+		result.List[i].Count = converter.Int64ToStr(count)
 	}
-	data.result = &result
-	return
+
+	jsonResponse(w, result)
 }

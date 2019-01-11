@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -29,13 +29,12 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -44,46 +43,56 @@ type listResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var limit int
+type listForm struct {
+	paginatorForm
+	rowForm
+}
 
-	var where string
-	tblname := data.params[`name`].(string)
-	if model.FirstEcosystemTables[tblname] {
-		tblname = `1_` + tblname
-		where = fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
-	} else {
-		tblname = converter.ParseTable(tblname, data.ecosystemId)
+func (f *listForm) Validate(r *http.Request) error {
+	if err := f.paginatorForm.Validate(r); err != nil {
+		return err
 	}
-	cols := `*`
-	if len(data.params[`columns`].(string)) > 0 {
-		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
+	return f.rowForm.Validate(r)
+}
+
+func getListHandler(w http.ResponseWriter, r *http.Request) {
+	form := &listForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
-	count, err := model.GetRecordsCountTx(nil, tblname, where)
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
+	table := params["name"]
+	q := model.GetTableQuery(table, client.EcosystemID)
+
+	if len(form.Columns) > 0 {
+		q = q.Select("id," + form.Columns)
+	}
+
+	result := new(listResult)
+	err := q.Count(&result.Count).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
-		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
+		errorResponse(w, errTableNotFound.Errorf(table))
+		return
 	}
 
-	if data.params[`limit`].(int64) > 0 {
-		limit = int(data.params[`limit`].(int64))
-	} else {
-		limit = 25
-	}
-	if len(where) > 0 {
-		where = `where ` + where
-	}
-	var query string
-	query = fmt.Sprintf(`select %s from "%s" %s order by id desc offset %d `, cols, tblname,
-		where, data.params[`offset`].(int64))
-	list, err := model.GetAll(query, limit)
+	rows, err := q.Order("id ASC").Offset(form.Offset).Limit(form.Limit).Rows()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
-	data.result = &listResult{
-		Count: converter.Int64ToStr(count), List: list,
+
+	result.List, err = model.GetResult(rows)
+	if err != nil {
+		errorResponse(w, err)
+		return
 	}
-	return
+
+	jsonResponse(w, result)
 }

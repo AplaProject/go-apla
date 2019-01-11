@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -119,7 +119,7 @@ func TestAPI(t *testing.T) {
 		}
 	}
 	err = sendPost(`content/page/mypage`, &url.Values{}, &ret)
-	if err != nil && err.Error() != `404 {"error": "E_NOTFOUND", "msg": "Page not found" }` {
+	if err != nil && err.Error() != `404 {"error":"E_NOTFOUND","msg":"Page not found"}` {
 		t.Error(err)
 		return
 	}
@@ -131,6 +131,10 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind(@1pages).Where({{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}).Columns("id,name").Order(id)`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"],["2","developer_index"],["3","notifications"]],"name":"@1pages","order":"id","types":["text","text"],"where":"{{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}"}}]`},
+	{`DBFind(@1pages).Where({{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}).Columns("id,name")`,
+		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["2","developer_index"]],"name":"@1pages","types":["text","text"],"where":"{{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}"}}]`},
+	{`DBFind(@1pages).Where({id:3, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["3","notifications"]],"name":"@1pages","types":["text","text"],"where":"{id:3, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}"}}]`},
 	{`DBFind(@1pages).Where({id:1}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"]],"name":"@1pages","types":["text","text"],"where":"{id:1}"}}]`},
 	{`DBFind(keys).Where("id='#key_id#'").Columns("amount").Vars(amount)`, `[{"tag":"text","text":"Where has wrong format"}]`},
 	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},

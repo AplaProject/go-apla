@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -33,13 +33,13 @@ import "github.com/AplaProject/go-apla/packages/converter"
 // Page is model
 type Page struct {
 	ecosystem     int64
-	ID            int64  `gorm:"primary_key;not null" json:"id"`
-	Name          string `gorm:"not null" json:"name"`
-	Value         string `gorm:"not null" json:"value"`
-	Menu          string `gorm:"not null;size:255" json:"menu"`
-	ValidateCount int64  `gorm:"not null" json:"nodesCount"`
-	AppID         int64  `gorm:"column:app_id;not null" json:"app_id"`
-	Conditions    string `gorm:"not null" json:"conditions"`
+	ID            int64  `gorm:"primary_key;not null" json:"id,omitempty"`
+	Name          string `gorm:"not null" json:"name,omitempty"`
+	Value         string `gorm:"not null" json:"value,omitempty"`
+	Menu          string `gorm:"not null;size:255" json:"menu,omitempty"`
+	ValidateCount int64  `gorm:"not null" json:"nodesCount,omitempty"`
+	AppID         int64  `gorm:"column:app_id;not null" json:"app_id,omitempty"`
+	Conditions    string `gorm:"not null" json:"conditions,omitempty"`
 }
 
 // SetTablePrefix is setting table prefix
@@ -64,4 +64,11 @@ func (p *Page) Get(name string) (bool, error) {
 func (p *Page) Count() (count int64, err error) {
 	err = DBConn.Table(p.TableName()).Count(&count).Error
 	return
+}
+
+// GetByApp returns all pages belonging to selected app
+func (p *Page) GetByApp(appID int64, ecosystemID int64) ([]Page, error) {
+	var result []Page
+	err := DBConn.Select("id, name").Where("app_id = ? and ecosystem = ?", appID, ecosystemID).Find(&result).Error
+	return result, err
 }

@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -41,7 +41,7 @@ import (
 )
 
 // MarshallBlock is marshalling block
-func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, key string) ([]byte, error) {
+func MarshallBlock(header *utils.BlockData, trData [][]byte, prev *utils.BlockData, key string) ([]byte, error) {
 	var mrklArray [][]byte
 	var blockDataTx []byte
 	var signed []byte
@@ -63,11 +63,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		}
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
-
 		var err error
-		signed, err = crypto.SignString(key, forSign)
+		signed, err = crypto.SignString(key, header.ForSign(prev, mrklRoot))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing blocko")
 			return nil, err

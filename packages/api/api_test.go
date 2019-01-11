@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -76,7 +76,7 @@ func PrivateToPublicHex(hexkey string) (string, error) {
 	if err != nil {
 		return ``, err
 	}
-	return hex.EncodeToString(pubKey), nil
+	return crypto.PubToHex(pubKey), nil
 }
 
 func sendRawRequest(rtype, url string, form *url.Values) ([]byte, error) {
@@ -284,10 +284,18 @@ func postTxResult(name string, form getter) (id int64, msg string, err error) {
 		switch field.Type {
 		case "bool":
 			params[name], err = strconv.ParseBool(value)
-		case "int":
+		case "int", "address":
 			params[name], err = strconv.ParseInt(value, 10, 64)
 		case "float":
 			params[name], err = strconv.ParseFloat(value, 64)
+		case "array":
+			var v interface{}
+			err = json.Unmarshal([]byte(value), &v)
+			params[name] = v
+		case "map":
+			var v map[string]interface{}
+			err = json.Unmarshal([]byte(value), &v)
+			params[name] = v
 		case "string", "money":
 			params[name] = value
 		case "file", "bytes":

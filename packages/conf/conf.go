@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -107,6 +107,7 @@ type GlobalConfig struct {
 	KeyID        int64  `toml:"-"`
 	ConfigPath   string `toml:"-"`
 	TestRollBack bool   `toml:"-"`
+	FuncBench    bool   `toml:"-"`
 
 	PidFilePath           string
 	LockFilePath          string
@@ -117,7 +118,7 @@ type GlobalConfig struct {
 	TLS                   bool   // TLS is on/off. It is required for https
 	TLSCert               string // TLSCert is a filepath of the fullchain of certificate.
 	TLSKey                string // TLSKey is a filepath of the private key.
-	VDEMode               string
+	OBSMode               string
 	HTTPServerMaxBodySize int64
 
 	MaxPageGenerationTime int64 // in milliseconds
@@ -273,22 +274,22 @@ func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
 }
 
-// IsVDE check running mode
-func (c GlobalConfig) IsVDE() bool {
-	return RunMode(c.VDEMode).IsVDE()
+// IsOBS check running mode
+func (c GlobalConfig) IsOBS() bool {
+	return RunMode(c.OBSMode).IsOBS()
 }
 
-// IsVDEMaster check running mode
-func (c GlobalConfig) IsVDEMaster() bool {
-	return RunMode(c.VDEMode).IsVDEMaster()
+// IsOBSMaster check running mode
+func (c GlobalConfig) IsOBSMaster() bool {
+	return RunMode(c.OBSMode).IsOBSMaster()
 }
 
-// IsSupportingVDE check running mode
-func (c GlobalConfig) IsSupportingVDE() bool {
-	return RunMode(c.VDEMode).IsSupportingVDE()
+// IsSupportingOBS check running mode
+func (c GlobalConfig) IsSupportingOBS() bool {
+	return RunMode(c.OBSMode).IsSupportingOBS()
 }
 
 // IsNode check running mode
 func (c GlobalConfig) IsNode() bool {
-	return RunMode(c.VDEMode).IsNode()
+	return RunMode(c.OBSMode).IsNode()
 }

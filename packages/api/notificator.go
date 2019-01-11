@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -48,13 +48,15 @@ type updateNotificatorResult struct {
 	Result bool `json:"result"`
 }
 
-func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var list []idItem
+func updateNotificatorHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
 
-	err := json.Unmarshal([]byte(data.params["ids"].(string)), &list)
+	var list []idItem
+	err := json.Unmarshal([]byte(r.FormValue("ids")), &list)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling ids")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling ids")
+		errorResponse(w, err)
+		return
 	}
 
 	stateList := make(map[int64][]int64)
@@ -68,6 +70,6 @@ func updateNotificator(w http.ResponseWriter, r *http.Request, data *apiData, lo
 	}
 
 	go notificator.SendNotificationsByRequest(stateList)
-	data.result = &updateNotificatorResult{Result: true}
-	return nil
+
+	jsonResponse(w, &updateNotificatorResult{Result: true})
 }

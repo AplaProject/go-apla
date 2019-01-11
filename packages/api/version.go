@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -30,13 +30,13 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-
-	log "github.com/sirupsen/logrus"
 )
 
-func getVersion(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	data.result = consts.VERSION + ` ` + consts.BuildInfo
-	return nil
+func getVersionHandler(w http.ResponseWriter, r *http.Request) {
+	jsonResponse(w, strings.Join([]string{
+		consts.VERSION, consts.BuildInfo}, " ",
+	))
 }

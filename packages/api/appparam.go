@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -35,28 +35,42 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-func appParam(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	_, prefix, err := checkEcosystem(w, data, logger)
-	if err != nil {
-		return err
+func (m Mode) GetAppParamHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+
+	form := &ecosystemForm{
+		Validator: m.EcosysIDValidator,
 	}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	params := mux.Vars(r)
+
 	ap := &model.AppParam{}
-	ap.SetTablePrefix(prefix)
-	name := data.params[`name`].(string)
-	found, err := ap.Get(nil, converter.StrToInt64(data.params[`appid`].(string)), name)
+	ap.SetTablePrefix(form.EcosystemPrefix)
+	name := params["name"]
+	found, err := ap.Get(nil, converter.StrToInt64(params["appID"]), name)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting app parameter by name")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": name}).Error("app parameter not found")
-		return errorAPI(w, `E_PARAMNOTFOUND`, http.StatusBadRequest, name)
+		errorResponse(w, errParamNotFound.Errorf(name))
+		return
 	}
 
-	data.result = &paramValue{ID: converter.Int64ToStr(ap.ID), Name: ap.Name, Value: ap.Value,
-		Conditions: ap.Conditions}
-	return
+	jsonResponse(w, &paramResult{
+		ID:         converter.Int64ToStr(ap.ID),
+		Name:       ap.Name,
+		Value:      ap.Value,
+		Conditions: ap.Conditions,
+	})
 }

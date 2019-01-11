@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -32,6 +32,8 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/AplaProject/go-apla/packages/types"
 
 	"github.com/shopspring/decimal"
 )
@@ -57,15 +59,15 @@ func (block *Block) String() (ret string) {
 	return
 }
 
-func getMap() *Map {
-	myMap := NewMap()
+func getMap() *types.Map {
+	myMap := types.NewMap()
 	myMap.Set(`par0`, `Parameter 0`)
 	myMap.Set(`par1`, `Parameter 1`)
 	return myMap
 }
 
 func getArray() []interface{} {
-	myMap := NewMap()
+	myMap := types.NewMap()
 	myMap.Set(`par0`, `Parameter 0`)
 	myMap.Set(`par1`, `Parameter 1`)
 	return []interface{}{myMap,
@@ -86,7 +88,7 @@ func Money(v interface{}) (ret decimal.Decimal) {
 	return ret
 }
 
-func outMap(v *Map) string {
+func outMap(v *types.Map) string {
 	return fmt.Sprint(v)
 }
 
@@ -662,6 +664,15 @@ func TestVMCompile(t *testing.T) {
 		func getqq() string {
 			return qq2("Id,ID2", 10,20)
 		}`, `getqq`, `1020`},
+		{`func IND() string {
+			var a,b,d array
+			a[0] = 100
+			a[1] = 555
+			b[0] = 200
+			d[0] = a
+			d[1] = b
+			d[0][0] =  777
+	}`, `IND`, `multi-index is not supported`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -681,7 +692,7 @@ func TestVMCompile(t *testing.T) {
 				break
 			}
 		} else {
-			glob := NewMap()
+			glob := types.NewMap()
 			glob.Set(`test`, `String value`)
 			glob.Set(`number`, 1001)
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{

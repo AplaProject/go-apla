@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -35,6 +35,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,24 +44,37 @@ type balanceResult struct {
 	Money  string `json:"money"`
 }
 
-func balance(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	ecosystemId, _, err := checkEcosystem(w, data, logger)
-	if err != nil {
-		return err
+func (m Mode) getBalanceHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+	form := &ecosystemForm{
+		Validator: m.EcosysIDValidator,
 	}
-	keyID := converter.StringToAddress(data.params[`wallet`].(string))
+
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	params := mux.Vars(r)
+
+	keyID := converter.StringToAddress(params["wallet"])
 	if keyID == 0 {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": data.params["wallet"].(string)}).Error("converting wallet to address")
-		return errorAPI(w, `E_INVALIDWALLET`, http.StatusBadRequest, data.params[`wallet`].(string))
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "value": params["wallet"]}).Error("converting wallet to address")
+		errorResponse(w, errInvalidWallet.Errorf(params["wallet"]))
+		return
 	}
 
 	key := &model.Key{}
-	key.SetTablePrefix(ecosystemId)
-	_, err = key.Get(keyID)
+	key.SetTablePrefix(form.EcosystemID)
+	_, err := key.Get(keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
-	data.result = &balanceResult{Amount: key.Amount, Money: converter.EGSMoney(key.Amount)}
-	return nil
+
+	jsonResponse(w, &balanceResult{
+		Amount: key.Amount,
+		Money:  converter.EGSMoney(key.Amount),
+	})
 }

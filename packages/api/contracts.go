@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -29,14 +29,11 @@
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/script"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -46,48 +43,45 @@ type contractsResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func getContracts(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var limit int
+func getContractsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &paginatorForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
 
-	table := `1_contracts`
+	client := getClient(r)
+	logger := getLogger(r)
 
-	where := fmt.Sprintf(`ecosystem='%d'`, data.ecosystemId)
+	contract := &model.Contract{}
+	contract.EcosystemID = client.EcosystemID
 
-	count, err := model.GetRecordsCountTx(nil, table, where)
+	count, err := contract.CountByEcosystem()
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting table records count")
+		errorResponse(w, err)
+		return
 	}
 
-	if data.params[`limit`].(int64) > 0 {
-		limit = int(data.params[`limit`].(int64))
-	} else {
-		limit = 25
-	}
-	list, err := model.GetAll(fmt.Sprintf(`select * from "%s" where %s order by id desc offset %d `, table, where, data.params[`offset`].(int64)), limit)
+	contracts, err := contract.GetListByEcosystem(form.Offset, form.Limit)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting all")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
-	for ind, val := range list {
-		if val[`wallet_id`] == `NULL` {
-			list[ind][`wallet_id`] = ``
-			list[ind][`address`] = ``
-		} else {
-			list[ind][`address`] = converter.AddressToString(converter.StrToInt64(val[`wallet_id`]))
-		}
-		if val[`active`] == `NULL` {
-			list[ind][`active`] = ``
-		}
-		cntlist, err := script.ContractsList(val[`value`])
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("getting contract list")
-			return errorAPI(w, err.Error(), http.StatusInternalServerError)
-		}
-		list[ind][`name`] = strings.Join(cntlist, `,`)
+
+	list := make([]map[string]string, len(contracts))
+	for i, c := range contracts {
+		list[i] = c.ToMap()
+		list[i]["address"] = converter.AddressToString(c.WalletID)
 	}
-	data.result = &listResult{
-		Count: converter.Int64ToStr(count), List: list,
+
+	if len(list) == 0 {
+		list = nil
 	}
-	return
+
+	jsonResponse(w, &listResult{
+		Count: converter.Int64ToStr(count),
+		List:  list,
+	})
 }

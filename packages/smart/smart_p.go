@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -37,6 +37,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -134,10 +135,6 @@ type TxSignJSON struct {
 	Field   string    `json:"field"`
 	Title   string    `json:"title"`
 	Params  []SignRes `json:"params"`
-}
-
-func init() {
-	EmbedFuncs(smartVM, script.VMTypeSmart)
 }
 
 func getCostP(name string) int64 {
@@ -323,7 +320,7 @@ func Sha256(text string) (string, error) {
 
 // PubToID returns a numeric identifier for the public key specified in the hexadecimal form.
 func PubToID(hexkey string) int64 {
-	pubkey, err := hex.DecodeString(hexkey)
+	pubkey, err := crypto.HexToPub(hexkey)
 	if err != nil {
 		logErrorValue(err, consts.CryptoError, "decoding hexkey to string", hexkey)
 		return 0
@@ -458,13 +455,21 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 	if err := LoadContract(sc.DbTransaction, id); err != nil {
 		return 0, err
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem", ID: id}); err != nil {
 			return 0, err
 		}
 	}
 
 	sc.FullAccess = true
+
+	if _, _, err = DBInsert(sc, "@1parameters", types.LoadMap(map[string]interface{}{
+		"name": "error_page", "value": "@1error_page", "conditions": `ContractConditions("@MainCondition")`,
+		"ecosystem": idStr,
+	})); err != nil {
+		return 0, logErrorDB(err, "inserting system parameter")
+	}
+
 	if _, _, err = DBInsert(sc, "@1applications", types.LoadMap(map[string]interface{}{
 		"name":       "System",
 		"conditions": `ContractConditions("MainCondition")`,
@@ -614,6 +619,10 @@ func CheckSignature(i *map[string]interface{}, name string) error {
 
 // DBSelectMetrics returns list of metrics by name and time interval
 func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc string) ([]interface{}, error) {
+	if conf.Config.IsSupportingOBS() {
+		return nil, ErrNotImplementedOnOBS
+	}
+
 	timeBlock := time.Unix(sc.TxSmart.Time, 0).Format(`2006-01-02 15:04:05`)
 	result, err := model.GetMetricValues(metric, timeInterval, aggregateFunc, timeBlock)
 	if err != nil {
@@ -625,6 +634,10 @@ func DBSelectMetrics(sc *SmartContract, metric, timeInterval, aggregateFunc stri
 // DBCollectMetrics returns actual values of all metrics
 // This function used to further store these values
 func DBCollectMetrics(sc *SmartContract) []interface{} {
+	if conf.Config.IsSupportingOBS() {
+		return nil
+	}
+
 	c := metric.NewCollector(
 		metric.CollectMetricDataForEcosystemTables,
 		metric.CollectMetricDataForEcosystemTx,

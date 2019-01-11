@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -50,8 +50,7 @@ import (
 func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	blockID := block.Header.BlockID
 	// for the local tests
-	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
-		block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
+	forSha := block.Header.ForSha(block.PrevHeader, block.MrklRoot)
 
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
@@ -148,9 +147,12 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		validBlockTime = !exists
 	}
 	if validBlockTime {
-		err = b.Create(transaction)
-		if err != nil {
+		if err = b.Create(transaction); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
+			return err
+		}
+		if err = model.UpdRollbackHash(transaction, rollbackTxsHash); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")
 			return err
 		}
 	} else {
@@ -179,6 +181,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 
 	BlockData = &header
 	BlockData.Hash = block.Hash
+	BlockData.RollbacksHash = block.RollbacksHash
 	return BlockData, nil
 }
 
@@ -211,13 +214,6 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 	if !ok {
 		log.WithFields(log.Fields{"type": consts.ParserError}).Error("getting data of first block")
 		return
-	}
-	sysParam := &model.SystemParameter{}
-	sysParam.Name = "test"
-	if data.Test == 1 {
-		sysParam.Update("1")
-	} else {
-		sysParam.Update("0")
 	}
 	syspar.SysUpdate(nil)
 	return

@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -30,31 +30,31 @@ package conf
 
 type RunMode string
 
-// VDEManager const label for running mode
-const vdeMaster RunMode = "VDEMaster"
+// OBSManager const label for running mode
+const obsMaster RunMode = "OBSMaster"
 
-// VDE const label for running mode
-const vde RunMode = "VDE"
+// OBS const label for running mode
+const obs RunMode = "OBS"
 
-// VDE const label for running mode
+// OBS const label for running mode
 const node RunMode = "NONE"
 
-// IsVDEMaster returns true if mode equal vdeMaster
-func (rm RunMode) IsVDEMaster() bool {
-	return rm == vdeMaster
+// IsOBSMaster returns true if mode equal obsMaster
+func (rm RunMode) IsOBSMaster() bool {
+	return rm == obsMaster
 }
 
-// IsVDE returns true if mode equal vde
-func (rm RunMode) IsVDE() bool {
-	return rm == vde
+// IsOBS returns true if mode equal obs
+func (rm RunMode) IsOBS() bool {
+	return rm == obs
 }
 
-// IsNode returns true if mode not equal to any VDE
+// IsNode returns true if mode not equal to any OBS
 func (rm RunMode) IsNode() bool {
 	return rm == node
 }
 
-// IsSupportingVDE returns true if mode support vde
-func (rm RunMode) IsSupportingVDE() bool {
-	return rm.IsVDE() || rm.IsVDEMaster()
+// IsSupportingOBS returns true if mode support obs
+func (rm RunMode) IsSupportingOBS() bool {
+	return rm.IsOBS() || rm.IsOBSMaster()
 }

@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -40,6 +40,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const jwtUIDExpire = time.Second * 5
+
 type getUIDResult struct {
 	UID         string `json:"uid,omitempty"`
 	Token       string `json:"token,omitempty"`
@@ -49,30 +51,36 @@ type getUIDResult struct {
 	Address     string `json:"address,omitempty"`
 }
 
-func getUID(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var result getUIDResult
+func getUIDHandler(w http.ResponseWriter, r *http.Request) {
+	result := new(getUIDResult)
 
-	data.result = &result
-
-	if data.token != nil && data.token.Valid {
-		if claims, ok := data.token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
+	token := getToken(r)
+	if token != nil {
+		if claims, ok := token.Claims.(*JWTClaims); ok && len(claims.KeyID) > 0 {
 			result.EcosystemID = claims.EcosystemID
 			result.Expire = converter.Int64ToStr(claims.ExpiresAt - time.Now().Unix())
 			result.KeyID = claims.KeyID
-			return nil
+			jsonResponse(w, result)
+			return
 		}
 	}
+
 	result.UID = converter.Int64ToStr(rand.New(rand.NewSource(time.Now().Unix())).Int63())
 	claims := JWTClaims{
-		UID: result.UID,
+		UID:         result.UID,
+		EcosystemID: "1",
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Second * 5).Unix(),
+			ExpiresAt: time.Now().Add(jwtUIDExpire).Unix(),
 		},
 	}
-	result.Token, err = jwtGenerateToken(w, claims)
-	if err != nil {
+
+	var err error
+	if result.Token, err = generateJWTToken(claims); err != nil {
+		logger := getLogger(r)
 		logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("generating jwt token")
-		return errorAPI(w, err, http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
-	return
+
+	jsonResponse(w, result)
 }

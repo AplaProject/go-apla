@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -41,12 +41,18 @@ var migrations = []*migration{
 
 	// Initial schema
 	&migration{"0.1.6b9", migrationInitialSchema},
+
+	&migration{"0.1.7", updates.M123}, // duplicate of 1.2.3 version
 }
 
 var updateMigrations = []*migration{
 	&migration{"1.0.7", updates.M107},
 	&migration{"1.1.4", updates.M114},
 	&migration{"1.1.5", updates.M115},
+	&migration{"1.2.0", updates.M120},
+	&migration{"1.2.1", updates.M121},
+	&migration{"1.2.2", updates.M122},
+	&migration{"1.2.3", updates.M123},
 }
 
 type migration struct {

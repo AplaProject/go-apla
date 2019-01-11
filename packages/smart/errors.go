@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -73,7 +73,6 @@ var (
 	errEmptyColumn        = errors.New(`Column name is empty`)
 	errWrongColumn        = errors.New(`Column name cannot begin with digit`)
 	errNotFound           = errors.New(`Record has not been found`)
-	errNow                = errors.New(`It is prohibited to use NOW() or current time functions`)
 	errContractChange     = errors.New(`Contract cannot be removed or inserted`)
 	errCurrentBalance     = errors.New(`Current balance is not enough`)
 	errDeletedKey         = errors.New(`The key is deleted`)
@@ -105,6 +104,8 @@ var (
 	errIncorrectParameter = errors.New(`Incorrect parameter of the condition function`)
 	errParseTransaction   = errors.New(`parse transaction`)
 	errInputSlice         = errors.New(`input slice is short`)
+	errWhereUpdate        = errors.New(`There is not Where in Update request`)
+	errNotValidUTF        = errors.New(`Result is not valid utf-8 string`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )

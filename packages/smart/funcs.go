@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -34,6 +34,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,26 +42,26 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/obsmanager"
 	"github.com/AplaProject/go-apla/packages/scheduler"
 	"github.com/AplaProject/go-apla/packages/scheduler/contract"
 	"github.com/AplaProject/go-apla/packages/script"
+	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
 	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
-	"github.com/AplaProject/go-apla/packages/vdemanager"
-
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -71,6 +72,10 @@ const (
 	historyLimit              = 250
 	dateTimeFormat            = "2006-01-02 15:04:05"
 	contractTxType            = 128
+)
+
+var (
+	ErrNotImplementedOnOBS = errors.New("Contract not implemented on OBS")
 )
 
 type ThrowError struct {
@@ -121,7 +126,7 @@ type NotifyInfo struct {
 
 // SmartContract is storing smart contract data
 type SmartContract struct {
-	VDE           bool
+	OBS           bool
 	Rollback      bool
 	FullAccess    bool
 	SysUpdate     bool
@@ -143,6 +148,13 @@ type SmartContract struct {
 	FlushRollback []FlushInfo
 	Notifications []NotifyInfo
 }
+
+var (
+	defaultSortOrder = map[string]string{
+		`keys`:    "ecosystem,id",
+		`members`: "ecosystem,id",
+	}
+)
 
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
 func (sc *SmartContract) AppendStack(fn string) error {
@@ -224,6 +236,8 @@ var (
 		"TransactionInfo":              100,
 		"DelTable":                     100,
 		"DelColumn":                    100,
+		"HexToPub":                     20,
+		"PubToHex":                     20,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -348,10 +362,15 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"DelTable":                     DelTable,
 		"DelColumn":                    DelColumn,
 		"Throw":                        Throw,
+		"HexToPub":                     crypto.HexToPub,
+		"PubToHex":                     PubToHex,
+		"UpdateNodesBan":               UpdateNodesBan,
+		"DBSelectMetrics":              DBSelectMetrics,
+		"DBCollectMetrics":             DBCollectMetrics,
 	}
 
 	switch vt {
-	case script.VMTypeVDE:
+	case script.VMTypeOBS:
 		f["HTTPRequest"] = HTTPRequest
 		f["GetMapKeys"] = GetMapKeys
 		f["SortedKeys"] = SortedKeys
@@ -361,7 +380,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["UpdateCron"] = UpdateCron
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
-	case script.VMTypeVDEMaster:
+	case script.VMTypeOBSMaster:
 		f["HTTPRequest"] = HTTPRequest
 		f["GetMapKeys"] = GetMapKeys
 		f["SortedKeys"] = SortedKeys
@@ -369,18 +388,15 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		f["HTTPPostJSON"] = HTTPPostJSON
 		f["ValidateCron"] = ValidateCron
 		f["UpdateCron"] = UpdateCron
-		f["CreateVDE"] = CreateVDE
-		f["DeleteVDE"] = DeleteVDE
-		f["StartVDE"] = StartVDE
-		f["StopVDEProcess"] = StopVDEProcess
-		f["GetVDEList"] = GetVDEList
+		f["CreateOBS"] = CreateOBS
+		f["DeleteOBS"] = DeleteOBS
+		f["StartOBS"] = StartOBS
+		f["StopOBSProcess"] = StopOBSProcess
+		f["GetOBSList"] = GetOBSList
 		vmExtendCost(vm, getCost)
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
-		f["UpdateNodesBan"] = UpdateNodesBan
-		f["DBSelectMetrics"] = DBSelectMetrics
-		f["DBCollectMetrics"] = DBCollectMetrics
 		ExtendCost(getCostP)
 		FuncCallsDB(funcCallsDBP)
 	}
@@ -406,8 +422,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 			"NewMoney":         {},
 			"UpdateNodesBan":   {},
 			"UpdateCron":       {},
-			"CreateVDE":        {},
-			"DeleteVDE":        {},
+			"CreateOBS":        {},
+			"DeleteOBS":        {},
 			"DelColumn":        {},
 			"DelTable":         {},
 		},
@@ -419,6 +435,10 @@ func GetTableName(sc *SmartContract, tblname string) string {
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
+	if conf.Config.FuncBench {
+		return true
+	}
+
 	for _, item := range names {
 		if sc.TxContract.Name == `@1`+item {
 			return true
@@ -437,6 +457,10 @@ func CompileContract(sc *SmartContract, code string, state, id, token int64) (in
 
 // ContractAccess checks whether the name of the executable contract matches one of the names listed in the parameters.
 func ContractAccess(sc *SmartContract, names ...interface{}) bool {
+	if conf.Config.FuncBench {
+		return true
+	}
+
 	for _, iname := range names {
 		switch name := iname.(type) {
 		case string:
@@ -579,7 +603,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions string, recip
 	}
 
 	if len(pars) > 0 {
-		if !sc.VDE {
+		if !sc.OBS {
 			if err := SysRollback(sc, SysRollData{Type: "EditContract", ID: id}); err != nil {
 				return err
 			}
@@ -627,7 +651,7 @@ func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcos
 	if err = FlushContract(sc, root, id); err != nil {
 		return 0, err
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		err = SysRollback(sc, SysRollData{Type: "NewContract", Data: value})
 		if err != nil {
 			return 0, err
@@ -738,7 +762,7 @@ func CreateTable(sc *SmartContract, name, columns, permissions string, applicati
 	if err != nil {
 		return logErrorDB(err, "insert table info")
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		if err = SysRollback(sc, SysRollData{Type: "NewTable", TableName: tableName}); err != nil {
 			return err
 		}
@@ -819,49 +843,6 @@ func PrepareColumns(columns []string) string {
 	return strings.Join(colList, `,`)
 }
 
-func PrepareWhere(where string) string {
-	whereSlice := regexp.MustCompile(`->([\w\d_]+)`).FindAllStringSubmatchIndex(where, -1)
-	startWhere := 0
-	out := ``
-	for i := 0; i < len(whereSlice); i++ {
-		slice := whereSlice[i]
-		if len(slice) != 4 {
-			continue
-		}
-		if i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
-			colsWhere := []string{where[slice[2]:slice[3]]}
-			from := slice[0]
-			for i < len(whereSlice)-1 && slice[1] == whereSlice[i+1][0] {
-				i++
-				slice = whereSlice[i]
-				if len(slice) != 4 {
-					break
-				}
-				colsWhere = append(colsWhere, where[slice[2]:slice[3]])
-			}
-			out += fmt.Sprintf(`%s::jsonb#>>'{%s}'`, where[startWhere:from], strings.Join(colsWhere, `,`))
-			startWhere = slice[3]
-		} else {
-			out += fmt.Sprintf(`%s->>'%s'`, where[startWhere:slice[0]], where[slice[2]:slice[3]])
-			startWhere = slice[3]
-		}
-	}
-	if len(out) > 0 {
-		return out + where[startWhere:]
-	}
-	return where
-}
-
-func checkNow(inputs ...string) error {
-	re := regexp.MustCompile(`(now\s*\(\s*\)|localtime|current_date|current_time)`)
-	for _, item := range inputs {
-		if re.Match([]byte(strings.ToLower(item))) {
-			return errNow
-		}
-	}
-	return nil
-}
-
 func GetColumns(inColumns interface{}) ([]string, error) {
 	var columns []string
 
@@ -884,18 +865,22 @@ func GetColumns(inColumns interface{}) ([]string, error) {
 	for i, v := range columns {
 		columns[i] = converter.Sanitize(strings.ToLower(v), `*->`)
 	}
-	if err := checkNow(columns...); err != nil {
+	if err := qb.CheckNow(columns...); err != nil {
 		return nil, err
 	}
 	return columns, nil
 }
 
-func GetOrder(inOrder interface{}) (string, error) {
-	var orders []string
+func GetOrder(tblname string, inOrder interface{}) (string, error) {
+	var (
+		orders []string
+	)
+	cols := types.NewMap()
 
 	sanitize := func(in string, value interface{}) {
 		in = converter.Sanitize(strings.ToLower(in), ``)
 		if len(in) > 0 {
+			cols.Set(in, true)
 			in = `"` + in + `"`
 			if fmt.Sprint(value) == `-1` {
 				in += ` desc`
@@ -906,6 +891,13 @@ func GetOrder(inOrder interface{}) (string, error) {
 		}
 	}
 
+	if v, ok := defaultSortOrder[tblname[2:]]; ok {
+		for _, item := range strings.Split(v, `,`) {
+			cols.Set(item, false)
+		}
+	} else {
+		cols.Set(`id`, false)
+	}
 	switch v := inOrder.(type) {
 	case string:
 		sanitize(v, nil)
@@ -935,147 +927,15 @@ func GetOrder(inOrder interface{}) (string, error) {
 			}
 		}
 	}
-	if len(orders) == 0 {
-		orders = []string{`id`}
+	for _, key := range cols.Keys() {
+		if state, found := cols.Get(key); !found || !state.(bool) {
+			orders = append(orders, key)
+		}
 	}
-	if err := checkNow(orders...); err != nil {
+	if err := qb.CheckNow(orders...); err != nil {
 		return ``, err
 	}
 	return strings.Join(orders, `,`), nil
-}
-
-func GetWhere(inWhere *types.Map) (string, error) {
-	var (
-		where string
-		cond  []string
-	)
-	if inWhere == nil {
-		inWhere = types.NewMap()
-	}
-	escape := func(value interface{}) string {
-		return strings.Replace(fmt.Sprint(value), `'`, `''`, -1)
-	}
-	oper := func(action string, v interface{}) (string, error) {
-		switch value := v.(type) {
-		default:
-			return fmt.Sprintf(`%s '%s'`, action, escape(value)), nil
-		}
-	}
-	like := func(pattern string, v interface{}) (string, error) {
-		switch value := v.(type) {
-		default:
-			return fmt.Sprintf(pattern, escape(value)), nil
-		}
-	}
-	in := func(action string, v interface{}) (ret string, err error) {
-		switch value := v.(type) {
-		case []interface{}:
-			var list []string
-			for _, ival := range value {
-				list = append(list, escape(ival))
-			}
-			if len(list) > 0 {
-				ret = fmt.Sprintf(`%s ('%s')`, action, strings.Join(list, `', '`))
-			}
-		}
-		return
-	}
-	logic := func(action string, v interface{}) (ret string, err error) {
-		switch value := v.(type) {
-		case []interface{}:
-			var list []string
-			for _, ival := range value {
-				switch avalue := ival.(type) {
-				case *types.Map:
-					where, err := GetWhere(avalue)
-					if err != nil {
-						return ``, err
-					}
-					list = append(list, where)
-				}
-			}
-			if len(list) > 0 {
-				ret = fmt.Sprintf(`(%s)`, strings.Join(list, ` `+action+` `))
-			}
-		}
-		return
-	}
-	for _, key := range inWhere.Keys() {
-		v, _ := inWhere.Get(key)
-		key = PrepareWhere(converter.Sanitize(strings.ToLower(key), `->$`))
-		switch key {
-		case `$like`:
-			return like(`like '%%%s%%'`, v)
-		case `$end`:
-			return like(`like '%%%s'`, v)
-		case `$begin`:
-			return like(`like '%s%%'`, v)
-		case `$and`:
-			return logic(`and`, v)
-		case `$or`:
-			return logic(`or`, v)
-		case `$in`:
-			return in(`in`, v)
-		case `$nin`:
-			return in(`not in`, v)
-		case `$eq`:
-			return oper(`=`, v)
-		case `$neq`:
-			return oper(`!=`, v)
-		case `$gt`:
-			return oper(`>`, v)
-		case `$gte`:
-			return oper(`>=`, v)
-		case `$lt`:
-			return oper(`<`, v)
-		case `$lte`:
-			return oper(`<=`, v)
-		default:
-			if !strings.Contains(key, `>`) && len(key) > 0 {
-				key = `"` + key + `"`
-			}
-			switch value := v.(type) {
-			case []interface{}:
-				var acond []string
-				for _, iarr := range value {
-					switch avalue := iarr.(type) {
-					case *types.Map:
-						ret, err := GetWhere(avalue)
-						if err != nil {
-							return ``, err
-						}
-						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
-					default:
-						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(value)))
-					}
-				}
-				if len(acond) > 0 {
-					cond = append(cond, fmt.Sprintf(`(%s)`, strings.Join(acond, ` and `)))
-				}
-			case *types.Map:
-				ret, err := GetWhere(value)
-				if err != nil {
-					return ``, err
-				}
-				cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
-			default:
-				ival := escape(value)
-				if ival == `$isnull` {
-					ival = fmt.Sprintf(`%s is null`, key)
-				} else {
-					ival = fmt.Sprintf(`%s = '%s'`, key, ival)
-				}
-				cond = append(cond, ival)
-			}
-		}
-	}
-	if len(cond) > 0 {
-		where = strings.Join(cond, ` and `)
-		if err := checkNow(where); err != nil {
-			return ``, err
-		}
-	}
-	return where, nil
 }
 
 // DBSelect returns an array of values of the specified columns when there is selection of data 'offset', 'limit', 'where'
@@ -1093,11 +953,12 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err != nil {
 		return 0, nil, err
 	}
-	order, err = GetOrder(inOrder)
+	tblname = GetTableName(sc, tblname)
+	order, err = GetOrder(tblname, inOrder)
 	if err != nil {
 		return 0, nil, err
 	}
-	where, err := GetWhere(inWhere)
+	where, err := qb.GetWhere(inWhere)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -1111,7 +972,6 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if limit < 0 || limit > 250 {
 		limit = 250
 	}
-	tblname = GetTableName(sc, tblname)
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil {
 		return 0, nil, err
@@ -1172,7 +1032,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 }
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
-func DBUpdateExt(sc *SmartContract, tblname string, column string, value interface{},
+func DBUpdateExt(sc *SmartContract, tblname string, where *types.Map,
 	values *types.Map) (qcost int64, err error) {
 	if tblname == "system_parameters" {
 		return 0, fmt.Errorf("system parameters access denied")
@@ -1188,13 +1048,13 @@ func DBUpdateExt(sc *SmartContract, tblname string, column string, value interfa
 	if err = sc.AccessColumns(tblname, &columns, true); err != nil {
 		return
 	}
-	qcost, _, err = sc.update(columns, val, tblname, column, fmt.Sprint(value))
+	qcost, _, err = sc.updateWhere(columns, val, tblname, where)
 	return
 }
 
 // DBUpdate updates the item with the specified id in the table
 func DBUpdate(sc *SmartContract, tblname string, id int64, values *types.Map) (qcost int64, err error) {
-	return DBUpdateExt(sc, tblname, `id`, id, values)
+	return DBUpdateExt(sc, tblname, types.LoadMap(map[string]interface{}{`id`: id}), values)
 }
 
 // EcosysParam returns the value of the specified parameter for the ecosystem
@@ -1305,9 +1165,11 @@ func PermTable(sc *SmartContract, name, permissions string) error {
 	if err != nil {
 		return err
 	}
+
+	name = converter.EscapeSQL(strings.ToLower(name))
 	tbl := &model.Table{}
 	tbl.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
-	found, err := tbl.ExistsByName(sc.DbTransaction, strings.ToLower(name))
+	found, err := tbl.ExistsByName(sc.DbTransaction, name)
 	if err != nil {
 		return err
 	}
@@ -1583,7 +1445,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 	temp := &cols{}
 	err = model.GetDB(sc.DbTransaction).Table(`1_tables`).Where("name = ? and ecosystem = ?",
-		tableName, sc.TxSmart.EcosystemID).Select("id,columns").Find(temp).Error
+		strings.ToLower(tableName), sc.TxSmart.EcosystemID).Select("id,columns").Find(temp).Error
 
 	if err != nil {
 		return
@@ -1599,7 +1461,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
 		`1_tables`, `id`, temp.ID)
-	if !sc.VDE {
+	if !sc.OBS {
 		return SysRollback(sc, SysRollData{Type: "NewColumn", TableName: tblname, Data: name})
 	}
 	return
@@ -1610,8 +1472,8 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 	if err = validateAccess(`SetPubKey`, sc, nNewUser); err != nil {
 		return
 	}
-	if len(pubKey) == consts.PubkeySizeLength*2 {
-		pubKey, err = hex.DecodeString(string(pubKey))
+	if len(pubKey) >= consts.PubkeySizeLength*2 {
+		pubKey, err = crypto.HexToPub(string(pubKey))
 		if err != nil {
 			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
 		}
@@ -1635,7 +1497,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		return err
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
-	tableName = strings.ToLower(tableName)
+	tableName = converter.EscapeSQL(strings.ToLower(tableName))
 	tables := `1_tables`
 	type cols struct {
 		Columns string
@@ -1829,6 +1691,10 @@ func UpdateCron(sc *SmartContract, id int64) error {
 }
 
 func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
+	if conf.Config.IsSupportingOBS() {
+		return ErrNotImplementedOnOBS
+	}
+
 	now := time.Unix(timestamp, 0)
 
 	badBlocks := &model.BadBlocks{}
@@ -2004,29 +1870,29 @@ func BytesToString(src []byte) string {
 	return string(src)
 }
 
-// CreateVDE allow create new VDE throw vdemanager
-func CreateVDE(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
-	return vdemanager.Manager.CreateVDE(name, dbUser, dbPassword, int(port))
+// CreateOBS allow create new OBS throught obsmanager
+func CreateOBS(sc *SmartContract, name, dbUser, dbPassword string, port int64) error {
+	return obsmanager.Manager.CreateOBS(name, dbUser, dbPassword, int(port))
 }
 
-// DeleteVDE delete vde
-func DeleteVDE(sc *SmartContract, name string) error {
-	return vdemanager.Manager.DeleteVDE(name)
+// DeleteOBS delete obs
+func DeleteOBS(sc *SmartContract, name string) error {
+	return obsmanager.Manager.DeleteOBS(name)
 }
 
-// StartVDE run VDE process
-func StartVDE(sc *SmartContract, name string) error {
-	return vdemanager.Manager.StartVDE(name)
+// StartOBS run OBS process
+func StartOBS(sc *SmartContract, name string) error {
+	return obsmanager.Manager.StartOBS(name)
 }
 
-// StopVDEProcess stops VDE process
-func StopVDEProcess(sc *SmartContract, name string) error {
-	return vdemanager.Manager.StopVDE(name)
+// StopOBSProcess stops OBS process
+func StopOBSProcess(sc *SmartContract, name string) error {
+	return obsmanager.Manager.StopOBS(name)
 }
 
-// GetVDEList returns list VDE process with statuses
-func GetVDEList(sc *SmartContract) map[string]string {
-	list, _ := vdemanager.Manager.ListProcessWithPorts()
+// GetOBSList returns list OBS process with statuses
+func GetOBSList(sc *SmartContract) map[string]string {
+	list, _ := obsmanager.Manager.ListProcessWithPorts()
 	return list
 }
 
@@ -2113,6 +1979,12 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
 	}
+	if len((*txs)[len(*txs)-1].Data) > 0 {
+		prev := rollbackList[len(rollbackList)-1].(*types.Map)
+		prev.Set(`block_id`, `1`)
+		prev.Set(`id`, ``)
+		prev.Set(`block_time`, ``)
+	}
 	if idRollback > 0 {
 		return []interface{}{}, nil
 	}
@@ -2148,7 +2020,7 @@ func BlockTime(sc *SmartContract) string {
 	if sc.BlockData != nil {
 		blockTime = sc.BlockData.Time
 	}
-	if sc.VDE {
+	if sc.OBS {
 		blockTime = time.Now().Unix()
 	}
 	return Date(dateTimeFormat, blockTime)
@@ -2352,7 +2224,7 @@ func DelColumn(sc *SmartContract, tableName, name string) (err error) {
 	}
 	_, _, err = sc.update([]string{`columns`}, []interface{}{string(permout)},
 		`1_tables`, `id`, t.ID)
-	if !sc.VDE {
+	if !sc.OBS {
 		data := map[string]string{"name": name, "type": colType}
 		out, err := marshalJSON(data, `marshalling column info`)
 		if err != nil {
@@ -2402,7 +2274,7 @@ func DelTable(sc *SmartContract, tableName string) (err error) {
 	if err = model.DropTable(sc.DbTransaction, tblname); err != nil {
 		return
 	}
-	if !sc.VDE {
+	if !sc.OBS {
 		var (
 			out []byte
 		)
@@ -2465,5 +2337,21 @@ func (throw *ThrowError) Error() string {
 }
 
 func Throw(code, errText string) error {
+	if len(errText) > script.MaxErrLen {
+		errText = errText[:script.MaxErrLen] + `...`
+	}
+	if len(code) > 32 {
+		code = code[:32]
+	}
 	return &ThrowError{Code: code, ErrText: errText, Type: `exception`}
+}
+
+func PubToHex(in interface{}) (ret string) {
+	switch v := in.(type) {
+	case string:
+		ret = crypto.PubToHex([]byte(v))
+	case []byte:
+		ret = crypto.PubToHex(v)
+	}
+	return
 }

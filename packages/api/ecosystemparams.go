@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -30,7 +30,6 @@ package api
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -39,7 +38,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type paramValue struct {
+type paramResult struct {
 	ID         string `json:"id"`
 	Name       string `json:"name"`
 	Value      string `json:"value"`
@@ -47,38 +46,45 @@ type paramValue struct {
 }
 
 type ecosystemParamsResult struct {
-	List []paramValue `json:"list"`
+	List []paramResult `json:"list"`
 }
 
-func ecosystemParams(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var (
-		result ecosystemParamsResult
-		names  map[string]bool
-	)
-	_, prefix, err := checkEcosystem(w, data, logger)
-	if err != nil {
-		return err
+func (m Mode) getEcosystemParamsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &appParamsForm{
+		ecosystemForm: ecosystemForm{
+			Validator: m.EcosysIDValidator,
+		},
 	}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
+	logger := getLogger(r)
+
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(prefix)
+	sp.SetTablePrefix(form.EcosystemPrefix)
 	list, err := sp.GetAllStateParameters()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting all state parameters")
 	}
-	result.List = make([]paramValue, 0)
-	if len(data.params[`names`].(string)) > 0 {
-		names = make(map[string]bool)
-		for _, item := range strings.Split(data.params[`names`].(string), `,`) {
-			names[item] = true
-		}
+
+	result := &ecosystemParamsResult{
+		List: make([]paramResult, 0),
 	}
+
+	acceptNames := form.AcceptNames()
 	for _, item := range list {
-		if names != nil && !names[item.Name] {
+		if len(acceptNames) > 0 && !acceptNames[item.Name] {
 			continue
 		}
-		result.List = append(result.List, paramValue{ID: converter.Int64ToStr(item.ID),
-			Name: item.Name, Value: item.Value, Conditions: item.Conditions})
+		result.List = append(result.List, paramResult{
+			ID:         converter.Int64ToStr(item.ID),
+			Name:       item.Name,
+			Value:      item.Value,
+			Conditions: item.Conditions,
+		})
 	}
-	data.result = &result
-	return
+
+	jsonResponse(w, result)
 }

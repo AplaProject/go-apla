@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -29,120 +29,110 @@
 package api
 
 import (
-	"strings"
+	"net/http"
 
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
-
-	hr "github.com/julienschmidt/httprouter"
-	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
-func methodRoute(route *hr.Router, method, pattern, pars string, handler ...apiHandle) {
-	route.Handle(
-		method,
-		consts.ApiPath+pattern,
-		DefaultHandler(method, pattern, processParams(pars), append([]apiHandle{blockchainUpdatingState}, handler...)...),
-	)
+const corsMaxAge = 600
+
+type Router struct {
+	main        *mux.Router
+	apiVersions map[string]*mux.Router
+}
+
+func (r Router) GetAPI() *mux.Router {
+	return r.main
+}
+
+func (r Router) GetAPIVersion(preffix string) *mux.Router {
+	return r.apiVersions[preffix]
+}
+
+func (r Router) NewVersion(preffix string) *mux.Router {
+	api := r.main.PathPrefix(preffix).Subrouter()
+	r.apiVersions[preffix] = api
+	return api
 }
 
 // Route sets routing pathes
-func Route(route *hr.Router) {
-	get := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `GET`, pattern, params, handler...)
-	}
-	post := func(pattern, params string, handler ...apiHandle) {
-		methodRoute(route, `POST`, pattern, params, handler...)
-	}
+func (m Mode) SetCommonRoutes(r Router) {
+	api := r.NewVersion("/api/v2")
 
-	route.Handle(`OPTIONS`, consts.ApiPath+`*name`, optionsHandler())
-	route.Handle(`GET`, consts.ApiPath+`data/:table/:id/:column/:hash`, dataHandler())
+	api.Use(nodeStateMiddleware, tokenMiddleware, m.clientMiddleware)
 
-	get(`contract/:name`, ``, authWallet, getContract)
-	get(`contracts`, `?limit ?offset:int64`, authWallet, getContracts)
-	get(`getuid`, ``, getUID)
-	get(`keyinfo/:wallet`, ``, keyInfo)
-	get(`list/:name`, `?limit ?offset:int64,?columns:string`, authWallet, list)
-	get(`sections`, `?limit ?offset:int64,?lang:string`, authWallet, sections)
-	get(`row/:name/:id`, `?columns:string`, authWallet, row)
-	get(`interface/page/:name`, ``, authWallet, getPageRow)
-	get(`interface/menu/:name`, ``, authWallet, getMenuRow)
-	get(`interface/block/:name`, ``, authWallet, getBlockInterfaceRow)
-	// get(`systemparams`, `?names:string`, authWallet, systemParams)
-	get(`table/:name`, ``, authWallet, table)
-	get(`tables`, `?limit ?offset:int64`, authWallet, tables)
-	get(`test/:name`, ``, getTest)
-	get(`version`, ``, getVersion)
-	get(`avatar/:ecosystem/:member`, ``, getAvatar)
-	get(`config/:option`, ``, getConfigOption)
-	post(`content/source/:name`, ``, authWallet, getSource)
-	post(`content/page/:name`, `?lang:string`, authWallet, getPage)
-	post(`content/menu/:name`, `?lang:string`, authWallet, getMenu)
-	post(`content/hash/:name`, `?lang:string`, getPageHash)
-	post(`login`, `?pubkey signature:hex,?key_id ?mobile:string,?ecosystem ?expire ?role_id:int64`, login)
-	post(`sendTx`, ``, authWallet, sendTx)
-	post(`test/:name`, ``, getTest)
-	post(`content`, `template ?source:string`, jsonContent)
-	post(`updnotificator`, `ids:string`, updateNotificator)
-	methodRoute(route, `POST`, `node/:name`, `?token_ecosystem:int64,?max_sum ?payover:string`, nodeContract)
+	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", getDataHandler).Methods("GET")
+	api.HandleFunc("/data/{prefix}_binaries/{id}/data/{hash}", getBinaryHandler).Methods("GET")
+	api.HandleFunc("/avatar/{ecosystem}/{member}", getAvatarHandler).Methods("GET")
 
-	if !conf.Config.IsSupportingVDE() {
-		get(`txinfo/:hash`, `?contractinfo:int64`, authWallet, txinfo)
-		get(`txinfomultiple`, `data:string,?contractinfo:int64`, authWallet, txinfoMulti)
-		get(`appparam/:appid/:name`, `?ecosystem:int64`, authWallet, appParam)
-		get(`appparams/:appid`, `?ecosystem:int64,?names:string`, authWallet, appParams)
-		get(`history/:table/:id`, ``, authWallet, getHistory)
-		get(`balance/:wallet`, `?ecosystem:int64`, authWallet, balance)
-		get(`block/:id`, ``, getBlockInfo)
-		get(`maxblockid`, ``, getMaxBlockID)
-		get("blocks", "block_id ?count:int64", getBlocksTxInfo)
-		get("detailed_blocks", "block_id ?count:int64", getBlocksDetailedInfo)
-		get(`ecosystemparams`, `?ecosystem:int64,?names:string`, authWallet, ecosystemParams)
-		get(`systemparams`, `?names:string`, authWallet, systemParams)
-		get(`ecosystems`, ``, authWallet, ecosystems)
-		get(`ecosystemparam/:name`, `?ecosystem:int64`, authWallet, ecosystemParam)
-		get("ecosystemname", "?id:int64", getEcosystemName)
-		post(`txstatus`, `data:string`, authWallet, txstatus)
-	}
+	api.HandleFunc("/contract/{name}", authRequire(getContractInfoHandler)).Methods("GET")
+	api.HandleFunc("/contracts", authRequire(getContractsHandler)).Methods("GET")
+	api.HandleFunc("/getuid", getUIDHandler).Methods("GET")
+	api.HandleFunc("/keyinfo/{wallet}", m.getKeyInfoHandler).Methods("GET")
+	api.HandleFunc("/list/{name}", authRequire(getListHandler)).Methods("GET")
+	api.HandleFunc("/sections", authRequire(getSectionsHandler)).Methods("GET")
+	api.HandleFunc("/row/{name}/{id}", authRequire(getRowHandler)).Methods("GET")
+	api.HandleFunc("/interface/page/{name}", authRequire(getPageRowHandler)).Methods("GET")
+	api.HandleFunc("/interface/menu/{name}", authRequire(getMenuRowHandler)).Methods("GET")
+	api.HandleFunc("/interface/block/{name}", authRequire(getBlockInterfaceRowHandler)).Methods("GET")
+	api.HandleFunc("/table/{name}", authRequire(getTableHandler)).Methods("GET")
+	api.HandleFunc("/tables", authRequire(getTablesHandler)).Methods("GET")
+	api.HandleFunc("/test/{name}", getTestHandler).Methods("GET", "POST")
+	api.HandleFunc("/version", getVersionHandler).Methods("GET")
+	api.HandleFunc("/config/{option}", getConfigOptionHandler).Methods("GET")
+
+	api.HandleFunc("/page/validators_count/{name}", getPageValidatorsCountHandler).Methods("GET")
+	api.HandleFunc("/content/source/{name}", authRequire(getSourceHandler)).Methods("POST")
+	api.HandleFunc("/content/page/{name}", authRequire(getPageHandler)).Methods("POST")
+	api.HandleFunc("/content/hash/{name}", getPageHashHandler).Methods("POST")
+	api.HandleFunc("/content/menu/{name}", authRequire(getMenuHandler)).Methods("POST")
+	api.HandleFunc("/content", jsonContentHandler).Methods("POST")
+	api.HandleFunc("/login", m.loginHandler).Methods("POST")
+	api.HandleFunc("/sendTx", authRequire(m.sendTxHandler)).Methods("POST")
+	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST")
+	api.HandleFunc("/node/{name}", nodeContractHandler).Methods("POST")
+	api.HandleFunc("/txstatus", authRequire(getTxStatusHandler)).Methods("POST")
 }
 
-func processParams(input string) (params map[string]int) {
-	if len(input) == 0 {
-		return
+func (m Mode) SetBlockchainRoutes(r Router) {
+	api := r.GetAPIVersion("/api/v2")
+	api.HandleFunc("/txinfo/{hash}", authRequire(getTxInfoHandler)).Methods("GET")
+	api.HandleFunc("/txinfomultiple", authRequire(getTxInfoMultiHandler)).Methods("GET")
+	api.HandleFunc("/appparam/{appID}/{name}", authRequire(m.GetAppParamHandler)).Methods("GET")
+	api.HandleFunc("/appparams/{appID}", authRequire(m.getAppParamsHandler)).Methods("GET")
+	api.HandleFunc("/appcontent/{appID}", authRequire(m.getAppContentHandler)).Methods("GET")
+	api.HandleFunc("/history/{name}/{id}", authRequire(getHistoryHandler)).Methods("GET")
+	api.HandleFunc("/balance/{wallet}", authRequire(m.getBalanceHandler)).Methods("GET")
+	api.HandleFunc("/block/{id}", getBlockInfoHandler).Methods("GET")
+	api.HandleFunc("/maxblockid", getMaxBlockHandler).Methods("GET")
+	api.HandleFunc("/blocks", getBlocksTxInfoHandler).Methods("GET")
+	api.HandleFunc("/detailed_blocks", getBlocksDetailedInfoHandler).Methods("GET")
+	api.HandleFunc("/ecosystemparams", authRequire(m.getEcosystemParamsHandler)).Methods("GET")
+	api.HandleFunc("/systemparams", authRequire(getSystemParamsHandler)).Methods("GET")
+	api.HandleFunc("/ecosystems", authRequire(getEcosystemsHandler)).Methods("GET")
+	api.HandleFunc("/ecosystemparam/{name}", authRequire(m.getEcosystemParamHandler)).Methods("GET")
+	api.HandleFunc("/ecosystemname", getEcosystemNameHandler).Methods("GET")
+}
+
+func NewRouter(m Mode) Router {
+	r := mux.NewRouter()
+	r.StrictSlash(true)
+	r.Use(loggerMiddleware, recoverMiddleware, statsdMiddleware)
+
+	api := Router{
+		main:        r,
+		apiVersions: make(map[string]*mux.Router),
 	}
-	params = make(map[string]int)
-	for _, par := range strings.Split(input, `,`) {
-		var vtype int
-		types := strings.Split(par, `:`)
-		if len(types) != 2 {
-			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect api route parameters")
-		}
-		switch types[1] {
-		case `hex`:
-			vtype = pHex
-		case `string`:
-			vtype = pString
-		case `int64`:
-			vtype = pInt64
-		default:
-			log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Unknown type of api route parameter")
-		}
-		vars := strings.Split(types[0], ` `)
-		for _, v := range vars {
-			v = strings.TrimSpace(v)
-			if len(v) == 0 {
-				continue
-			}
-			if v[0] == '?' {
-				if len(v) > 1 {
-					params[v[1:]] = vtype | pOptional
-				} else {
-					log.WithFields(log.Fields{"type": consts.RouteError, "parameter": par}).Fatal("Incorrect name of api route parameter")
-				}
-			} else {
-				params[v] = vtype
-			}
-		}
-	}
-	return
+	m.SetCommonRoutes(api)
+	return api
+}
+
+func WithCors(h http.Handler) http.Handler {
+	return handlers.CORS(
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET", "HEAD", "POST"}),
+		handlers.AllowedHeaders([]string{"Authorization", "Content-Type", "X-Requested-With"}),
+		handlers.MaxAge(corsMaxAge),
+	)(h)
 }

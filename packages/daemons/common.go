@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -62,16 +62,6 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 	"QueueParserBlocks": QueueParserBlocks,
 	"Confirmations":     Confirmations,
 	"Scheduler":         Scheduler,
-}
-
-var serverList = []string{
-	"BlocksCollection",
-	"BlockGenerator",
-	"QueueParserTx",
-	"QueueParserBlocks",
-	"Disseminator",
-	"Confirmations",
-	"Scheduler",
 }
 
 var rollbackList = []string{
@@ -122,7 +112,7 @@ func daemonLoop(ctx context.Context, goRoutineName string, handler func(context.
 }
 
 // StartDaemons starts daemons
-func StartDaemons(ctx context.Context) {
+func StartDaemons(ctx context.Context, daemonsToStart []string) {
 	go WaitStopTime()
 
 	daemonsTable := make(map[string]string)
@@ -140,7 +130,6 @@ func StartDaemons(ctx context.Context) {
 	// utils.CancelFunc = cancel
 	// utils.ReturnCh = make(chan string)
 
-	daemonsToStart := getDaemonsToStart()
 	if conf.Config.TestRollBack {
 		daemonsToStart = rollbackList
 	}
@@ -165,14 +154,4 @@ func getHostPort(h string) string {
 		return h
 	}
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
-}
-
-func getDaemonsToStart() []string {
-	if conf.Config.IsSupportingVDE() {
-		return []string{
-			"Scheduler",
-		}
-	}
-
-	return serverList
 }

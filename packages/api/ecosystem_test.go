@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -36,6 +36,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewEcosystem(t *testing.T) {
@@ -138,28 +139,18 @@ func TestEditEcosystem(t *testing.T) {
 }
 
 func TestEcosystemParams(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	var ret ecosystemParamsResult
-	err := sendGet(`ecosystemparams`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`ecosystemparams`, nil, &ret))
+
 	if len(ret.List) < 5 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 	}
-	err = sendGet(`ecosystemparams?names=ecosystem_name,new_table&ecosystem=1`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.List) != 1 {
-		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
-	}
 
+	require.NoError(t, sendGet(`ecosystemparams?names=ecosystem_name,new_table&ecosystem=1`, nil, &ret))
+
+	require.Equalf(t, 1, len(ret.List), `wrong count of parameters %d`, len(ret.List))
 }
 
 func TestSystemParams(t *testing.T) {
@@ -203,7 +194,7 @@ func TestEcosystemParam(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	var ret, ret1 paramValue
+	var ret, ret1 paramResult
 	err := sendGet(`ecosystemparam/changing_menu`, nil, &ret)
 	if err != nil {
 		t.Error(err)
@@ -244,7 +235,7 @@ func TestAppParams(t *testing.T) {
 	assert.NoError(t, sendGet(fmt.Sprintf(`appparams/1?names=%s1,%[1]s2&ecosystem=1`, rnd), nil, &ret))
 	assert.Len(t, ret.List, 2)
 
-	var ret1, ret2 paramValue
+	var ret1, ret2 paramResult
 	assert.NoError(t, sendGet(`appparam/1/`+rnd+`2`, nil, &ret1))
 	assert.Equal(t, `another string`, ret1.Value)
 

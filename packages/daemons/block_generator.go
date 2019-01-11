@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -139,8 +139,11 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		NodePosition: nodePosition,
 		Version:      consts.BLOCK_VERSION,
 	}
-
-	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
+	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, &utils.BlockData{
+		BlockID:       prevBlock.BlockID,
+		Hash:          prevBlock.Hash,
+		RollbacksHash: prevBlock.RollbacksHash,
+	})
 	if err != nil {
 		return err
 	}
@@ -155,13 +158,14 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	return nil
 }
 
-func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, key string, prevBlockHash []byte) ([]byte, error) {
+func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, key string,
+	prevBlock *utils.BlockData) ([]byte, error) {
 	trData := make([][]byte, 0, len(trs))
 	for _, tr := range trs {
 		trData = append(trData, tr.Data)
 	}
 
-	return block.MarshallBlock(blockHeader, trData, prevBlockHash, key)
+	return block.MarshallBlock(blockHeader, trData, prevBlock, key)
 }
 
 func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Transaction, error) {
@@ -182,8 +186,9 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 	limits := block.NewLimits(nil)
 
 	type badTxStruct struct {
-		hash []byte
-		msg  string
+		hash  []byte
+		msg   string
+		keyID int64
 	}
 
 	processBadTx := func(dbTx *model.DbTransaction) chan badTxStruct {
@@ -191,6 +196,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 
 		go func() {
 			for badTxItem := range ch {
+				block.BadTxForBan(badTxItem.keyID)
 				transaction.MarkTransactionBad(p.DbTransaction, badTxItem.hash, badTxItem.msg)
 			}
 		}()
@@ -228,13 +234,13 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 			p, err := transaction.UnmarshallTransaction(bufTransaction, true)
 			if err != nil {
 				if p != nil {
-					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+					txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 				}
 				continue
 			}
 
 			if err := p.Check(time.Now().Unix(), false); err != nil {
-				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+				txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 				continue
 			}
 
@@ -247,7 +253,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 					if err == block.ErrLimitSkip {
 						attemptCountChan <- p.TxHash
 					} else {
-						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error()}
+						txBadChan <- badTxStruct{hash: p.TxHash, msg: err.Error(), keyID: p.TxHeader.KeyID}
 					}
 					continue
 				}

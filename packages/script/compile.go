@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -230,7 +230,7 @@ var (
 			lexNewLine:                      {stateRoot, 0},
 			lexKeyword | (keyContract << 8): {stateContract | statePush, 0},
 			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
-			0: {errUnknownCmd, cfError},
+			0:                               {errUnknownCmd, cfError},
 		},
 		{ // stateBody
 			lexNewLine:                      {stateBody, 0},
@@ -657,6 +657,11 @@ func fFieldLine(buf *[]*Block, state int, lexem *Lexem) error {
 	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == nil {
 		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
 	}
+	for i, field := range *tx {
+		if field.Tags == `_` {
+			(*tx)[i].Tags = ``
+		}
+	}
 	return nil
 }
 
@@ -668,7 +673,7 @@ func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 	for i, field := range *tx {
 		if field.Type == reflect.TypeOf(nil) {
 			(*tx)[i].Type = lexem.Value.(reflect.Type)
-			(*tx)[i].Tags = ``
+			(*tx)[i].Original = lexem.Ext
 		}
 	}
 	return nil
@@ -676,17 +681,15 @@ func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
-	if (*tx)[len(*tx)-1].Tags == `_` {
-		(*tx)[len(*tx)-1].Tags = ``
-	}
 	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type == nil || len((*tx)[len(*tx)-1].Tags) != 0 {
 		return fmt.Errorf(eDataTag, lexem.Line, lexem.Column)
 	}
 	for i := len(*tx) - 1; i >= 0; i-- {
-		if len((*tx)[i].Tags) == 0 {
+		if i == len(*tx)-1 || (*tx)[i].Tags == `_` {
 			(*tx)[i].Tags = lexem.Value.(string)
-			break
+			continue
 		}
+		break
 	}
 	return nil
 }
@@ -940,7 +943,7 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 			value = mapItem{Type: mapArray, Value: subArr}
 		}
 	case isLCurly:
-		subMap, err = vm.getInitMap(lexems, &i, block)
+		subMap, err = vm.getInitMap(lexems, &i, block, false)
 		if err == nil {
 			value = mapItem{Type: mapMap, Value: subMap}
 		}
@@ -962,8 +965,12 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 	return
 }
 
-func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (*types.Map, error) {
-	i := *ind + 1
+func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block, oneItem bool) (*types.Map, error) {
+	var next int
+	if !oneItem {
+		next = 1
+	}
+	i := *ind + next
 	key := ``
 	ret := types.NewMap()
 	state := mustKey
@@ -975,6 +982,11 @@ main:
 			continue
 		case isRCurly:
 			break main
+		case isComma, isRBrack:
+			if oneItem {
+				*ind = i - 1
+				return ret, nil
+			}
 		}
 		switch state {
 		case mustComma:
@@ -991,6 +1003,8 @@ main:
 			switch lexem.Type & 0xff {
 			case lexIdent:
 				key = lexem.Value.(string)
+			case lexExtend:
+				key = `$` + lexem.Value.(string)
 			case lexString:
 				key = lexem.Value.(string)
 			case lexKeyword:
@@ -1043,11 +1057,19 @@ main:
 			}
 			state = mustValue
 		case mustValue:
-			arri, err := vm.getInitValue(lexems, &i, block)
-			if err != nil {
-				return nil, err
+			if i+1 < len(*lexems) && (*lexems)[i+1].Type == isColon {
+				subMap, err := vm.getInitMap(lexems, &i, block, true)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, mapItem{Type: mapMap, Value: subMap})
+			} else {
+				arri, err := vm.getInitValue(lexems, &i, block)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, arri)
 			}
-			ret = append(ret, arri)
 			state = mustComma
 		}
 	}
@@ -1090,7 +1112,7 @@ main:
 		logger := lexem.GetLogger()
 		if !noMap {
 			if lexem.Type == isLCurly {
-				pMap, err := vm.getInitMap(lexems, &i, block)
+				pMap, err := vm.getInitMap(lexems, &i, block, false)
 				if err != nil {
 					return err
 				}
@@ -1260,6 +1282,9 @@ main:
 					}
 					bytecode = append(bytecode, prev)
 				}
+			}
+			if (*lexems)[i+1].Type == isLBrack {
+				return errMultiIndex
 			}
 		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {

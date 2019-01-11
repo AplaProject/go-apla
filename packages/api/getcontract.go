@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -34,8 +34,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/smart"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -48,7 +48,6 @@ type contractField struct {
 type getContractResult struct {
 	ID       uint32          `json:"id"`
 	StateID  uint32          `json:"state"`
-	Active   bool            `json:"active"`
 	TableID  string          `json:"tableid"`
 	WalletID string          `json:"walletid"`
 	TokenID  string          `json:"tokenid"`
@@ -57,21 +56,25 @@ type getContractResult struct {
 	Name     string          `json:"name"`
 }
 
-func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var result getContractResult
+func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
 
-	cntname := data.params[`name`].(string)
-	contract := smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
+	contract := getContract(r, params["name"])
 	if contract == nil {
-		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": cntname}).Error("contract name")
-		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": params["contract"]}).Error("contract name")
+		errorResponse(w, errContract.Errorf(params["name"]))
+		return
 	}
-	info := (*contract).Block.Info.(*script.ContractInfo)
+
+	var result getContractResult
+	info := getContractInfo(contract)
 	fields := make([]contractField, 0)
 	result = getContractResult{
-		ID:   uint32(info.Owner.TableID + consts.ShiftContractID),
-		Name: info.Name, StateID: info.Owner.StateID,
-		Active: info.Owner.Active, TableID: converter.Int64ToStr(info.Owner.TableID),
+		ID:       uint32(info.Owner.TableID + consts.ShiftContractID),
+		TableID:  converter.Int64ToStr(info.Owner.TableID),
+		Name:     info.Name,
+		StateID:  info.Owner.StateID,
 		WalletID: converter.Int64ToStr(info.Owner.WalletID),
 		TokenID:  converter.Int64ToStr(info.Owner.TokenID),
 		Address:  converter.AddressToString(info.Owner.WalletID),
@@ -81,29 +84,12 @@ func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *
 		for _, fitem := range *info.Tx {
 			fields = append(fields, contractField{
 				Name:     fitem.Name,
-				Type:     getFieldTypeAlias(fitem.Type.String()),
+				Type:     script.OriginalToString(fitem.Original),
 				Optional: fitem.ContainsTag(script.TagOptional),
 			})
 		}
 	}
 	result.Fields = fields
 
-	data.result = result
-	return nil
-}
-
-func getFieldTypeAlias(t string) string {
-	var fieldTypeAliases = map[string]string{
-		"int64":           "int",
-		"float64":         "float",
-		"decimal.Decimal": "money",
-		"[]uint8":         "bytes",
-		"[]interface {}":  "array",
-		"*types.Map":      "file",
-	}
-
-	if v, ok := fieldTypeAliases[t]; ok {
-		return v
-	}
-	return t
+	jsonResponse(w, result)
 }

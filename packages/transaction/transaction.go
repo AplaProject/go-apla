@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -259,6 +259,15 @@ func (t *Transaction) parseFromContract(fillData bool) error {
 			}
 		} else {
 			t.TxData = smartTx.Params
+			for key, item := range t.TxData {
+				if v, ok := item.(map[interface{}]interface{}); ok {
+					imap := make(map[string]interface{})
+					for ikey, ival := range v {
+						imap[fmt.Sprint(ikey)] = ival
+					}
+					t.TxData[key] = imap
+				}
+			}
 		}
 	}
 
@@ -362,7 +371,7 @@ func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 // CallContract calls the contract functions according to the specified flags
 func (t *Transaction) CallContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
 	sc := smart.SmartContract{
-		VDE:           false,
+		OBS:           false,
 		Rollback:      true,
 		SysUpdate:     false,
 		VM:            smart.GetVM(),
@@ -387,6 +396,31 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
 		copy(flushRollback, sc.FlushRollback)
 	}
+	return
+}
+
+func (t *Transaction) CallOBSContract() (resultContract string, flushRollback []smart.FlushInfo, err error) {
+	sc := smart.SmartContract{
+		OBS:           true,
+		Rollback:      false,
+		SysUpdate:     false,
+		VM:            smart.GetVM(),
+		TxSmart:       *t.TxSmart,
+		TxData:        t.TxData,
+		TxContract:    t.TxContract,
+		TxCost:        t.TxCost,
+		TxUsedCost:    t.TxUsedCost,
+		BlockData:     t.BlockData,
+		TxHash:        t.TxHash,
+		TxSignature:   t.TxSignature,
+		TxSize:        int64(len(t.TxBinaryData)),
+		PublicKeys:    t.PublicKeys,
+		DbTransaction: t.DbTransaction,
+		Rand:          t.Rand,
+	}
+	resultContract, err = sc.CallContract()
+	t.SysUpdate = sc.SysUpdate
+	t.Notifications = sc.Notifications
 	return
 }
 

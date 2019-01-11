@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -59,7 +59,7 @@ type authResult struct {
 
 type contractResult struct {
 	Hash string `json:"hash"`
-	// These fields are used for VDE
+	// These fields are used for OBS
 	Message struct {
 		Type  string `json:"type,omitempty"`
 		Error string `json:"error,omitempty"`
@@ -105,7 +105,7 @@ func NodeContract(Name string) (result contractResult, err error) {
 		return
 	}
 	auth = logret.Token
-	form = url.Values{`vde`: {`true`}}
+	form = url.Values{`obs`: {`true`}}
 	err = sendAPIRequest(`POST`, `node/`+Name, &form, &result, auth)
 	if err != nil {
 		return

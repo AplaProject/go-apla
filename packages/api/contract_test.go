@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -42,6 +42,101 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBin(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    data {    }
+    conditions {    }
+    action {
+		$result = DBFind("keys").Columns("pub")
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err := postTxResult(rnd, &url.Values{})
+	assert.EqualError(t, err, `{"type":"panic","error":"Result is not valid utf-8 string"}`)
+}
+
+func TestArray(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    data {    }
+    conditions {    }
+    action {
+        var a,b,d array
+        a[0] = 100
+        a[1] = 555
+        b[0] = 200
+        d[0] = a
+        d[1] = b
+        $result = d[0][0] // 0 - должно же быть 100 ???
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"multi-index is not supported"}`)
+}
+
+func TestDBFindContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+			}
+			action { 
+				var ret i j k m array
+				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}}).Limit(100)
+				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}}).Limit(100)
+				j = DBFind("contracts").Where({id: {$lt: 10}})
+				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, id: {$neq: 26} ]})
+				m = DBFind("contracts").Where({id: 10, name: "EditColumn", $or: [id: 10, id: {$neq: 20}]})
+				$result = Sprintf("%d %d %d %d %d", Len(ret), Len(i), Len(j), Len(k), Len(m))
+			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, msg, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	if msg != `25 25 9 2 1` {
+		t.Error(fmt.Errorf(`wrong msg %s`, msg))
+	}
+}
+
+func TestErrorContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `err` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+		    data {
+			}
+			action { 
+				error("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt 
+				vestibulum eros. Curabitur fermentum pulvinar nibh, in maximus dolor tempor quis. 
+				Donec non nulla id ex lacinia bibendum eu a sapien. Nam eu mi feugiat, gravida 
+				erat ac, tincidunt dolor. Curabitur sed erat et felis turpis duis.")
+			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err := postTxResult(rnd, &url.Values{})
+	if len(err.Error()) > 250 {
+		t.Error(`Too long error`)
+	}
+	rnd += `1`
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
+		data {
+		}
+		action { 
+			Throw("This is a problem", "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce tincidunt 
+			vestibulum eros. Curabitur fermentum pulvinar nibh, in maximus dolor tempor quis. 
+			Donec non nulla id ex lacinia bibendum eu a sapien. Nam eu mi feugiat, gravida 
+			erat ac, tincidunt dolor. Curabitur sed erat et felis turpis duis.")
+		}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err = postTxResult(rnd, &url.Values{})
+	if len(err.Error()) > 250 {
+		t.Error(`Too long error`)
+	}
+}
+
 func TestUpdate_FullNodes(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
@@ -57,6 +152,35 @@ func TestUpdate_FullNodes(t *testing.T) {
 		return
 	}
 }
+
+func TestCrashContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `crash` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+			data {}
+		
+			conditions {
+				$Recipient = Append([], "1")
+				$Recipient = Append($Recipient, "7")
+			}
+		
+			action {
+				var i int
+				var steps map
+				var list myarr q b array
+				while i < Len($Recipient) {
+					steps["recipient_role"] = JSONDecode($Recipient[i])
+					list[i] = Append(list, steps)
+					myarr = Split(list[i], ",")
+					i = i + 1
+				}
+			}
+		}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd, &url.Values{}), `{"type":"panic","error":"self assignment"}`)
+}
+
 func TestHardContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -127,6 +251,29 @@ func TestDataContract(t *testing.T) {
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"expecting type of the data field [Ln:3 Col:13]"}`)
 }
 
+func TestTypesContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := `cnt` + crypto.RandSeq(4)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {
+			Float float
+			Addr  address
+			Arr   array
+			Map   map
+		}
+		action { $result = Sprintf("%v=%v=%v=%v", $Float, $Addr, $Arr, $Map) }
+		}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	_, msg, err := postTxResult(name, &url.Values{"Float": {"1.23"}, "Addr": {"-1334343423"},
+		"Arr": {`[23,"tt"]`}, "Map": {`{"k" : "v"}`}})
+	assert.NoError(t, err)
+	if msg != `1.23=-1334343423=[23 tt]=map[k:v]` {
+		t.Error(`Wrong msg`, msg)
+	}
+}
+
 func TestNewContracts(t *testing.T) {
 
 	wanted := func(name, want string) bool {
@@ -144,7 +291,7 @@ func TestNewContracts(t *testing.T) {
 		name := strings.Replace(item.Name, `#rnd#`, rnd, -1)
 		err := sendGet(`contract/`+name, nil, &ret)
 		if err != nil {
-			if strings.Contains(err.Error(), fmt.Sprintf(apiErrors[`E_CONTRACT`], name)) {
+			if strings.Contains(err.Error(), errContract.Errorf(name).Error()) {
 				form := url.Values{"Name": {name}, "Value": {strings.Replace(item.Value,
 					`#rnd#`, rnd, -1)},
 					"ApplicationId": {`1`}, "Conditions": {`true`}}
@@ -707,117 +854,6 @@ func TestNewTableWithEmptyName(t *testing.T) {
 	}
 
 	assert.EqualError(t, postTx("NewTable", &form), `{"type":"panic","error":"Column name cannot begin with digit"}`)
-}
-
-func TestActivateContracts(t *testing.T) {
-
-	wanted := func(name, want string) bool {
-		var ret getTestResult
-		err := sendPost(`test/`+name, nil, &ret)
-		if err != nil {
-			t.Error(err)
-			return false
-		}
-		if ret.Value != want {
-			t.Error(fmt.Errorf(`%s != %s`, ret.Value, want))
-			return false
-		}
-		return true
-	}
-
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
-	rnd := `rnd` + crypto.RandSeq(6)
-	form := url.Values{`Value`: {`contract ` + rnd + ` {
-		    data {
-				Par string
-			}
-			action { Test("active",  $Par)}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	var ret getContractResult
-	err := sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}); err != nil {
-		t.Error(err)
-		return
-	}
-	err = sendGet(`contract/`+rnd, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if !ret.Active {
-		t.Error(fmt.Errorf(`Not activate ` + rnd))
-	}
-	var row rowResult
-	err = sendGet(`row/contracts/`+ret.TableID, nil, &row)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if row.Value[`active`] != `1` {
-		t.Error(fmt.Errorf(`row not activate ` + rnd))
-	}
-
-	if err := postTx(rnd, &url.Values{`Par`: {rnd}}); err != nil {
-		t.Error(err)
-		return
-	}
-	if !wanted(`active`, rnd) {
-		return
-	}
-}
-
-func TestDeactivateContracts(t *testing.T) {
-
-	wanted := func(name, want string) bool {
-		var ret getTestResult
-		return assert.NoError(t, sendPost(`test/`+name, nil, &ret)) && assert.Equal(t, want, ret.Value)
-	}
-
-	assert.NoError(t, keyLogin(1))
-
-	rnd := `rnd` + crypto.RandSeq(6)
-	form := url.Values{`Value`: {`contract ` + rnd + ` {
-		    data {
-				Par string
-			}
-			action { Test("active",  $Par)}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
-
-	var ret getContractResult
-	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
-
-	assert.NoError(t, postTx(`ActivateContract`, &url.Values{`Id`: {ret.TableID}}))
-	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
-	assert.True(t, ret.Active, `Not activate `+rnd)
-
-	var row rowResult
-	assert.NoError(t, sendGet(`row/contracts/`+ret.TableID, nil, &row))
-	assert.Equal(t, "1", row.Value[`active`], `row not activate `+rnd)
-
-	assert.NoError(t, postTx(rnd, &url.Values{`Par`: {rnd}}))
-
-	if !wanted(`active`, rnd) {
-		return
-	}
-
-	assert.NoError(t, postTx(`DeactivateContract`, &url.Values{`Id`: {ret.TableID}}))
-
-	assert.NoError(t, sendGet(`contract/`+rnd, nil, &ret))
-	assert.False(t, ret.Active, `Not deactivate `+rnd)
-
-	var row2 rowResult
-	assert.NoError(t, sendGet(`row/contracts/`+ret.TableID, nil, &row2))
-	assert.Equal(t, "0", row2.Value[`active`])
 }
 
 func TestContracts(t *testing.T) {

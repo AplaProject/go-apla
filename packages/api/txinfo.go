@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -37,7 +37,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/gorilla/mux"
 )
 
 type txinfoResult struct {
@@ -46,20 +46,26 @@ type txinfoResult struct {
 	Data    *smart.TxInfo `json:"data,omitempty"`
 }
 
+type txInfoForm struct {
+	nopeValidator
+	ContractInfo bool   `schema:"contractinfo"`
+	Data         string `schema:"data"`
+}
+
 type multiTxInfoResult struct {
 	Results map[string]*txinfoResult `json:"results"`
 }
 
-func getTxInfo(txHash string, w http.ResponseWriter, cntInfo bool) (*txinfoResult, error) {
+func getTxInfo(r *http.Request, txHash string, cntInfo bool) (*txinfoResult, error) {
 	var status txinfoResult
 	hash, err := hex.DecodeString(txHash)
 	if err != nil {
-		return nil, errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+		return nil, errHashWrong
 	}
 	ltx := &model.LogTransaction{Hash: hash}
 	found, err := ltx.GetByHash(hash)
 	if err != nil {
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	if !found {
 		return &status, nil
@@ -68,7 +74,7 @@ func getTxInfo(txHash string, w http.ResponseWriter, cntInfo bool) (*txinfoResul
 	var confirm model.Confirmation
 	found, err = confirm.GetConfirmation(ltx.Block)
 	if err != nil {
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	if found {
 		status.Confirm = int(confirm.Good)
@@ -76,37 +82,53 @@ func getTxInfo(txHash string, w http.ResponseWriter, cntInfo bool) (*txinfoResul
 	if cntInfo {
 		status.Data, err = smart.TransactionData(ltx.Block, hash)
 		if err != nil {
-			return nil, errorAPI(w, err, http.StatusInternalServerError)
+			return nil, err
 		}
 	}
 	return &status, nil
 }
 
-func txinfo(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	status, err := getTxInfo(data.params[`hash`].(string), w, data.params[`contractinfo`].(int64) > 0)
-	if err != nil {
-		return err
+func getTxInfoHandler(w http.ResponseWriter, r *http.Request) {
+	form := &txInfoForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
-	data.result = &status
-	return nil
+
+	params := mux.Vars(r)
+	status, err := getTxInfo(r, params["hash"], form.ContractInfo)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
+	jsonResponse(w, status)
 }
 
-func txinfoMulti(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func getTxInfoMultiHandler(w http.ResponseWriter, r *http.Request) {
+	form := &txInfoForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
+	}
+
 	result := &multiTxInfoResult{}
 	result.Results = map[string]*txinfoResult{}
 	var request struct {
 		Hashes []string `json:"hashes"`
 	}
-	if err := json.Unmarshal([]byte(data.params["data"].(string)), &request); err != nil {
-		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+	if err := json.Unmarshal([]byte(form.Data), &request); err != nil {
+		errorResponse(w, errHashWrong)
+		return
 	}
 	for _, hash := range request.Hashes {
-		status, err := getTxInfo(hash, w, data.params[`contractinfo`].(int64) > 0)
+		status, err := getTxInfo(r, hash, form.ContractInfo)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Results[hash] = status
 	}
-	data.result = result
-	return nil
+
+	jsonResponse(w, result)
 }

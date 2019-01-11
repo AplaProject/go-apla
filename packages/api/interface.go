@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -33,6 +33,8 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -41,30 +43,32 @@ type componentModel interface {
 	Get(name string) (bool, error)
 }
 
-func getPageRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	return getInterfaceRow(w, r, data, logger, &model.Page{})
+func getPageRowHandler(w http.ResponseWriter, r *http.Request) {
+	getInterfaceRow(w, r, &model.Page{})
 }
 
-func getMenuRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	return getInterfaceRow(w, r, data, logger, &model.Menu{})
+func getMenuRowHandler(w http.ResponseWriter, r *http.Request) {
+	getInterfaceRow(w, r, &model.Menu{})
 }
 
-func getBlockInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	return getInterfaceRow(w, r, data, logger, &model.BlockInterface{})
+func getBlockInterfaceRowHandler(w http.ResponseWriter, r *http.Request) {
+	getInterfaceRow(w, r, &model.BlockInterface{})
 }
 
-func getInterfaceRow(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry, c componentModel) error {
-	c.SetTablePrefix(getPrefix(data))
-	ok, err := c.Get(data.ParamString("name"))
-	if err != nil {
+func getInterfaceRow(w http.ResponseWriter, r *http.Request, c componentModel) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
+	client := getClient(r)
+
+	c.SetTablePrefix(client.Prefix())
+	if ok, err := c.Get(params["name"]); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting one row")
-		return errorAPI(w, `E_QUERY`, http.StatusInternalServerError)
-	}
-	if !ok {
-		return errorAPI(w, `E_NOTFOUND`, http.StatusInternalServerError)
+		errorResponse(w, errQuery)
+		return
+	} else if !ok {
+		errorResponse(w, errNotFound)
+		return
 	}
 
-	data.result = c
-
-	return nil
+	jsonResponse(w, c)
 }

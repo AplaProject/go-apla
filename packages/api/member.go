@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -33,64 +33,68 @@ import (
 	"strconv"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
+
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-func getAvatar(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	parMember := data.params["member"].(string)
-	parEcosystem := data.params["ecosystem"].(string)
+func getAvatarHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
 
-	memberID := converter.StrToInt64(parMember)
-	ecosystemID := converter.StrToInt64(parEcosystem)
+	memberID := converter.StrToInt64(params["member"])
+	ecosystemID := converter.StrToInt64(params["ecosystem"])
 
 	member := &model.Member{}
 	member.SetTablePrefix(converter.Int64ToStr(ecosystemID))
 
 	found, err := member.Get(memberID)
 	if err != nil {
-		log.WithFields(log.Fields{
+		logger.WithFields(log.Fields{
 			"type":      consts.DBError,
 			"error":     err,
 			"ecosystem": ecosystemID,
 			"member_id": memberID,
 		}).Error("getting member")
-		return errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
 
 	if !found {
-		return errorAPI(w, "E_NOTFOUND", http.StatusNotFound)
+		errorResponse(w, errNotFound)
+		return
 	}
 
 	if member.ImageID == nil {
-		return errorAPI(w, "E_NOTFOUND", http.StatusNotFound)
+		errorResponse(w, errNotFound)
+		return
 	}
 
 	bin := &model.Binary{}
 	bin.SetTablePrefix(converter.Int64ToStr(ecosystemID))
 	found, err = bin.GetByID(*member.ImageID)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "image_id": *member.ImageID}).Errorf("on getting binary by id")
-		return errorAPI(w, "E_SERVER", http.StatusInternalServerError)
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "image_id": *member.ImageID}).Errorf("on getting binary by id")
+		errorResponse(w, err)
+		return
 	}
 
 	if !found {
-		return errorAPI(w, "E_SERVER", http.StatusNotFound)
+		errorResponse(w, errNotFound)
+		return
 	}
 
 	if len(bin.Data) == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject, "error": err, "image_id": *member.ImageID}).Errorf("on check avatar size")
-		return errorAPI(w, "E_SERVER", http.StatusNotFound)
+		logger.WithFields(log.Fields{"type": consts.EmptyObject, "error": err, "image_id": *member.ImageID}).Errorf("on check avatar size")
+		errorResponse(w, errNotFound)
+		return
 	}
 
 	w.Header().Set("Content-Type", bin.MimeType)
 	w.Header().Set("Content-Length", strconv.Itoa(len(bin.Data)))
 	if _, err := w.Write(bin.Data); err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("unable to write image")
-		return err
+		logger.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("unable to write image")
 	}
-
-	return nil
 }

@@ -3,7 +3,7 @@
 // of access rights to data, interfaces, and Smart contracts. The
 // technical characteristics of the Apla Software are indicated in
 // Apla Technical Paper.
-//
+
 // Apla Users are granted a permission to deal in the Apla
 // Software without restrictions, including without limitation the
 // rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -15,7 +15,7 @@
 // substantial portions of the software;
 // * a result of the dealing in Apla Software cannot be
 // implemented outside of the Apla Platform environment.
-//
+
 // THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
 // OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
 // TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
@@ -52,21 +52,23 @@ type txstatusResult struct {
 	Result  string         `json:"result"`
 }
 
-func getTxStatus(hash string, w http.ResponseWriter, logger *log.Entry) (*txstatusResult, error) {
+func getTxStatus(r *http.Request, hash string) (*txstatusResult, error) {
+	logger := getLogger(r)
+
 	var status txstatusResult
 	if _, err := hex.DecodeString(hash); err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding tx hash from hex")
-		return nil, errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+		return nil, errHashWrong
 	}
 	ts := &model.TransactionStatus{}
 	found, err := ts.Get([]byte(converter.HexToBin(hash)))
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("getting transaction status by hash")
-		return nil, errorAPI(w, err, http.StatusInternalServerError)
+		return nil, err
 	}
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound, "key": []byte(converter.HexToBin(hash))}).Error("getting transaction status by hash")
-		return nil, errorAPI(w, `E_HASHNOTFOUND`, http.StatusBadRequest)
+		return nil, errHashNotFound
 	}
 	if ts.BlockID > 0 {
 		status.BlockID = converter.Int64ToStr(ts.BlockID)
@@ -91,20 +93,23 @@ type txstatusRequest struct {
 	Hashes []string `json:"hashes"`
 }
 
-func txstatus(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
+func getTxStatusHandler(w http.ResponseWriter, r *http.Request) {
 	result := &multiTxStatusResult{}
 	result.Results = map[string]*txstatusResult{}
+
 	var request txstatusRequest
-	if err := json.Unmarshal([]byte(data.params["data"].(string)), &request); err != nil {
-		return errorAPI(w, `E_HASHWRONG`, http.StatusBadRequest)
+	if err := json.Unmarshal([]byte(r.FormValue("data")), &request); err != nil {
+		errorResponse(w, errHashWrong)
+		return
 	}
 	for _, hash := range request.Hashes {
-		status, err := getTxStatus(hash, w, logger)
+		status, err := getTxStatus(r, hash)
 		if err != nil {
-			return err
+			errorResponse(w, err)
+			return
 		}
 		result.Results[hash] = status
 	}
-	data.result = result
-	return nil
+
+	jsonResponse(w, result)
 }
