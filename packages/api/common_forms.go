@@ -87,8 +87,13 @@ type ecosystemForm struct {
 }
 
 func (f *ecosystemForm) Validate(r *http.Request) error {
+	if f.Validator == nil {
+		panic("ecosystemForm.Validator should not be empty")
+	}
+
 	client := getClient(r)
 	logger := getLogger(r)
+
 	ecosysID, err := f.Validator.Validate(f.EcosystemID, client.EcosystemID, logger)
 	if err != nil {
 		if err == ErrEcosystemNotFound {

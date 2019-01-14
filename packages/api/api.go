@@ -36,8 +36,11 @@ import (
 
 	"github.com/gorilla/schema"
 
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/types"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -68,8 +71,14 @@ func (c *Client) Prefix() string {
 }
 
 func jsonResponse(w http.ResponseWriter, v interface{}) {
+	jsonResult, err := json.Marshal(v)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marhsalling http response to json")
+		errorResponse(w, err, http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(v)
+	w.Write(jsonResult)
 }
 
 func errorResponse(w http.ResponseWriter, err error, code ...int) {
