@@ -136,9 +136,8 @@ func (b *Block) DeleteById(transaction *DbTransaction, id int64) error {
 
 func GetTxCount() (int64, error) {
 	var txCount int64
-	if err := DBConn.Raw("SELECT SUM(tx) tx_count FROM block_chain").Scan(&txCount).Error; err != nil {
-		return 0, err
-	}
+	row := DBConn.Raw("SELECT SUM(tx) tx_count FROM block_chain").Select("tx_count").Row()
+	err := row.Scan(&txCount)
 
-	return txCount, nil
+	return txCount, err
 }
