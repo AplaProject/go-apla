@@ -33,10 +33,12 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.0"
+const VERSION = "1.2.3"
+
+const BV_ROLLBACK_HASH = 2
 
 // BLOCK_VERSION is block version
-const BLOCK_VERSION = 1
+const BLOCK_VERSION = BV_ROLLBACK_HASH
 
 // NETWORK_ID is id of network
 const NETWORK_ID = 1
@@ -175,8 +177,8 @@ const TxRequestExpire = 1 * time.Minute
 // DefaultTempDirName is default name of temporary directory
 const DefaultTempDirName = "apla-temp"
 
-// DefaultVDE allways is 1
-const DefaultVDE = 1
+// DefaultOBS allways is 1
+const DefaultOBS = 1
 
 // MoneyLength is the maximum number of digits in money value
 const MoneyLength = 30

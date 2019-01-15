@@ -105,6 +105,7 @@ var (
 	errParseTransaction   = errors.New(`parse transaction`)
 	errInputSlice         = errors.New(`input slice is short`)
 	errWhereUpdate        = errors.New(`There is not Where in Update request`)
+	errNotValidUTF        = errors.New(`Result is not valid utf-8 string`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )

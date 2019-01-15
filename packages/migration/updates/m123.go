@@ -26,8 +26,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package vde
+package updates
 
-var sectionsDataSQL = `
-INSERT INTO "1_sections" ("id","title","urlname","page","roles_access", "delete", "ecosystem") VALUES
-('1', 'Home', 'home', 'default_page', '', 0, '%[1]d');`
+var M123 = `ALTER TABLE "info_block" ADD COLUMN IF NOT EXISTS "rollbacks_hash" bytea NOT NULL DEFAULT '';
+	UPDATE "info_block" SET rollbacks_hash = (SELECT rollbacks_hash from block_chain where id=info_block.block_id);
+`

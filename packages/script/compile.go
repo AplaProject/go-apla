@@ -230,7 +230,7 @@ var (
 			lexNewLine:                      {stateRoot, 0},
 			lexKeyword | (keyContract << 8): {stateContract | statePush, 0},
 			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
-			0: {errUnknownCmd, cfError},
+			0:                               {errUnknownCmd, cfError},
 		},
 		{ // stateBody
 			lexNewLine:                      {stateBody, 0},
@@ -1282,6 +1282,9 @@ main:
 					}
 					bytecode = append(bytecode, prev)
 				}
+			}
+			if (*lexems)[i+1].Type == isLBrack {
+				return errMultiIndex
 			}
 		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {

@@ -535,6 +535,33 @@ func (rt *RunTime) getResultMap(cmd *types.Map) (*types.Map, error) {
 	return initMap, nil
 }
 
+func isSelfAssignment(dest, value interface{}) bool {
+	if _, ok := value.([]interface{}); !ok {
+		if _, ok = value.(*types.Map); !ok {
+			return false
+		}
+	}
+	if reflect.ValueOf(dest).Pointer() == reflect.ValueOf(value).Pointer() {
+		return true
+	}
+	switch v := value.(type) {
+	case []interface{}:
+		for _, item := range v {
+
+			if isSelfAssignment(dest, item) {
+				return true
+			}
+		}
+	case *types.Map:
+		for _, item := range v.Values() {
+			if isSelfAssignment(dest, item) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // RunCode executes Block
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	top := make([]interface{}, 8)
@@ -566,9 +593,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	if namemap != nil {
 		for key, item := range namemap {
 			params := (*block.Info.(*FuncInfo).Names)[key]
-			if params.Variadic {
-
-			}
 			for i, value := range item {
 				if params.Variadic && i >= len(params.Params)-1 {
 					off := varoff + params.Offset[len(params.Params)-1]
@@ -808,6 +832,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						break
 					}
 				}
+			}
+			if isSelfAssignment(rt.stack[size-3], rt.stack[size-1]) {
+				return 0, errSelfAssignment
 			}
 
 			switch {

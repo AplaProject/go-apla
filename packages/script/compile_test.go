@@ -664,6 +664,15 @@ func TestVMCompile(t *testing.T) {
 		func getqq() string {
 			return qq2("Id,ID2", 10,20)
 		}`, `getqq`, `1020`},
+		{`func IND() string {
+			var a,b,d array
+			a[0] = 100
+			a[1] = 555
+			b[0] = 200
+			d[0] = a
+			d[1] = b
+			d[0][0] =  777
+	}`, `IND`, `multi-index is not supported`},
 	}
 	vm := NewVM()
 	vm.Extern = true
