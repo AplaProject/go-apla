@@ -63,4 +63,6 @@ var (
 	errCondWrite       = errors.New(`'conditions' cannot call contracts or functions which can modify the blockchain database.`)
 	errMultiIndex      = errors.New(`multi-index is not supported`)
 	errSelfAssignment  = errors.New(`self assignment`)
+	errEndExp          = errors.New(`unexpected end of the expression`)
+	errOper            = errors.New(`unexpected operator; expecting operand`)
 )
