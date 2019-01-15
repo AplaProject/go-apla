@@ -762,6 +762,9 @@ func splitArray(in []rune) []string {
 	var off int
 	ret := make([]string, 0, 32)
 	brace := make([]rune, 0, 32)
+	if len(in) == 0 {
+		return ret
+	}
 	if in[0] == '[' && in[len(in)-1] == ']' {
 		in = in[1 : len(in)-1]
 	}
