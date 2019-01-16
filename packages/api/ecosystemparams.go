@@ -49,8 +49,12 @@ type ecosystemParamsResult struct {
 	List []paramResult `json:"list"`
 }
 
-func getEcosystemParamsHandler(w http.ResponseWriter, r *http.Request) {
-	form := &appParamsForm{}
+func (m Mode) getEcosystemParamsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &appParamsForm{
+		ecosystemForm: ecosystemForm{
+			Validator: m.EcosysIDValidator,
+		},
+	}
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
