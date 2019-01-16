@@ -1104,6 +1104,7 @@ func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	parcount := make([]int, 0, 20)
 	setIndex := false
 	noMap := false
+	prevLex := uint32(0)
 main:
 	for ; i < len(*lexems); i++ {
 		var cmd *ByteCode
@@ -1133,6 +1134,9 @@ main:
 		switch lexem.Type {
 		case isRCurly, isLCurly:
 			i--
+			if prevLex == isComma || prevLex == lexOper {
+				return errEndExp
+			}
 			break main
 		case lexNewLine:
 			if i > 0 && ((*lexems)[i-1].Type == isComma || (*lexems)[i-1].Type == lexOper) {
@@ -1297,6 +1301,8 @@ main:
 					prevType != isRBrack && prevType != isRPar)) {
 					oper.Cmd = cmdSign
 					oper.Priority = cmdUnary
+				} else if prevLex == lexOper && oper.Priority != cmdUnary {
+					return errOper
 				}
 				byteOper := &ByteCode{oper.Cmd, oper.Priority}
 				for {
@@ -1433,6 +1439,9 @@ main:
 				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
 		}
+		if lexem.Type != lexNewLine {
+			prevLex = lexem.Type
+		}
 		if lexem.Type&0xff == lexKeyword {
 			if lexem.Value.(uint32) == keyTail {
 				cmd = &ByteCode{cmdUnwrapArr, 0}
@@ -1443,6 +1452,9 @@ main:
 		}
 	}
 	*ind = i
+	if prevLex == lexOper {
+		return errEndExp
+	}
 	for i := len(buffer) - 1; i >= 0; i-- {
 		if buffer[i].Cmd == cmdSys {
 			log.WithFields(log.Fields{"type": consts.ParseError}).Error("there is not pair")

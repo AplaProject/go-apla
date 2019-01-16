@@ -673,6 +673,16 @@ func TestVMCompile(t *testing.T) {
 			d[1] = b
 			d[0][0] =  777
 	}`, `IND`, `multi-index is not supported`},
+		{`func result() {
+		/*
+		aa
+		/*bb*/
+		
+		error "test"*/
+		}`, `result`, `unexpected operator; expecting operand`},
+		{`func result() {
+				error "test"*
+				}`, `result`, `unexpected end of the expression`},
 	}
 	vm := NewVM()
 	vm.Extern = true
@@ -688,7 +698,7 @@ func TestVMCompile(t *testing.T) {
 		source := []rune(item.Input)
 		if err := vm.Compile(source, &OwnerInfo{StateID: uint32(ikey) + 22, Active: true, TableID: 1}); err != nil {
 			if err.Error() != item.Output {
-				t.Error(err)
+				t.Errorf(`%s != %s`, err, item.Output)
 				break
 			}
 		} else {
@@ -714,7 +724,6 @@ func TestVMCompile(t *testing.T) {
 
 		}
 	}
-	t.Error(`OK`)
 }
 
 func TestContractList(t *testing.T) {

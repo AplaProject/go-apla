@@ -42,6 +42,22 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBin(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    data {    }
+    conditions {    }
+    action {
+		$result = DBFind("keys").Columns("pub")
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err := postTxResult(rnd, &url.Values{})
+	assert.EqualError(t, err, `{"type":"panic","error":"Result is not valid utf-8 string"}`)
+}
+
 func TestArray(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

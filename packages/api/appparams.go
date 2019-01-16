@@ -53,8 +53,13 @@ func (f *appParamsForm) Validate(r *http.Request) error {
 	return f.ecosystemForm.Validate(r)
 }
 
-func getAppParamsHandler(w http.ResponseWriter, r *http.Request) {
-	form := &appParamsForm{}
+func (m Mode) getAppParamsHandler(w http.ResponseWriter, r *http.Request) {
+	form := &appParamsForm{
+		ecosystemForm: ecosystemForm{
+			Validator: m.EcosysIDValidator,
+		},
+	}
+
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
