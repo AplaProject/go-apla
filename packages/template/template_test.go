@@ -102,6 +102,17 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(arr, [1, "hello", {"val": "123000000000000000000", "OK":{"time": "1545788052"}, "type": "emission"}, {"val": "555000000000000000000", "arr":["time", "1545788125"], "type": "emission"}, 23])
+	ArrayToSource(src, #arr#)`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","hello"],["2","{\"val\": \"123000000000000000000\", \"OK\":{\"time\": \"1545788052\"}, \"type\": \"emission\"}"],["3","{\"val\": \"555000000000000000000\", \"arr\":[\"time\", \"1545788125\"], \"type\": \"emission\"}"],["4","23"]],"source":"src","types":["text","text"]}}]`},
+	{`ArrayToSource(dat, [ "hello","1 2 3", "my name" , "is Billy" ])`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","hello"],["1","1 2 3"],["2","my name"],["3","is Billy"]],"source":"dat","types":["text","text"]}}]`},
+	{`P(#twxt# #some text# 2#some_par#1#toxt#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":" #some text# 21"}]}]`},
+	{`SetVar(tmp, 0#mytest#1)VarAsIs(txt, tmp)VarAsIs(txt2, #tmp#)VarAsIs(txt3, Some #mytest#)
+	 VarAsIs(txt4, #mytest# #tmp# #txt#)
+	  P(#txt# #txt2# #txt3# #txt4#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":"0Span(test)1 0Span(test)1 Some #mytest# #mytest# #tmp# #txt#"}]}]`},
 	{`SetVar(txt, "те").(txt1, "ещё")P(#txt# #txt1#)`,
 		`[{"tag":"p","children":[{"tag":"text","text":"те ещё"}]}]`},
 	{`Span(Body: "те").(Body: "ещё")`,
@@ -159,7 +170,7 @@ var forTest = tplList{
 		`[{"tag":"addtoolbutton","attr":{"page":"default","popup":{"header":"Test","width":"50"},"title":"Open"}}]`},
 	{`SetVar(ok, OK)Input(Type: text, Value: #ok# Now(YY))Input(Type:text, Value: #ok# Some text)`,
 		`[{"tag":"input","attr":{"type":"text","value":"OK Now(YY)"}},{"tag":"input","attr":{"type":"text","value":"OK Some text"}}]`},
-	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"now","attr":{"format":"MMYY","interval":"1 day"}},{"tag":"now"}]`},
+	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"text","text":"Now(MMYY,1 day)Now()"}]`},
 	{`SetVar(digit, 2)Money(12345, #digit#)=Money(#digit#, #digit#)=Money(123456000, 7)=Money(12, -3)`,
 		`[{"tag":"text","text":"123.45"},{"tag":"text","text":"=0.02"},{"tag":"text","text":"=12.3456"},{"tag":"text","text":"=12000"}]`},
 	{`SetVar(textc, test)Code(P(Some #textc#))CodeAsIs(P(No Some #textc#))Div(){CodeAsIs(Text:#textc#)}`,
@@ -202,13 +213,13 @@ var forTest = tplList{
 	 JsonToSource(dat, {"param":"va lue", "obj": {"sub":"one"}, "arr":["one"], "empty": null})`,
 		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["empty",""],["obj","{\"sub\":\"one\"}"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
 	{`SetVar(arr,[1, 2, 3])ArrayToSource(src2, #arr#)ArrayToSource(src1, ["q","p"])ArrayToSource(src1, {"k":"v"})`,
-		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","2"],["2","3"]],"source":"src2","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","q"],["1","p"]],"source":"src1","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[],"source":"src1","types":["text","text"]}}]`},
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","2"],["2","3"]],"source":"src2","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","q"],["1","p"]],"source":"src1","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"k\":\"v\"}"]],"source":"src1","types":["text","text"]}}]`},
 	{`ArrayToSource(arr, [{"k1":"v1"},{"k2":"v2"}])ForList(arr){JsonToSource(json, #value#)}`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"k1\":\"v1\"}"],["1","{\"k2\":\"v2\"}"]],"source":"arr","types":["text","text"]}},{"tag":"forlist","attr":{"source":"arr"},"children":[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k1","v1"]],"source":"json","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k2","v2"]],"source":"json","types":["text","text"]}}]}]`},
 	{`Button(Body: addpage).CompositeContract().CompositeContract(NewPage, [{"param1": "Value 1"},
 		{"param2": "Value 2", "param3" : "#mytest#"}]).CompositeContract(EditPage)`,
 		`[{"tag":"button","attr":{"composite":[{"name":"NewPage","data":[{"param1":"Value 1"},{"param2":"Value 2","param3":"Span(test)"}]},{"name":"EditPage"}]},"children":[{"tag":"text","text":"addpage"}]}]`},
-	{`SetVar(a, 0)SetVar(a, #a#7)SetVar(where, #where# 1)Div(){#where##a#}`, `[{"tag":"div","children":[{"tag":"text","text":"#where# 107"}]}]`},
+	{`SetVar(a, 0)SetVar(a, #a#7)SetVar(where, #where# 1)Div(){#where##a#}`, `[{"tag":"div","children":[{"tag":"text","text":" 107"}]}]`},
 	{`Div(){Span(begin "You've" end<hr>)}Div(Body: ` + "`\"You've\"`" + `)
 	  Div(Body: "` + "`You've`" + `")`, `[{"tag":"div","children":[{"tag":"span","children":[{"tag":"text","text":"begin \"You've\" end\u003chr\u003e"}]}]},{"tag":"div","children":[{"tag":"text","text":"\"You've\""}]},{"tag":"div","children":[{"tag":"text","text":"` + "`You've`" + `"}]}]`},
 	{`Data(Source: test, Columns: "a,b"){a}ForList(Source: test){#a#}`,
@@ -221,7 +232,7 @@ var forTest = tplList{
 	  If(false){SetVar(if, 1)}.ElseIf(true){SetVar(elseif, 1)}.Else{SetVar(else, 1)}
 	  Div(){
 		#false_condition# #true_condition# #ok# #problem# #if# #elseif# #else#
-	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":"#false_condition# 1 1 #problem# #if# 1 #else#"}]}]`},
+	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":" 1 1   1 "}]}]`},
 	{`Div(){Span(begin "You've" end<hr>)}Div(Body: ` + "`\"You've\"`" + `)
 	  Div(Body: "` + "`You've`" + `")`, `[{"tag":"div","children":[{"tag":"span","children":[{"tag":"text","text":"begin \"You've\" end\u003chr\u003e"}]}]},{"tag":"div","children":[{"tag":"text","text":"\"You've\""}]},{"tag":"div","children":[{"tag":"text","text":"` + "`You've`" + `"}]}]`},
 	{`Button(Body: addpage, 
@@ -337,7 +348,7 @@ var forTest = tplList{
 			}
 		}
 	}`,
-		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My #text#"}]}]}]}]}]`},
+		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My "}]}]}]}]}]`},
 	{`SetVar(istrue, 1)If(GetVar(istrue),OK)If(GetVar(isfalse)){Skip}.Else{Span(Else OK)}`,
 		`[{"tag":"text","text":"OK"},{"tag":"span","children":[{"tag":"text","text":"Else OK"}]}]`},
 	{`If(false,First).ElseIf(0){Skip}.ElseIf(1){
@@ -356,7 +367,7 @@ var forTest = tplList{
 		}`,
 		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"name":"SubMenu","title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
-		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
+		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, , Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
 	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
 		And(1,#mytest#)Or(#empty#, And(#empty#, line))Or(#test#==mytest)If(#empty#).Else{Div(){#mytest#}}`,
 		`[{"tag":"text","text":"0100101"},{"tag":"div","children":[{"tag":"text","text":"Span(test)"}]}]`},

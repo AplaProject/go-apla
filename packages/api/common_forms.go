@@ -32,11 +32,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/types"
+
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/model"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -85,28 +83,26 @@ func (f *paramsForm) AcceptNames() map[string]bool {
 type ecosystemForm struct {
 	EcosystemID     int64  `schema:"ecosystem"`
 	EcosystemPrefix string `schema:"-"`
+	Validator       types.EcosystemIDValidator
 }
 
 func (f *ecosystemForm) Validate(r *http.Request) error {
+	if f.Validator == nil {
+		panic("ecosystemForm.Validator should not be empty")
+	}
+
 	client := getClient(r)
 	logger := getLogger(r)
 
-	if conf.Config.IsSupportingVDE() {
-		f.EcosystemID = consts.DefaultVDE
-	} else if f.EcosystemID > 0 {
-		count, err := model.GetNextID(nil, "1_ecosystems")
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting next id of ecosystems")
-			return err
+	ecosysID, err := f.Validator.Validate(f.EcosystemID, client.EcosystemID, logger)
+	if err != nil {
+		if err == ErrEcosystemNotFound {
+			err = errEcosystem.Errorf(f.EcosystemID)
 		}
-		if f.EcosystemID >= count {
-			logger.WithFields(log.Fields{"state_id": f.EcosystemID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
-			return errEcosystem.Errorf(f.EcosystemID)
-		}
-	} else {
-		f.EcosystemID = client.EcosystemID
+		return err
 	}
 
+	f.EcosystemID = ecosysID
 	f.EcosystemPrefix = converter.Int64ToStr(f.EcosystemID)
 
 	return nil
