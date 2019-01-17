@@ -67,12 +67,33 @@ type BlockData struct {
 	NodePosition      int64
 	Sign              []byte
 	Hash              []byte
+	RollbacksHash     []byte
 	Version           int
 	PrivateBlockchain bool
 }
 
 func (b BlockData) String() string {
 	return fmt.Sprintf("BlockID:%d, Time:%d, NodePosition %d", b.BlockID, b.Time, b.NodePosition)
+}
+
+func blockVer(cur, prev *BlockData) (ret string) {
+	if cur.Version >= consts.BV_ROLLBACK_HASH {
+		ret = fmt.Sprintf(",%x", prev.RollbacksHash)
+	}
+	return
+}
+
+func (b BlockData) ForSha(prev *BlockData, mrklRoot []byte) string {
+	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
+		b.BlockID, prev.Hash, mrklRoot, b.Time, b.EcosystemID, b.KeyID, b.NodePosition) +
+		blockVer(&b, prev)
+}
+
+// ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+func (b BlockData) ForSign(prev *BlockData, mrklRoot []byte) string {
+	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
+		b.BlockID, prev.Hash, b.Time, b.EcosystemID, b.KeyID, b.NodePosition, mrklRoot) +
+		blockVer(&b, prev)
 }
 
 // ParseBlockHeader is parses block header

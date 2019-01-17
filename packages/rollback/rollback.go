@@ -90,6 +90,7 @@ func ToBlockID(blockID int64, dbTransaction *model.DbTransaction, logger *log.En
 		KeyID:          header.KeyID,
 		NodePosition:   converter.Int64ToStr(header.NodePosition),
 		CurrentVersion: strconv.Itoa(header.Version),
+		RollbacksHash:  block.RollbacksHash,
 	}
 
 	err = ib.Update(dbTransaction)

@@ -29,7 +29,6 @@
 package template
 
 import (
-	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -614,19 +613,6 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`whereid`] != nil {
 		where = fmt.Sprintf(` id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
-	if par.Node.Attr[`order`] != nil {
-		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
-		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
-			inColumns, _ = parseObject([]rune(order))
-		} else {
-			inColumns = order
-		}
-		order, err = smart.GetOrder(inColumns)
-		if err != nil {
-			return err.Error()
-		}
-		order = ` order by ` + order
-	}
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
 	}
@@ -651,6 +637,21 @@ func dbfindTag(par parFunc) string {
 	sc := par.Workspace.SmartContract
 	tblname := converter.ParseTable(strings.Trim(macro((*par.Pars)[`Name`], par.Workspace.Vars), `"`), state)
 	tblname = strings.ToLower(tblname)
+
+	inColumns = ``
+	if par.Node.Attr[`order`] != nil {
+		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
+			inColumns, _ = parseObject([]rune(order))
+		} else {
+			inColumns = order
+		}
+	}
+	order, err = smart.GetOrder(tblname, inColumns)
+	if err != nil {
+		return err.Error()
+	}
+	order = ` order by ` + order
 
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
@@ -1284,18 +1285,8 @@ func arraytosourceTag(par parFunc) string {
 	data := make([][]string, 0, 16)
 	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
-	var out []json.RawMessage
-	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON Array to source")
-	}
-	for key, item := range out {
-		if item == nil {
-			item = []byte("")
-		}
-
-		item = bytes.Trim(item, `"`)
-
-		data = append(data, []string{fmt.Sprint(key), string(item)})
+	for key, item := range splitArray([]rune(macro((*par.Pars)[`Data`], par.Workspace.Vars))) {
+		data = append(data, []string{fmt.Sprint(key), item})
 	}
 	setAllAttr(par)
 	par.Node.Attr[`columns`] = &cols

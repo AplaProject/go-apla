@@ -41,7 +41,7 @@ import (
 )
 
 // MarshallBlock is marshalling block
-func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, key string) ([]byte, error) {
+func MarshallBlock(header *utils.BlockData, trData [][]byte, prev *utils.BlockData, key string) ([]byte, error) {
 	var mrklArray [][]byte
 	var blockDataTx []byte
 	var signed []byte
@@ -63,11 +63,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		}
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
-
 		var err error
-		signed, err = crypto.SignString(key, forSign)
+		signed, err = crypto.SignString(key, header.ForSign(prev, mrklRoot))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing blocko")
 			return nil, err
