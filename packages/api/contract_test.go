@@ -42,6 +42,42 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBin(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    data {    }
+    conditions {    }
+    action {
+		$result = DBFind("keys").Columns("pub")
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err := postTxResult(rnd, &url.Values{})
+	assert.EqualError(t, err, `{"type":"panic","error":"Result is not valid utf-8 string"}`)
+}
+
+func TestArray(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    data {    }
+    conditions {    }
+    action {
+        var a,b,d array
+        a[0] = 100
+        a[1] = 555
+        b[0] = 200
+        d[0] = a
+        d[1] = b
+        $result = d[0][0] // 0 - должно же быть 100 ???
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"multi-index is not supported"}`)
+}
+
 func TestDBFindContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

@@ -43,11 +43,9 @@ type BCEcosysIDValidator struct {
 	logger *log.Entry
 }
 
-func (v BCEcosysIDValidator) SetLogger(logger *log.Entry) {}
-
-func (v BCEcosysIDValidator) Validate(id, clientID int64, le *log.Entry) (int64, error) {
-	if clientID <= 0 {
-		return clientID, nil
+func (v BCEcosysIDValidator) Validate(formEcosysID, clientEcosysID int64, le *log.Entry) (int64, error) {
+	if formEcosysID <= 0 {
+		return clientEcosysID, nil
 	}
 
 	count, err := model.GetNextID(nil, "1_ecosystems")
@@ -56,12 +54,12 @@ func (v BCEcosysIDValidator) Validate(id, clientID int64, le *log.Entry) (int64,
 		return 0, err
 	}
 
-	if clientID >= count {
-		le.WithFields(log.Fields{"state_id": clientID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
+	if formEcosysID >= count {
+		le.WithFields(log.Fields{"state_id": formEcosysID, "count": count, "type": consts.ParameterExceeded}).Error("ecosystem is larger then max count")
 		return 0, api.ErrEcosystemNotFound
 	}
 
-	return clientID, nil
+	return formEcosysID, nil
 }
 
 type OBSEcosysIDValidator struct{}

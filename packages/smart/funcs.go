@@ -149,6 +149,13 @@ type SmartContract struct {
 	Notifications []NotifyInfo
 }
 
+var (
+	defaultSortOrder = map[string]string{
+		`keys`:    "ecosystem,id",
+		`members`: "ecosystem,id",
+	}
+)
+
 // AppendStack adds an element to the stack of contract call or removes the top element when name is empty
 func (sc *SmartContract) AppendStack(fn string) error {
 	if sc.isAllowStack(fn) {
@@ -865,12 +872,16 @@ func GetColumns(inColumns interface{}) ([]string, error) {
 	return columns, nil
 }
 
-func GetOrder(inOrder interface{}) (string, error) {
-	var orders []string
+func GetOrder(tblname string, inOrder interface{}) (string, error) {
+	var (
+		orders []string
+	)
+	cols := types.NewMap()
 
 	sanitize := func(in string, value interface{}) {
 		in = converter.Sanitize(strings.ToLower(in), ``)
 		if len(in) > 0 {
+			cols.Set(in, true)
 			in = `"` + in + `"`
 			if fmt.Sprint(value) == `-1` {
 				in += ` desc`
@@ -881,6 +892,13 @@ func GetOrder(inOrder interface{}) (string, error) {
 		}
 	}
 
+	if v, ok := defaultSortOrder[tblname[2:]]; ok {
+		for _, item := range strings.Split(v, `,`) {
+			cols.Set(item, false)
+		}
+	} else {
+		cols.Set(`id`, false)
+	}
 	switch v := inOrder.(type) {
 	case string:
 		sanitize(v, nil)
@@ -910,8 +928,10 @@ func GetOrder(inOrder interface{}) (string, error) {
 			}
 		}
 	}
-	if len(orders) == 0 {
-		orders = []string{`id`}
+	for _, key := range cols.Keys() {
+		if state, found := cols.Get(key); !found || !state.(bool) {
+			orders = append(orders, key)
+		}
 	}
 	if err := qb.CheckNow(orders...); err != nil {
 		return ``, err
@@ -934,7 +954,8 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if err != nil {
 		return 0, nil, err
 	}
-	order, err = GetOrder(inOrder)
+	tblname = GetTableName(sc, tblname)
+	order, err = GetOrder(tblname, inOrder)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -952,7 +973,6 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if limit < 0 || limit > 250 {
 		limit = 250
 	}
-	tblname = GetTableName(sc, tblname)
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil {
 		return 0, nil, err
