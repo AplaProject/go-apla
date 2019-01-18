@@ -154,6 +154,9 @@ main:
 			start = i + 1
 		case ',':
 			val := trimString(in[start:i])
+			if len(val) == 0 && (len(key) > 0 || mapMode) {
+				key = ``
+			}
 			if len(val) > 0 {
 				if mapMode {
 					ret.(map[string]interface{})[key] = val
@@ -182,6 +185,18 @@ main:
 					ret = append(ret.([]interface{}), last)
 				}
 			}
+		} else if len(key) > 0 || mapMode {
+			ret.(map[string]interface{})[key] = ``
+		}
+	}
+	switch v := ret.(type) {
+	case map[string]interface{}:
+		if len(v) == 0 {
+			ret = ``
+		}
+	case []interface{}:
+		if len(v) == 0 {
+			ret = ``
 		}
 	}
 	return ret, i

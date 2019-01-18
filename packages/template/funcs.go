@@ -600,9 +600,12 @@ func dbfindTag(par parFunc) string {
 	}
 	if par.Node.Attr[`where`] != nil {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
+		fmt.Println(`WHERE 0`, where)
 		if strings.HasPrefix(where, `{`) {
 			inWhere, _ := parseObject([]rune(where))
+			fmt.Println(`WHERE 1`, inWhere)
 			where, err = qb.GetWhere(types.LoadMap(inWhere.(map[string]interface{})))
+			fmt.Println(`WHERE 2`, where)
 			if err != nil {
 				return err.Error()
 			}
