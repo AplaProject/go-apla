@@ -212,11 +212,20 @@ func GetNodes() []FullNode {
 func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	for i, item := range nodesByPosition {
-		if item.KeyID == keyID {
-			return int64(i), nil
+
+	var counter int64
+	for _, item := range nodesByPosition {
+		if item.Stopped {
+			continue
 		}
+
+		if item.KeyID == keyID {
+			return counter, nil
+		}
+
+		counter++
 	}
+
 	return 0, fmt.Errorf("Incorrect keyID")
 }
 
@@ -285,48 +294,6 @@ func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 		return nil, err
 	}
 	return nodeData.PublicKey, nil
-}
-
-// GetSleepTimeByKey is returns sleep time by key
-func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
-
-	myPosition, err := GetNodePositionByKeyID(myKeyID)
-	if err != nil {
-		return 0, err
-	}
-	sleepTime := int64(0)
-	if myPosition == prevBlockNodePosition {
-		sleepTime = ((GetNumberOfNodes() + myPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if myPosition > prevBlockNodePosition {
-		sleepTime = (myPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if myPosition < prevBlockNodePosition {
-		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
-	}
-
-	return int64(sleepTime), nil
-}
-
-// GetSleepTimeByPosition is returns sleep time by position
-func GetSleepTimeByPosition(CurrentPosition, prevBlockNodePosition int64) (int64, error) {
-
-	sleepTime := int64(0)
-	if CurrentPosition == prevBlockNodePosition {
-		sleepTime = ((GetNumberOfNodes() + CurrentPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if CurrentPosition > prevBlockNodePosition {
-		sleepTime = (CurrentPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if CurrentPosition < prevBlockNodePosition {
-		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
-	}
-
-	return int64(sleepTime), nil
 }
 
 // SysInt64 is converting sys string to int64

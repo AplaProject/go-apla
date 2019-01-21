@@ -55,6 +55,7 @@ type fullNodeJSON struct {
 	KeyID      json.Number `json:"key_id"`
 	PublicKey  string      `json:"public_key"`
 	UnbanTime  json.Number `json:"unban_time,er"`
+	Stopped    bool        `json:"stopped"`
 }
 
 // FullNode is storing full node data
@@ -64,6 +65,7 @@ type FullNode struct {
 	KeyID      int64
 	PublicKey  []byte
 	UnbanTime  time.Time
+	Stopped    bool
 }
 
 // UnmarshalJSON is custom json unmarshaller
