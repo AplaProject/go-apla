@@ -106,6 +106,8 @@ var (
 	errInputSlice         = errors.New(`input slice is short`)
 	errWhereUpdate        = errors.New(`There is not Where in Update request`)
 	errNotValidUTF        = errors.New(`Result is not valid utf-8 string`)
+	errFloat              = errors.New(`incorrect float value`)
+	errFloatResult        = errors.New(`incorrect float result`)
 
 	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )
