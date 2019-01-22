@@ -58,6 +58,33 @@ func TestBin(t *testing.T) {
 	assert.EqualError(t, err, `{"type":"panic","error":"Result is not valid utf-8 string"}`)
 }
 
+func TestMath(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `math` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    action {
+		var it float
+		it = Log(Pow(2,3) + 2)
+        $result = Sqrt( Round(it) + Floor(it)) + Log10("10")
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, msg, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	if msg != `3` {
+		t.Errorf(`wrong val %s`, msg)
+	}
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		action {
+			Sqrt(-1)
+		}
+	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd+`1`, &url.Values{}),
+		`{"type":"panic","error":"incorrect float result"}`)
+}
+
 func TestArray(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
