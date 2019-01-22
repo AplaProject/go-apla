@@ -600,14 +600,22 @@ func dbfindTag(par parFunc) string {
 	}
 	if par.Node.Attr[`where`] != nil {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
-		fmt.Println(`WHERE 0`, where)
 		if strings.HasPrefix(where, `{`) {
 			inWhere, _ := parseObject([]rune(where))
-			fmt.Println(`WHERE 1`, inWhere)
-			where, err = qb.GetWhere(types.LoadMap(inWhere.(map[string]interface{})))
-			fmt.Println(`WHERE 2`, where)
-			if err != nil {
-				return err.Error()
+			switch v := inWhere.(type) {
+			case string:
+				if len(v) == 0 {
+					where = `true`
+				} else {
+					return errWhere.Error()
+				}
+			case map[string]interface{}:
+				where, err = qb.GetWhere(types.LoadMap(v))
+				if err != nil {
+					return err.Error()
+				}
+			default:
+				return errWhere.Error()
 			}
 		} else if len(where) > 0 {
 			return errWhere.Error()
@@ -1243,8 +1251,11 @@ func jsontosourceTag(par parFunc) string {
 	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
 	var out map[string]interface{}
-	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
+	dataVal := macro((*par.Pars)[`Data`], par.Workspace.Vars)
+	if len(dataVal) > 0 {
+		if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
+		}
 	}
 	for key, item := range out {
 		if item == nil {

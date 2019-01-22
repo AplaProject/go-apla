@@ -150,8 +150,10 @@ main:
 		case '"':
 			quote = !quote
 		case ':':
-			key = trimString(in[start:i])
-			start = i + 1
+			if len(key) == 0 {
+				key = trimString(in[start:i])
+				start = i + 1
+			}
 		case ',':
 			val := trimString(in[start:i])
 			if len(val) == 0 && (len(key) > 0 || mapMode) {
