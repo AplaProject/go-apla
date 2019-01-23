@@ -199,7 +199,7 @@ func SysRollbackEditContract(transaction *model.DbTransaction, sysData SysRollDa
 // SysRollbackEcosystem is rolling back ecosystem
 func SysRollbackEcosystem(DbTransaction *model.DbTransaction, sysData SysRollData) error {
 	tables := make([]string, 0)
-	for table := range model.FirstEcosystemTables {
+	for table := range converter.FirstEcosystemTables {
 		tables = append(tables, table)
 		err := model.Delete(DbTransaction, `1_`+table, fmt.Sprintf(`where ecosystem='%d'`, sysData.ID))
 		if err != nil {

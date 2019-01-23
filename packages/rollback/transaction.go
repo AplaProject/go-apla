@@ -114,7 +114,7 @@ func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logg
 		table := tx[`table_name`]
 		if under := strings.IndexByte(table, '_'); under > 0 {
 			keyName := table[under+1:]
-			if v, ok := model.FirstEcosystemTables[keyName]; ok && !v {
+			if v, ok := converter.FirstEcosystemTables[keyName]; ok && !v {
 				where += fmt.Sprintf(` AND ecosystem='%d'`, converter.StrToInt64(table[:under]))
 				tx[`table_name`] = `1_` + keyName
 			}
