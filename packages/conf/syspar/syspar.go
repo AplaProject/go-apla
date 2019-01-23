@@ -105,12 +105,12 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	nodes           = make(map[int64]*FullNode)
-	nodesByPosition = make([]*FullNode, 0)
-	fuels           = make(map[int64]string)
-	wallets         = make(map[int64]string)
-	mutex           = &sync.RWMutex{}
-
+	nodes             = make(map[int64]*FullNode)
+	nodesByPosition   = make([]*FullNode, 0)
+	fuels             = make(map[int64]string)
+	wallets           = make(map[int64]string)
+	mutex             = &sync.RWMutex{}
+	activeNodes       = make(map[*FullNode]struct{})
 	firstBlockData    *consts.FirstBlock
 	errFirstBlockData = errors.New("Failed to get data of the first block")
 )
@@ -170,9 +170,14 @@ func updateNodes() (err error) {
 		}
 	}
 
+	activeNodes = make(map[*FullNode]struct{})
 	nodesByPosition = items
 	for _, item := range items {
 		nodes[item.KeyID] = item
+
+		if !item.Stopped {
+			activeNodes[item] = struct{}{}
+		}
 	}
 
 	return nil
@@ -227,6 +232,11 @@ func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	}
 
 	return 0, fmt.Errorf("Incorrect keyID")
+}
+
+// GetCountOfActiveNodes is count of nodes with stopped = false
+func GetCountOfActiveNodes() int64 {
+	return int64(len(activeNodes))
 }
 
 // GetNumberOfNodes is count number of nodes
