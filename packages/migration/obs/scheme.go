@@ -17,7 +17,7 @@ func GetOBSScript() string {
 		sectionsDataSQL,
 		tablesDataSQL,
 		applicationsDataSQL,
-		keysDataSQLVDE,
+		keysDataSQLOBS,
 		systemParametersDataSQL,
 	}
 
