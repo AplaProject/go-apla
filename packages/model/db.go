@@ -239,7 +239,7 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 
 // ExecOBSSchema is executing schema for off blockchainService
 func ExecOBSSchema(id int, wallet int64) error {
-	if err := DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet, consts.GuestPublic)).Error; err != nil {
+	if err := DBConn.Exec(fmt.Sprintf(obs.GetOBSScript(), id, wallet, consts.GuestPublic)).Error; err != nil {
 		return nil
 	}
 
