@@ -36,6 +36,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewEcosystem(t *testing.T) {
@@ -138,28 +139,18 @@ func TestEditEcosystem(t *testing.T) {
 }
 
 func TestEcosystemParams(t *testing.T) {
-	if err := keyLogin(1); err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, keyLogin(1))
+
 	var ret ecosystemParamsResult
-	err := sendGet(`ecosystemparams`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
+	require.NoError(t, sendGet(`ecosystemparams`, nil, &ret))
+
 	if len(ret.List) < 5 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 	}
-	err = sendGet(`ecosystemparams?names=ecosystem_name,new_table&ecosystem=1`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if len(ret.List) != 1 {
-		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
-	}
 
+	require.NoError(t, sendGet(`ecosystemparams?names=ecosystem_name,new_table&ecosystem=1`, nil, &ret))
+
+	require.Equalf(t, 1, len(ret.List), `wrong count of parameters %d`, len(ret.List))
 }
 
 func TestSystemParams(t *testing.T) {

@@ -33,10 +33,12 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.0"
+const VERSION = "1.2.4"
+
+const BV_ROLLBACK_HASH = 2
 
 // BLOCK_VERSION is block version
-const BLOCK_VERSION = 1
+const BLOCK_VERSION = BV_ROLLBACK_HASH
 
 // NETWORK_ID is id of network
 const NETWORK_ID = 1
@@ -201,3 +203,5 @@ const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470
 const StatusMainPage = `2`
 
 const NoneVDE = "none"
+
+const DBFindLimit = 10000

@@ -42,6 +42,69 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBin(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    data {    }
+    conditions {    }
+    action {
+		$result = DBFind("keys").Columns("pub")
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, _, err := postTxResult(rnd, &url.Values{})
+	assert.EqualError(t, err, `{"type":"panic","error":"Result is not valid utf-8 string"}`)
+}
+
+func TestMath(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `math` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    action {
+		var it float
+		it = Log(Pow(2,3) + 2)
+        $result = Sqrt( Round(it) + Floor(it)) + Log10("10")
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, msg, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	if msg != `3` {
+		t.Errorf(`wrong val %s`, msg)
+	}
+	form = url.Values{`Value`: {`contract ` + rnd + `1 {
+		action {
+			Sqrt(-1)
+		}
+	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd+`1`, &url.Values{}),
+		`{"type":"panic","error":"incorrect float result"}`)
+}
+
+func TestArray(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `db` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    data {    }
+    conditions {    }
+    action {
+        var a,b,d array
+        a[0] = 100
+        a[1] = 555
+        b[0] = 200
+        d[0] = a
+        d[1] = b
+        $result = d[0][0] // 0 - должно же быть 100 ???
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"multi-index is not supported"}`)
+}
+
 func TestDBFindContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
@@ -116,6 +179,35 @@ func TestUpdate_FullNodes(t *testing.T) {
 		return
 	}
 }
+
+func TestCrashContract(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `crash` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+			data {}
+		
+			conditions {
+				$Recipient = Append([], "1")
+				$Recipient = Append($Recipient, "7")
+			}
+		
+			action {
+				var i int
+				var steps map
+				var list myarr q b array
+				while i < Len($Recipient) {
+					steps["recipient_role"] = JSONDecode($Recipient[i])
+					list[i] = Append(list, steps)
+					myarr = Split(list[i], ",")
+					i = i + 1
+				}
+			}
+		}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(rnd, &url.Values{}), `{"type":"panic","error":"self assignment"}`)
+}
+
 func TestHardContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

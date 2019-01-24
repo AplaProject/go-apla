@@ -35,6 +35,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -780,6 +781,30 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	return nil
 }
 
+func (sc *SmartContract) CheckAccess(tableName, columns string, ecosystem int64) (table string, perm map[string]string,
+	cols string, err error) {
+	var collist []string
+
+	table = converter.ParseTable(tableName, ecosystem)
+	collist, err = GetColumns(columns)
+	if err != nil {
+		return
+	}
+	if !syspar.IsPrivateBlockchain() {
+		cols = PrepareColumns(collist)
+		return
+	}
+	perm, err = sc.AccessTablePerm(table, `read`)
+	if err != nil {
+		return
+	}
+	if err = sc.AccessColumns(table, &collist, false); err != nil {
+		return
+	}
+	cols = PrepareColumns(collist)
+	return
+}
+
 // AccessRights checks the access right by executing the condition value
 func (sc *SmartContract) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
@@ -1141,6 +1166,9 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.TxUsedCost = decimal.New(sc.TxFuel+price, 0)
 	if ctrctExtend[`result`] != nil {
 		result = fmt.Sprint(ctrctExtend[`result`])
+		if !utf8.ValidString(result) {
+			return retError(errNotValidUTF)
+		}
 		if len(result) > 255 {
 			result = result[:255]
 		}

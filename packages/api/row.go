@@ -66,11 +66,21 @@ func getRowHandler(w http.ResponseWriter, r *http.Request) {
 	logger := getLogger(r)
 
 	q := model.GetDB(nil).Limit(1)
-	table := params["name"]
-	if model.FirstEcosystemTables[table] {
-		q = q.Table("1_"+table).Where("id = ? and ecosystem = ?", params["id"], client.EcosystemID)
+
+	var (
+		err   error
+		table string
+	)
+	table, form.Columns, err = checkAccess(params["name"], form.Columns, client)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+
+	if converter.FirstEcosystemTables[params["name"]] {
+		q = q.Table(table).Where("id = ? and ecosystem = ?", params["id"], client.EcosystemID)
 	} else {
-		q = q.Table(converter.ParseTable(table, client.EcosystemID)).Where("id = ?", params["id"])
+		q = q.Table(table).Where("id = ?", params["id"])
 	}
 
 	if len(form.Columns) > 0 {

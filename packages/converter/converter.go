@@ -49,6 +49,27 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var FirstEcosystemTables = map[string]bool{
+	`keys`:               false,
+	`menu`:               true,
+	`pages`:              true,
+	`blocks`:             true,
+	`languages`:          true,
+	`contracts`:          true,
+	`tables`:             true,
+	`parameters`:         true,
+	`history`:            true,
+	`sections`:           true,
+	`members`:            false,
+	`roles`:              true,
+	`roles_participants`: true,
+	`notifications`:      true,
+	`applications`:       true,
+	`binaries`:           true,
+	`buffer_data`:        true,
+	`app_params`:         true,
+}
+
 // FillLeft is filling slice
 func FillLeft(slice []byte) []byte {
 	if len(slice) >= 32 {
@@ -858,7 +879,11 @@ func ParseName(in string) (id int64, name string) {
 func ParseTable(tblname string, defaultEcosystem int64) string {
 	ecosystem, name := ParseName(tblname)
 	if ecosystem == 0 {
-		ecosystem = defaultEcosystem
+		if FirstEcosystemTables[tblname] {
+			ecosystem = 1
+		} else {
+			ecosystem = defaultEcosystem
+		}
 		name = tblname
 	}
 	return strings.ToLower(fmt.Sprintf(`%d_%s`, ecosystem, Sanitize(name, ``)))

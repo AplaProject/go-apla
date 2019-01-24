@@ -42,6 +42,7 @@ type InfoBlock struct {
 	Time           int64  `gorm:"not null"`
 	CurrentVersion string `gorm:"not null"`
 	Sent           int8   `gorm:"not null"`
+	RollbacksHash  []byte `gorm:"not null"`
 }
 
 // TableName returns name of table
@@ -72,6 +73,11 @@ func (ib *InfoBlock) Create(transaction *DbTransaction) error {
 // MarkSent update model sent field
 func (ib *InfoBlock) MarkSent() error {
 	return DBConn.Model(ib).Update("sent", 1).Error
+}
+
+// UpdRollbackHash update model rollbacks_hash field
+func UpdRollbackHash(transaction *DbTransaction, hash []byte) error {
+	return GetDB(transaction).Model(&InfoBlock{}).Update("rollbacks_hash", hash).Error
 }
 
 // BlockGetUnsent returns InfoBlock
