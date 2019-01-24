@@ -33,7 +33,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.3"
+const VERSION = "1.2.4"
 
 const BV_ROLLBACK_HASH = 2
 
