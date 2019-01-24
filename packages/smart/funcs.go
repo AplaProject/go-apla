@@ -238,6 +238,12 @@ var (
 		"DelColumn":                    100,
 		"HexToPub":                     20,
 		"PubToHex":                     20,
+		"Log":                          15,
+		"Log10":                        15,
+		"Pow":                          15,
+		"Sqrt":                         15,
+		"Round":                        15,
+		"Floor":                        15,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -367,6 +373,12 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"UpdateNodesBan":               UpdateNodesBan,
 		"DBSelectMetrics":              DBSelectMetrics,
 		"DBCollectMetrics":             DBCollectMetrics,
+		"Log":                          Log,
+		"Log10":                        Log10,
+		"Pow":                          Pow,
+		"Sqrt":                         Sqrt,
+		"Round":                        Round,
+		"Floor":                        Floor,
 	}
 
 	switch vt {
@@ -969,8 +981,8 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	if limit == 0 {
 		limit = 25
 	}
-	if limit < 0 || limit > 250 {
-		limit = 250
+	if limit < 0 || limit > consts.DBFindLimit {
+		limit = consts.DBFindLimit
 	}
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil {

@@ -102,6 +102,8 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`ArrayToSource(src, )`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[],"source":"src","types":["text","text"]}}]`},
 	{`SetVar(arr, [1, "hello", {"val": "123000000000000000000", "OK":{"time": "1545788052"}, "type": "emission"}, {"val": "555000000000000000000", "arr":["time", "1545788125"], "type": "emission"}, 23])
 	ArrayToSource(src, #arr#)`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","hello"],["2","{\"val\": \"123000000000000000000\", \"OK\":{\"time\": \"1545788052\"}, \"type\": \"emission\"}"],["3","{\"val\": \"555000000000000000000\", \"arr\":[\"time\", \"1545788125\"], \"type\": \"emission\"}"],["4","23"]],"source":"src","types":["text","text"]}}]`},
