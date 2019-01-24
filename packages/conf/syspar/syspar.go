@@ -464,6 +464,12 @@ func SetFirstBlockData(data *consts.FirstBlock) {
 	if len(nodesByPosition) == 0 {
 		keyID := crypto.Address(firstBlockData.PublicKey)
 		addFullNodeKeys(keyID, firstBlockData.NodePublicKey)
+
+		activeNodes[&FullNode{
+			KeyID:     keyID,
+			PublicKey: firstBlockData.NodePublicKey,
+			Stopped:   false,
+		}] = struct{}{}
 	}
 }
 
