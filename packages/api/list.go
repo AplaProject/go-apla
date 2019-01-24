@@ -31,8 +31,11 @@ package api
 import (
 	"net/http"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -55,6 +58,22 @@ func (f *listForm) Validate(r *http.Request) error {
 	return f.rowForm.Validate(r)
 }
 
+func checkAccess(tableName, columns string, client *Client) (table string, cols string, err error) {
+	sc := smart.SmartContract{
+		OBS: conf.Config.IsSupportingOBS(),
+		VM:  smart.GetVM(),
+		TxSmart: tx.SmartContract{
+			Header: tx.Header{
+				EcosystemID: client.EcosystemID,
+				KeyID:       client.KeyID,
+				NetworkID:   consts.NETWORK_ID,
+			},
+		},
+	}
+	table, _, cols, err = sc.CheckAccess(tableName, columns, client.EcosystemID)
+	return
+}
+
 func getListHandler(w http.ResponseWriter, r *http.Request) {
 	form := &listForm{}
 	if err := parseForm(r, form); err != nil {
@@ -66,15 +85,23 @@ func getListHandler(w http.ResponseWriter, r *http.Request) {
 	client := getClient(r)
 	logger := getLogger(r)
 
-	table := params["name"]
-	q := model.GetTableQuery(table, client.EcosystemID)
+	var (
+		err   error
+		table string
+	)
+	table, form.Columns, err = checkAccess(params["name"], form.Columns, client)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+	q := model.GetTableQuery(params["name"], client.EcosystemID)
 
 	if len(form.Columns) > 0 {
 		q = q.Select("id," + form.Columns)
 	}
 
 	result := new(listResult)
-	err := q.Count(&result.Count).Error
+	err = q.Count(&result.Count).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
 		errorResponse(w, errTableNotFound.Errorf(table))

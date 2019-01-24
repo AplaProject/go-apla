@@ -195,7 +195,7 @@ func GetRowConditionsByTableNameAndID(transaction *DbTransaction, tblname string
 }
 
 func GetTableQuery(table string, ecosystemID int64) *gorm.DB {
-	if FirstEcosystemTables[table] {
+	if converter.FirstEcosystemTables[table] {
 		return DBConn.Table("1_"+table).Where("ecosystem = ?", ecosystemID)
 	}
 

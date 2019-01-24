@@ -66,19 +66,19 @@ func TestRead(t *testing.T) {
 		`contract Get%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Where({id:[{&gte: 2},{"$lte":5}]})
+			row = DBFind("%[1]s").Where({id:[{$gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetOK%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("my,amount").Where({id:[{&gte: 2},{"$lte":5}]})
+			row = DBFind("%[1]s").Columns("my,amount").Where({id:[{$gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetData%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("active").Where({id:[{&gte: 2},{"$lte":5}]})
+			row = DBFind("%[1]s").Columns("active").Where({id:[{$gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`func ReadFilter%s bool {
@@ -114,14 +114,26 @@ func TestRead(t *testing.T) {
 	assert.NoError(t, postTx(`GetOK`+name, &url.Values{}))
 
 	assert.NoError(t, postTx(`EditColumn`, &url.Values{`TableName`: {name}, `Name`: {`active`},
-		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}))
+		"UpdatePerm": {"true"}, "ReadPerm": {"true" /*"ContractConditions(\"MainCondition\")"*/},
+	}))
+	var ret listResult
+	assert.NoError(t, sendGet(`list/`+name, nil, &ret))
 
 	assert.NoError(t, postTx(`Get`+name, &url.Values{}))
+
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {
+		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
+	if !strings.Contains(RawToString(retCont.Tree), `Alex 2`) {
+		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
+		return
+	}
 
 	form = url.Values{"Name": {name}, "InsertPerm": {`ContractConditions("MainCondition")`},
 		"UpdatePerm": {"true"}, "ReadPerm": {`false`}, "NewColumnPerm": {`true`}}
 	assert.NoError(t, postTx(`EditTable`, &form))
 	assert.EqualError(t, postTx(`GetOK`+name, &url.Values{}), `{"type":"panic","error":"Access denied"}`)
+
+	assert.EqualError(t, sendGet(`list/`+name, nil, &ret), `400 {"error":"E_SERVER","msg":"Access denied"}`)
 
 	form = url.Values{"Name": {name}, "InsertPerm": {`ContractConditions("MainCondition")`},
 		"UpdatePerm": {"true"}, "FilterPerm": {`ReadFilter` + name + `()`},
