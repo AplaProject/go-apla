@@ -117,7 +117,9 @@ func GetWhere(inWhere *types.Map) (string, error) {
 					if err != nil {
 						return ``, err
 					}
-					list = append(list, where)
+					if len(where) > 0 {
+						list = append(list, where)
+					}
 				}
 			}
 			if len(list) > 0 {
