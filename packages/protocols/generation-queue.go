@@ -137,6 +137,10 @@ func (btc *BlockTimeCounter) TimeToGenerate(at time.Time, nodePosition int) (boo
 	return position == nodePosition, err
 }
 
+func (btc *BlockTimeCounter) MaxBlockForTime(t time.Time) int64 {
+	return int64(t.Sub(btc.start)/btc.duration) + 1
+}
+
 // NewBlockTimeCounter return initialized BlockTimeCounter
 func NewBlockTimeCounter() *BlockTimeCounter {
 	firstBlock, _ := syspar.GetFirstBlockData()

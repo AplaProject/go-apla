@@ -35,6 +35,8 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/protocols"
+
 	"github.com/AplaProject/go-apla/packages/block"
 	"github.com/AplaProject/go-apla/packages/network"
 	"github.com/AplaProject/go-apla/packages/network/tcpclient"
@@ -55,6 +57,7 @@ import (
 
 // ErrNodesUnavailable is returned when all nodes is unavailable
 var ErrNodesUnavailable = errors.New("All nodes unavailable")
+var ErrTooBigBlock = errors.New("block has too big id")
 
 // BlocksCollection collects and parses blocks
 func BlocksCollection(ctx context.Context, d *daemon) error {
@@ -94,6 +97,13 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 		return err
 	}
 
+	btc := protocols.NewBlockTimeCounter()
+	if btc.MaxBlockForTime(time.Now()) < maxBlockID {
+		if err := ban(d.logger, maxBlockID, host, ErrTooBigBlock.Error()); err != nil {
+			return err
+		}
+	}
+
 	infoBlock := &model.InfoBlock{}
 	found, err := infoBlock.Get()
 	if err != nil {
@@ -122,14 +132,9 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 
 // UpdateChain load from host all blocks from our last block to maxBlockID
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
-	var (
-		err   error
-		count int
-	)
-
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
-	if _, err = curBlock.Get(); err != nil {
+	if _, err := curBlock.Get(); err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting info block")
 		return err
 	}
@@ -186,7 +191,15 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		return nil
 	}
 
+	var count int
 	st := time.Now()
+
+	defer func() {
+		if count == 0 {
+			ban(d.logger, maxBlockID, host, "host returns max block, but not sent block bodies")
+		}
+	}()
+
 	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
@@ -488,4 +501,15 @@ func processBlocks(blocks []*block.Block) error {
 	}
 
 	return dbTransaction.Commit()
+}
+
+func ban(logger *log.Entry, block int64, host, reason string) error {
+	node, err := syspar.GetNodeByHost(host)
+	if err != nil {
+		logger.WithFields(log.Fields{"error": err}).Error("on getting node by host")
+		return ErrTooBigBlock
+	}
+	service.GetNodesBanService().RegisterBadBlock(node, block, time.Now().Unix(), reason)
+	logger.WithFields(log.Fields{"host": host, "block": block, "reason": reason})
+	return nil
 }

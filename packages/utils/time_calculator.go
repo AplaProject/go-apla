@@ -94,6 +94,10 @@ func (btc *BlockTimeCounter) RangesByTime(t time.Time) (start, end time.Time) {
 	return
 }
 
+func (btc *BlockTimeCounter) MaxBlockForTime(t time.Time) int64 {
+	return int64(t.Sub(btc.start)/btc.duration) + 1
+}
+
 // NewBlockTimeCounter return initialized BlockTimeCounter
 func NewBlockTimeCounter() *BlockTimeCounter {
 	firstBlock, _ := syspar.GetFirstBlockData()
