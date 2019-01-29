@@ -139,14 +139,16 @@ func resieveTxBodies(con io.Reader) ([]byte, error) {
 }
 
 func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
+	var lastBlockID int64 = 0
 	lastBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting cur block ID")
 		return utils.ErrInfo(err)
 	}
 	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound}).Error("cant find info block")
-		return errors.New("can't find info block")
+		log.WithFields(log.Fields{"type": consts.NotFound}).Debug("cant find info block")
+	} else {
+		lastBlockID = lastBlock.Header.BlockID
 	}
 
 	// get block ID
@@ -155,10 +157,9 @@ func processBlock(buf *bytes.Buffer, fullNodeID int64) error {
 
 	// get block hash
 	blockHash := buf.Next(consts.HashSize)
-	log.Debug("blockHash %x", blockHash)
 
 	// we accept only new blocks
-	if newBlockID >= lastBlock.Header.BlockID {
+	if newBlockID >= lastBlockID {
 		qb := &queue.QueueBlock{BlockHash: blockHash, BlockID: newBlockID, FullNodeID: fullNodeID}
 		if err := queue.ValidateBlockQueue.Enqueue(qb); err != nil {
 			log.WithFields(log.Fields{"type": consts.QueueError, "error": err}).Error("Creating QueueBlock")
