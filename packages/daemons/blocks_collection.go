@@ -196,7 +196,13 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 	defer func() {
 		if count == 0 {
-			ban(d.logger, maxBlockID, host, "host returns max block, but not sent block bodies")
+
+			header := utils.BlockData{
+				BlockID: maxBlockID,
+				Time:    time.Now().Unix(),
+			}
+			block := &block.Block{Header: header}
+			banNode(host, block, fmt.Errorf("host returns max block, but not sent block bodies"))
 		}
 	}()
 
@@ -501,15 +507,4 @@ func processBlocks(blocks []*block.Block) error {
 	}
 
 	return dbTransaction.Commit()
-}
-
-func ban(logger *log.Entry, block int64, host, reason string) error {
-	node, err := syspar.GetNodeByHost(host)
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err}).Error("on getting node by host")
-		return ErrTooBigBlock
-	}
-	service.GetNodesBanService().RegisterBadBlock(node, block, time.Now().Unix(), reason)
-	logger.WithFields(log.Fields{"host": host, "block": block, "reason": reason})
-	return nil
 }
