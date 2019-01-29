@@ -17,6 +17,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/queue"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/storage/metadb"
+	"github.com/GenesisKernel/memdb"
 
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
@@ -91,8 +93,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
-				Test:              test,
-				PrivateBlockchain: pb,
+				Test:                  test,
+				PrivateBlockchain:     pb,
 			},
 		)
 
@@ -108,6 +110,13 @@ var generateFirstBlockCmd = &cobra.Command{
 			}).Error("can't init gorm")
 			return
 		}
+
+		memdb, err := memdb.OpenDB(filepath.Join(conf.Config.DataDir, "meta.db"), true)
+		if err != nil {
+			return
+		}
+		model.MetaStorage = metadb.NewStorage(memdb)
+
 		err = queue.Init()
 		if err != nil {
 			return

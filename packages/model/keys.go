@@ -28,39 +28,28 @@
 
 package model
 
-import "fmt"
+import "strconv"
 
 // Key is model
 type Key struct {
-	ecosystem int64
-	ID        int64  `gorm:"primary_key;not null"`
-	PublicKey []byte `gorm:"column:pub;not null"`
-	Amount    string `gorm:"not null"`
-	Maxpay    string `gorm:"not null"`
-	Deleted   int64  `gorm:"not null"`
-	Blocked   int64  `gorm:"not null"`
+	ID          int64  `json:"id"`
+	EcosystemID int64  `json:"ecosystem_id"`
+	PublicKey   []byte `json:"public_key"`
+	Amount      string `json:"amount"`
+	Maxpay      string `json:"maxpay"`
+	Multi       bool   `json:"multi"`
+	Deleted     bool   `json:"deleted"`
+	Blocked     bool   `json:"blocked"`
 }
 
-// SetTablePrefix is setting table prefix
-func (m *Key) SetTablePrefix(prefix int64) *Key {
-	m.ecosystem = prefix
-	return m
-}
-
-// TableName returns name of table
-func (m Key) TableName() string {
-	if m.ecosystem == 0 {
-		m.ecosystem = 1
-	}
-	return `1_keys`
+func (k *Key) PrimaryKey() string {
+	return "1_keys:" + strconv.FormatInt(k.EcosystemID, 10) +
+		":" + strconv.FormatInt(k.ID, 10)
 }
 
 // Get is retrieving model from database
-func (m *Key) Get(wallet int64) (bool, error) {
-	return isFound(DBConn.Where("id = ? and ecosystem = ?", wallet, m.ecosystem).First(m))
-}
-
-// KeyTableName returns name of key table
-func KeyTableName(prefix int64) string {
-	return fmt.Sprintf("%d_keys", prefix)
+func (k *Key) Get(ecosystemID, id int64) (bool, error) {
+	k.ID = id
+	k.EcosystemID = ecosystemID
+	return MetaStorage.Begin(false).FindModel(k)
 }

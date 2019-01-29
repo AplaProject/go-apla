@@ -56,11 +56,11 @@ import (
 	"github.com/AplaProject/go-apla/packages/service"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/statsd"
+	"github.com/AplaProject/go-apla/packages/storage/metadb"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/vdemanager"
-
-	"github.com/AplaProject/go-apla/packages/storage/kv"
 	"github.com/GenesisKernel/memdb"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -244,12 +244,21 @@ func Start() {
 	}
 
 	initGorm(conf.Config.DB)
-	metaDB, err := memdb.OpenDB("meta.db", true)
+
+	// memdb, err := buntdb.Open(":memory")
+	mdb, err := memdb.OpenDB(filepath.Join(conf.Config.DataDir, "meta.db"), true)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
 		Exit(1)
 	}
-	model.MetadataRegistry, err = metadata.NewStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), false, true)
+
+	tx := mdb.Begin(true)
+	tx.AddIndex(memdb.NewIndex("keys:id", "keys:*", func(a, b string) bool {
+		return a < b
+	}))
+
+	model.MetaStorage = metadb.NewStorage(mdb)
+	// model.MetadataRegistry, err = metadata.NewStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), false, true)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("adding indexes")
 		Exit(1)

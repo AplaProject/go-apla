@@ -39,10 +39,10 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/storage/metadb"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
 	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
@@ -70,7 +70,8 @@ type Transaction struct {
 	TxContract    *smart.Contract
 	TxHeader      *blockchain.TxHeader
 	tx            custom.TransactionInterface
-	MultiTx       types.MultiTransaction
+	DbTransaction *model.DbTransaction
+	MetaTx        *metadb.Transaction
 	Rand          *rand.Rand
 	SysUpdate     bool
 	LdbTx         *leveldb.Transaction
@@ -275,7 +276,7 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
-		MetaDb:        t.MetaDb,
+		MetaTx:        t.MetaTx,
 	}
 	resultContract, err = sc.CallContract()
 	t.TxFuel = sc.TxFuel

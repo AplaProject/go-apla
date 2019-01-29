@@ -39,6 +39,8 @@ import (
 )
 
 func TestNewEcosystem(t *testing.T) {
+	apiAddress = "http://eu0.dev.apla.io:7079"
+
 	var (
 		err    error
 		result string

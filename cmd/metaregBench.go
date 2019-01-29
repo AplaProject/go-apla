@@ -1,29 +1,16 @@
 package cmd
 
 import (
-	"fmt"
-	"math/rand"
-	"os"
 	"strconv"
-	"sync/atomic"
-	"time"
 
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/registry/metadata"
-	"github.com/AplaProject/go-apla/packages/storage/kv"
-	"github.com/AplaProject/go-apla/packages/types"
-	"github.com/GenesisKernel/memdb"
-
-	ui "github.com/gizak/termui"
 	"github.com/spf13/cobra"
-	"github.com/tidwall/gjson"
 )
 
 // metaregBenchCmd represents the metaregBench command
 var metaregBenchCmd = &cobra.Command{
 	Use: "metaregBench",
 	Run: func(cmd *cobra.Command, args []string) {
-		setupGui()
+		// setupGui()
 	},
 }
 
@@ -40,7 +27,7 @@ func (t tt) GetTransactionHash() []byte {
 	return []byte(strconv.FormatInt(t.t, 10))
 }
 
-func setupGui() {
+/*func setupGui() {
 	err := ui.Init()
 	if err != nil {
 		panic(err)
@@ -239,3 +226,4 @@ func setupDB() (types.MetadataRegistryStorage, []int64) {
 	checkErr(metadataTx.Commit())
 	return storage, ids
 }
+*/

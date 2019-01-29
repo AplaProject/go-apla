@@ -34,7 +34,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/AplaProject/go-apla/packages/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/syndtr/goleveldb/leveldb"
 )
@@ -61,13 +60,13 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 		return err
 	}
 
-	metadb := model.MetadataRegistry.Begin(ldbTx)
-
-	err = rollbackBlock(dbTransaction, ldbTx, metadb, b)
+	// metadb := model.MetadataRegistry.Begin(ldbTx)
+	//err = rollbackBlock(dbTransaction, ldbTx, metadb, b)
+	err = rollbackBlock(dbTransaction, ldbTx, b)
 	if err != nil {
 		dbTransaction.Rollback()
 		ldbTx.Discard()
-		metadb.Rollback()
+		// metadb.Rollback()
 		return err
 	}
 
@@ -76,7 +75,7 @@ func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
 	return err
 }
 
-func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, metadb types.MetadataRegistryReaderWriter, block *block.PlayableBlock) error {
+func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, block *block.PlayableBlock) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Transactions) - 1; i >= 0; i-- {
@@ -91,10 +90,10 @@ func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transactio
 		}
 	}
 
-	err := metadb.RollbackBlock(block.Hash)
-	if err != nil {
-		return err
-	}
+	//err := metadb.RollbackBlock(block.Hash)
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }

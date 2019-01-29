@@ -28,65 +28,19 @@
 
 package model
 
-import (
-	"encoding/json"
-	"strconv"
-
-	"github.com/AplaProject/go-apla/packages/types"
-	"github.com/fatih/structs"
-	"github.com/mitchellh/mapstructure"
-	"github.com/tidwall/gjson"
-)
-
 const ecosysTable = "1_ecosystems"
 
 // Ecosystem is model
 type Ecosystem struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	IsValued bool   `json:"is_valued"`
+	ID       int64 `gorm:"primary_key;not null"`
+	Name     string
+	IsValued bool
 }
 
 // TableName returns name of table
 // only first ecosystem has this entity
-// TODO REMOVE
 func (sys *Ecosystem) TableName() string {
-	return "ecosystems"
-}
-
-func (sys Ecosystem) ModelName() string {
-	return "ecosystems"
-}
-
-func (sys Ecosystem) GetPrimaryKey() string {
-	return strconv.FormatInt(sys.ID, 10)
-}
-
-func (sys Ecosystem) CreateFromData(data map[string]interface{}) (types.RegistryModel, error) {
-	k := &Ecosystem{}
-	err := mapstructure.Decode(data, &k)
-	return k, err
-}
-
-func (sys Ecosystem) UpdateFromData(model types.RegistryModel, data map[string]interface{}) error {
-	oldStruct := model.(*Ecosystem)
-	return mapstructure.Decode(data, oldStruct)
-}
-
-func (ks Ecosystem) GetData() map[string]interface{} {
-	return structs.Map(ks)
-}
-
-func (sys Ecosystem) GetIndexes() []types.Index {
-	return []types.Index{
-		{
-			Name:     "name",
-			Registry: &types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
-			SortFn: func(a, b string) bool {
-				return gjson.Get(a, "name").Less(gjson.Get(b, "name"), false)
-			},
-		},
-	}
+	return ecosysTable
 }
 
 // GetAllSystemStatesIDs is retrieving all ecosystems ids
@@ -119,10 +73,4 @@ func (sys *Ecosystem) Get(id int64) (bool, error) {
 // Delete is deleting record
 func (sys *Ecosystem) Delete(transaction *DbTransaction) error {
 	return GetDB(transaction).Delete(sys).Error
-}
-
-func (sys *Ecosystem) UnmarshalJSON(b []byte) error {
-	type schema *Ecosystem
-	err := json.Unmarshal(b, schema(sys))
-	return err
 }

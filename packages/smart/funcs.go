@@ -59,6 +59,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/service"
 	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
+	"github.com/AplaProject/go-apla/packages/storage/metadb"
 	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/vdemanager"
@@ -140,7 +141,7 @@ type SmartContract struct {
 	TxSize        int64
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
-	MetaDb        types.MetadataRegistryReaderWriter
+	MetaTx        *metadb.Transaction
 	UndoLog       types.StateStorage
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
@@ -358,6 +359,11 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Throw":                        Throw,
 		"HexToPub":                     crypto.HexToPub,
 		"PubToHex":                     PubToHex,
+		"MetaCollectionCreate":         MetaCollectionCreate,
+		"MetaCollectionUpdate":         MetaCollectionUpdate,
+		"MetaInsert":                   MetaInsert,
+		"MetaGet":                      MetaGet,
+		"MetaUpdate":                   MetaUpdate,
 	}
 
 	switch vt {
@@ -699,6 +705,18 @@ func InitFirstEcosystem(sc *SmartContract, data string) error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
 		return err
 	}
+
+	err = sc.MetaTx.InsertModel(&model.Key{
+		ID:          keyID,
+		EcosystemID: 1,
+		PublicKey:   fbData.PublicKey,
+		Amount:      amount,
+	})
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting key")
+		return err
+	}
+
 	id, err := model.GetNextID(sc.DbTransaction, "1_pages")
 	if err != nil {
 		return utils.ErrInfo(err)
@@ -1146,7 +1164,7 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 	return 0, result, nil
 }
 
-func metadbSelect(sc *SmartContract, tblname string, inColumns []string, id int64, inOrder interface{},
+/* func metadbSelect(sc *SmartContract, tblname string, inColumns []string, id int64, inOrder interface{},
 	offset, limit, ecosystem int64,
 	inWhere map[string]interface{}) (int64, []interface{}, error) {
 
@@ -1189,6 +1207,7 @@ func metadbSelect(sc *SmartContract, tblname string, inColumns []string, id int6
 	// TODO
 	return 0, nil, nil
 }
+*/
 
 // DBUpdateExt updates the record in the specified table. You can specify 'where' query in params and then the values for this query
 func DBUpdateExt(sc *SmartContract, tblname string, where *types.Map,
@@ -1670,9 +1689,9 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 		}
 	}
 	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey}, `1_keys`, `id`, id)
-	registry := &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: "1"}}
+	// registry := &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: "1"}}
 
-	key := &model.KeySchema{}
+	/* key := &model.KeySchema{}
 	err = sc.MetaDb.Get(
 		registry,
 		strconv.FormatInt(id, 10),
@@ -1684,7 +1703,7 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError}).Error("Writing to metadb")
 		return qcost, nil
-	}
+	}*/
 
 	return qcost, nil
 }
@@ -1709,18 +1728,11 @@ func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
 		return err
 	}
 
-	// TODO remove old version, Ecosystem name to id
-	err = sc.MetaDb.Insert(nil, &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: "1"}},
-		strconv.FormatInt(id, 10),
-		model.KeySchema{ID: id, Amount: amount},
-	)
-
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError}).Error("Writing to metadb")
-		return err
-	}
-
-	return nil
+	return sc.MetaTx.InsertModel(&model.Key{
+		ID:          id,
+		EcosystemID: sc.TxSmart.Header.EcosystemID,
+		Amount:      amount,
+	})
 }
 
 // PermColumn is contract func

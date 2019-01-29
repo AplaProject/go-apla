@@ -34,6 +34,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/storage/metadb"
+
 	"github.com/AplaProject/go-apla/packages/blockchain"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -45,7 +47,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
-	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
@@ -92,9 +93,10 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 		return err
 	}
 	b.LDBTX = ldbtx
-	metaDbTx := model.MetadataRegistry.Begin(ldbtx)
 
-	err = b.Play(dbTransaction, txs, ldbtx, metaDbTx)
+	metaTx := model.MetaStorage.Begin(true)
+
+	err = b.Play(dbTransaction, txs, ldbtx, metaTx)
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		txs = []*blockchain.Transaction{}
@@ -130,7 +132,8 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 	} else if err != nil {
 		dbTransaction.Rollback()
 		ldbtx.Discard()
-		metaDbTx.Rollback()
+		metaTx.Rollback()
+
 		if b.GenBlock && b.StopCount == 0 {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
@@ -156,13 +159,14 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 	if err := bBlock.Insert(ldbtx, txs); err != nil {
 		dbTransaction.Rollback()
 		ldbtx.Discard()
+		metaTx.Rollback()
 		return err
 	}
 
 	// TODO double phase commit
 	dbTransaction.Commit()
 	ldbtx.Commit()
-	metaDbTx.Commit()
+	metaTx.Commit()
 
 	b.LDBTX = nil
 	if b.SysUpdate {
@@ -196,7 +200,7 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	return nil
 }
 
-func (b *PlayableBlock) Play(txs []*blockchain.Transaction, mt types.MultiTransaction) error {
+func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockchain.Transaction, ldbtx *leveldb.Transaction, metaTx *metadb.Transaction) error {
 	logger := b.GetLogger()
 	limits := NewLimits(b)
 
@@ -215,10 +219,16 @@ func (b *PlayableBlock) Play(txs []*blockchain.Transaction, mt types.MultiTransa
 		var (
 			err error
 		)
+		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
-		t.MultiTx = mt
+		t.MetaTx = metaTx
 
-		blockchain.IncrementTxAttemptCount(nil, t.TxHash)
+		blockchain.IncrementTxAttemptCount(ldbtx, t.TxHash)
+		err = dbTransaction.Savepoint(curTx)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
+			return err
+		}
 		var flush []smart.FlushInfo
 		msg, flush, err := t.Play()
 		if err == nil && t.TxSmart != nil {

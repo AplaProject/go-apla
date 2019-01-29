@@ -400,7 +400,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
 		return utils.ErrInfo(err)
 	}
-	metaDbTx := model.MetadataRegistry.Begin(ldbTx)
+	metaTx := model.MetaStorage.Begin(true)
 
 	// go through new blocks from the smallest block_id to the largest block_id
 	prevBlocks := make(map[int64]*block.PlayableBlock, 0)
@@ -435,7 +435,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 			return err
 		}
 
-		if err := b.Play(dbTransaction, txs, ldbTx, metaDbTx); err != nil {
+		if err := b.Play(dbTransaction, txs, ldbTx, metaTx); err != nil {
 			ldbTx.Discard()
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
@@ -461,7 +461,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		if err := bBlock.Insert(ldbTx, transactions); err != nil {
 			ldbTx.Discard()
 			dbTransaction.Rollback()
-			metaDbTx.Rollback()
+			metaTx.Rollback()
 			return err
 		}
 	}
@@ -469,7 +469,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 	// TODO double phase commit
 	err = dbTransaction.Commit()
 	err = ldbTx.Commit()
-	metaDbTx.Commit()
+	err = metaTx.Commit()
 
 	return err
 }

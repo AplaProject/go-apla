@@ -34,7 +34,6 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -512,17 +511,17 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 		return 0, logErrorDB(err, "insert new ecosystem to stat table")
 	}
 
-	if err := sc.MetaDb.Insert(
-		nil, // TODO
-		&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
-		strconv.FormatInt(id, 10),
-		model.Ecosystem{
-			ID:   id,
-			Name: name,
-		},
-	); err != nil {
-		return 0, logErrorDB(err, "insert new ecosystem to metadb")
-	}
+	// if err := sc.MetaDb.Insert(
+	// 	nil, // TODO
+	// 	&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
+	// 	strconv.FormatInt(id, 10),
+	// 	model.Ecosystem{
+	// 		ID:   id,
+	// 		Name: name,
+	// 	},
+	// ); err != nil {
+	// 	return 0, logErrorDB(err, "insert new ecosystem to metadb")
+	// }
 
 	if !sc.VDE {
 		if err := SysRollback(sc, SysRollData{Type: "NewEcosystem"}); err != nil {
@@ -538,18 +537,18 @@ func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
 		return err
 	}
 
-	err := sc.MetaDb.Update(
-		nil, // TODO
-		&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
-		strconv.FormatInt(sysID, 10),
-		model.Ecosystem{
-			ID:   sysID,
-			Name: newName,
-		},
-	)
-	if err != nil {
-		return logErrorDB(err, "insert new ecosystem to metadb")
-	}
+	// err := sc.MetaDb.Update(
+	// 	nil, // TODO
+	// 	&types.Registry{Name: "ecosystem", Type: types.RegistryTypePrimary},
+	// 	strconv.FormatInt(sysID, 10),
+	// 	model.Ecosystem{
+	// 		ID:   sysID,
+	// 		Name: newName,
+	// 	},
+	// )
+	// if err != nil {
+	// 	return logErrorDB(err, "insert new ecosystem to metadb")
+	// }
 
 	return nil
 }

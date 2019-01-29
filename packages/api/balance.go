@@ -62,8 +62,7 @@ func getBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := &model.Key{}
-	key.SetTablePrefix(form.EcosystemID)
-	_, err := key.Get(keyID)
+	_, err := key.Get(form.EcosystemID, keyID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting Key for wallet")
 		errorResponse(w, err)

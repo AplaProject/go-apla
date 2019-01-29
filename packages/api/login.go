@@ -136,8 +136,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	account := &model.Key{}
-	account.SetTablePrefix(client.EcosystemID)
-	isAccount, err := account.Get(wallet)
+	isAccount, err := account.Get(client.EcosystemID, wallet)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting public key from keys")
 		errorResponse(w, err)
@@ -145,7 +144,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if isAccount {
-		if account.Deleted == 1 {
+		if account.Deleted {
 			errorResponse(w, errDeletedKey)
 			return
 		}

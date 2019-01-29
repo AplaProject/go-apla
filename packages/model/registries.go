@@ -3,8 +3,8 @@ package model
 import "github.com/AplaProject/go-apla/packages/types"
 
 var registries = []types.RegistryModel{
-	&KeySchema{},
-	&Ecosystem{},
+	// &KeySchema{},
+	// &Ecosystem{},
 }
 
 func GetIndexes() []types.Index {

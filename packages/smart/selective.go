@@ -55,10 +55,11 @@ func addRollback(sc *SmartContract, table, tableID, rollbackInfoStr string) erro
 		return logErrorDB(err, "creating rollback tx")
 	}
 
-	sc.UndoLog.Save(types.State{
-		Transaction: sc.TxHash,
-		DBType:      types.DBTypeUsers,
-	})
+	// TODO: undo
+	// sc.UndoLog.Save(types.State{
+	// 	Transaction: sc.TxHash,
+	// 	DBType:      types.DBTypeUsers,
+	// })
 
 	return nil
 }

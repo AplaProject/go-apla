@@ -119,6 +119,5 @@ func getEcosystemKey(keyID, ecosystemID int64) (bool, error) {
 	}
 
 	key := &model.Key{}
-	key.SetTablePrefix(ecosystemID)
-	return key.Get(keyID)
+	return key.Get(ecosystemID, keyID)
 }
