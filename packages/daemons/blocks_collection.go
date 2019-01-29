@@ -99,9 +99,15 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 
 	btc := protocols.NewBlockTimeCounter()
 	if btc.MaxBlockForTime(time.Now()) < maxBlockID {
-		if err := ban(d.logger, maxBlockID, host, ErrTooBigBlock.Error()); err != nil {
-			return err
+		block := &block.Block{
+			Header: utils.BlockData{
+				BlockID: maxBlockID,
+				Time:    time.Now().Unix(),
+			},
 		}
+
+		banNode(host, block, ErrTooBigBlock)
+		return ErrTooBigBlock
 	}
 
 	infoBlock := &model.InfoBlock{}
