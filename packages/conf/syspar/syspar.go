@@ -113,6 +113,7 @@ var (
 	activeNodes       = make(map[*FullNode]struct{})
 	firstBlockData    *consts.FirstBlock
 	errFirstBlockData = errors.New("Failed to get data of the first block")
+	errNodeDisabled   = errors.New("node is disabled")
 )
 
 // SysUpdate reloads/updates values of system parameters
@@ -221,6 +222,9 @@ func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	var counter int64
 	for _, item := range nodesByPosition {
 		if item.Stopped {
+			if item.KeyID == keyID {
+				return 0, errNodeDisabled
+			}
 			continue
 		}
 
