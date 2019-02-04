@@ -886,82 +886,71 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 	return sc.TxCost
 }
 
-func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.Key,
-	fromID, toID int64) error {
-	// TODO memdb
-	/*
-		logger := sc.GetLogger()
+func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.Key) error {
+	logger := sc.GetLogger()
+	apl := sc.TxUsedCost.Mul(fuelRate)
 
-		apl := sc.TxUsedCost.Mul(fuelRate)
+	wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
+	if ierr != nil {
+		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
+		return ierr
+	}
+	if wltAmount.Cmp(apl) < 0 {
+		apl = wltAmount
+	}
 
-		wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
-		if ierr != nil {
-			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-			return ierr
+	commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
+	comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
+	fromIDString := converter.Int64ToStr(fromID)
+
+	payCommission := func(toID int64, sum decimal.Decimal) error {
+		toWallet := &model.Key{}
+		_, err = toWallet.Get(1, toID)
+		if err != nil {
+			return err
 		}
-		if wltAmount.Cmp(apl) < 0 {
-			apl = wltAmount
-		}
-
-		commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
-		walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
-		comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
-		fromIDString := converter.Int64ToStr(fromID)
-
-		payCommission := func(toID string, sum decimal.Decimal) error {
-			_, _, err := sc.update(
-				[]string{"+amount"}, []interface{}{sum}, walletTable, "id", toID)
-			if err != nil {
-				return err
-			}
-
-			_, _, err = sc.insert(
-				[]string{
-					"sender_id",
-					"recipient_id",
-					"amount",
-					"comment",
-					"block_id",
-					"txhash",
-					"ecosystem",
-					"created_at",
-				},
-				[]interface{}{
-					fromIDString,
-					toID,
-					sum,
-					comment,
-					sc.BlockData.BlockID,
-					sc.TxHash,
-					sc.TxSmart.TokenEcosystem,
-					sc.BlockData.Time,
-				},
-				`1_history`)
-			if err != nil {
-				return err
-			}
-
-			return nil
+		toWallet.Amount = toWallet.Amount.Add(sum)
+		err = sc.MetaTx.UpdateModel(toWallet)
+		if err != nil {
+			return err
 		}
 
-		if err := payCommission(converter.Int64ToStr(toID), apl.Sub(commission)); err != nil {
-			if err != errUpdNotExistRecord {
-				return err
-			}
-			apl = commission
-		}
+		return sc.MetaTx.InsertModel(&model.History{
+			ID:          UniqueID(sc),
+			SenderID:    fromID,
+			RecipientID: toID,
+			Amount:      sum,
+			Comment:     comment,
+			BlockID:     sc.BlockData.BlockID,
+			TxHash:      sc.TxHash,
+			CreatedAt:   sc.BlockData.Time,
+		})
+	}
 
-		if err := payCommission(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem), commission); err != nil {
-			if err != errUpdNotExistRecord {
-				return err
-			}
-			apl = apl.Sub(commission)
+	if err = payCommission(toID, apl.Sub(commission)); err != nil {
+		if err != errUpdNotExistRecord {
+			return err
 		}
+		apl = commission
+	}
 
-		if _, _, ierr := sc.update([]string{`-amount`}, []interface{}{apl}, walletTable, `id`,
-			fromIDString); ierr != nil {
-			return errCommission
-		}*/
+	walletID := converter.StrToInt64(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem))
+	if err = payCommission(walletID, commission); err != nil {
+		if err != errUpdNotExistRecord {
+			return err
+		}
+		apl = apl.Sub(commission)
+	}
+
+	_, err = payWallet.Get(1, payWallet.ID)
+	if err != nil {
+		return err
+	}
+	payWallet.Amount = payWallet.Amount.Sub(apl)
+	if err = sc.MetaTx.UpdateModel(payWallet); err != nil {
+		return errCommission
+	}
+
 	return nil
 }
 
@@ -1057,14 +1046,6 @@ func (sc *SmartContract) CallContract() (string, error) {
 		if len(wallet.PublicKey) > 0 {
 			public = wallet.PublicKey
 		}
-	}
-	if sc.TxSmart.Header.Name == "UpdFullNodes" {
-		node := syspar.GetNode(sc.TxSmart.Header.KeyID)
-		if node == nil {
-			logger.WithFields(log.Fields{"user_id": sc.TxSmart.Header.KeyID, "type": consts.NotFound}).Error("unknown node id")
-			return retError(errUnknownNodeID)
-		}
-		public = node.PublicKey
 	}
 	if len(public) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")

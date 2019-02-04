@@ -219,6 +219,8 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 	}
 	randBlock := rand.New(rand.NewSource(int64(seed)))
 
+	var counter uint64
+
 	for curTx, t := range b.Transactions {
 		var (
 			err error
@@ -226,6 +228,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
 		t.MetaTx = metaTx
+		t.Counter = &counter
 
 		blockchain.IncrementTxAttemptCount(ldbtx, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)

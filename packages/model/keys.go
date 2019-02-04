@@ -28,18 +28,22 @@
 
 package model
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/shopspring/decimal"
+)
 
 // Key is model
 type Key struct {
-	ID          int64  `json:"id"`
-	EcosystemID int64  `json:"ecosystem_id"`
-	PublicKey   []byte `json:"public_key"`
-	Amount      string `json:"amount"`
-	Maxpay      string `json:"maxpay"`
-	Multi       bool   `json:"multi"`
-	Deleted     bool   `json:"deleted"`
-	Blocked     bool   `json:"blocked"`
+	ID          int64           `json:"id"`
+	EcosystemID int64           `json:"ecosystem_id"`
+	PublicKey   []byte          `json:"public_key"`
+	Amount      decimal.Decimal `json:"amount"`
+	Maxpay      string          `json:"maxpay"`
+	Multi       bool            `json:"multi"`
+	Deleted     bool            `json:"deleted"`
+	Blocked     bool            `json:"blocked"`
 }
 
 func (k *Key) PrimaryKey() string {

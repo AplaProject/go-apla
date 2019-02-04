@@ -72,10 +72,11 @@ type Transaction struct {
 	tx            custom.TransactionInterface
 	DbTransaction *model.DbTransaction
 	MetaTx        *metadb.Transaction
-	Rand          *rand.Rand
 	SysUpdate     bool
 	LdbTx         *leveldb.Transaction
 	Notifications []smart.NotifyInfo
+	Rand          *rand.Rand
+	Counter       *uint64
 
 	SmartContract smart.SmartContract
 }
@@ -276,6 +277,7 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
+		Counter:       t.Counter,
 		MetaTx:        t.MetaTx,
 	}
 	resultContract, err = sc.CallContract()

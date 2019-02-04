@@ -32,6 +32,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/base64"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -44,6 +45,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -144,6 +146,7 @@ type SmartContract struct {
 	MetaTx        *metadb.Transaction
 	UndoLog       types.StateStorage
 	Rand          *rand.Rand
+	Counter       *uint64
 	FlushRollback []FlushInfo
 	Notifications []NotifyInfo
 }
@@ -359,11 +362,11 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Throw":                        Throw,
 		"HexToPub":                     crypto.HexToPub,
 		"PubToHex":                     PubToHex,
-		"MetaCollectionCreate":         MetaCollectionCreate,
-		"MetaCollectionUpdate":         MetaCollectionUpdate,
-		"MetaInsert":                   MetaInsert,
-		"MetaGet":                      MetaGet,
-		"MetaUpdate":                   MetaUpdate,
+		"MemCollectionCreate":          MemCollectionCreate,
+		"MemCollectionUpdate":          MemCollectionUpdate,
+		"MemInsert":                    MemInsert,
+		"MemGet":                       MemGet,
+		"MemUpdate":                    MemUpdate,
 	}
 
 	switch vt {
@@ -2547,4 +2550,11 @@ func PubToHex(in interface{}) (ret string) {
 		ret = crypto.PubToHex(v)
 	}
 	return
+}
+
+func UniqueID(sc *SmartContract) string {
+	b := make([]byte, 10)
+	binary.LittleEndian.PutUint64(b[:8], uint64(sc.BlockData.BlockID))
+	binary.LittleEndian.PutUint16(b[8:], uint16(atomic.AddUint64(sc.Counter, 1)))
+	return hex.EncodeToString(b)
 }

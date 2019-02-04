@@ -30,7 +30,6 @@ package model
 
 import (
 	"errors"
-	"time"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/shopspring/decimal"
@@ -40,30 +39,34 @@ var errLowBalance = errors.New("not enough APL on the balance")
 
 // History represent record of history table
 type History struct {
-	ecosystem   int64
-	ID          int64
+	ID string
+	// EcosystemID int64
 	SenderID    int64
 	RecipientID int64
 	Amount      decimal.Decimal
 	Comment     string
 	BlockID     int64
-	TxHash      []byte `gorm:"column:txhash"`
-	CreatedAt   time.Time
+	TxHash      []byte
+	CreatedAt   int64
 }
 
-// SetTablePrefix is setting table prefix
-func (h *History) SetTablePrefix(prefix int64) *History {
-	h.ecosystem = prefix
-	return h
+func (h *History) PrimaryKey() string {
+	return "1_history:" + h.ID
 }
 
-// TableName returns table name
-func (h *History) TableName() string {
-	if h.ecosystem == 0 {
-		h.ecosystem = 1
-	}
-	return `1_history`
-}
+// // SetTablePrefix is setting table prefix
+// func (h *History) SetTablePrefix(prefix int64) *History {
+// 	h.ecosystem = prefix
+// 	return h
+// }
+
+// // TableName returns table name
+// func (h *History) TableName() string {
+// 	if h.ecosystem == 0 {
+// 		h.ecosystem = 1
+// 	}
+// 	return `1_history`
+// }
 
 // APLTransfer from to amount
 type APLTransfer struct {
