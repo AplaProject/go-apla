@@ -38,6 +38,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/migration"
 	"github.com/AplaProject/go-apla/packages/migration/obs"
 
@@ -57,33 +58,12 @@ var (
 
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("Database connection error")
-
-	FirstEcosystemTables = map[string]bool{
-		`keys`:               false,
-		`menu`:               true,
-		`pages`:              true,
-		`blocks`:             true,
-		`languages`:          true,
-		`contracts`:          true,
-		`tables`:             true,
-		`parameters`:         true,
-		`history`:            true,
-		`sections`:           true,
-		`members`:            false,
-		`roles`:              true,
-		`roles_participants`: true,
-		`notifications`:      true,
-		`applications`:       true,
-		`binaries`:           true,
-		`buffer_data`:        true,
-		`app_params`:         true,
-	}
 )
 
 type KeyTableChecker struct{}
 
 func (ktc KeyTableChecker) IsKeyTable(tableName string) bool {
-	val, exist := FirstEcosystemTables[tableName]
+	val, exist := converter.FirstEcosystemTables[tableName]
 	return exist && !val
 }
 

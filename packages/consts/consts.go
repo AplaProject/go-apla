@@ -33,7 +33,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.3"
+const VERSION = "1.2.4"
 
 const BV_ROLLBACK_HASH = 2
 
@@ -203,3 +203,5 @@ const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470
 const StatusMainPage = `2`
 
 const NoneVDE = "none"
+
+const DBFindLimit = 10000

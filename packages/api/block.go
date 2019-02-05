@@ -192,18 +192,18 @@ type TxDetailedInfo struct {
 type BlockHeaderInfo struct {
 	BlockID      int64  `json:"block_id"`
 	Time         int64  `json:"time"`
-	EcosystemID  int64  `json:"ecosystem_id"`
+	EcosystemID  int64  `json:"-"`
 	KeyID        int64  `json:"key_id"`
 	NodePosition int64  `json:"node_position"`
-	Sign         []byte `json:"sign"`
-	Hash         []byte `json:"hash"`
+	Sign         []byte `json:"-"`
+	Hash         []byte `json:"-"`
 	Version      int    `json:"version"`
 }
 
 type BlockDetailedInfo struct {
 	Header        BlockHeaderInfo  `json:"header"`
 	Hash          []byte           `json:"hash"`
-	EcosystemID   int64            `json:"ecosystem_id"`
+	EcosystemID   int64            `json:"-"`
 	NodePosition  int64            `json:"node_position"`
 	KeyID         int64            `json:"key_id"`
 	Time          int64            `json:"time"`
@@ -211,8 +211,8 @@ type BlockDetailedInfo struct {
 	RollbacksHash []byte           `json:"rollbacks_hash"`
 	MrklRoot      []byte           `json:"mrkl_root"`
 	BinData       []byte           `json:"bin_data"`
-	SysUpdate     bool             `json:"sys_update"`
-	GenBlock      bool             `json:"gen_block"`
+	SysUpdate     bool             `json:"-"`
+	GenBlock      bool             `json:"-"`
 	StopCount     int              `json:"stop_count"`
 	Transactions  []TxDetailedInfo `json:"transactions"`
 }
