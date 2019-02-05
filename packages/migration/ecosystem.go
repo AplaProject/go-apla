@@ -29,6 +29,7 @@
 package migration
 
 import (
+	"fmt"
 	"strings"
 )
 
@@ -44,8 +45,10 @@ func GetEcosystemScript(privateBlockchain uint64) string {
 	}
 
 	if privateBlockchain == 1 {
+		fmt.Println(keysDataSQLPrivate)
 		scripts = append(scripts, keysDataSQLPrivate)
 	} else {
+		fmt.Println(keysDataSQLPublic)
 		scripts = append(scripts, keysDataSQLPublic)
 	}
 
