@@ -245,7 +245,7 @@ func (t *Transaction) parseFromContract(fillData bool) error {
 	found, err := key.Get(smartTx.KeyID)
 	if !found {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_key": t.TxKeyID}).Error("key ID not found")
-		return err
+		return fmt.Errorf("key not found")
 	}
 	if key.ReadOnly == 1 {
 		return fmt.Errorf("transaction aborted because of read_only key")
