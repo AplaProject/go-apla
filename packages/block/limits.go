@@ -74,6 +74,8 @@ var (
 	ErrLimitStop = errors.New(`stop generating block`)
 	// ErrLimitTime returns when the time limit exceeded
 	ErrLimitTime = errors.New(`Time limit exceeded`)
+	// Block creation stopped because incorrect transaction
+	ErrStop = errors.New(`incorrect transaction in new block`)
 )
 
 // NewLimits initializes Limits structure.
