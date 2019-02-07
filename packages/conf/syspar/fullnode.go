@@ -79,7 +79,7 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 	fn.TCPAddress = data.TCPAddress
 	fn.APIAddress = data.APIAddress
 	fn.KeyID = converter.StrToInt64(data.KeyID.String())
-
+	fn.Stopped = data.Stopped
 	if fn.PublicKey, err = crypto.HexToPub(data.PublicKey); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.PublicKey}).Error("converting full nodes public key from hex")
 		return err

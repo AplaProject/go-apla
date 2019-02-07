@@ -165,6 +165,7 @@ func updateNodes() (err error) {
 	items := make([]*FullNode, 0)
 	if len(cache[FullNodes]) > 0 {
 		err = json.Unmarshal([]byte(cache[FullNodes]), &items)
+
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "v": cache[FullNodes]}).Error("unmarshalling full nodes from json")
 			return err
@@ -429,7 +430,7 @@ func GetRemoteHosts() []string {
 	defer mutex.RUnlock()
 
 	for keyID, item := range nodes {
-		if keyID != conf.Config.KeyID {
+		if keyID != conf.Config.KeyID && !item.Stopped {
 			ret = append(ret, item.TCPAddress)
 		}
 	}
