@@ -1,44 +1,57 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package language
 
 import (
 	"encoding/json"
+	"strconv"
 	"strings"
+	"sync"
 	"unicode/utf8"
 
-	"strconv"
-
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	log "github.com/sirupsen/logrus"
 )
 
-//cacheLang is cache for language, first level map is app_id, second is lang_name, third is lang dictionary
+//cacheLang is cache for language, first level is lang_name, second is lang dictionary
 type cacheLang struct {
-	res map[int]map[string]*map[string]string
+	res map[string]*map[string]string
 }
 
 var (
 	// LangList is the list of available languages. It stores two-bytes codes
 	LangList []string
 	lang     = make(map[int]*cacheLang)
+	mutex    = &sync.RWMutex{}
 )
 
 // IsLang checks if there is a language with code name
@@ -63,12 +76,11 @@ func DefLang() string {
 }
 
 // UpdateLang updates language sources for the specified state
-func UpdateLang(state, appID int, name, value string, vde bool) {
-	if vde {
-		state = -state
-	}
+func UpdateLang(state int, name, value string) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	if _, ok := lang[state]; !ok {
-		lang[state] = &cacheLang{make(map[int]map[string]*map[string]string)}
+		lang[state] = &cacheLang{make(map[string]*map[string]string)}
 	}
 	var ires map[string]string
 	err := json.Unmarshal([]byte(value), &ires)
@@ -79,15 +91,12 @@ func UpdateLang(state, appID int, name, value string, vde bool) {
 		ires[strings.ToLower(key)] = val
 	}
 	if len(ires) > 0 {
-		if _, ok := (*lang[state]).res[appID]; !ok {
-			(*lang[state]).res[appID] = map[string]*map[string]string{}
-		}
-		(*lang[state]).res[appID][name] = &ires
+		(*lang[state]).res[name] = &ires
 	}
 }
 
 // loadLang download the language sources from database for the state
-func loadLang(state int, vde bool) error {
+func loadLang(state int) error {
 	language := &model.Language{}
 	prefix := strconv.FormatInt(int64(state), 10)
 
@@ -100,7 +109,7 @@ func loadLang(state int, vde bool) error {
 	for _, l := range languages {
 		list = append(list, l.ToMap())
 	}
-	res := make(map[int]map[string]*map[string]string)
+	res := make(map[string]*map[string]string)
 	for _, ilist := range list {
 		var ires map[string]string
 		err := json.Unmarshal([]byte(ilist[`res`]), &ires)
@@ -110,51 +119,43 @@ func loadLang(state int, vde bool) error {
 		for key, val := range ires {
 			ires[strings.ToLower(key)] = val
 		}
-		if _, ok := res[converter.StrToInt(ilist[`app_id`])]; !ok {
-			res[converter.StrToInt(ilist[`app_id`])] = map[string]*map[string]string{}
-		}
-		res[converter.StrToInt(ilist[`app_id`])][ilist[`name`]] = &ires
+		res[ilist[`name`]] = &ires
 	}
-	langInd := langIndex(state, vde)
-	if _, ok := lang[langInd]; !ok {
-		lang[langInd] = &cacheLang{}
+	mutex.Lock()
+	defer mutex.Unlock()
+	if _, ok := lang[state]; !ok {
+		lang[state] = &cacheLang{}
 	}
-	lang[langInd].res = res
+	lang[state].res = res
 	return nil
-}
-
-func langIndex(state int, vde bool) int {
-	if vde {
-		return -state
-	}
-	return state
 }
 
 // LangText looks for the specified word through language sources and returns the meaning of the source
 // if it is found. Search goes according to the languages specified in 'accept'
-func LangText(in string, state, appID int, accept string, vde bool) (string, bool) {
+func LangText(in string, state int, accept string) (string, bool) {
 	if strings.IndexByte(in, ' ') >= 0 || state == 0 {
 		return in, false
 	}
-	istate := langIndex(state, vde)
-	if _, ok := lang[istate]; !ok {
-		if err := loadLang(state, vde); err != nil {
+	ecosystem, name := converter.ParseName(in)
+	if ecosystem != 0 {
+		state = int(ecosystem)
+		in = name
+	}
+	if state == 0 {
+		return in, false
+	}
+	if _, ok := lang[state]; !ok {
+		if err := loadLang(state); err != nil {
 			return err.Error(), false
 		}
 	}
+	mutex.RLock()
+	defer mutex.RUnlock()
 	langs := strings.Split(accept, `,`)
-	if _, ok := (*lang[istate]).res[appID]; !ok {
-		var found bool
-		for appID, _ = range (*lang[istate]).res {
-			if _, found = (*lang[istate]).res[appID][in]; ok {
-				break
-			}
-		}
-		if !found {
-			return in, false
-		}
+	if _, ok := (*lang[state]).res[in]; !ok {
+		return in, false
 	}
-	if lres, ok := (*lang[istate]).res[appID][in]; ok {
+	if lres, ok := (*lang[state]).res[in]; ok {
 		lng := DefLang()
 		for _, val := range langs {
 			val = strings.ToLower(val)
@@ -187,7 +188,7 @@ func LangText(in string, state, appID int, accept string, vde bool) (string, boo
 
 // LangMacro replaces all inclusions of $resname$ in the incoming text with the corresponding language resources,
 // if they exist
-func LangMacro(input string, state, appID int, accept string, vde bool) string {
+func LangMacro(input string, state int, accept string) string {
 	if !strings.ContainsRune(input, '$') {
 		return input
 	}
@@ -214,7 +215,7 @@ func LangMacro(input string, state, appID int, accept string, vde bool) string {
 			continue
 		}
 		if isName {
-			value, ok := LangText(string(name), state, appID, accept, vde)
+			value, ok := LangText(string(name), state, accept)
 			if ok {
 				result = append(result, []rune(value)...)
 				isName = false

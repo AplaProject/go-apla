@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package script
 
@@ -26,8 +38,9 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/types"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -43,6 +56,7 @@ const (
 	Decimal = `decimal.Decimal`
 	// Interface is the constant string for interface type
 	Interface = `interface`
+	File      = `*types.Map`
 
 	brackets = `[]`
 
@@ -50,6 +64,7 @@ const (
 	maxMapCount   = 100000
 	maxCallDepth  = 1000
 	memoryLimit   = 128 << 20 // 128 MB
+	MaxErrLen     = 150
 )
 
 var sysVars = map[string]struct{}{
@@ -69,7 +84,6 @@ var sysVars = map[string]struct{}{
 	`type`:              {},
 	`txcost`:            {},
 	`txhash`:            {},
-	`role_id`:           {},
 	`guest_key`:         {},
 }
 
@@ -192,12 +206,9 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			stack Stacker
 			ok    bool
 		)
-		if finfo.Name != `ContractConditions` && finfo.Name != `ExecContract` &&
-			finfo.Name != `ContractAccess` {
-			if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
-				if err := stack.AppendStack(finfo.Name); err != nil {
-					return err
-				}
+		if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
+			if err := stack.AppendStack(finfo.Name); err != nil {
+				return err
 			}
 		}
 		(*rt.extend)[`rt`] = rt
@@ -238,7 +249,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 		}
 		rt.stack = rt.stack[:shift]
 		if stack != nil {
-			stack.AppendStack("")
+			stack.PopStack(finfo.Name)
 		}
 
 		for i, iret := range result {
@@ -392,6 +403,8 @@ func valueToBool(v interface{}) bool {
 		return val != nil && len(val) > 0
 	case map[string]string:
 		return val != nil && len(val) > 0
+	case *types.Map:
+		return val != nil && val.Size() > 0
 	default:
 		dec, _ := decimal.NewFromString(fmt.Sprintf(`%v`, val))
 		return dec.Cmp(decimal.New(0, 0)) != 0
@@ -459,7 +472,11 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 
 // SetVMError sets error of VM
 func SetVMError(eType string, eText interface{}) error {
-	out, err := json.Marshal(&VMError{Type: eType, Error: fmt.Sprintf(`%v`, eText)})
+	errText := fmt.Sprintf(`%v`, eText)
+	if len(errText) > MaxErrLen {
+		errText = errText[:MaxErrLen] + `...`
+	}
+	out, err := json.Marshal(&VMError{Type: eType, Error: errText})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling VMError")
 		out = []byte(`{"type": "panic", "error": "marshalling VMError"}`)
@@ -486,7 +503,7 @@ func (rt *RunTime) getResultValue(item mapItem) (value interface{}, err error) {
 			err = fmt.Errorf(eWrongVar, ivar.Obj.Value)
 		}
 	case mapMap:
-		value, err = rt.getResultMap(item.Value.(map[string]mapItem))
+		value, err = rt.getResultMap(item.Value.(*types.Map))
 	case mapArray:
 		value, err = rt.getResultArray(item.Value.([]mapItem))
 	}
@@ -505,16 +522,44 @@ func (rt *RunTime) getResultArray(cmd []mapItem) ([]interface{}, error) {
 	return initArr, nil
 }
 
-func (rt *RunTime) getResultMap(cmd map[string]mapItem) (map[string]interface{}, error) {
-	initMap := make(map[string]interface{})
-	for key, val := range cmd {
-		value, err := rt.getResultValue(val)
+func (rt *RunTime) getResultMap(cmd *types.Map) (*types.Map, error) {
+	initMap := types.NewMap()
+	for _, key := range cmd.Keys() {
+		val, _ := cmd.Get(key)
+		value, err := rt.getResultValue(val.(mapItem))
 		if err != nil {
 			return nil, err
 		}
-		initMap[key] = value
+		initMap.Set(key, value)
 	}
 	return initMap, nil
+}
+
+func isSelfAssignment(dest, value interface{}) bool {
+	if _, ok := value.([]interface{}); !ok {
+		if _, ok = value.(*types.Map); !ok {
+			return false
+		}
+	}
+	if reflect.ValueOf(dest).Pointer() == reflect.ValueOf(value).Pointer() {
+		return true
+	}
+	switch v := value.(type) {
+	case []interface{}:
+		for _, item := range v {
+
+			if isSelfAssignment(dest, item) {
+				return true
+			}
+		}
+	case *types.Map:
+		for _, item := range v.Values() {
+			if isSelfAssignment(dest, item) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // RunCode executes Block
@@ -537,8 +582,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			value = rt.stack[start-len(block.Info.(*FuncInfo).Params)+vkey]
 		} else {
 			value = reflect.New(vpar).Elem().Interface()
-			if vpar == reflect.TypeOf(map[string]interface{}{}) {
-				value = make(map[string]interface{})
+			if vpar == reflect.TypeOf(&types.Map{}) {
+				value = types.NewMap()
 			} else if vpar == reflect.TypeOf([]interface{}{}) {
 				value = make([]interface{}, 0, len(rt.vars)+1)
 			}
@@ -548,9 +593,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	if namemap != nil {
 		for key, item := range namemap {
 			params := (*block.Info.(*FuncInfo).Names)[key]
-			if params.Variadic {
-
-			}
 			for i, value := range item {
 				if params.Variadic && i >= len(params.Params)-1 {
 					off := varoff + params.Offset[len(params.Params)-1]
@@ -747,20 +789,22 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 		case cmdIndex:
 			rv := reflect.ValueOf(rt.stack[size-2])
-			switch rv.Kind() {
-			case reflect.Map:
+			itype := reflect.TypeOf(rt.stack[size-2]).String()
+
+			switch {
+			case itype == `*types.Map`:
 				if reflect.TypeOf(rt.stack[size-1]).String() != `string` {
 					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-1]).String())
 					break
 				}
-				v := rv.MapIndex(reflect.ValueOf(rt.stack[size-1]))
-				if v.IsValid() {
-					rt.stack[size-2] = v.Interface()
+				v, found := rt.stack[size-2].(*types.Map).Get(rt.stack[size-1].(string))
+				if found {
+					rt.stack[size-2] = v
 				} else {
 					rt.stack[size-2] = nil
 				}
 				rt.stack = rt.stack[:size-1]
-			case reflect.Slice:
+			case itype[:2] == brackets:
 				if reflect.TypeOf(rt.stack[size-1]).String() != `int64` {
 					err = fmt.Errorf(eArrIndex, reflect.TypeOf(rt.stack[size-1]).String())
 					break
@@ -789,10 +833,13 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					}
 				}
 			}
+			if isSelfAssignment(rt.stack[size-3], rt.stack[size-1]) {
+				return 0, errSelfAssignment
+			}
 
 			switch {
-			case itype[:3] == `map`:
-				if len(rt.stack[size-3].(map[string]interface{})) > maxMapCount {
+			case itype == `*types.Map`:
+				if rt.stack[size-3].(*types.Map).Size() > maxMapCount {
 					err = errMaxMapCount
 					break
 				}
@@ -800,7 +847,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					err = fmt.Errorf(eMapIndex, reflect.TypeOf(rt.stack[size-2]).String())
 					break
 				}
-				reflect.ValueOf(rt.stack[size-3]).SetMapIndex(reflect.ValueOf(rt.stack[size-2]), reflect.ValueOf(rt.stack[size-1]))
+				rt.stack[size-3].(*types.Map).Set(rt.stack[size-2].(string),
+					reflect.ValueOf(rt.stack[size-1]).Interface())
 				rt.stack = rt.stack[:size-2]
 			case itype[:2] == brackets:
 				if reflect.TypeOf(rt.stack[size-2]).String() != `int64` {
@@ -1166,7 +1214,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			rt.stack = append(rt.stack, initArray)
 		case cmdMapInit:
-			initMap, err := rt.getResultMap(cmd.Value.(map[string]mapItem))
+			initMap, err := rt.getResultMap(cmd.Value.(*types.Map))
 			if err != nil {
 				return 0, err
 			}

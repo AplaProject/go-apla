@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package converter
 
 import (
@@ -11,13 +39,36 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
+	"unicode"
 
 	"bytes"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
+
+var FirstEcosystemTables = map[string]bool{
+	`keys`:               false,
+	`menu`:               true,
+	`pages`:              true,
+	`blocks`:             true,
+	`languages`:          true,
+	`contracts`:          true,
+	`tables`:             true,
+	`parameters`:         true,
+	`history`:            true,
+	`sections`:           true,
+	`members`:            false,
+	`roles`:              true,
+	`roles_participants`: true,
+	`notifications`:      true,
+	`applications`:       true,
+	`binaries`:           true,
+	`buffer_data`:        true,
+	`app_params`:         true,
+}
 
 // FillLeft is filling slice
 func FillLeft(slice []byte) []byte {
@@ -160,7 +211,13 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 		log.WithFields(log.Fields{"data_length": buf.Len(), "length": int(length), "type": consts.UnmarshallingError}).Error("length of data is smaller then encoded length")
 		return 0, fmt.Errorf(`input slice has small size`)
 	}
-	return int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...))), nil
+
+	n := int(binary.BigEndian.Uint64(append(make([]byte, 8-length), buf.Next(int(length))...)))
+	if n < 0 {
+		return 0, fmt.Errorf(`input slice has negative size`)
+	}
+
+	return n, nil
 }
 
 // BinMarshal converts v parameter to []byte slice.
@@ -575,7 +632,8 @@ func InterfaceToStr(v interface{}) (string, error) {
 	case []byte:
 		str = string(v.([]byte))
 	default:
-		if reflect.TypeOf(v).String() == `map[string]interface {}` {
+		if reflect.TypeOf(v).String() == `map[string]interface {}` ||
+			reflect.TypeOf(v).String() == `*types.Map` {
 			if out, err := json.Marshal(v); err != nil {
 				log.WithFields(log.Fields{"error": err, "type": consts.JSONMarshallError}).Error("marshalling map for jsonb")
 				return ``, err
@@ -787,7 +845,7 @@ func checkSum(val []byte) int {
 
 // EGSMoney converts qEGS to EGS. For example, 123455000000000000000 => 123.455
 func EGSMoney(money string) string {
-	digit := consts.EGS_DIGIT
+	digit := consts.MoneyDigits
 	if len(money) < digit+1 {
 		money = strings.Repeat(`0`, digit+1-len(money)) + money
 	}
@@ -804,6 +862,31 @@ func EscapeForJSON(data string) string {
 func ValidateEmail(email string) bool {
 	Re := regexp.MustCompile(`^(?i)[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,4}$`)
 	return Re.MatchString(email)
+}
+
+// ParseName gets a state identifier and the name of the contract or table
+// from the full name like @[id]name
+func ParseName(in string) (id int64, name string) {
+	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
+	ret := re.FindStringSubmatch(in)
+	if len(ret) == 3 {
+		id = StrToInt64(ret[1])
+		name = ret[2]
+	}
+	return
+}
+
+func ParseTable(tblname string, defaultEcosystem int64) string {
+	ecosystem, name := ParseName(tblname)
+	if ecosystem == 0 {
+		if FirstEcosystemTables[tblname] {
+			ecosystem = 1
+		} else {
+			ecosystem = defaultEcosystem
+		}
+		name = tblname
+	}
+	return strings.ToLower(fmt.Sprintf(`%d_%s`, ecosystem, Sanitize(name, ``)))
 }
 
 func IsByteColumn(table, column string) bool {
@@ -892,11 +975,12 @@ func IsValidAddress(address string) bool {
 
 // Escape deletes unaccessable characters
 func Escape(data string) string {
-	out := make([]byte, 0, len(data)+2)
+	out := make([]rune, 0, len(data))
 	available := `_ ,=!-'()"?*$#{}<>: `
-	for _, ch := range []byte(data) {
+	for _, ch := range []rune(data) {
 		if (ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, ch) >= 0 {
+			(ch >= 'A' && ch <= 'Z') || strings.IndexByte(available, byte(ch)) >= 0 ||
+			unicode.IsLetter(ch) {
 			out = append(out, ch)
 		}
 	}
@@ -999,4 +1083,9 @@ func ValueToInt(v interface{}) (ret int64, err error) {
 			"value": fmt.Sprint(v)}).Error("converting value to int")
 	}
 	return
+}
+
+func Int64ToDateStr(date int64, format string) string {
+	t := time.Unix(date, 0)
+	return t.Format(format)
 }

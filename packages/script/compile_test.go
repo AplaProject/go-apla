@@ -1,26 +1,39 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package script
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"testing"
+
+	"github.com/AplaProject/go-apla/packages/types"
 
 	"github.com/shopspring/decimal"
 )
@@ -46,12 +59,18 @@ func (block *Block) String() (ret string) {
 	return
 }
 
-func getMap() map[string]interface{} {
-	return map[string]interface{}{`par0`: `Parameter 0`, `par1`: `Parameter 1`}
+func getMap() *types.Map {
+	myMap := types.NewMap()
+	myMap.Set(`par0`, `Parameter 0`)
+	myMap.Set(`par1`, `Parameter 1`)
+	return myMap
 }
 
 func getArray() []interface{} {
-	return []interface{}{map[string]interface{}{`par0`: `Parameter 0`, `par1`: `Parameter 1`},
+	myMap := types.NewMap()
+	myMap.Set(`par0`, `Parameter 0`)
+	myMap.Set(`par1`, `Parameter 1`)
+	return []interface{}{myMap,
 		"The second string", int64(2000)}
 }
 
@@ -69,22 +88,8 @@ func Money(v interface{}) (ret decimal.Decimal) {
 	return ret
 }
 
-func outMap(v map[string]interface{}) string {
-	keys := make([]string, 0)
-	for key := range v {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	values := make([]string, 0, len(keys))
-	for _, key := range keys {
-		switch val := v[key].(type) {
-		case map[string]interface{}:
-			values = append(values, fmt.Sprintf(`"%v":%v`, key, outMap(val)))
-		default:
-			values = append(values, fmt.Sprintf(`"%v":%v`, key, val))
-		}
-	}
-	return `{` + strings.Join(values, ` `) + `}`
+func outMap(v *types.Map) string {
+	return fmt.Sprint(v)
 }
 
 func TestVMCompile(t *testing.T) {
@@ -104,7 +109,6 @@ func TestVMCompile(t *testing.T) {
 			return CallContract("@22sets", par) + "=" + sets()
 		}
 		`, `result`, `Name parameter=Name parameter`},
-
 		{`func proc(par string) string {
 					return par + "proc"
 					}
@@ -180,7 +184,7 @@ func TestVMCompile(t *testing.T) {
 								//@26empty("test",10)
 								empty("toempty", 10)
 								Println( "mytest", $parent)
-								return "OK"
+								return "OK INIT"
 							}
 						}
 						contract empty {
@@ -193,7 +197,7 @@ func TestVMCompile(t *testing.T) {
 								}
 							}
 						}
-						`, `mytest.init`, `OK`},
+						`, `mytest.init`, `OK INIT`},
 		{`func line_test string {
 						return "Start " +
 						Sprintf( "My String %s %d %d",
@@ -534,7 +538,7 @@ func TestVMCompile(t *testing.T) {
 			"in": true, "var": i, sub: sub, "Company": {"Name": "Ltd", Country: s, 
 				Arr: [s, 20, "finish"]}}
 			return outMap(my) + Sprintf("%v", list)
-		}`, `initmap`, `{"22":MY STRING "Company":{"Arr":[Spain 20 finish] "Country":Spain "Name":Ltd} "ext":Ooops "float":1.2 "in":true "qqq":10 "sub":{"lastname":Smith "myarr":[] "name":John} "var":256}[0 256 map[item:256] [Ooops]]`},
+		}`, `initmap`, `map[qqq:10 22:MY STRING float:1.2 ext:Ooops in:true var:256 sub:map[name:John lastname:Smith myarr:[]] Company:map[Name:Ltd Country:Spain Arr:[Spain 20 finish]]][0 256 map[item:256] [Ooops]]`},
 		{`func test() string {
 			var where map
 			where["name"] = {"$in": "menus_names"}
@@ -554,25 +558,157 @@ func TestVMCompile(t *testing.T) {
 			var par map
 			return CallContract("TestCyr", par) 
 		}`, `result`, `тест`},
+		{`contract MainCond {
+			conditions {
+				error $test
+			}
+			action {
+				$result = "OK"
+			}
+		}
+		func result() bool {
+			return MainCond
+		}
+		`, `result`, `unknown variable MainCond`},
+		{`func myFunc(my string) string {
+			return Sprintf("writable: %s", my)
+		}
+		contract mySet {
+			conditions {
+				myFunc("test")	
+			}
+			action {
+				myFunc("test")	
+			}
+		}	
+		contract myExec {
+			conditions {
+				mySet()
+			}
+			action {
+				mySet()
+				$result = "OK"
+			}
+		}
+		func result() string {
+			myExec()
+			return "COND"
+		}`, `result`, `'conditions' cannot call contracts or functions which can modify the blockchain database.`},
+		{`func test string {
+			var s string
+			var m map
+			m = {f: 5, b: 2, a: 1, d: 3, c: 0, e: 4}
+			var i int
+			while i<3{
+				s = s + Sprintf("%v", m)
+				i = i + 1
+			}
+			return s
+		}
+		`, `test`, `map[f:5 b:2 a:1 d:3 c:0 e:4]map[f:5 b:2 a:1 d:3 c:0 e:4]map[f:5 b:2 a:1 d:3 c:0 e:4]`},
+		{`contract qqq3 {
+			data {
+				Name string "aaq"
+				Temp
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq3.action`, `expecting type of the data field [Ln:5 Col:1]`},
+		{`contract qqq2 {
+			data {
+				Name string "aaq"
+				"awede"
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq2.action`, `unexpected tag [Ln:4 Col:6]`},
+		{`contract qqq1 {
+			data {
+				string Name qwerty
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq1.action`, `expecting name of the data field [Ln:3 Col:6]`},
+		{`contract qqq {
+			data {
+				Name qwerty
+			}
+			action {
+				$result = $Name
+			}
+		}
+		`, `qqq.action`, `expecting type of the data field [Ln:3 Col:11]`},
+		{`contract qq3 {
+			data {
+				Id uint
+			}
+			action {
+				$result = "OK"
+			}
+		}
+		`, `qq3.action`, `expecting type of the data field [Ln:3 Col:9]`},
+		{`contract qq2 {
+			data {
+				Id, ID2 int
+			}
+			action {
+				$result = str($Id) + str($ID2)
+			}
+		}
+		func getqq() string {
+			return qq2("Id,ID2", 10,20)
+		}`, `getqq`, `1020`},
+		{`func IND() string {
+			var a,b,d array
+			a[0] = 100
+			a[1] = 555
+			b[0] = 200
+			d[0] = a
+			d[1] = b
+			d[0][0] =  777
+	}`, `IND`, `multi-index is not supported`},
+		{`func result() {
+		/*
+		aa
+		/*bb*/
+		
+		error "test"*/
+		}`, `result`, `unexpected operator; expecting operand`},
+		{`func result() {
+				error "test"*
+				}`, `result`, `unexpected end of the expression`},
 	}
 	vm := NewVM()
 	vm.Extern = true
 	vm.Extend(&ExtendData{map[string]interface{}{"Println": fmt.Println, "Sprintf": fmt.Sprintf,
 		"GetMap": getMap, "GetArray": getArray, "lenArray": lenArray, "outMap": outMap,
-		"str": str, "Money": Money, "Replace": strings.Replace}, nil})
+		"str": str, "Money": Money, "Replace": strings.Replace}, nil,
+		map[string]struct{}{"Sprintf": {}}})
 
 	for ikey, item := range test {
+		if ikey > 100 {
+			break
+		}
 		source := []rune(item.Input)
 		if err := vm.Compile(source, &OwnerInfo{StateID: uint32(ikey) + 22, Active: true, TableID: 1}); err != nil {
 			if err.Error() != item.Output {
-				t.Error(err)
+				t.Errorf(`%s != %s`, err, item.Output)
 				break
 			}
 		} else {
+			glob := types.NewMap()
+			glob.Set(`test`, `String value`)
+			glob.Set(`number`, 1001)
 			if out, err := vm.Call(item.Func, nil, &map[string]interface{}{
 				`rt_state`: uint32(ikey) + 22, `data`: make([]interface{}, 0),
 				`test1`: 101, `test2`: `test 2`,
-				"glob": map[string]interface{}{`test`: `String value`, `number`: 1001},
+				"glob": glob,
 				`test3`: func(param int64) string {
 					return fmt.Sprintf("test=%d=test", param)
 				},
@@ -603,7 +739,7 @@ func TestContractList(t *testing.T) {
 		action {
 		}
 		func price() int {
-			return  SysParamInt("contract_price")
+			return  SysParamInt("price_create_contract")
 		}
 	}func MyFunc {}`,
 		`NewContract,MyFunc`},

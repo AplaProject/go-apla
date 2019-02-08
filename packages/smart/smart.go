@@ -1,37 +1,50 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package smart
 
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"strconv"
+	"regexp"
 	"strings"
+	"unicode/utf8"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
@@ -48,6 +61,10 @@ type Contract struct {
 	StackCont     []interface{} // Stack of called contracts
 	Extend        *map[string]interface{}
 	Block         *script.Block
+}
+
+func (c *Contract) Info() *script.ContractInfo {
+	return c.Block.Info.(*script.ContractInfo)
 }
 
 const (
@@ -79,7 +96,15 @@ func (sc SmartContract) GetLogger() *log.Entry {
 	if sc.TxContract != nil {
 		name = sc.TxContract.Name
 	}
-	return log.WithFields(log.Fields{"vde": sc.VDE, "name": name})
+	return log.WithFields(log.Fields{"obs": sc.OBS, "name": name})
+}
+
+func InitVM() {
+	vm := GetVM()
+
+	vmt := defineVMType()
+
+	EmbedFuncs(vm, vmt)
 }
 
 func newVM() *script.VM {
@@ -119,8 +144,48 @@ func VMCompileBlock(vm *script.VM, src string, owner *script.OwnerInfo) (*script
 	return vm.CompileBlock([]rune(src), owner)
 }
 
+func getContractList(src string) (list []string) {
+	for _, funcCond := range []string{`ContractConditions`, `ContractAccess`} {
+		if strings.Contains(src, funcCond) {
+			if ret := regexp.MustCompile(funcCond +
+				`\(\s*(.*)\s*\)`).FindStringSubmatch(src); len(ret) == 2 {
+				for _, item := range strings.Split(ret[1], `,`) {
+					list = append(list, strings.Trim(item, "\"` "))
+				}
+			}
+		}
+	}
+	return
+}
+
 func VMCompileEval(vm *script.VM, src string, prefix uint32) error {
-	return vm.CompileEval(src, prefix)
+	var ok bool
+	if len(src) == 0 {
+		return nil
+	}
+	allowed := []string{`0`, `1`, `true`, `false`, `ContractConditions\(\s*\".*\"\s*\)`,
+		`ContractAccess\(\s*\".*\"\s*\)`, `RoleAccess\(\s*.*\s*\)`}
+	for _, v := range allowed {
+		re := regexp.MustCompile(`^` + v + `$`)
+		if re.Match([]byte(src)) {
+			ok = true
+			break
+		}
+	}
+	if !ok {
+		return fmt.Errorf(eConditionNotAllowed, src)
+	}
+	err := vm.CompileEval(src, prefix)
+	if err != nil {
+		return err
+	}
+	re := regexp.MustCompile(`^@?[\d\w\_]+$`)
+	for _, item := range getContractList(src) {
+		if len(item) == 0 || !re.Match([]byte(item)) {
+			return errIncorrectParameter
+		}
+	}
+	return nil
 }
 
 func VMEvalIf(vm *script.VM, src string, state uint32, extend *map[string]interface{}) (bool, error) {
@@ -136,24 +201,25 @@ func vmExtend(vm *script.VM, ext *script.ExtendData) {
 }
 
 func VMRun(vm *script.VM, block *script.Block, params []interface{}, extend *map[string]interface{}) (ret []interface{}, err error) {
-	var extcost int64
-	cost := script.CostDefault
+	var cost int64
 	if ecost, ok := (*extend)[`txcost`]; ok {
 		cost = ecost.(int64)
+	} else {
+		cost = syspar.GetMaxCost()
 	}
 	rt := vm.RunInit(cost)
 	ret, err = rt.Run(block, params, extend)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("running block in smart vm")
 	}
-	if ecost, ok := (*extend)[`txcost`]; ok && cost > ecost.(int64) {
-		extcost = cost - ecost.(int64)
-	}
-	(*extend)[`txcost`] = rt.Cost() - extcost
+	(*extend)[`txcost`] = rt.Cost()
 	return
 }
 
 func VMGetContract(vm *script.VM, name string, state uint32) *Contract {
+	if len(name) == 0 {
+		return nil
+	}
 	name = script.StateName(state, name)
 	obj, ok := vm.Objects[name]
 
@@ -193,8 +259,19 @@ func vmGetUsedContracts(vm *script.VM, name string, state uint32, full bool) []s
 }
 
 func VMGetContractByID(vm *script.VM, id int32) *Contract {
-	idcont := id // - CNTOFF
-	if len(vm.Children) <= int(idcont) || vm.Children[idcont].Type != script.ObjContract {
+	var tableID int64
+	if id > consts.ShiftContractID {
+		tableID = int64(id - consts.ShiftContractID)
+		id = int32(tableID + vm.ShiftContract)
+	}
+	idcont := id
+	if len(vm.Children) <= int(idcont) {
+		return nil
+	}
+	if vm.Children[idcont] == nil || vm.Children[idcont].Type != script.ObjContract {
+		return nil
+	}
+	if tableID > 0 && vm.Children[idcont].Info.(*script.ContractInfo).Owner.TableID != tableID {
 		return nil
 	}
 	return &Contract{Name: vm.Children[idcont].Info.(*script.ContractInfo).Name,
@@ -272,7 +349,7 @@ func ActivateContract(tblid, state int64, active bool) {
 
 // SetContractWallet changes WalletID of the contract in smartVM
 func SetContractWallet(sc *SmartContract, tblid, state int64, wallet int64) error {
-	if err := validateAccess(`SetContractWallet`, sc, nEditContract); err != nil {
+	if err := validateAccess(`SetContractWallet`, sc, nBindWallet, nUnbindWallet); err != nil {
 		return err
 	}
 	for i, item := range smartVM.Block.Children {
@@ -309,33 +386,71 @@ func (contract *Contract) GetFunc(name string) *script.Block {
 	return nil
 }
 
+func loadContractList(list []model.Contract) error {
+	if smartVM.ShiftContract == 0 {
+		LoadSysFuncs(smartVM, 1)
+		smartVM.ShiftContract = int64(len(smartVM.Children) - 1)
+	}
+
+	for _, item := range list {
+		clist, err := script.ContractsList(item.Value)
+		if err != nil {
+			return err
+		}
+		owner := script.OwnerInfo{
+			StateID:  uint32(item.EcosystemID),
+			Active:   false,
+			TableID:  item.ID,
+			WalletID: item.WalletID,
+			TokenID:  item.TokenID,
+		}
+		if err = Compile(item.Value, &owner); err != nil {
+			logErrorValue(err, consts.EvalError, "Load Contract", strings.Join(clist, `,`))
+		}
+	}
+	return nil
+}
+
+func defineVMType() script.VMType {
+
+	if conf.Config.IsOBS() {
+		return script.VMTypeOBS
+	}
+
+	if conf.Config.IsOBSMaster() {
+		return script.VMTypeOBSMaster
+	}
+
+	return script.VMTypeSmart
+}
+
 // LoadContracts reads and compiles contracts from smart_contracts tables
-func LoadContracts(transaction *model.DbTransaction) error {
-	ecosystemsIds, err := model.GetAllSystemStatesIDs()
+func LoadContracts() error {
+	contract := &model.Contract{}
+	count, err := contract.Count()
 	if err != nil {
-		return logErrorDB(err, "selecting ids from ecosystems")
+		return logErrorDB(err, "getting count of contracts")
 	}
 
 	defer ExternOff()
-	if err := LoadContract(transaction, "system"); err != nil {
-		return err
-	}
-
-	for _, ecosystemID := range ecosystemsIds {
-		prefix := strconv.FormatInt(ecosystemID, 10)
-		if err := LoadContract(transaction, prefix); err != nil {
+	var offset int64
+	listCount := int64(consts.ContractList)
+	for ; offset < count; offset += listCount {
+		list, err := contract.GetList(offset, listCount)
+		if err != nil {
+			return logErrorDB(err, "getting list of contracts")
+		}
+		if err = loadContractList(list); err != nil {
 			return err
 		}
 	}
-
-	ExternOff()
 	return nil
 }
 
 func LoadSysFuncs(vm *script.VM, state int) error {
 	code := `func DBFind(table string).Columns(columns string).Where(where map)
-	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int).Ecosystem(ecosystem int) array {
-   return DBSelect(table, columns, id, order, offset, limit, ecosystem, where)
+	.WhereId(id int).Order(order string).Limit(limit int).Offset(offset int) array {
+   return DBSelect(table, columns, id, order, offset, limit, where)
 }
 
 func One(list array, name string) string {
@@ -384,10 +499,10 @@ func Row(list array) map {
 }
 
 func DBRow(table string).Columns(columns string).Where(where map)
-   .WhereId(id int).Order(order string).Ecosystem(ecosystem int) map {
+   .WhereId(id int).Order(order string) map {
    
    var result array
-   result = DBFind(table).Columns(columns).Where(where).WhereId(id).Order(order).Ecosystem(ecosystem)
+   result = DBFind(table).Columns(columns).Where(where).WhereId(id).Order(order)
 
    var row map
    if Len(result) > 0 {
@@ -414,81 +529,23 @@ func ConditionById(table string, validate bool) {
 }
 
 // LoadContract reads and compiles contract of new state
-func LoadContract(transaction *model.DbTransaction, prefix string) (err error) {
-	var contracts []map[string]string
-	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
+func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error) {
+
+	contract := &model.Contract{}
+
+	defer ExternOff()
+	list, err := contract.GetFromEcosystem(transaction, ecosystem)
 	if err != nil {
-		return logErrorDB(err, "selecting all transactions from contracts")
+		return logErrorDB(err, "selecting all contracts from ecosystem")
 	}
-	state := uint32(converter.StrToInt64(prefix))
-	LoadSysFuncs(smartVM, int(state))
-	for _, item := range contracts {
-		list, err := script.ContractsList(item[`value`])
-		if err != nil {
-			return err
-		}
-		names := strings.Join(list, `,`)
-		owner := script.OwnerInfo{
-			StateID:  state,
-			Active:   item[`active`] == `1`,
-			TableID:  converter.StrToInt64(item[`id`]),
-			WalletID: converter.StrToInt64(item[`wallet_id`]),
-			TokenID:  converter.StrToInt64(item[`token_id`]),
-		}
-		if err = Compile(item[`value`], &owner); err != nil {
-			logErrorValue(err, consts.EvalError, "Load Contract", names)
-		}
-	}
-
-	return
-}
-
-func LoadVDEContracts(transaction *model.DbTransaction, prefix string) (err error) {
-	var contracts []map[string]string
-
-	if !model.IsTable(prefix + `_contracts`) {
-		return
-	}
-	contracts, err = model.GetAllTransaction(transaction, `select * from "`+prefix+`_contracts" order by id`, -1)
-	if err != nil {
+	if err = loadContractList(list); err != nil {
 		return err
 	}
-	state := converter.StrToInt64(prefix)
-	vm := GetVM()
-
-	var vmt script.VMType
-	if conf.Config.IsVDE() {
-		vmt = script.VMTypeVDE
-	} else if conf.Config.IsVDEMaster() {
-		vmt = script.VMTypeVDEMaster
-	}
-
-	EmbedFuncs(vm, vmt)
-	LoadSysFuncs(vm, int(state))
-	for _, item := range contracts {
-		list, err := script.ContractsList(item[`value`])
-		if err != nil {
-			return err
-		}
-		names := strings.Join(list, `,`)
-		owner := script.OwnerInfo{
-			StateID:  uint32(state),
-			Active:   false,
-			TableID:  converter.StrToInt64(item[`id`]),
-			WalletID: 0,
-			TokenID:  0,
-		}
-
-		if err = vmCompile(vm, item[`value`], &owner); err != nil {
-			logErrorValue(err, consts.EvalError, "Load VDE Contract", names)
-		}
-	}
-
 	return
 }
 
 func (sc *SmartContract) getExtend() *map[string]interface{} {
-	var block, blockTime, blockKeyID int64
+	var block, blockTime, blockKeyID, blockNodePosition int64
 
 	head := sc.TxSmart
 	keyID := int64(head.KeyID)
@@ -496,12 +553,13 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		block = sc.BlockData.BlockID
 		blockKeyID = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
+		blockNodePosition = sc.BlockData.NodePosition
 	}
 	extend := map[string]interface{}{
-		`type`:              head.Type,
+		`type`:              head.ID,
 		`time`:              head.Time,
 		`ecosystem_id`:      head.EcosystemID,
-		`node_position`:     head.NodePosition,
+		`node_position`:     blockNodePosition,
 		`block`:             block,
 		`key_id`:            keyID,
 		`block_key_id`:      blockKeyID,
@@ -514,8 +572,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`block_time`:        blockTime,
 		`original_contract`: ``,
 		`this_contract`:     ``,
-		`role_id`:           head.RoleID,
-		`guest_key`:         vde.GuestKey,
+		`guest_key`:         consts.GuestKey,
 	}
 
 	for key, val := range sc.TxData {
@@ -558,7 +615,7 @@ func (sc *SmartContract) AccessTablePerm(table, action string) (map[string]strin
 	)
 	logger := sc.GetLogger()
 	isRead := action == `read`
-	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
+	if GetTableName(sc, table) == `1_parameters` || GetTableName(sc, table) == `1_app_params` {
 		if isRead || sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 			return tablePermission, nil
 		}
@@ -621,11 +678,12 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	if sc.FullAccess {
 		return nil
 	}
-	if table == getDefTableName(sc, `parameters`) || table == getDefTableName(sc, `app_params`) {
+	if GetTableName(sc, table) == `1_parameters` || GetTableName(sc, table) == `1_app_params` {
 		if update {
 			if sc.TxSmart.KeyID == converter.StrToInt64(EcosysParam(sc, `founder_account`)) {
 				return nil
 			}
+			log.WithFields(log.Fields{"txSmart.KeyID": sc.TxSmart.KeyID}).Error("ACCESS DENIED")
 			return errAccessDenied
 		}
 		return nil
@@ -723,6 +781,30 @@ func (sc *SmartContract) AccessColumns(table string, columns *[]string, update b
 	return nil
 }
 
+func (sc *SmartContract) CheckAccess(tableName, columns string, ecosystem int64) (table string, perm map[string]string,
+	cols string, err error) {
+	var collist []string
+
+	table = converter.ParseTable(tableName, ecosystem)
+	collist, err = GetColumns(columns)
+	if err != nil {
+		return
+	}
+	if !syspar.IsPrivateBlockchain() {
+		cols = PrepareColumns(collist)
+		return
+	}
+	perm, err = sc.AccessTablePerm(table, `read`)
+	if err != nil {
+		return
+	}
+	if err = sc.AccessColumns(table, &collist, false); err != nil {
+		return
+	}
+	cols = PrepareColumns(collist)
+	return
+}
+
 // AccessRights checks the access right by executing the condition value
 func (sc *SmartContract) AccessRights(condition string, iscondition bool) error {
 	sp := &model.StateParameter{}
@@ -766,18 +848,10 @@ func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
 // GetContractLimit returns the default maximal cost of contract
 func (sc *SmartContract) GetContractLimit() (ret int64) {
 	// default maximum cost of F
-	if !sc.VDE {
-		if len(sc.TxSmart.MaxSum) > 0 {
-			sc.TxCost = converter.StrToInt64(sc.TxSmart.MaxSum)
-		} else {
-			cost := EcosysParam(sc, `max_sum`)
-			if len(cost) > 0 {
-				sc.TxCost = converter.StrToInt64(cost)
-			}
-		}
-	}
-	if sc.TxCost == 0 {
-		sc.TxCost = script.CostDefault // fuel
+	if len(sc.TxSmart.MaxSum) > 0 {
+		sc.TxCost = converter.StrToInt64(sc.TxSmart.MaxSum)
+	} else {
+		sc.TxCost = syspar.GetMaxCost()
 	}
 	return sc.TxCost
 }
@@ -799,7 +873,6 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 
 	commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 	walletTable := model.KeyTableName(sc.TxSmart.TokenEcosystem)
-	historyTable := model.HistoryTableName(sc.TxSmart.TokenEcosystem)
 	comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
 	fromIDString := converter.Int64ToStr(fromID)
 
@@ -811,9 +884,27 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 		}
 
 		_, _, err = sc.insert(
-			[]string{"sender_id", "recipient_id", "amount", "comment", "block_id", "txhash"},
-			[]interface{}{fromIDString, toID, sum, comment, sc.BlockData.BlockID, sc.TxHash},
-			historyTable)
+			[]string{
+				"sender_id",
+				"recipient_id",
+				"amount",
+				"comment",
+				"block_id",
+				"txhash",
+				"ecosystem",
+				"created_at",
+			},
+			[]interface{}{
+				fromIDString,
+				toID,
+				sum,
+				comment,
+				sc.BlockData.BlockID,
+				sc.TxHash,
+				sc.TxSmart.TokenEcosystem,
+				sc.BlockData.Time,
+			},
+			`1_history`)
 		if err != nil {
 			return err
 		}
@@ -887,11 +978,20 @@ func (sc *SmartContract) CallContract() (string, error) {
 	logger := sc.GetLogger()
 	payWallet := &model.Key{}
 	sc.TxContract.Extend = sc.getExtend()
+	sc.TxSmart.TokenEcosystem = consts.TokenEcosystem
 
 	retError := func(err error) (string, error) {
 		eText := err.Error()
 		if !strings.HasPrefix(eText, `{`) {
-			err = script.SetVMError(`panic`, eText)
+			if throw, ok := err.(*ThrowError); ok {
+				out, errThrow := json.Marshal(throw)
+				if errThrow != nil {
+					out = []byte(`{"type": "panic", "error": "marshalling throw"}`)
+				}
+				err = errors.New(string(out))
+			} else {
+				err = script.SetVMError(`panic`, eText)
+			}
 		}
 		return ``, err
 	}
@@ -900,7 +1000,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.AppendStack(sc.TxContract.Name)
 	sc.VM = GetVM()
 
-	if !sc.VDE {
+	if !sc.OBS {
 		toID = sc.BlockData.KeyID
 		fromID = sc.TxSmart.KeyID
 	}
@@ -924,7 +1024,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	if len(wallet.PublicKey) > 0 {
 		public = wallet.PublicKey
 	}
-	if sc.TxSmart.Type == 258 { // UpdFullNodes
+	if sc.TxSmart.ID == 258 { // UpdFullNodes
 		node := syspar.GetNode(sc.TxSmart.KeyID)
 		if node == nil {
 			logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
@@ -939,7 +1039,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	sc.PublicKeys = append(sc.PublicKeys, public)
 
 	var CheckSignResult bool
-	CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxData[`forsign`].(string), sc.TxSmart.BinSignatures, false)
+	CheckSignResult, err = utils.CheckSign(sc.PublicKeys, sc.TxHash, sc.TxSignature, false)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("checking tx data sign")
 		return retError(err)
@@ -948,88 +1048,85 @@ func (sc *SmartContract) CallContract() (string, error) {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 		return retError(errIncorrectSign)
 	}
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+
+	needPayment := sc.TxSmart.EcosystemID > 0 && !sc.OBS && !syspar.IsPrivateBlockchain()
+	if needPayment {
 		if sc.TxSmart.TokenEcosystem == 0 {
 			sc.TxSmart.TokenEcosystem = 1
 		}
-		fuelRate, err = decimal.NewFromString(syspar.GetFuelRate(sc.TxSmart.TokenEcosystem))
+
+		parTokenEcosysFuelRate := syspar.GetFuelRate(sc.TxSmart.TokenEcosystem)
+		fuelRate, err = decimal.NewFromString(parTokenEcosysFuelRate)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting ecosystem fuel rate from string to decimal")
 			return retError(err)
 		}
+
 		if fuelRate.Cmp(decimal.New(0, 0)) <= 0 {
 			logger.WithFields(log.Fields{"type": consts.ParameterExceeded}).Error("Fuel rate must be greater than 0")
 			return retError(errFuelRate)
 		}
-		var payOver decimal.Decimal
-		if len(sc.TxSmart.PayOver) > 0 {
-			payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
-			if err != nil {
-				log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
-				return retError(err)
-			}
-			fuelRate = fuelRate.Add(payOver)
-		}
-		isActive := sc.TxContract.Block.Info.(*script.ContractInfo).Owner.Active
-		if isActive {
-			fromID = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.WalletID
-			sc.TxSmart.TokenEcosystem = sc.TxContract.Block.Info.(*script.ContractInfo).Owner.TokenID
+
+		cntrctOwnerInfo := sc.TxContract.Block.Info.(*script.ContractInfo).Owner
+
+		if cntrctOwnerInfo.WalletID > 0 {
+			fromID = cntrctOwnerInfo.WalletID
+			sc.TxSmart.TokenEcosystem = cntrctOwnerInfo.TokenID
 		} else if len(sc.TxSmart.PayOver) > 0 {
-			payOver, err = decimal.NewFromString(sc.TxSmart.PayOver)
+			payOver, err := decimal.NewFromString(sc.TxSmart.PayOver)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": sc.TxSmart.TokenEcosystem}).Error("converting tx smart pay over from string to decimal")
 				return retError(err)
 			}
+
 			fuelRate = fuelRate.Add(payOver)
 		}
+
 		payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
 		if found, err := payWallet.Get(fromID); err != nil || !found {
 			if !found {
 				return retError(errCurrentBalance)
 			}
+
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 			return retError(err)
 		}
-		if !isActive && !bytes.Equal(wallet.PublicKey, payWallet.PublicKey) && !bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) && sc.TxSmart.SignedBy == 0 {
+
+		if cntrctOwnerInfo.WalletID <= 0 &&
+			!bytes.Equal(wallet.PublicKey, payWallet.PublicKey) &&
+			!bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) &&
+			sc.TxSmart.SignedBy == 0 {
 			return retError(errDiffKeys)
 		}
-		var amount, maxpay decimal.Decimal
+
+		amount := decimal.New(0, 0)
 		if len(payWallet.Amount) > 0 {
 			amount, err = decimal.NewFromString(payWallet.Amount)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
 				return retError(err)
 			}
-		} else {
-			amount = decimal.New(0, 0)
 		}
+
+		maxpay := decimal.New(0, 0)
 		if len(payWallet.Maxpay) > 0 {
 			maxpay, err = decimal.NewFromString(payWallet.Maxpay)
 			if err != nil {
 				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
 				return retError(err)
 			}
-		} else {
-			maxpay = decimal.New(0, 0)
 		}
+
 		if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
 			amount = maxpay
 		}
-		if priceName, ok := script.ContractPrices[sc.TxContract.Name]; ok {
-			price = SysParamInt(priceName)
-			if price > MaxPrice {
-				return retError(errMaxPrice)
-			}
-			if price < 0 {
-				return retError(errNegPrice)
-			}
-		}
-		sizeFuel = syspar.GetSizeFuel() * int64(len(sc.TxSmart.Data)) / 1024
+		sizeFuel = syspar.GetSizeFuel() * sc.TxSize / 1024
 		priceCost := decimal.New(price, 0)
 		if amount.LessThanOrEqual(priceCost.Mul(fuelRate)) {
 			logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough")
 			return retError(errCurrentBalance)
 		}
+
 		maxCost := amount.Div(fuelRate).Floor()
 		fullCost := decimal.New((*sc.TxContract.Extend)[`txcost`].(int64), 0).Add(priceCost)
 		if maxCost.LessThan(fullCost) {
@@ -1037,18 +1134,19 @@ func (sc *SmartContract) CallContract() (string, error) {
 		}
 	}
 
-	before := (*sc.TxContract.Extend)[`txcost`].(int64)
+	ctrctExtend := *sc.TxContract.Extend
+	before := ctrctExtend[`txcost`].(int64)
 
 	// Payment for the size
-	(*sc.TxContract.Extend)[`txcost`] = (*sc.TxContract.Extend)[`txcost`].(int64) - sizeFuel
-	if (*sc.TxContract.Extend)[`txcost`].(int64) <= 0 {
+	ctrctExtend[`txcost`] = ctrctExtend[`txcost`].(int64) - sizeFuel
+	if ctrctExtend[`txcost`].(int64) <= 0 {
 		logger.WithFields(log.Fields{"type": consts.NoFunds}).Error("current balance is not enough for payment")
 		return retError(errCurrentBalance)
 	}
 
-	_, nameContract := script.ParseContract(sc.TxContract.Name)
-	(*sc.TxContract.Extend)[`original_contract`] = nameContract
-	(*sc.TxContract.Extend)[`this_contract`] = nameContract
+	_, nameContract := converter.ParseName(sc.TxContract.Name)
+	ctrctExtend[`original_contract`] = nameContract
+	ctrctExtend[`this_contract`] = nameContract
 
 	sc.TxContract.FreeRequest = false
 	for i := uint32(0); i < 2; i++ {
@@ -1056,29 +1154,35 @@ func (sc *SmartContract) CallContract() (string, error) {
 		if cfunc == nil {
 			continue
 		}
+
 		sc.TxContract.Called = 1 << i
-		_, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend)
-		if err != nil {
+		if _, err = VMRun(sc.VM, cfunc, nil, sc.TxContract.Extend); err != nil {
 			price = 0
 			break
 		}
 	}
-	sc.TxFuel = before - (*sc.TxContract.Extend)[`txcost`].(int64)
+
+	sc.TxFuel = before - ctrctExtend[`txcost`].(int64)
 	sc.TxUsedCost = decimal.New(sc.TxFuel+price, 0)
-	if (*sc.TxContract.Extend)[`result`] != nil {
-		result = fmt.Sprint((*sc.TxContract.Extend)[`result`])
+	if ctrctExtend[`result`] != nil {
+		result = fmt.Sprint(ctrctExtend[`result`])
+		if !utf8.ValidString(result) {
+			return retError(errNotValidUTF)
+		}
 		if len(result) > 255 {
 			result = result[:255]
 		}
 	}
 
-	if sc.TxSmart.EcosystemID > 0 && !sc.VDE && !conf.Config.IsPrivateBlockchain() {
+	if needPayment {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
 			err = ierr
 		}
 	}
+
 	if err != nil {
 		return retError(err)
 	}
+
 	return result, nil
 }

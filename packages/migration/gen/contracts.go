@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package main
 
 import (
@@ -23,17 +51,17 @@ var (
 		{
 			[]string{"./contracts/ecosystem"},
 			"./contracts_data.go",
-			"contractsDataSQL", "%[1]d_contracts", "%[2]d",
+			"contractsDataSQL", "%[1]d", "%[2]d",
 		},
 		{
 			[]string{"./contracts/common", "./contracts/first_ecosystem"},
 			"./first_ecosys_contracts_data.go",
-			"firstEcosystemContractsSQL", "1_contracts", "%[1]d",
+			"firstEcosystemContractsSQL", "1", "%[1]d",
 		},
 		{
-			[]string{"./contracts/common", "./contracts/first_ecosystem", "./contracts/vde"},
-			"./vde/vde_data_contracts.go",
-			"contractsDataSQL", "%[1]d_contracts", "",
+			[]string{"./contracts/common", "./contracts/first_ecosystem", "./contracts/obs"},
+			"./obs/obs_data_contracts.go",
+			"contractsDataSQL", "%[1]d", "",
 		},
 	}
 
@@ -41,22 +69,22 @@ var (
 )
 
 type scenario struct {
-	Source   []string
-	Dest     string
-	Variable string
-	Table    string
-	Owner    string
+	Source    []string
+	Dest      string
+	Variable  string
+	Ecosystem string
+	Owner     string
 }
 
 type contract struct {
 	Name       string
 	Source     template.HTML
 	Conditions template.HTML
-	AppID      int
+	AppID      string
 }
 
 type meta struct {
-	AppID      int
+	AppID      string
 	Conditions string
 }
 
@@ -71,11 +99,11 @@ var contractsTemplate = template.Must(template.New("").Funcs(fns).Parse(`// Code
 package {{ .Package }}
 
 var {{ .Variable }} = ` + "`" + `
-INSERT INTO "{{ .Table }}" (id, name, value, conditions, app_id{{if .Owner }}, wallet_id{{end}})
+INSERT INTO "1_contracts" (id, name, value, conditions, app_id{{if .Owner }}, wallet_id{{end}}, ecosystem)
 VALUES
 {{- $last := add (len .Contracts) -1}}
 {{- range $i, $item := .Contracts}}
-	(next_id('{{ $.Table }}'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}', {{ $item.AppID }}{{if $.Owner }}, {{ $.Owner }}{{end}}){{if eq $last $i}};{{else}},{{end}}
+	(next_id('1_contracts'), '{{ $item.Name }}', '{{ $item.Source }}', '{{ $item.Conditions }}', '{{ $item.AppID }}'{{if $.Owner }}, {{ $.Owner }}{{end}}, '{{ $.Ecosystem }}'){{if eq $last $i}};{{else}},{{end}}
 {{- end}}
 ` + "`"))
 
@@ -179,8 +207,8 @@ func generate(s scenario) error {
 	return contractsTemplate.Execute(file, map[string]interface{}{
 		"Package":   pkg,
 		"Variable":  s.Variable,
-		"Table":     s.Table,
-		"Owner":     s.Owner,
+		"Ecosystem": s.Ecosystem,
+		"Owner":     nil,
 		"Contracts": sources,
 	})
 }

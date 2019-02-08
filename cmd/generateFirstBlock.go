@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"encoding/hex"
 	"io/ioutil"
 	"time"
 
@@ -9,15 +8,18 @@ import (
 
 	"path/filepath"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/block"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
 
 var stopNetworkBundleFilepath string
+var testBlockchain bool
+var privateBlockchain bool
 
 // generateFirstBlockCmd represents the generateFirstBlock command
 var generateFirstBlockCmd = &cobra.Command{
@@ -26,7 +28,6 @@ var generateFirstBlockCmd = &cobra.Command{
 	PreRun: loadConfigWKey,
 	Run: func(cmd *cobra.Command, args []string) {
 		now := time.Now().Unix()
-
 		header := &utils.BlockData{
 			BlockID:      1,
 			Time:         now,
@@ -43,7 +44,7 @@ var generateFirstBlockCmd = &cobra.Command{
 				log.WithError(err).WithFields(log.Fields{"key": kName, "filepath": filepath}).Fatal("Reading key data")
 			}
 
-			decodedKey, err := hex.DecodeString(string(data))
+			decodedKey, err := crypto.HexToPub(string(data))
 			if err != nil {
 				log.WithError(err).Fatalf("converting %s from hex", kName)
 			}
@@ -65,6 +66,14 @@ var generateFirstBlockCmd = &cobra.Command{
 		}
 
 		var tx []byte
+		var test int64
+		var pb uint64
+		if testBlockchain == true {
+			test = 1
+		}
+		if privateBlockchain == true {
+			pb = 1
+		}
 		_, err := converter.BinMarshal(&tx,
 			&consts.FirstBlock{
 				TxHeader: consts.TxHeader{
@@ -75,6 +84,8 @@ var generateFirstBlockCmd = &cobra.Command{
 				PublicKey:             decodeKeyFile(consts.PublicKeyFilename),
 				NodePublicKey:         decodeKeyFile(consts.NodePublicKeyFilename),
 				StopNetworkCertBundle: stopNetworkCert,
+				Test:                  test,
+				PrivateBlockchain:     pb,
 			},
 		)
 
@@ -83,7 +94,10 @@ var generateFirstBlockCmd = &cobra.Command{
 			return
 		}
 
-		block, err := block.MarshallBlock(header, [][]byte{tx}, []byte("0"), "")
+		block, err := block.MarshallBlock(header, [][]byte{tx}, &utils.BlockData{
+			Hash:          []byte(`0`),
+			RollbacksHash: []byte(`0`),
+		}, "")
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Fatal("first block marshalling")
 			return
@@ -96,4 +110,6 @@ var generateFirstBlockCmd = &cobra.Command{
 
 func init() {
 	generateFirstBlockCmd.Flags().StringVar(&stopNetworkBundleFilepath, "stopNetworkCert", "", "Filepath to the fullchain of certificates for network stopping")
+	generateFirstBlockCmd.Flags().BoolVar(&testBlockchain, "test", false, "if true - test blockchain")
+	generateFirstBlockCmd.Flags().BoolVar(&privateBlockchain, "private", false, "if true - all transactions will be free")
 }

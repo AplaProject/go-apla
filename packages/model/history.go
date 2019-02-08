@@ -1,21 +1,46 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package model
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/shopspring/decimal"
 )
-
-const historyTableSuffix = "_history"
 
 var errLowBalance = errors.New("not enough APL on the balance")
 
 // History represent record of history table
 type History struct {
-	tableName   string
+	ecosystem   int64
 	ID          int64
 	SenderID    int64
 	RecipientID int64
@@ -28,13 +53,16 @@ type History struct {
 
 // SetTablePrefix is setting table prefix
 func (h *History) SetTablePrefix(prefix int64) *History {
-	h.tableName = HistoryTableName(prefix)
+	h.ecosystem = prefix
 	return h
 }
 
 // TableName returns table name
 func (h *History) TableName() string {
-	return h.tableName
+	if h.ecosystem == 0 {
+		h.ecosystem = 1
+	}
+	return `1_history`
 }
 
 // APLTransfer from to amount
@@ -59,7 +87,7 @@ func GetExcessCommonTokenMovementPerDay(tx *DbTransaction) (amount decimal.Decim
 
 	var res result
 	err = db.Table("1_history").Select("SUM(amount) as amount").
-		Where("created_at > NOW() - interval '24 hours' AND amount > 0").Scan(&res).Error
+		Where("to_timestamp(created_at) > NOW() - interval '24 hours' AND amount > 0").Scan(&res).Error
 
 	return res.Amount, err
 }
@@ -69,7 +97,7 @@ func GetExcessFromToTokenMovementPerDay(tx *DbTransaction) (excess []APLTransfer
 	db := GetDB(tx)
 	err = db.Table("1_history").
 		Select("sender_id, recipient_id, SUM(amount) amount").
-		Where("created_at > NOW() - interval '24 hours' AND amount > 0").
+		Where("to_timestamp(created_at) > NOW() - interval '24 hours' AND amount > 0").
 		Group("sender_id, recipient_id").
 		Having("SUM(amount) > ?", consts.FromToPerDayLimit).
 		Scan(&excess).Error
@@ -88,9 +116,4 @@ func GetExcessTokenMovementQtyPerBlock(tx *DbTransaction, blockID int64) (excess
 		Scan(&excess).Error
 
 	return excess, err
-}
-
-// HistoryTableName returns name of history table
-func HistoryTableName(prefix int64) string {
-	return fmt.Sprintf("%d%s", prefix, historyTableSuffix)
 }

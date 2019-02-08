@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package utils
 
@@ -33,12 +45,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/pkg/errors"
@@ -48,18 +60,40 @@ import (
 
 // BlockData is a structure of the block's header
 type BlockData struct {
-	BlockID      int64
-	Time         int64
-	EcosystemID  int64
-	KeyID        int64
-	NodePosition int64
-	Sign         []byte
-	Hash         []byte
-	Version      int
+	BlockID           int64
+	Time              int64
+	EcosystemID       int64
+	KeyID             int64
+	NodePosition      int64
+	Sign              []byte
+	Hash              []byte
+	RollbacksHash     []byte
+	Version           int
+	PrivateBlockchain bool
 }
 
 func (b BlockData) String() string {
 	return fmt.Sprintf("BlockID:%d, Time:%d, NodePosition %d", b.BlockID, b.Time, b.NodePosition)
+}
+
+func blockVer(cur, prev *BlockData) (ret string) {
+	if cur.Version >= consts.BV_ROLLBACK_HASH {
+		ret = fmt.Sprintf(",%x", prev.RollbacksHash)
+	}
+	return
+}
+
+func (b BlockData) ForSha(prev *BlockData, mrklRoot []byte) string {
+	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
+		b.BlockID, prev.Hash, mrklRoot, b.Time, b.EcosystemID, b.KeyID, b.NodePosition) +
+		blockVer(&b, prev)
+}
+
+// ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
+func (b BlockData) ForSign(prev *BlockData, mrklRoot []byte) string {
+	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
+		b.BlockID, prev.Hash, b.Time, b.EcosystemID, b.KeyID, b.NodePosition, mrklRoot) +
+		blockVer(&b, prev)
 }
 
 // ParseBlockHeader is parses block header
@@ -242,7 +276,7 @@ func CopyFileContents(src, dst string) error {
 }
 
 // CheckSign checks the signature
-func CheckSign(publicKeys [][]byte, forSign string, signs []byte, nodeKeyOrLogin bool) (bool, error) {
+func CheckSign(publicKeys [][]byte, forSign []byte, signs []byte, nodeKeyOrLogin bool) (bool, error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.WithFields(log.Fields{"type": consts.PanicRecoveredError, "error": r}).Error("recovered panic in check sign")
@@ -397,7 +431,21 @@ func GetNodeKeys() (string, string, error) {
 		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting node private key to public")
 		return "", "", err
 	}
-	return string(nprivkey), hex.EncodeToString(npubkey), nil
+	return string(nprivkey), crypto.PubToHex(npubkey), nil
+}
+
+func GetNodePrivateKey() ([]byte, error) {
+	data, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
+		return nil, err
+	}
+	privateKey, err := hex.DecodeString(string(data))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return nil, err
+	}
+	return privateKey, nil
 }
 
 func GetHostPort(h string) string {
@@ -446,11 +494,11 @@ func LockOrDie(dir string) *flock.Flock {
 	f := flock.NewFlock(dir)
 	success, err := f.TryLock()
 	if err != nil {
-		log.WithError(err).Fatal("Locking go-genesis")
+		log.WithError(err).Fatal("Locking go-apla")
 	}
 
 	if !success {
-		log.Fatal("Go-genesis is locked")
+		log.Fatal("Go-apla is locked")
 	}
 
 	return f

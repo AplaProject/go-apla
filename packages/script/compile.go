@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package script
 
@@ -20,8 +32,10 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -161,6 +175,9 @@ const (
 	cfField
 	cfFieldType
 	cfFieldTag
+	cfFields
+	cfFieldComma
+	cfFieldLine
 	cfWhile
 	cfContinue
 	cfBreak
@@ -198,6 +215,9 @@ var (
 		fField,
 		fFieldType,
 		fFieldTag,
+		fFields,
+		fFieldComma,
+		fFieldLine,
 		fWhile,
 		fContinue,
 		fBreak,
@@ -210,7 +230,7 @@ var (
 			lexNewLine:                      {stateRoot, 0},
 			lexKeyword | (keyContract << 8): {stateContract | statePush, 0},
 			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
-			0: {errUnknownCmd, cfError},
+			0:                               {errUnknownCmd, cfError},
 		},
 		{ // stateBody
 			lexNewLine:                      {stateBody, 0},
@@ -337,12 +357,12 @@ var (
 			0:         {errStrNum, cfError},
 		},
 		{ // stateFields
-			lexNewLine: {stateFields, 0},
-			isComma:    {stateFields, 0},
+			lexNewLine: {stateFields, cfFieldLine},
+			isComma:    {stateFields, cfFieldComma},
 			lexIdent:   {stateFields, cfField},
 			lexType:    {stateFields, cfFieldType},
 			lexString:  {stateFields, cfFieldTag},
-			isRCurly:   {stateToBody, 0},
+			isRCurly:   {stateToBody, cfFields},
 			0:          {errMustRCurly, cfError},
 		},
 	}
@@ -607,15 +627,53 @@ func fConstValue(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fField(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == reflect.TypeOf(nil) &&
+		(*tx)[len(*tx)-1].Tags != `_` {
+		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
+	}
 	*tx = append(*tx, &FieldInfo{Name: lexem.Value.(string), Type: reflect.TypeOf(nil)})
+	return nil
+}
+
+func fFields(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == nil {
+		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
+	}
+	return nil
+}
+
+func fFieldComma(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type != nil {
+		return fmt.Errorf(eDataName, lexem.Line, lexem.Column)
+	}
+	(*tx)[len(*tx)-1].Tags = `_`
+	return nil
+}
+
+func fFieldLine(buf *[]*Block, state int, lexem *Lexem) error {
+	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) > 0 && (*tx)[len(*tx)-1].Type == nil {
+		return fmt.Errorf(eDataType, lexem.Line, lexem.Column)
+	}
+	for i, field := range *tx {
+		if field.Tags == `_` {
+			(*tx)[i].Tags = ``
+		}
+	}
 	return nil
 }
 
 func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type != nil {
+		return fmt.Errorf(eDataName, lexem.Line, lexem.Column)
+	}
 	for i, field := range *tx {
 		if field.Type == reflect.TypeOf(nil) {
 			(*tx)[i].Type = lexem.Value.(reflect.Type)
+			(*tx)[i].Original = lexem.Ext
 		}
 	}
 	return nil
@@ -623,11 +681,15 @@ func fFieldType(buf *[]*Block, state int, lexem *Lexem) error {
 
 func fFieldTag(buf *[]*Block, state int, lexem *Lexem) error {
 	tx := (*(*buf)[len(*buf)-1]).Info.(*ContractInfo).Tx
+	if len(*tx) == 0 || (*tx)[len(*tx)-1].Type == nil || len((*tx)[len(*tx)-1].Tags) != 0 {
+		return fmt.Errorf(eDataTag, lexem.Line, lexem.Column)
+	}
 	for i := len(*tx) - 1; i >= 0; i-- {
-		if len((*tx)[i].Tags) == 0 {
+		if i == len(*tx)-1 || (*tx)[i].Tags == `_` {
 			(*tx)[i].Tags = lexem.Value.(string)
-			break
+			continue
 		}
+		break
 	}
 	return nil
 }
@@ -645,13 +707,10 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 
 // StateName checks the name of the contract and modifies it to @[state]name if it is necessary.
 func StateName(state uint32, name string) string {
-	if len(name) < 3 {
-		return name
-	}
-	if name[0] != '@' {
+	if !strings.HasPrefix(name, `@`) {
 		return fmt.Sprintf(`@%d%s`, state, name)
-	} else if name[1] < '0' || name[1] > '9' {
-		name = `@0` + name[1:]
+	} else if len(name) > 1 && (name[1] < '0' || name[1] > '9') {
+		name = `@1` + name[1:]
 	}
 	return name
 }
@@ -774,6 +833,15 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 	if len(stack) > 0 {
 		return nil, fError(&blockstack, errMustRCurly, lexems[len(lexems)-1])
 	}
+	for _, item := range root.Objects {
+		if item.Type == ObjContract {
+			if cond, ok := item.Value.(*Block).Objects[`conditions`]; ok {
+				if cond.Type == ObjFunc && cond.Value.(*Block).Info.(*FuncInfo).CanWrite {
+					return nil, errCondWrite
+				}
+			}
+		}
+	}
 	return root, nil
 }
 
@@ -863,7 +931,7 @@ func (vm *VM) findObj(name string, block *[]*Block) (ret *ObjInfo, owner *Block)
 func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value mapItem, err error) {
 	var (
 		subArr []mapItem
-		subMap map[string]mapItem
+		subMap *types.Map
 	)
 	i := *ind
 	lexem := (*lexems)[i]
@@ -875,7 +943,7 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 			value = mapItem{Type: mapArray, Value: subArr}
 		}
 	case isLCurly:
-		subMap, err = vm.getInitMap(lexems, &i, block)
+		subMap, err = vm.getInitMap(lexems, &i, block, false)
 		if err == nil {
 			value = mapItem{Type: mapMap, Value: subMap}
 		}
@@ -897,10 +965,14 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 	return
 }
 
-func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (map[string]mapItem, error) {
-	i := *ind + 1
+func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block, oneItem bool) (*types.Map, error) {
+	var next int
+	if !oneItem {
+		next = 1
+	}
+	i := *ind + next
 	key := ``
-	ret := make(map[string]mapItem)
+	ret := types.NewMap()
 	state := mustKey
 main:
 	for ; i < len(*lexems); i++ {
@@ -910,6 +982,11 @@ main:
 			continue
 		case isRCurly:
 			break main
+		case isComma, isRBrack:
+			if oneItem {
+				*ind = i - 1
+				return ret, nil
+			}
 		}
 		switch state {
 		case mustComma:
@@ -926,6 +1003,8 @@ main:
 			switch lexem.Type & 0xff {
 			case lexIdent:
 				key = lexem.Value.(string)
+			case lexExtend:
+				key = `$` + lexem.Value.(string)
 			case lexString:
 				key = lexem.Value.(string)
 			case lexKeyword:
@@ -947,7 +1026,7 @@ main:
 			if err != nil {
 				return nil, err
 			}
-			ret[key] = mapi
+			ret.Set(key, mapi)
 			state = mustComma
 		}
 	}
@@ -978,11 +1057,19 @@ main:
 			}
 			state = mustValue
 		case mustValue:
-			arri, err := vm.getInitValue(lexems, &i, block)
-			if err != nil {
-				return nil, err
+			if i+1 < len(*lexems) && (*lexems)[i+1].Type == isColon {
+				subMap, err := vm.getInitMap(lexems, &i, block, true)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, mapItem{Type: mapMap, Value: subMap})
+			} else {
+				arri, err := vm.getInitValue(lexems, &i, block)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, arri)
 			}
-			ret = append(ret, arri)
 			state = mustComma
 		}
 	}
@@ -991,6 +1078,18 @@ main:
 	}
 	*ind = i
 	return ret, nil
+}
+
+func setWritable(block *[]*Block) {
+	for i := len(*block) - 1; i >= 0; i-- {
+		blockItem := (*block)[i]
+		if blockItem.Type == ObjFunc {
+			blockItem.Info.(*FuncInfo).CanWrite = true
+		}
+		if blockItem.Type == ObjContract {
+			blockItem.Info.(*ContractInfo).CanWrite = true
+		}
+	}
 }
 
 // This function is responsible for the compilation of expressions
@@ -1005,6 +1104,7 @@ func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	parcount := make([]int, 0, 20)
 	setIndex := false
 	noMap := false
+	prevLex := uint32(0)
 main:
 	for ; i < len(*lexems); i++ {
 		var cmd *ByteCode
@@ -1013,7 +1113,7 @@ main:
 		logger := lexem.GetLogger()
 		if !noMap {
 			if lexem.Type == isLCurly {
-				pMap, err := vm.getInitMap(lexems, &i, block)
+				pMap, err := vm.getInitMap(lexems, &i, block, false)
 				if err != nil {
 					return err
 				}
@@ -1034,6 +1134,9 @@ main:
 		switch lexem.Type {
 		case isRCurly, isLCurly:
 			i--
+			if prevLex == isComma || prevLex == lexOper {
+				return errEndExp
+			}
 			break main
 		case lexNewLine:
 			if i > 0 && ((*lexems)[i-1].Type == isComma || (*lexems)[i-1].Type == lexOper) {
@@ -1087,7 +1190,12 @@ main:
 				}
 				var tail *ByteCode
 				if prev := buffer[len(buffer)-1]; prev.Cmd == cmdCall || prev.Cmd == cmdCallVari {
-					if prev.Value.(*ObjInfo).Type == ObjFunc && prev.Value.(*ObjInfo).Value.(*Block).Info.(*FuncInfo).Names != nil {
+					objInfo := prev.Value.(*ObjInfo)
+					if (objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(*FuncInfo).CanWrite) ||
+						(objInfo.Type == ObjExtFunc && objInfo.Value.(ExtFuncInfo).CanWrite) {
+						setWritable(block)
+					}
+					if objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(*FuncInfo).Names != nil {
 						if len(bytecode) == 0 || bytecode[len(bytecode)-1].Cmd != cmdFuncName {
 							bytecode = append(bytecode, &ByteCode{cmdPush, nil})
 						}
@@ -1179,6 +1287,9 @@ main:
 					bytecode = append(bytecode, prev)
 				}
 			}
+			if (*lexems)[i+1].Type == isLBrack {
+				return errMultiIndex
+			}
 		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
 				var prevType uint32
@@ -1190,6 +1301,8 @@ main:
 					prevType != isRBrack && prevType != isRPar)) {
 					oper.Cmd = cmdSign
 					oper.Priority = cmdUnary
+				} else if prevLex == lexOper && oper.Priority != cmdUnary {
+					return errOper
 				}
 				byteOper := &ByteCode{oper.Cmd, oper.Priority}
 				for {
@@ -1250,7 +1363,10 @@ main:
 			}
 			if i < len(*lexems)-2 {
 				if (*lexems)[i+1].Type == isLPar {
-					var isContract bool
+					var (
+						isContract  bool
+						objContract *Block
+					)
 					if vm.Extern && objInfo == nil {
 						objInfo = &ObjInfo{Type: ObjContract}
 					}
@@ -1260,6 +1376,9 @@ main:
 						return fmt.Errorf(`unknown function %s`, lexem.Value.(string))
 					}
 					if objInfo.Type == ObjContract {
+						if objInfo.Value != nil {
+							objContract = objInfo.Value.(*Block)
+						}
 						objInfo, tobj = vm.findObj(`ExecContract`, block)
 						isContract = true
 					}
@@ -1287,6 +1406,9 @@ main:
 								topblock.Info.(*ContractInfo).Used[name] = true
 							}
 						}
+						if objContract != nil && objContract.Info.(*ContractInfo).CanWrite {
+							setWritable(block)
+						}
 						bytecode = append(bytecode, &ByteCode{cmdPush, name})
 						if count == 0 {
 							count = 2
@@ -1311,8 +1433,14 @@ main:
 				}
 			}
 			if !call {
+				if objInfo.Type != ObjVar {
+					return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
+				}
 				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
+		}
+		if lexem.Type != lexNewLine {
+			prevLex = lexem.Type
 		}
 		if lexem.Type&0xff == lexKeyword {
 			if lexem.Value.(uint32) == keyTail {
@@ -1324,6 +1452,9 @@ main:
 		}
 	}
 	*ind = i
+	if prevLex == lexOper {
+		return errEndExp
+	}
 	for i := len(buffer) - 1; i >= 0; i-- {
 		if buffer[i].Cmd == cmdSys {
 			log.WithFields(log.Fields{"type": consts.ParseError}).Error("there is not pair")

@@ -1,71 +1,33 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package migration
 
-var pagesDataSQL = `INSERT INTO "%[1]d_pages" (id, name, value, menu, conditions) VALUES
-	(2, 'admin_index', '', 'admin_menu','ContractAccess("@1EditPage")'),
-	(3, 'notifications', '', 'default_menu','ContractAccess("@1EditPage")'),
-	(4, 'import_app', 'Div(content-wrapper){
-	DBFind(buffer_data, src_buffer).Columns("id,value->name,value->data").Where({key:import,member_id:#key_id#}).Vars(hash00001)
-	DBFind(buffer_data, src_buffer).Columns("value->app_name,value->pages,value->pages_count,value->blocks,value->blocks_count,value->menu,value->menu_count,value->parameters,value->parameters_count,value->languages,value->languages_count,value->contracts,value->contracts_count,value->tables,value->tables_count").Where({key:import_info,member_id:#key_id#}).Vars(hash00002)
-
-	SetTitle("Import - #hash00002_value_app_name#")
-	Data(data_info, "hash00003_name,hash00003_count,hash00003_info"){
-		Pages,"#hash00002_value_pages_count#","#hash00002_value_pages#"
-		Blocks,"#hash00002_value_blocks_count#","#hash00002_value_blocks#"
-		Menu,"#hash00002_value_menu_count#","#hash00002_value_menu#"
-		Parameters,"#hash00002_value_parameters_count#","#hash00002_value_parameters#"
-		Language resources,"#hash00002_value_languages_count#","#hash00002_value_languages#"
-		Contracts,"#hash00002_value_contracts_count#","#hash00002_value_contracts#"
-		Tables,"#hash00002_value_tables_count#","#hash00002_value_tables#"
-	}
-	Div(breadcrumb){
-		Span(Class: text-muted, Body: "Your data that you can import")
-	}
-
-	Div(panel panel-primary){
-		ForList(data_info){
-			Div(list-group-item){
-				Div(row){
-					Div(col-md-10 mc-sm text-left){
-						Span(Class: text-bold, Body: "#hash00003_name#")
-					}
-					Div(col-md-2 mc-sm text-right){
-						If(#hash00003_count# > 0){
-							Span(Class: text-bold, Body: "(#hash00003_count#)")
-						}.Else{
-							Span(Class: text-muted, Body: "(0)")
-						}
-					}
-				}
-				Div(row){
-					Div(col-md-12 mc-sm text-left){
-						If(#hash00003_count# > 0){
-							Span(Class: h6, Body: "#hash00003_info#")
-						}.Else{
-							Span(Class: text-muted h6, Body: "Nothing selected")
-						}
-					}
-				}
-			}
-		}
-		If(#hash00001_id# > 0){
-			Div(list-group-item text-right){
-				Button(Body: "Import", Class: btn btn-primary, Page: apps_list).CompositeContract(@1Import, "#hash00001_value_data#")
-			}
-		}
-	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")'),
-	(5, 'import_upload', 'Div(content-wrapper){
-	SetTitle("Import")
-	Div(breadcrumb){
-		Span(Class: text-muted, Body: "Select payload that you want to import")
-	}
-	Form(panel panel-primary){
-		Div(list-group-item){
-			Input(Name: input_file, Type: file)
-		}
-		Div(list-group-item text-right){
-			Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: import_app)
-		}
-	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")');
-`
+var pagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, conditions, app_id, ecosystem) VALUES
+	(next_id('1_pages'), 'admin_index', '', 'admin_menu', 'ContractConditions("@1DeveloperCondition")', '%[5]d', '%[1]d'),
+	(next_id('1_pages'), 'developer_index', '', 'developer_menu', 'ContractConditions("@1DeveloperCondition")', '%[5]d', '%[1]d');`

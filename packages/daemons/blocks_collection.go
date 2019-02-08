@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package daemons
 
@@ -23,20 +35,20 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/block"
-	"github.com/GenesisKernel/go-genesis/packages/network"
-	"github.com/GenesisKernel/go-genesis/packages/network/tcpclient"
+	"github.com/AplaProject/go-apla/packages/block"
+	"github.com/AplaProject/go-apla/packages/network"
+	"github.com/AplaProject/go-apla/packages/network/tcpclient"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/rollback"
-	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/rollback"
+	"github.com/AplaProject/go-apla/packages/service"
+	"github.com/AplaProject/go-apla/packages/transaction"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -68,6 +80,8 @@ func InitialLoad(logger *log.Entry) error {
 		if err := firstLoad(logger); err != nil {
 			return err
 		}
+
+		model.UpdateSchema()
 	}
 
 	return nil
@@ -176,21 +190,32 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
-		rawBlocksChan, err := tcpclient.GetBlocksBodies(ctx, host, blockID, false)
-		if err != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-			return err
-		}
+		ctxDone, cancel := context.WithCancel(ctx)
 
-		for rawBlock := range rawBlocksChan {
-			if err = playRawBlock(rawBlock); err != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+		if loopErr := func() error {
+			defer func() {
+				cancel()
+				d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
+			}()
+
+			rawBlocksChan, err := tcpclient.GetBlocksBodies(ctxDone, host, blockID, false)
+			if err != nil {
+				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
 				return err
 			}
-			count++
-		}
 
-		d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
+			for rawBlock := range rawBlocksChan {
+				if err = playRawBlock(rawBlock); err != nil {
+					d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("playing raw block")
+					return err
+				}
+				count++
+			}
+
+			return nil
+		}(); loopErr != nil {
+			return loopErr
+		}
 	}
 	return nil
 }
@@ -378,7 +403,9 @@ func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block,
 		count++
 
 		// check the signature
-		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey}, block.ForSign(), block.Header.Sign, true)
+		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey},
+			[]byte(block.Header.ForSign(block.PrevHeader, block.MrklRoot)),
+			block.Header.Sign, true)
 		if okSignErr == nil {
 			break
 		}
@@ -402,6 +429,7 @@ func processBlocks(blocks []*block.Block) error {
 
 		if prevBlocks[b.Header.BlockID-1] != nil {
 			b.PrevHeader.Hash = prevBlocks[b.Header.BlockID-1].Header.Hash
+			b.PrevHeader.RollbacksHash = prevBlocks[b.Header.BlockID-1].Header.RollbacksHash
 			b.PrevHeader.Time = prevBlocks[b.Header.BlockID-1].Header.Time
 			b.PrevHeader.BlockID = prevBlocks[b.Header.BlockID-1].Header.BlockID
 			b.PrevHeader.EcosystemID = prevBlocks[b.Header.BlockID-1].Header.EcosystemID
@@ -409,7 +437,7 @@ func processBlocks(blocks []*block.Block) error {
 			b.PrevHeader.NodePosition = prevBlocks[b.Header.BlockID-1].Header.NodePosition
 		}
 
-		hash, err := crypto.DoubleHash([]byte(b.ForSha()))
+		hash, err := crypto.DoubleHash([]byte(b.Header.ForSha(b.PrevHeader, b.MrklRoot)))
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal("double hashing block")
 		}

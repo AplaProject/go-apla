@@ -1,21 +1,48 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package tcpclient
 
 import (
 	"bytes"
 	"context"
 	"errors"
-	"io"
 	"net"
 	"sync"
 	"sync/atomic"
 
-	"github.com/GenesisKernel/go-genesis/packages/network"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/network"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/model"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -163,7 +190,7 @@ func sendFullBlockRequest(con net.Conn, data []byte) (response []byte, err error
 	}
 
 	//response
-	return sendRequiredTransactions(con)
+	return resieveRequiredTransactions(con)
 }
 
 func prepareTxPacket(txes []model.Transaction) []byte {
@@ -197,35 +224,19 @@ func prepareFullBlockRequest(block *model.InfoBlock, trs []model.Transaction, no
 	return buf.Bytes()
 }
 
-func sendRequiredTransactions(con net.Conn) (response []byte, err error) {
-	buf := make([]byte, 4)
-
-	// read data size
-	_, err = io.ReadFull(con, buf)
-	if err != nil {
-		if err == io.EOF {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Warn("connection closed unexpectedly")
-		} else {
-			log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data size")
+func resieveRequiredTransactions(con net.Conn) (response []byte, err error) {
+	needTxResp := network.DisHashResponse{}
+	if err := needTxResp.Read(con); err != nil {
+		if err == network.ErrMaxSize {
+			log.WithFields(log.Fields{"max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
+			return nil, nil
 		}
 
-		return nil, err
-	}
-
-	respSize := converter.BinToDec(buf)
-	if respSize > syspar.GetMaxTxSize() {
-		log.WithFields(log.Fields{"size": respSize, "max_size": syspar.GetMaxTxSize(), "type": consts.ParameterExceeded}).Warning("response size is larger than max tx size")
-		return nil, nil
-	}
-	// read the data
-	response = make([]byte, respSize)
-	_, err = io.ReadFull(con, response)
-	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading data")
 		return nil, err
 	}
 
-	return response, err
+	return needTxResp.Data, err
 }
 
 func parseTxHashesFromResponse(resp []byte) (hashes [][]byte) {
@@ -245,26 +256,33 @@ func sendDisseminatorRequest(con net.Conn, requestType int, packet []byte) (err 
 		data  len bytes
 	*/
 	// type
-	_, err = con.Write(converter.DecToBin(requestType, 2))
+	rt := network.RequestType{
+		Type: uint16(requestType),
+	}
+	err = rt.Write(con)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing request type to host")
 		return err
 	}
 
 	// data size
-	size := converter.DecToBin(len(packet), 4)
-	_, err = con.Write(size)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data size to host")
-		return err
+	// size := converter.DecToBin(len(packet), 4)
+	// _, err = con.Write(size)
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data size to host")
+	// 	return err
+	// }
+
+	// // data
+	// _, err = con.Write(packet)
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data to host")
+	// 	return err
+	// }
+
+	req := network.DisRequest{
+		Data: packet,
 	}
 
-	// data
-	_, err = con.Write(packet)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing data to host")
-		return err
-	}
-
-	return nil
+	return req.Write(con)
 }

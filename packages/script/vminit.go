@@ -1,30 +1,42 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package script
 
 import (
 	"fmt"
 	"reflect"
-	"regexp"
-	"strconv"
 	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/types"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -63,15 +75,13 @@ const (
 	CostContract = 100
 	// CostExtend is the cost of the extend function calling
 	CostExtend = 10
-	// CostDefault is the default maximum cost of F
-	CostDefault = int64(10000000)
 
 	// VMTypeSmart is smart vm type
 	VMTypeSmart VMType = 1
-	// VMTypeVDE is vde vm type
-	VMTypeVDE VMType = 2
-	// VMTypeVDEMaster is VDEMaster type
-	VMTypeVDEMaster VMType = 3
+	// VMTypeOBS is obs vm type
+	VMTypeOBS VMType = 2
+	// VMTypeOBSMaster is OBSMaster type
+	VMTypeOBSMaster VMType = 3
 
 	TagFile      = "file"
 	TagAddress   = "address"
@@ -87,19 +97,15 @@ type ExtFuncInfo struct {
 	Auto     []string
 	Variadic bool
 	Func     interface{}
+	CanWrite bool // If the function can update DB
 }
 
 // FieldInfo describes the field of the data structure
 type FieldInfo struct {
-	Name string
-	Type reflect.Type
-	Tags string
-}
-
-var ContractPrices = map[string]string{
-	`@1NewTable`: `table_price`, `@1NewContract`: `contract_price`,
-	`@1NewEcosystem`: `ecosystem_price`, `@1NewMenu`: `menu_price`,
-	`@1NewPage`: `page_price`, `@1NewColumn`: `column_price`,
+	Name     string
+	Type     reflect.Type
+	Original uint32
+	Tags     string
 }
 
 // ContainsTag returns whether the tag is contained in this field
@@ -115,6 +121,7 @@ type ContractInfo struct {
 	Used     map[string]bool // Called contracts
 	Tx       *[]*FieldInfo
 	Settings map[string]interface{}
+	CanWrite bool // If the function can update DB
 }
 
 // FuncNameCmd for cmdFuncName
@@ -137,6 +144,7 @@ type FuncInfo struct {
 	Names    *map[string]FuncName
 	Variadic bool
 	ID       uint32
+	CanWrite bool // If the function can update DB
 }
 
 // VarInfo contains the variable information
@@ -185,36 +193,24 @@ type Blocks []*Block
 // VM is the main type of the virtual machine
 type VM struct {
 	Block
-	ExtCost     func(string) int64
-	FuncCallsDB map[string]struct{}
-	Extern      bool // extern mode of compilation
-	logger      *log.Entry
+	ExtCost       func(string) int64
+	FuncCallsDB   map[string]struct{}
+	Extern        bool  // extern mode of compilation
+	ShiftContract int64 // id of the first contract
+	logger        *log.Entry
 }
 
 // ExtendData is used for the definition of the extended functions and variables
 type ExtendData struct {
-	Objects  map[string]interface{}
-	AutoPars map[string]string
+	Objects    map[string]interface{}
+	AutoPars   map[string]string
+	WriteFuncs map[string]struct{}
 }
 
 // Stacker represents interface for working with call stack
 type Stacker interface {
-	AppendStack(contract string) error
-}
-
-// ParseContract gets a state identifier and the name of the contract from the full name like @[id]name
-func ParseContract(in string) (id uint64, name string) {
-	var err error
-	re := regexp.MustCompile(`(?is)^@(\d+)(\w[_\w\d]*)$`)
-	ret := re.FindStringSubmatch(in)
-	if len(ret) == 3 {
-		id, err = strconv.ParseUint(ret[1], 10, 32)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": ret[1]}).Error("converting state identifier from string to int while parsing contract")
-		}
-		name = ret[2]
-	}
-	return
+	AppendStack(fn string) error
+	PopStack(fn string)
 }
 
 // ExecContract runs the name contract where txs contains the list of parameters and
@@ -257,7 +253,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
 			if !parnames[tx.Name] {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return ``, fmt.Errorf(eUndefinedParam, tx.Name)
 				}
@@ -272,7 +268,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		(*rt.extend)[ipar] = params[i]
 	}
 	prevthis := (*rt.extend)[`this_contract`]
-	_, nameContract := ParseContract(name)
+	_, nameContract := converter.ParseName(name)
 	(*rt.extend)[`this_contract`] = nameContract
 
 	prevparent := (*rt.extend)[`parent`]
@@ -281,8 +277,8 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		if rt.blocks[i].Block.Type == ObjFunc && rt.blocks[i].Block.Parent != nil &&
 			rt.blocks[i].Block.Parent.Type == ObjContract {
 			parent = rt.blocks[i].Block.Parent.Info.(*ContractInfo).Name
-			fid, fname := ParseContract(parent)
-			cid, _ := ParseContract(name)
+			fid, fname := converter.ParseName(parent)
+			cid, _ := converter.ParseName(name)
 			if len(fname) > 0 {
 				if fid == 0 {
 					parent = `@` + fname
@@ -294,15 +290,6 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		}
 	}
 	rt.cost -= CostContract
-	if priceName, ok := ContractPrices[name]; ok {
-		price := syspar.SysInt64(priceName)
-		if price > 0 {
-			rt.cost -= price
-		}
-		if rt.cost < 0 {
-			rt.cost = 0
-		}
-	}
 
 	var stack Stacker
 	if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
@@ -331,7 +318,7 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		}
 	}
 	if stack != nil {
-		stack.AppendStack("")
+		stack.PopStack(name)
 	}
 	(*rt.extend)[`parent`] = prevparent
 	(*rt.extend)[`this_contract`] = prevthis
@@ -367,6 +354,7 @@ func NewVM() *VM {
 		map[string]string{
 			`*script.RunTime`: `rt`,
 		},
+		map[string]struct{}{"CallContract": {}},
 	})
 	vm.logger = log.WithFields(log.Fields{"extern": vm.Extern, "vm_block_type": vm.Block.Type})
 	return &vm
@@ -378,9 +366,10 @@ func (vm *VM) Extend(ext *ExtendData) {
 		fobj := reflect.ValueOf(item).Type()
 		switch fobj.Kind() {
 		case reflect.Func:
+			_, canWrite := ext.WriteFuncs[key]
 			data := ExtFuncInfo{key, make([]reflect.Type, fobj.NumIn()),
 				make([]reflect.Type, fobj.NumOut()), make([]string, fobj.NumIn()),
-				fobj.IsVariadic(), item}
+				fobj.IsVariadic(), item, canWrite}
 			for i := 0; i < fobj.NumIn(); i++ {
 				if isauto, ok := ext.AutoPars[fobj.In(i).String()]; ok {
 					data.Auto[i] = isauto
@@ -455,8 +444,15 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 	}
 	switch obj.Type {
 	case ObjFunc:
-		rt := vm.RunInit(CostDefault)
+		var cost int64
+		if v, ok := (*extend)[`txcost`]; ok {
+			cost = v.(int64)
+		} else {
+			cost = syspar.GetMaxCost()
+		}
+		rt := vm.RunInit(cost)
 		ret, err = rt.Run(obj.Value.(*Block), params, extend)
+		(*extend)[`txcost`] = rt.Cost()
 	case ObjExtFunc:
 		finfo := obj.Value.(ExtFuncInfo)
 		foo := reflect.ValueOf(finfo.Func)
@@ -485,7 +481,7 @@ func (vm *VM) Call(name string, params []interface{}, extend *map[string]interfa
 }
 
 // ExContract executes the name contract in the state with specified parameters
-func ExContract(rt *RunTime, state uint32, name string, params map[string]interface{}) (interface{}, error) {
+func ExContract(rt *RunTime, state uint32, name string, params *types.Map) (interface{}, error) {
 
 	name = StateName(state, name)
 	contract, ok := rt.vm.Objects[name]
@@ -494,7 +490,7 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 		return nil, fmt.Errorf(eUnknownContract, name)
 	}
 	if params == nil {
-		params = make(map[string]interface{})
+		params = types.NewMap()
 	}
 	logger := log.WithFields(log.Fields{"contract_name": name, "type": consts.ContractError})
 	names := make([]string, 0)
@@ -502,9 +498,9 @@ func ExContract(rt *RunTime, state uint32, name string, params map[string]interf
 	cblock := contract.Value.(*Block)
 	if cblock.Info.(*ContractInfo).Tx != nil {
 		for _, tx := range *cblock.Info.(*ContractInfo).Tx {
-			val, ok := params[tx.Name]
+			val, ok := params.Get(tx.Name)
 			if !ok {
-				if !strings.Contains(tx.Tags, `optional`) {
+				if !strings.Contains(tx.Tags, TagOptional) {
 					logger.WithFields(log.Fields{"transaction_name": tx.Name, "type": consts.ContractError}).Error("transaction not defined")
 					return nil, fmt.Errorf(eUndefinedParam, tx.Name)
 				}

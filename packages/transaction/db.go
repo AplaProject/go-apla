@@ -1,27 +1,52 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package transaction
 
 import (
+	"bytes"
 	"errors"
+	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var ErrDuplicatedTx = errors.New("Duplicated transaction")
+var ErrEarlyTime = errors.New("Early transaction time")
 
 // InsertInLogTx is inserting tx in log
-func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64) error {
-	txHash, err := crypto.Hash(binaryTx)
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Fatal("hashing binary tx")
-	}
-	ltx := &model.LogTransaction{Hash: txHash, Time: time}
-	err = ltx.Create(transaction)
-	if err != nil {
+func InsertInLogTx(t *Transaction, blockID int64) error {
+	ltx := &model.LogTransaction{Hash: t.TxHash, Block: blockID}
+	if err := ltx.Create(t.DbTransaction); err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("insert logged transaction")
 		return utils.ErrInfo(err)
 	}
@@ -30,26 +55,22 @@ func InsertInLogTx(transaction *model.DbTransaction, binaryTx []byte, time int64
 
 // CheckLogTx checks if this transaction exists
 // And it would have successfully passed a frontal test
-func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
-	searchedHash, err := crypto.Hash(txBinary)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Fatal(err)
-	}
+func CheckLogTx(txHash []byte, transactions, txQueue bool) error {
 	logTx := &model.LogTransaction{}
-	found, err := logTx.GetByHash(searchedHash)
+	found, err := logTx.GetByHash(txHash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting log transaction by hash")
 		return utils.ErrInfo(err)
 	}
 	if found {
-		log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
+		log.WithFields(log.Fields{"tx_hash": txHash, "type": consts.DuplicateObject}).Error("double tx in log transactions")
 		return ErrDuplicatedTx
 	}
 
 	if transactions {
 		// check for duplicate transaction
 		tx := &model.Transaction{}
-		_, err := tx.GetVerified(searchedHash)
+		_, err := tx.GetVerified(txHash)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting verified transaction")
 			return utils.ErrInfo(err)
@@ -63,9 +84,9 @@ func CheckLogTx(txBinary []byte, transactions, txQueue bool) error {
 	if txQueue {
 		// check for duplicate transaction from queue
 		qtx := &model.QueueTx{}
-		found, err := qtx.GetByHash(nil, searchedHash)
+		found, err := qtx.GetByHash(nil, txHash)
 		if found {
-			log.WithFields(log.Fields{"tx_hash": searchedHash, "type": consts.DuplicateObject}).Error("double tx in queue")
+			log.WithFields(log.Fields{"tx_hash": txHash, "type": consts.DuplicateObject}).Error("double tx in queue")
 			return ErrDuplicatedTx
 		}
 		if err != nil {
@@ -104,7 +125,7 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 	}
 
 	// set loglevel as error because default level setups to "error"
-	log.WithFields(log.Fields{"type": consts.BadTxError, "tx_hash": string(hash), "error": errText}).Error("tx marked as bad")
+	log.WithFields(log.Fields{"type": consts.BadTxError, "tx_hash": hash, "error": errText}).Error("tx marked as bad")
 
 	// looks like there is not hash in queue_tx in this moment
 	qtx := &model.QueueTx{}
@@ -132,24 +153,21 @@ func MarkTransactionBad(dbTransaction *model.DbTransaction, hash []byte, errText
 
 // TxParser writes transactions into the queue
 func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx []byte, myTx bool) error {
-	// get parameters for "struct" transactions
-	txType, keyID := GetTxTypeAndUserID(binaryTx)
-
-	header, err := CheckTransaction(binaryTx)
+	t, err := UnmarshallTransaction(bytes.NewBuffer(binaryTx), true)
 	if err != nil {
 		MarkTransactionBad(dbTransaction, hash, err.Error())
 		return err
 	}
 
-	if !( /*txType > 127 ||*/ consts.IsStruct(int(txType))) {
-		if header == nil {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("tx header is nil")
-			return utils.ErrInfo(errors.New("header is nil"))
+	if err = t.Check(time.Now().Unix(), true); err != nil {
+		if err != ErrEarlyTime {
+			MarkTransactionBad(dbTransaction, hash, err.Error())
+			return err
 		}
-		keyID = header.KeyID
+		return nil
 	}
 
-	if keyID == 0 {
+	if t.TxKeyID == 0 {
 		errStr := "undefined keyID"
 		MarkTransactionBad(dbTransaction, hash, errStr)
 		return errors.New(errStr)
@@ -173,8 +191,8 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 	newTx := &model.Transaction{
 		Hash:     hash,
 		Data:     binaryTx,
-		Type:     int8(txType),
-		KeyID:    keyID,
+		Type:     int8(t.TxType),
+		KeyID:    t.TxKeyID,
 		Counter:  counter,
 		Verified: 1,
 		HighRate: tx.HighRate,

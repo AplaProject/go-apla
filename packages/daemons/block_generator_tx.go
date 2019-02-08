@@ -1,20 +1,43 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package daemons
 
 import (
 	"encoding/hex"
-	"fmt"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
-	msgpack "gopkg.in/vmihailenco/msgpack.v2"
 )
 
 const (
@@ -47,62 +70,31 @@ func (dtx *DelayedTx) RunForBlockID(blockID int64) {
 func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
 	vm := smart.GetVM()
 	contract := smart.VMGetContract(vm, callDelayedContract, uint32(firstEcosystemID))
-	info := contract.Block.Info.(*script.ContractInfo)
-
-	params := make([]byte, 0)
-	converter.EncodeLenInt64(&params, delayedContactID)
+	info := contract.Info()
 
 	smartTx := tx.SmartContract{
 		Header: tx.Header{
-			Type:        int(info.ID),
+			ID:          int(info.ID),
 			Time:        time.Now().Unix(),
 			EcosystemID: firstEcosystemID,
 			KeyID:       keyID,
 			NetworkID:   consts.NETWORK_ID,
 		},
 		SignedBy: smart.PubToID(dtx.publicKey),
-		Data:     params,
+		Params: map[string]interface{}{
+			"Id": delayedContactID,
+		},
 	}
 
-	signature, err := crypto.Sign(
-		dtx.privateKey,
-		fmt.Sprintf("%s,%d", smartTx.ForSign(), delayedContactID),
-	)
+	privateKey, err := hex.DecodeString(dtx.privateKey)
 	if err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
-		return err
-	}
-	smartTx.BinSignatures = converter.EncodeLengthPlusData(signature)
-
-	if smartTx.PublicKey, err = hex.DecodeString(dtx.publicKey); err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding public key from hex")
 		return err
 	}
 
-	data, err := msgpack.Marshal(smartTx)
+	txData, txHash, err := tx.NewInternalTransaction(smartTx, privateKey)
 	if err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.MarshallingError, "error": err}).Error("marshalling smart contract to msgpack")
-		return err
-	}
-	data = append([]byte{128}, data...)
-
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating hash of smart contract")
 		return err
 	}
 
-	tx := &model.Transaction{
-		Hash:     hash,
-		Data:     data[:],
-		Type:     int8(converter.BinToDecBytesShift(&data, 1)),
-		KeyID:    keyID,
-		HighRate: model.TransactionRateOnBlock,
-	}
-	if err = tx.Create(); err != nil {
-		dtx.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating new transaction")
-		return err
-	}
-
-	return nil
+	return tx.CreateTransaction(txData, txHash, keyID)
 }

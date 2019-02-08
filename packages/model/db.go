@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package model
 
 import (
@@ -6,11 +34,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/migration"
-	"github.com/GenesisKernel/go-genesis/packages/migration/vde"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/migration"
+	"github.com/AplaProject/go-apla/packages/migration/obs"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -30,6 +58,20 @@ var (
 	ErrDBConn = errors.New("Database connection error")
 )
 
+type KeyTableChecker struct{}
+
+func (ktc KeyTableChecker) IsKeyTable(tableName string) bool {
+	val, exist := converter.FirstEcosystemTables[tableName]
+	return exist && !val
+}
+
+type NextIDGetter struct {
+	Tx *DbTransaction
+}
+
+func (g NextIDGetter) GetNextID(tableName string) (int64, error) {
+	return GetNextID(g.Tx, tableName)
+}
 func isFound(db *gorm.DB) (bool, error) {
 	if db.RecordNotFound() {
 		return false, nil
@@ -74,7 +116,11 @@ func StartTransaction() (*DbTransaction, error) {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": conn.Error}).Error("cannot start transaction because of connection error")
 		return nil, conn.Error
 	}
-
+	err := conn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
+		return nil, err
+	}
 	return &DbTransaction{
 		conn: conn,
 	}, nil
@@ -132,15 +178,26 @@ func DropTables() error {
 }
 
 // GetRecordsCountTx is counting all records of table in transaction
-func GetRecordsCountTx(db *DbTransaction, tableName string) (int64, error) {
+func GetRecordsCountTx(db *DbTransaction, tableName, where string) (int64, error) {
 	var count int64
-	err := GetDB(db).Table(tableName).Count(&count).Error
+	dbQuery := GetDB(db).Table(tableName)
+	if len(where) > 0 {
+		dbQuery = dbQuery.Where(where)
+	}
+	err := dbQuery.Count(&count).Error
 	return count, err
 }
 
 // ExecSchemaEcosystem is executing ecosystem schema
-func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder int64) error {
-	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder)
+func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, founder, appID int64) error {
+	if id == 1 {
+		q := fmt.Sprintf(migration.GetCommonEcosystemScript())
+		if err := GetDB(db).Exec(q).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing comma ecosystem schema")
+			return err
+		}
+	}
+	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder, appID)
 	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
@@ -150,14 +207,23 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 		if err := GetDB(db).Exec(q).Error; err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
 		}
+		q = fmt.Sprintf(migration.GetFirstTableScript(), id)
+		if err := GetDB(db).Exec(q).Error; err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first tables schema")
+		}
 	}
 	return nil
 }
 
-// ExecSchemaLocalData is executing schema with local data
-func ExecSchemaLocalData(id int, wallet int64) error {
-	if err := DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing vde script")
+// ExecOBSSchema is executing schema for off blockchainService
+func ExecOBSSchema(id int, wallet int64) error {
+	if !conf.Config.IsSupportingOBS() {
+		return nil
+	}
+
+	query := fmt.Sprintf(obs.GetOBSScript(), id, wallet)
+	if err := DBConn.Exec(query).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing obs script")
 		return err
 	}
 
@@ -166,7 +232,16 @@ func ExecSchemaLocalData(id int, wallet int64) error {
 
 // ExecSchema is executing schema
 func ExecSchema() error {
-	return migration.Migrate(&MigrationHistory{})
+	return migration.InitMigrate(&MigrationHistory{})
+}
+
+// UpdateSchema run update migrations
+func UpdateSchema() error {
+	b := &Block{}
+	if found, err := b.GetMaxBlock(); !found {
+		return err
+	}
+	return migration.UpdateMigrate(&MigrationHistory{})
 }
 
 // Update is updating table rows
@@ -193,30 +268,30 @@ func GetColumnCount(tableName string) (int64, error) {
 	return count, nil
 }
 
+type RawTransaction interface {
+	Bytes() []byte
+	Hash() []byte
+	Type() int64
+}
+
 // SendTx is creates transaction
-func SendTx(txType int64, adminWallet int64, data []byte) ([]byte, error) {
-	hash, err := crypto.Hash(data)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing data")
-		return nil, err
-	}
+func SendTx(rtx RawTransaction, adminWallet int64) error {
 	ts := &TransactionStatus{
-		Hash:     hash,
+		Hash:     rtx.Hash(),
 		Time:     time.Now().Unix(),
-		Type:     txType,
+		Type:     rtx.Type(),
 		WalletID: adminWallet,
 	}
-	err = ts.Create()
+	err := ts.Create()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("transaction status create")
-		return nil, err
+		return err
 	}
 	qtx := &QueueTx{
-		Hash: hash,
-		Data: data,
+		Hash: rtx.Hash(),
+		Data: rtx.Bytes(),
 	}
-	err = qtx.Create()
-	return hash, err
+	return qtx.Create()
 }
 
 // AlterTableAddColumn is adding column to table
@@ -249,6 +324,27 @@ func GetAllColumnTypes(tblname string) ([]map[string]string, error) {
 		ORDER BY ordinal_position ASC`, -1, tblname)
 }
 
+func DataTypeToColumnType(dataType string) string {
+	var itype string
+	switch {
+	case dataType == "character varying":
+		itype = `varchar`
+	case dataType == `bigint`:
+		itype = "number"
+	case dataType == `jsonb`:
+		itype = "json"
+	case strings.HasPrefix(dataType, `timestamp`):
+		itype = "datetime"
+	case strings.HasPrefix(dataType, `numeric`):
+		itype = "money"
+	case strings.HasPrefix(dataType, `double`):
+		itype = "double"
+	default:
+		itype = dataType
+	}
+	return itype
+}
+
 // GetColumnType is returns type of column
 func GetColumnType(tblname, column string) (itype string, err error) {
 	coltype, err := GetColumnDataTypeCharMaxLength(tblname, column)
@@ -256,22 +352,7 @@ func GetColumnType(tblname, column string) (itype string, err error) {
 		return
 	}
 	if dataType, ok := coltype["data_type"]; ok {
-		switch {
-		case dataType == "character varying":
-			itype = `varchar`
-		case dataType == `bigint`:
-			itype = "number"
-		case dataType == `jsonb`:
-			itype = "json"
-		case strings.HasPrefix(dataType, `timestamp`):
-			itype = "datetime"
-		case strings.HasPrefix(dataType, `numeric`):
-			itype = "money"
-		case strings.HasPrefix(dataType, `double`):
-			itype = "double"
-		default:
-			itype = dataType
-		}
+		itype = DataTypeToColumnType(dataType)
 	}
 	return
 }
@@ -339,7 +420,7 @@ func GetNextID(transaction *DbTransaction, table string) (int64, error) {
 	var id int64
 	rows, err := GetDB(transaction).Raw(`select id from "` + table + `" order by id desc limit 1`).Rows()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("selecting next id from table")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("selecting next id from table")
 		return 0, err
 	}
 	rows.Next()
@@ -390,11 +471,9 @@ func InitDB(cfg conf.DBConfig) error {
 		return err
 	}
 
-	if conf.Config.IsSupportingVDE() {
-		if err := ExecSchemaLocalData(consts.DefaultVDE, conf.Config.KeyID); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE schema")
-			return err
-		}
+	if err := ExecOBSSchema(consts.DefaultOBS, conf.Config.KeyID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating OBS schema")
+		return err
 	}
 
 	return nil

@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
@@ -54,19 +66,19 @@ func TestRead(t *testing.T) {
 		`contract Get%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Where({id:[{&gte: 2},{"$lte":5}]})
+			row = DBFind("%[1]s").Where({id:[{$gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetOK%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("my,amount").Where({id:[{&gte: 2},{"$lte":5}]})
+			row = DBFind("%[1]s").Columns("my,amount").Where({id:[{$gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`contract GetData%s {
 		action {
 			var row array
-			row = DBFind("%[1]s").Columns("active").Where({id:[{&gte: 2},{"$lte":5}]})
+			row = DBFind("%[1]s").Columns("active").Where({id:[{$gte: 2},{"$lte":5}]})
 		}
 	}`,
 		`func ReadFilter%s bool {
@@ -102,14 +114,26 @@ func TestRead(t *testing.T) {
 	assert.NoError(t, postTx(`GetOK`+name, &url.Values{}))
 
 	assert.NoError(t, postTx(`EditColumn`, &url.Values{`TableName`: {name}, `Name`: {`active`},
-		`Permissions`: {`{"update":"true", "read":"ContractConditions(\"MainCondition\")"}`}}))
+		"UpdatePerm": {"true"}, "ReadPerm": {"true" /*"ContractConditions(\"MainCondition\")"*/},
+	}))
+	var ret listResult
+	assert.NoError(t, sendGet(`list/`+name, nil, &ret))
 
 	assert.NoError(t, postTx(`Get`+name, &url.Values{}))
+
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {
+		`DBFind(` + name + `, src).Limit(2)`}}, &retCont))
+	if !strings.Contains(RawToString(retCont.Tree), `Alex 2`) {
+		t.Errorf(`wrong tree %s`, RawToString(retCont.Tree))
+		return
+	}
 
 	form = url.Values{"Name": {name}, "InsertPerm": {`ContractConditions("MainCondition")`},
 		"UpdatePerm": {"true"}, "ReadPerm": {`false`}, "NewColumnPerm": {`true`}}
 	assert.NoError(t, postTx(`EditTable`, &form))
 	assert.EqualError(t, postTx(`GetOK`+name, &url.Values{}), `{"type":"panic","error":"Access denied"}`)
+
+	assert.EqualError(t, sendGet(`list/`+name, nil, &ret), `400 {"error":"E_SERVER","msg":"Access denied"}`)
 
 	form = url.Values{"Name": {name}, "InsertPerm": {`ContractConditions("MainCondition")`},
 		"UpdatePerm": {"true"}, "FilterPerm": {`ReadFilter` + name + `()`},

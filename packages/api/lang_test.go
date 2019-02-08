@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
@@ -30,13 +42,18 @@ func TestLang(t *testing.T) {
 	name := randName("lng")
 	utfName := randName("lngutf")
 
-	_, id, err := postTxResult("NewLang", &url.Values{
+	err := postTx("NewLang", &url.Values{
 		"Name":          {name},
 		"Trans":         {`{"en": "My test", "fr": "French string", "en-US": "US locale"}`},
 		"ApplicationId": {"1"},
 	})
 	assert.NoError(t, err)
-	assert.NotEmpty(t, id)
+	var list listResult
+	err = sendGet(`list/languages`, nil, &list)
+	if err != nil {
+		return
+	}
+	id := list.Count
 
 	cases := []struct {
 		url    string
@@ -56,9 +73,9 @@ func TestLang(t *testing.T) {
 			"NewPage",
 			url.Values{
 				"Name":          {name},
-				"Value":         {fmt.Sprintf("Span($%s$)", name)},
+				"Value":         {fmt.Sprintf("Span($@1%s$)", name)},
 				"Menu":          {"default_menu"},
-				"Conditions":    {"ContractConditions(`MainCondition`)"},
+				"Conditions":    {`ContractConditions("MainCondition")`},
 				"ApplicationId": {"1"},
 			},
 			"",
@@ -84,7 +101,7 @@ func TestLang(t *testing.T) {
 				"template": {
 					fmt.Sprintf(`Div(){
 						Button(Body: $%[1]s$ $,  Page:test).Alert(Text: $%[1]s$, ConfirmButton: $confirm$, CancelButton: $cancel$)
-						Button(Body: LangRes(%[1]s) LangRes, PageParams: "test", ).Alert(Text: $%[1]s$, CancelButton: $cancel$)
+						Button(Body: LangRes(@1%[1]s) LangRes, PageParams: "test", ).Alert(Text: $%[1]s$, CancelButton: $cancel$)
 					}`, utfName),
 				},
 				"app_id": {"1"},

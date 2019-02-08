@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package block
 
 import (
@@ -6,13 +34,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/protocols"
+	"github.com/AplaProject/go-apla/packages/protocols"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -21,8 +50,7 @@ import (
 func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	blockID := block.Header.BlockID
 	// for the local tests
-	forSha := fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d", blockID, block.PrevHeader.Hash, block.MrklRoot,
-		block.Header.Time, block.Header.EcosystemID, block.Header.KeyID, block.Header.NodePosition)
+	forSha := block.Header.ForSha(block.PrevHeader, block.MrklRoot)
 
 	hash, err := crypto.DoubleHash([]byte(forSha))
 	if err != nil {
@@ -119,9 +147,12 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		validBlockTime = !exists
 	}
 	if validBlockTime {
-		err = b.Create(transaction)
-		if err != nil {
+		if err = b.Create(transaction); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
+			return err
+		}
+		if err = model.UpdRollbackHash(transaction, rollbackTxsHash); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")
 			return err
 		}
 	} else {
@@ -150,6 +181,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 
 	BlockData = &header
 	BlockData.Hash = block.Hash
+	BlockData.RollbacksHash = block.RollbacksHash
 	return BlockData, nil
 }
 
@@ -166,7 +198,7 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		return
 	}
 
-	pb, err := UnmarshallBlock(bytes.NewBuffer(block.Data), true)
+	pb, err := UnmarshallBlock(bytes.NewBuffer(block.Data), true, true)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("parsing data of first block")
 		return
@@ -183,6 +215,6 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		log.WithFields(log.Fields{"type": consts.ParserError}).Error("getting data of first block")
 		return
 	}
-
+	syspar.SysUpdate(nil)
 	return
 }

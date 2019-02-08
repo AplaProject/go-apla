@@ -1,69 +1,38 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
 import (
-	"encoding/hex"
-	"errors"
 	"net/http"
-
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-
-	log "github.com/sirupsen/logrus"
 )
 
-func (h *contractHandlers) nodeContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var err error
-
-	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-	if err != nil {
-		return err
-	}
-	if len(NodePrivateKey) == 0 {
-		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-		return errors.New(`empty node private key`)
-	}
-	pubkey, err := hex.DecodeString(NodePublicKey)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-		return err
-	}
-	data.params[`signed_by`] = smart.PubToID(NodePublicKey)
-	prepareData := *data
-	if err = h.prepareContract(w, r, &prepareData, logger); err != nil {
-		return err
-	}
-	result := prepareData.result.(prepareResult)
-
-	signature, err := crypto.Sign(NodePrivateKey, result.ForSign)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing by node private key")
-		return err
-	}
-
-	data.params[`request_id`] = result.ID
-	data.params[`signature`] = signature
-	data.params[`pubkey`] = pubkey
-	data.params[`time`] = result.Time
-	if err = h.contract(w, r, data, logger); err != nil {
-		return err
-	}
-	return nil
+// nodeContract is used when calling a cron contract in OBS mode
+func nodeContractHandler(w http.ResponseWriter, r *http.Request) {
+	errorResponse(w, errNotImplemented)
 }

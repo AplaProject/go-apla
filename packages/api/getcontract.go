@@ -1,43 +1,53 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
 import (
 	"net/http"
-	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/script"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/script"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
 type contractField struct {
-	Name string `json:"name"`
-	HTML string `json:"htmltype"`
-	Type string `json:"txtype"`
-	Tags string `json:"tags"`
+	Name     string `json:"name"`
+	Type     string `json:"type"`
+	Optional bool   `json:"optional"`
 }
 
 type getContractResult struct {
+	ID       uint32          `json:"id"`
 	StateID  uint32          `json:"state"`
-	Active   bool            `json:"active"`
 	TableID  string          `json:"tableid"`
 	WalletID string          `json:"walletid"`
 	TokenID  string          `json:"tokenid"`
@@ -46,49 +56,40 @@ type getContractResult struct {
 	Name     string          `json:"name"`
 }
 
-func getContract(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) error {
-	var result getContractResult
+func getContractInfoHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	logger := getLogger(r)
 
-	cntname := data.params[`name`].(string)
-	contract := smart.VMGetContract(data.vm, cntname, uint32(data.ecosystemId))
+	contract := getContract(r, params["name"])
 	if contract == nil {
-		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": cntname}).Error("contract name")
-		return errorAPI(w, `E_CONTRACT`, http.StatusBadRequest, cntname)
+		logger.WithFields(log.Fields{"type": consts.ContractError, "contract_name": params["contract"]}).Error("contract name")
+		errorResponse(w, errContract.Errorf(params["name"]))
+		return
 	}
-	info := (*contract).Block.Info.(*script.ContractInfo)
+
+	var result getContractResult
+	info := getContractInfo(contract)
 	fields := make([]contractField, 0)
-	result = getContractResult{Name: info.Name, StateID: info.Owner.StateID,
-		Active: info.Owner.Active, TableID: converter.Int64ToStr(info.Owner.TableID),
+	result = getContractResult{
+		ID:       uint32(info.Owner.TableID + consts.ShiftContractID),
+		TableID:  converter.Int64ToStr(info.Owner.TableID),
+		Name:     info.Name,
+		StateID:  info.Owner.StateID,
 		WalletID: converter.Int64ToStr(info.Owner.WalletID),
 		TokenID:  converter.Int64ToStr(info.Owner.TokenID),
-		Address:  converter.AddressToString(info.Owner.WalletID)}
+		Address:  converter.AddressToString(info.Owner.WalletID),
+	}
 
 	if info.Tx != nil {
 		for _, fitem := range *info.Tx {
-			field := contractField{Name: fitem.Name, Type: fitem.Type.String(), Tags: fitem.Tags}
-
-			if strings.Contains(fitem.Tags, `hidden`) || strings.Contains(fitem.Tags, `signature`) {
-				field.HTML = `hidden`
-			} else {
-				for _, tag := range []string{`date`, `polymap`, `map`, `image`, `text`, `address`} {
-					if strings.Contains(fitem.Tags, tag) {
-						field.HTML = tag
-						break
-					}
-				}
-				if len(field.HTML) == 0 {
-					if fitem.Type.String() == script.Decimal {
-						field.HTML = `money`
-					} else if fitem.Type.String() == `string` || fitem.Type.String() == `int64` || fitem.Type.String() == `float64` {
-						field.HTML = `textinput`
-					}
-				}
-			}
-			fields = append(fields, field)
+			fields = append(fields, contractField{
+				Name:     fitem.Name,
+				Type:     script.OriginalToString(fitem.Original),
+				Optional: fitem.ContainsTag(script.TagOptional),
+			})
 		}
 	}
 	result.Fields = fields
 
-	data.result = result
-	return nil
+	jsonResponse(w, result)
 }

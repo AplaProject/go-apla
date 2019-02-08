@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package consts
 
@@ -21,10 +33,12 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "0.9.6"
+const VERSION = "1.2.4"
+
+const BV_ROLLBACK_HASH = 2
 
 // BLOCK_VERSION is block version
-const BLOCK_VERSION = 1
+const BLOCK_VERSION = BV_ROLLBACK_HASH
 
 // NETWORK_ID is id of network
 const NETWORK_ID = 1
@@ -33,10 +47,10 @@ const NETWORK_ID = 1
 const DEFAULT_TCP_PORT = 7078
 
 // FounderAmount is the starting amount of founder
-const FounderAmount = 50000
+const FounderAmount = 100000000
 
-// EGS_DIGIT money_digit for EGS 1000000000000000000
-const EGS_DIGIT = 18
+// MoneyDigits is numbers of digits for tokens 1000000000000000000
+const MoneyDigits = 18
 
 // WAIT_CONFIRMED_NODES is used in confirmations
 const WAIT_CONFIRMED_NODES = 10
@@ -48,7 +62,7 @@ const MIN_CONFIRMED_NODES = 0
 const DOWNLOAD_CHAIN_TRY_COUNT = 10
 
 // MAX_TX_FORW How fast could the time of transaction pass
-const MAX_TX_FORW = 0
+const MAX_TX_FORW = 600
 
 // MAX_TX_BACK transaction may wander in the net for a day and then get into a block
 const MAX_TX_BACK = 86400
@@ -104,7 +118,7 @@ const (
 )
 
 // TxTypes is the list of the embedded transactions
-var TxTypes = map[int]string{
+var TxTypes = map[int64]string{
 	TxTypeFirstBlock:  TxTypeParserFirstBlock,
 	TxTypeStopNetwork: TxTypeParserStopNetwork,
 }
@@ -119,13 +133,13 @@ var BuildInfo string
 const DefaultConfigFile = "config.toml"
 
 // DefaultWorkdirName name of working directory
-const DefaultWorkdirName = "genesis-data"
+const DefaultWorkdirName = "apla-data"
 
 // DefaultPidFilename is default filename of pid file
-const DefaultPidFilename = "go-genesis.pid"
+const DefaultPidFilename = "go-apla.pid"
 
 // DefaultLockFilename is default filename of lock file
-const DefaultLockFilename = "go-genesis.lock"
+const DefaultLockFilename = "go-apla.lock"
 
 // FirstBlockFilename name of first block binary file
 const FirstBlockFilename = "1block"
@@ -161,10 +175,33 @@ const TCPConnTimeout = 5 * time.Second
 const TxRequestExpire = 1 * time.Minute
 
 // DefaultTempDirName is default name of temporary directory
-const DefaultTempDirName = "genesis-temp"
+const DefaultTempDirName = "apla-temp"
 
-// DefaultVDE allways is 1
-const DefaultVDE = 1
+// DefaultOBS allways is 1
+const DefaultOBS = 1
 
 // MoneyLength is the maximum number of digits in money value
 const MoneyLength = 30
+
+const TokenEcosystem = 1
+
+const HTTPServerMaxBodySize = 1 << 20
+
+// ShiftContractID is the offset of tx identifiers
+const ShiftContractID = 5000
+
+// ContractList is the number of contracts per page on loading
+const ContractList = 200
+
+// GuestKey is the guest id
+const GuestKey = `4544233900443112470`
+
+// GuestPublic is the public guest key
+const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86`
+
+// StatusMainPage is a status for Main Page
+const StatusMainPage = `2`
+
+const NoneVDE = "none"
+
+const DBFindLimit = 10000

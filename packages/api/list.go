@@ -1,30 +1,43 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
 import (
-	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,34 +46,80 @@ type listResult struct {
 	List  []map[string]string `json:"list"`
 }
 
-func list(w http.ResponseWriter, r *http.Request, data *apiData, logger *log.Entry) (err error) {
-	var limit int
+type listForm struct {
+	paginatorForm
+	rowForm
+}
 
-	table := converter.EscapeName(getPrefix(data) + `_` + data.params[`name`].(string))
-	cols := `*`
-	if len(data.params[`columns`].(string)) > 0 {
-		cols = `id,` + converter.EscapeName(data.params[`columns`].(string))
+func (f *listForm) Validate(r *http.Request) error {
+	if err := f.paginatorForm.Validate(r); err != nil {
+		return err
+	}
+	return f.rowForm.Validate(r)
+}
+
+func checkAccess(tableName, columns string, client *Client) (table string, cols string, err error) {
+	sc := smart.SmartContract{
+		OBS: conf.Config.IsSupportingOBS(),
+		VM:  smart.GetVM(),
+		TxSmart: tx.SmartContract{
+			Header: tx.Header{
+				EcosystemID: client.EcosystemID,
+				KeyID:       client.KeyID,
+				NetworkID:   consts.NETWORK_ID,
+			},
+		},
+	}
+	table, _, cols, err = sc.CheckAccess(tableName, columns, client.EcosystemID)
+	return
+}
+
+func getListHandler(w http.ResponseWriter, r *http.Request) {
+	form := &listForm{}
+	if err := parseForm(r, form); err != nil {
+		errorResponse(w, err, http.StatusBadRequest)
+		return
 	}
 
-	count, err := model.GetRecordsCountTx(nil, strings.Trim(table, `"`))
+	params := mux.Vars(r)
+	client := getClient(r)
+	logger := getLogger(r)
+
+	var (
+		err   error
+		table string
+	)
+	table, form.Columns, err = checkAccess(params["name"], form.Columns, client)
+	if err != nil {
+		errorResponse(w, err)
+		return
+	}
+	q := model.GetTableQuery(params["name"], client.EcosystemID)
+
+	if len(form.Columns) > 0 {
+		q = q.Select("id," + form.Columns)
+	}
+
+	result := new(listResult)
+	err = q.Count(&result.Count).Error
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
-		return errorAPI(w, `E_TABLENOTFOUND`, http.StatusBadRequest, data.params[`name`].(string))
+		errorResponse(w, errTableNotFound.Errorf(table))
+		return
 	}
 
-	if data.params[`limit`].(int64) > 0 {
-		limit = int(data.params[`limit`].(int64))
-	} else {
-		limit = 25
-	}
-	list, err := model.GetAll(`select `+cols+` from `+table+` order by id desc`+
-		fmt.Sprintf(` offset %d `, data.params[`offset`].(int64)), limit)
+	rows, err := q.Order("id ASC").Offset(form.Offset).Limit(form.Limit).Rows()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
-		return errorAPI(w, err.Error(), http.StatusInternalServerError)
+		errorResponse(w, err)
+		return
 	}
-	data.result = &listResult{
-		Count: converter.Int64ToStr(count), List: list,
+
+	result.List, err = model.GetResult(rows)
+	if err != nil {
+		errorResponse(w, err)
+		return
 	}
-	return
+
+	jsonResponse(w, result)
 }

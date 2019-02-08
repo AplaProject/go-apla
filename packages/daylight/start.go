@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package daylight
 
@@ -27,23 +39,22 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/api"
-	conf "github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/daemons"
-	"github.com/GenesisKernel/go-genesis/packages/daylight/daemonsctl"
-	logtools "github.com/GenesisKernel/go-genesis/packages/log"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/publisher"
-	"github.com/GenesisKernel/go-genesis/packages/service"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/statsd"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
-	"github.com/GenesisKernel/go-genesis/packages/vdemanager"
+	"github.com/AplaProject/go-apla/packages/api"
+	conf "github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/daemons"
+	"github.com/AplaProject/go-apla/packages/daylight/daemonsctl"
+	logtools "github.com/AplaProject/go-apla/packages/log"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/modes"
+	"github.com/AplaProject/go-apla/packages/network/httpserver"
+	"github.com/AplaProject/go-apla/packages/obsmanager"
+	"github.com/AplaProject/go-apla/packages/publisher"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/statsd"
+	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/julienschmidt/httprouter"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -130,6 +141,7 @@ func initLogs() error {
 	}
 
 	log.AddHook(logtools.ContextHook{})
+	log.AddHook(logtools.HexHook{})
 
 	return nil
 }
@@ -149,16 +161,11 @@ func delPidFile() {
 	os.Remove(conf.Config.GetPidPath())
 }
 
-func setRoute(route *httprouter.Router, path string, handle func(http.ResponseWriter, *http.Request), methods ...string) {
-	for _, method := range methods {
-		route.HandlerFunc(method, path, handle)
-	}
-}
-
 func initRoutes(listenHost string) {
-	route := httprouter.New()
-	setRoute(route, `/monitoring`, daemons.Monitoring, `GET`)
-	api.Route(route)
+	handler := modes.RegisterRoutes()
+	handler = api.WithCors(handler)
+	handler = httpserver.NewMaxBodyReader(handler, conf.Config.HTTPServerMaxBodySize)
+
 	if conf.Config.TLS {
 		if len(conf.Config.TLSCert) == 0 || len(conf.Config.TLSKey) == 0 {
 			log.Fatal("-tls-cert/TLSCert and -tls-key/TLSKey must be specified with -tls/TLS")
@@ -170,7 +177,7 @@ func initRoutes(listenHost string) {
 			log.WithError(err).Fatalf(`Filepath -tls-key/TLSKey = %s is invalid`, conf.Config.TLSKey)
 		}
 		go func() {
-			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, route)
+			err := http.ListenAndServeTLS(listenHost, conf.Config.TLSCert, conf.Config.TLSKey, handler)
 			if err != nil {
 				log.WithFields(log.Fields{"host": listenHost, "error": err, "type": consts.NetworkError}).Fatal("Listening TLS server")
 			}
@@ -181,7 +188,7 @@ func initRoutes(listenHost string) {
 		log.Fatal("-tls/TLS must be specified with -tls-cert/TLSCert and -tls-key/TLSKey")
 	}
 
-	httpListener(listenHost, route)
+	httpListener(listenHost, handler)
 }
 
 // Start starts the main code of the program
@@ -212,7 +219,10 @@ func Start() {
 		}
 	}
 
-	log.WithFields(log.Fields{"mode": conf.Config.RunningMode}).Info("Node running mode")
+	log.WithFields(log.Fields{"mode": conf.Config.OBSMode}).Info("Node running mode")
+	if conf.Config.FuncBench {
+		log.Warning("Warning! Access checking is disabled in some built-in functions")
+	}
 
 	f := utils.LockOrDie(conf.Config.LockFilePath)
 	defer f.Unlock()
@@ -245,7 +255,13 @@ func Start() {
 	}
 	defer delPidFile()
 
+	smart.InitVM()
 	if model.DBConn != nil {
+		if err := model.UpdateSchema(); err != nil {
+			log.WithFields(log.Fields{"error": err}).Error("on running update migrations")
+			os.Exit(1)
+		}
+
 		ctx, cancel := context.WithCancel(context.Background())
 		utils.CancelFunc = cancel
 		utils.ReturnCh = make(chan string)
@@ -257,36 +273,8 @@ func Start() {
 			os.Exit(1)
 		}
 
-		if !conf.Config.IsSupportingVDE() {
-			var availableBCGap int64 = consts.AvailableBCGap
-			if syspar.GetRbBlocks1() > consts.AvailableBCGap {
-				availableBCGap = syspar.GetRbBlocks1() - consts.AvailableBCGap
-			}
-
-			blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-			blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-			blockGenerationTime := blockGenerationDuration + blocksGapDuration
-
-			checkingInterval := blockGenerationTime * time.Duration(syspar.GetRbBlocks1()-consts.DefaultNodesConnectDelay)
-			na := service.NewNodeRelevanceService(availableBCGap, checkingInterval)
-			na.Run(ctx)
-
-			err = service.InitNodesBanService()
-			if err != nil {
-				log.WithError(err).Fatal("Can't init ban service")
-			}
-		} else {
-			if err := smart.LoadVDEContracts(nil, converter.Int64ToStr(consts.DefaultVDE)); err != nil {
-				log.WithFields(log.Fields{"type": consts.VMError, "error": err}).Fatal("on loading vde virtual mashine")
-				Exit(1)
-			}
-
-			if conf.Config.IsVDEMaster() {
-				vdemanager.InitVDEManager()
-			}
-		}
+		obsmanager.InitOBSManager()
 	}
-
 	daemons.WaitForSignals()
 
 	initRoutes(conf.Config.HTTP.Str())

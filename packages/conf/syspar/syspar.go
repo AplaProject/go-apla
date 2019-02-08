@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package syspar
 
@@ -22,11 +34,11 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
 
 	"time"
 
@@ -55,7 +67,7 @@ const (
 	// MaxTxFuel is the maximum fuel of the transaction
 	MaxTxFuel = `max_fuel_tx`
 	// MaxTxCount is the maximum count of the transactions
-	MaxTxCount = `max_tx_count`
+	MaxTxCount = `max_tx_block`
 	// MaxBlockGenerationTime is the time limit for block generation (in ms)
 	MaxBlockGenerationTime = `max_block_generation_time`
 	// MaxColumns is the maximum columns in tables
@@ -63,13 +75,13 @@ const (
 	// MaxIndexes is the maximum indexes in tables
 	MaxIndexes = `max_indexes`
 	// MaxBlockUserTx is the maximum number of user's transactions in one block
-	MaxBlockUserTx = `max_block_user_tx`
+	MaxBlockUserTx = `max_tx_block_per_user`
 	// SizeFuel is the fuel cost of 1024 bytes of the transaction data
-	SizeFuel = `size_fuel`
+	SizeFuel = `price_tx_data`
 	// CommissionWallet is the address for commissions
 	CommissionWallet = `commission_wallet`
 	// RbBlocks1 rollback from queue_bocks
-	RbBlocks1 = `rb_blocks_1`
+	RbBlocks1 = `rollback_blocks`
 	// BlockReward value of reward, which is chrged on block generation
 	BlockReward = "block_reward"
 	// IncorrectBlocksPerDay is value of incorrect blocks per day before global ban
@@ -77,9 +89,16 @@ const (
 	// NodeBanTime is value of ban time for bad nodes (in ms)
 	NodeBanTime = `node_ban_time`
 	// LocalNodeBanTime is value of local ban time for bad nodes (in ms)
-	LocalNodeBanTime = `local_node_ban_time`
+	LocalNodeBanTime = `node_ban_time_local`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
+	// Test equals true or 1 if we have a test blockchain
+	Test = `test`
+	// PrivateBlockchain is value defining blockchain mode
+	PrivateBlockchain = `private_blockchain`
+
+	// CostDefault is the default maximum cost of F
+	CostDefault = int64(20000000)
 )
 
 var (
@@ -405,6 +424,10 @@ func GetMaxBlockUserTx() int {
 	return converter.StrToInt(SysString(MaxBlockUserTx))
 }
 
+func IsTestMode() bool {
+	return SysString(Test) == `true` || SysString(Test) == `1`
+}
+
 func GetIncorrectBlocksPerDay() int {
 	return converter.StrToInt(SysString(IncorrectBlocksPerDay))
 }
@@ -477,4 +500,18 @@ func GetFirstBlockData() (*consts.FirstBlock, error) {
 	}
 
 	return firstBlockData, nil
+}
+
+// IsPrivateBlockchain returns the value of private_blockchain system parameter or true
+func IsPrivateBlockchain() bool {
+	par := SysString(PrivateBlockchain)
+	return len(par) > 0 && par != `0` && par != `false`
+}
+
+func GetMaxCost() int64 {
+	cost := GetMaxTxFuel()
+	if cost == 0 {
+		cost = CostDefault
+	}
+	return cost
 }

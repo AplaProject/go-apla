@@ -1,3 +1,31 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package block
 
 import (
@@ -6,29 +34,32 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/protocols"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/transaction/custom"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/notificator"
+	"github.com/AplaProject/go-apla/packages/protocols"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/transaction"
+	"github.com/AplaProject/go-apla/packages/transaction/custom"
+	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Block is storing block data
 type Block struct {
-	Header       utils.BlockData
-	PrevHeader   *utils.BlockData
-	MrklRoot     []byte
-	BinData      []byte
-	Transactions []*transaction.Transaction
-	SysUpdate    bool
-	GenBlock     bool // it equals true when we are generating a new block
-	StopCount    int  // The count of good tx in the block
+	Header        utils.BlockData
+	PrevHeader    *utils.BlockData
+	MrklRoot      []byte
+	BinData       []byte
+	Transactions  []*transaction.Transaction
+	SysUpdate     bool
+	GenBlock      bool // it equals true when we are generating a new block
+	StopCount     int  // The count of good tx in the block
+	Notifications []smart.NotifyInfo
 }
 
 func (b Block) String() string {
@@ -63,14 +94,14 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 
-		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
+		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
 			return err
 		}
 
 		isFirstBlock := b.Header.BlockID == 1
-		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock)
+		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock, true)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -86,6 +117,7 @@ func (b *Block) PlaySafe() error {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
 			}
+			BadTxForBan(b.Transactions[0].TxHeader.KeyID)
 			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
 		}
 		return err
@@ -107,6 +139,13 @@ func (b *Block) PlaySafe() error {
 		if err = syspar.SysUpdate(nil); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 			return err
+		}
+	}
+	for _, item := range b.Notifications {
+		if item.Roles {
+			notificator.UpdateRolesNotifications(item.EcosystemID, item.List)
+		} else {
+			notificator.UpdateNotifications(item.EcosystemID, item.List)
 		}
 	}
 	return nil
@@ -154,18 +193,35 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
 
-		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
+		model.IncrementTxAttemptCount(nil, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
-
-		msg, err = t.Play()
+		var flush []smart.FlushInfo
+		msg, flush, err = t.Play()
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}
 		if err != nil {
+			if flush != nil {
+				for i := len(flush) - 1; i >= 0; i-- {
+					finfo := flush[i]
+					if finfo.Prev == nil {
+						if finfo.ID != uint32(len(smart.GetVM().Children)-1) {
+							logger.WithFields(log.Fields{"type": consts.ContractError, "value": finfo.ID,
+								"len": len(smart.GetVM().Children) - 1}).Error("flush rollback")
+						} else {
+							smart.GetVM().Children = smart.GetVM().Children[:len(smart.GetVM().Children)-1]
+							delete(smart.GetVM().Objects, finfo.Name)
+						}
+					} else {
+						smart.GetVM().Children[finfo.ID] = finfo.Prev
+						smart.GetVM().Objects[finfo.Name] = finfo.Info
+					}
+				}
+			}
 			if err == custom.ErrNetworkStopping {
 				return err
 			}
@@ -199,7 +255,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
-		model.DecrementTxAttemptCount(dbTransaction, t.TxHash)
+		model.DecrementTxAttemptCount(nil, t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true
@@ -217,9 +273,10 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("updating transaction status block id")
 			return err
 		}
-		if err := transaction.InsertInLogTx(t.DbTransaction, t.TxFullData, t.TxTime); err != nil {
+		if err := transaction.InsertInLogTx(t, b.Header.BlockID); err != nil {
 			return utils.ErrInfo(err)
 		}
+		b.Notifications = append(b.Notifications, t.Notifications...)
 	}
 	return nil
 }
@@ -318,7 +375,8 @@ func (b *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, b.ForSign(), b.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey},
+			[]byte(b.Header.ForSign(b.PrevHeader, b.MrklRoot)), b.Header.Sign, true)
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
@@ -328,19 +386,6 @@ func (b *Block) CheckHash() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (b Block) ForSha() string {
-	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
-		b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time,
-		b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
-}
-
-// ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-func (b Block) ForSign() string {
-	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
-		b.Header.BlockID, b.PrevHeader.Hash, b.Header.Time, b.Header.EcosystemID,
-		b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 }
 
 // InsertBlockWOForks is inserting blocks
@@ -376,7 +421,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := UnmarshallBlock(buf, !checkSize)
+	block, err := UnmarshallBlock(buf, !checkSize, true)
 	if err != nil {
 		return nil, err
 	}

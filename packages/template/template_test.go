@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package template
 
@@ -79,7 +91,7 @@ func TestJSON(t *testing.T) {
 	var timeout bool
 	vars := make(map[string]string)
 	vars[`_full`] = `0`
-	vars[`my`] = `Span(test)`
+	vars[`mytest`] = `Span(test)`
 	for _, item := range forTest {
 		templ := Template2JSON(item.input, &timeout, &vars)
 		if string(templ) != item.want {
@@ -90,6 +102,36 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`ArrayToSource(src, )`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[],"source":"src","types":["text","text"]}}]`},
+	{`SetVar(arr, [1, "hello", {"val": "123000000000000000000", "OK":{"time": "1545788052"}, "type": "emission"}, {"val": "555000000000000000000", "arr":["time", "1545788125"], "type": "emission"}, 23])
+	ArrayToSource(src, #arr#)`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","hello"],["2","{\"val\": \"123000000000000000000\", \"OK\":{\"time\": \"1545788052\"}, \"type\": \"emission\"}"],["3","{\"val\": \"555000000000000000000\", \"arr\":[\"time\", \"1545788125\"], \"type\": \"emission\"}"],["4","23"]],"source":"src","types":["text","text"]}}]`},
+	{`ArrayToSource(dat, [ "hello","1 2 3", "my name" , "is Billy" ])`,
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","hello"],["1","1 2 3"],["2","my name"],["3","is Billy"]],"source":"dat","types":["text","text"]}}]`},
+	{`P(#twxt# #some text# 2#some_par#1#toxt#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":" #some text# 21"}]}]`},
+	{`SetVar(tmp, 0#mytest#1)VarAsIs(txt, tmp)VarAsIs(txt2, #tmp#)VarAsIs(txt3, Some #mytest#)
+	 VarAsIs(txt4, #mytest# #tmp# #txt#)
+	  P(#txt# #txt2# #txt3# #txt4#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":"0Span(test)1 0Span(test)1 Some #mytest# #mytest# #tmp# #txt#"}]}]`},
+	{`SetVar(txt, "те").(txt1, "ещё")P(#txt# #txt1#)`,
+		`[{"tag":"p","children":[{"tag":"text","text":"те ещё"}]}]`},
+	{`Span(Body: "те").(Body: "ещё")`,
+		`[{"tag":"span","children":[{"tag":"text","text":"те"}]},{"tag":"span","children":[{"tag":"text","text":"ещё"}]}]`},
+	{`SetVar(mykey,0266-5397-0542-4815-0876)Div(){AddressToId(#mykey#)=AddressToId()}`,
+		`[{"tag":"div","children":[{"tag":"text","text":"2665397054248150876"},{"tag":"text","text":"="}]}]`},
+	{`SetVar(t,7)
+		Button(Body: Span(my#t#)).ErrorRedirect(PageParams: name=Val(#t#val), PageName: "v#t#", ErrorID: myerr).ErrorRedirect(PageParams: par=#t#, PageName: "qqq", ErrorID: err1)`,
+		`[{"tag":"button","attr":{"errredirect":{"err1":{"errorid":"err1","pagename":"qqq","pageparams":{"par":{"text":"7","type":"text"}}},"myerr":{"errorid":"myerr","pagename":"v7","pageparams":{"name":{"params":["7val"],"type":"Val"}}}}},"children":[{"tag":"span","children":[{"tag":"text","text":"my7"}]}]}]`},
+	{`SetVar(my,Val)Div().Hide(Test = #my#, Test2=qwerty).Show(Param=#my##my#)`,
+		`[{"tag":"div","attr":{"hide":[{"Test":"Val","Test2":"qwerty"}],"show":[{"Param":"ValVal"}]}}]`},
+	{`SetVar(my,Val)Div().Show(Test = #my#, Test2=qwerty).Show(Param=#my##my#)`,
+		`[{"tag":"div","attr":{"show":[{"Test":"Val","Test2":"qwerty"},{"Param":"ValVal"}]}}]`},
+	{`SetVar(my,Val)Div().Show(Test = #my#, Test2=qwerty)`,
+		`[{"tag":"div","attr":{"show":[{"Test":"Val","Test2":"qwerty"}]}}]`},
+	{`SetVar(my, My Value)Div(){qqq}.Show(Test=#my#)`,
+		`[{"tag":"div","attr":{"show":[{"Test":"My Value"}]},"children":[{"tag":"text","text":"qqq"}]}]`},
 	{`SetVar(outer, [{"obj1_key1": "obj1_value1"},{"obj2_key2": "obj2_value2"}])
 	ArrayToSource(outer, #outer#, p1)`, `[{"tag":"arraytosource","attr":{"columns":["p1_key","p1_value"],"data":[["0","{\"obj1_key1\": \"obj1_value1\"}"],["1","{\"obj2_key2\": \"obj2_value2\"}"]],"prefix":"p1","source":"outer","types":["text","text"]}}]`},
 	{`SetVar(json, {"title": "Are you agree to send money?", "params": {"ggg1": "ggg2"}})
@@ -130,7 +172,7 @@ var forTest = tplList{
 		`[{"tag":"addtoolbutton","attr":{"page":"default","popup":{"header":"Test","width":"50"},"title":"Open"}}]`},
 	{`SetVar(ok, OK)Input(Type: text, Value: #ok# Now(YY))Input(Type:text, Value: #ok# Some text)`,
 		`[{"tag":"input","attr":{"type":"text","value":"OK Now(YY)"}},{"tag":"input","attr":{"type":"text","value":"OK Some text"}}]`},
-	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"now","attr":{"format":"MMYY","interval":"1 day"}},{"tag":"now"}]`},
+	{`SetVar(format, MMYY)Now(#format#,1 day)Now()`, `[{"tag":"text","text":"Now(MMYY,1 day)Now()"}]`},
 	{`SetVar(digit, 2)Money(12345, #digit#)=Money(#digit#, #digit#)=Money(123456000, 7)=Money(12, -3)`,
 		`[{"tag":"text","text":"123.45"},{"tag":"text","text":"=0.02"},{"tag":"text","text":"=12.3456"},{"tag":"text","text":"=12000"}]`},
 	{`SetVar(textc, test)Code(P(Some #textc#))CodeAsIs(P(No Some #textc#))Div(){CodeAsIs(Text:#textc#)}`,
@@ -173,26 +215,26 @@ var forTest = tplList{
 	 JsonToSource(dat, {"param":"va lue", "obj": {"sub":"one"}, "arr":["one"], "empty": null})`,
 		`[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[],"source":"none","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["p1","v1"],["p2","v2"]],"source":"pv","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["arr","[one]"],["empty",""],["obj","{\"sub\":\"one\"}"],["param","va lue"]],"source":"dat","types":["text","text"]}}]`},
 	{`SetVar(arr,[1, 2, 3])ArrayToSource(src2, #arr#)ArrayToSource(src1, ["q","p"])ArrayToSource(src1, {"k":"v"})`,
-		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","2"],["2","3"]],"source":"src2","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","q"],["1","p"]],"source":"src1","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[],"source":"src1","types":["text","text"]}}]`},
+		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","1"],["1","2"],["2","3"]],"source":"src2","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","q"],["1","p"]],"source":"src1","types":["text","text"]}},{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"k\":\"v\"}"]],"source":"src1","types":["text","text"]}}]`},
 	{`ArrayToSource(arr, [{"k1":"v1"},{"k2":"v2"}])ForList(arr){JsonToSource(json, #value#)}`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[["0","{\"k1\":\"v1\"}"],["1","{\"k2\":\"v2\"}"]],"source":"arr","types":["text","text"]}},{"tag":"forlist","attr":{"source":"arr"},"children":[{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k1","v1"]],"source":"json","types":["text","text"]}},{"tag":"jsontosource","attr":{"columns":["key","value"],"data":[["k2","v2"]],"source":"json","types":["text","text"]}}]}]`},
 	{`Button(Body: addpage).CompositeContract().CompositeContract(NewPage, [{"param1": "Value 1"},
-		{"param2": "Value 2", "param3" : "#my#"}]).CompositeContract(EditPage)`,
+		{"param2": "Value 2", "param3" : "#mytest#"}]).CompositeContract(EditPage)`,
 		`[{"tag":"button","attr":{"composite":[{"name":"NewPage","data":[{"param1":"Value 1"},{"param2":"Value 2","param3":"Span(test)"}]},{"name":"EditPage"}]},"children":[{"tag":"text","text":"addpage"}]}]`},
-	{`SetVar(a, 0)SetVar(a, #a#7)SetVar(where, #where# 1)Div(){#where##a#}`, `[{"tag":"div","children":[{"tag":"text","text":"#where# 107"}]}]`},
+	{`SetVar(a, 0)SetVar(a, #a#7)SetVar(where, #where# 1)Div(){#where##a#}`, `[{"tag":"div","children":[{"tag":"text","text":" 107"}]}]`},
 	{`Div(){Span(begin "You've" end<hr>)}Div(Body: ` + "`\"You've\"`" + `)
 	  Div(Body: "` + "`You've`" + `")`, `[{"tag":"div","children":[{"tag":"span","children":[{"tag":"text","text":"begin \"You've\" end\u003chr\u003e"}]}]},{"tag":"div","children":[{"tag":"text","text":"\"You've\""}]},{"tag":"div","children":[{"tag":"text","text":"` + "`You've`" + `"}]}]`},
 	{`Data(Source: test, Columns: "a,b"){a}ForList(Source: test){#a#}`,
 		`[{"tag":"data","attr":{"columns":["a","b"],"data":[["a",""]],"source":"test","types":["text","text"]}},{"tag":"forlist","attr":{"source":"test"},"children":[{"tag":"text","text":"a"}]}]`},
 	{`QRcode(Some text)`, `[{"tag":"qrcode","attr":{"text":"Some text"}}]`},
-	{`SetVar(q, q#my#q)Div(Class: #my#){#my# Strong(#my#) Div(#q#){P(Span(#my#))}}`,
+	{`SetVar(q, q#mytest#q)Div(Class: #mytest#){#mytest# Strong(#mytest#) Div(#q#){P(Span(#mytest#))}}`,
 		`[{"tag":"div","attr":{"class":"Span(test)"},"children":[{"tag":"text","text":"Span(test) "},{"tag":"strong","children":[{"tag":"text","text":"Span(test)"}]},{"tag":"div","attr":{"class":"qSpan(test)q"},"children":[{"tag":"p","children":[{"tag":"span","children":[{"tag":"text","text":"Span(test)"}]}]}]}]}]`},
 	{`If(){SetVar(false_condition, 1)Span(False)}.Else{SetVar(true_condition, 1)Span(True)} 
 	  If(true){SetVar(ok, 1)}.Else{SetVar(problem, 1)}
 	  If(false){SetVar(if, 1)}.ElseIf(true){SetVar(elseif, 1)}.Else{SetVar(else, 1)}
 	  Div(){
 		#false_condition# #true_condition# #ok# #problem# #if# #elseif# #else#
-	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":"#false_condition# 1 1 #problem# #if# 1 #else#"}]}]`},
+	  }`, `[{"tag":"span","children":[{"tag":"text","text":"True"}]},{"tag":"div","children":[{"tag":"text","text":" 1 1   1 "}]}]`},
 	{`Div(){Span(begin "You've" end<hr>)}Div(Body: ` + "`\"You've\"`" + `)
 	  Div(Body: "` + "`You've`" + `")`, `[{"tag":"div","children":[{"tag":"span","children":[{"tag":"text","text":"begin \"You've\" end\u003chr\u003e"}]}]},{"tag":"div","children":[{"tag":"text","text":"\"You've\""}]},{"tag":"div","children":[{"tag":"text","text":"` + "`You've`" + `"}]}]`},
 	{`Button(Body: addpage, 
@@ -207,7 +249,7 @@ var forTest = tplList{
 		`[{"tag":"text","text":"753013346318631859107508068064700000-468"}]`},
 	{`SetVar(val, 100)Calculate(10000-(34+5)*#val#)=Calculate("((10+#val#-45)*3.0-10)/4.5 + #val#", Prec: 4)`,
 		`[{"tag":"text","text":"6100"},{"tag":"text","text":"=141.1111"}]`},
-	{`Span((span text), ok )Span(((span text), ok) )Div(){{My #my# body}}`,
+	{`Span((span text), ok )Span(((span text), ok) )Div(){{My #mytest# body}}`,
 		`[{"tag":"span","attr":{"class":"ok"},"children":[{"tag":"text","text":"(span text)"}]},{"tag":"span","children":[{"tag":"text","text":"((span text), ok)"}]},{"tag":"div","children":[{"tag":"text","text":"{My Span(test) body}"}]}]`},
 	{`Code(P(Some text)
  Div(myclass){
@@ -308,7 +350,7 @@ var forTest = tplList{
 			}
 		}
 	}`,
-		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My #text#"}]}]}]}]}]`},
+		`[{"tag":"div","attr":{"class":"myclass"},"children":[{"tag":"div"},{"tag":"p","children":[{"tag":"div","attr":{"class":"id"},"children":[{"tag":"label","attr":{"class":"myl","for":"forname"},"children":[{"tag":"text","text":"My "}]}]}]}]}]`},
 	{`SetVar(istrue, 1)If(GetVar(istrue),OK)If(GetVar(isfalse)){Skip}.Else{Span(Else OK)}`,
 		`[{"tag":"text","text":"OK"},{"tag":"span","children":[{"tag":"text","text":"Else OK"}]}]`},
 	{`If(false,First).ElseIf(0){Skip}.ElseIf(1){
@@ -327,9 +369,9 @@ var forTest = tplList{
 		}`,
 		`[{"tag":"menuitem","attr":{"page":"page1","title":"Menu 1"}},{"tag":"menugroup","attr":{"name":"SubMenu","title":"SubMenu"},"children":[{"tag":"menuitem","attr":{"page":"page2","title":"Menu 2"}},{"tag":"menuitem","attr":{"icon":"person","page":"page3","title":"Menu 3"}}]}]`},
 	{`SetVar(testvalue, The, #n#, Value).(n, New).(param,"23")Span(Test value equals #testvalue#).(#param#)`,
-		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, New, Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
+		`[{"tag":"span","children":[{"tag":"text","text":"Test value equals The, , Value"}]},{"tag":"span","children":[{"tag":"text","text":"23"}]}]`},
 	{`SetVar(test, mytest).(empty,0)And(0,test,0)Or(0,#test#)Or(0, And(0,0))And(0,Or(0,my,while))
-		And(1,#mytest#)Or(#empty#, And(#empty#, line))Or(#test#==mytest)If(#empty#).Else{Div(){#my#}}`,
+		And(1,#mytest#)Or(#empty#, And(#empty#, line))Or(#test#==mytest)If(#empty#).Else{Div(){#mytest#}}`,
 		`[{"tag":"text","text":"0100101"},{"tag":"div","children":[{"tag":"text","text":"Span(test)"}]}]`},
 	{`Address()Span(Address(-5728238900021))Address(3467347643873).(-6258391547979339691)`,
 		`[{"tag":"text","text":"unknown address"},{"tag":"span","children":[{"tag":"text","text":"1844-6738-3454-7065-1595"}]},{"tag":"text","text":"0000-0003-4673-4764-38731218-8352-5257-3021-1925"}]`},

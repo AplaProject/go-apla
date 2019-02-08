@@ -1,71 +1,99 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package migration
 
 var firstSystemParametersDataSQL = `
 INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES 
-	('1','default_ecosystem_page', '', 'true'),
-	('2','default_ecosystem_menu', '', 'true'),
-	('3','default_ecosystem_contract', '', 'true'),
-	('4','gap_between_blocks', '2', 'true'),
-	('5','rb_blocks_1', '60', 'true'),
-	('7','new_version_url', 'upd.apla.io', 'true'),
-	('8','full_nodes', '', 'true'),
-	('9','number_of_nodes', '101', 'true'),
-	('10','ecosystem_price', '1000', 'true'),
-	('11','contract_price', '200', 'true'),
-	('12','column_price', '200', 'true'),
-	('13','table_price', '200', 'true'),
-	('14','menu_price', '100', 'true'),
-	('15','page_price', '100', 'true'),
-	('16','blockchain_url', '', 'true'),
-	('17','max_block_size', '67108864', 'true'),
-	('18','max_tx_size', '33554432', 'true'),
-	('19','max_tx_count', '1000', 'true'),
-	('20','max_columns', '50', 'true'),
-	('21','max_indexes', '5', 'true'),
-	('22','max_block_user_tx', '100', 'true'),
-	('23','max_fuel_tx', '20000', 'true'),
-	('24','max_fuel_block', '100000', 'true'),
-	('25','commission_size', '3', 'true'),
-	('26','commission_wallet', '', 'true'),
-	('27','fuel_rate', '[["1","1000000000000000"]]', 'true'),
-	('28','extend_cost_address_to_id', '10', 'true'),
-	('29','extend_cost_id_to_address', '10', 'true'),
-	('30','extend_cost_new_state', '1000', 'true'), -- What cost must be?
-	('31','extend_cost_sha256', '50', 'true'),
-	('32','extend_cost_pub_to_id', '10', 'true'),
-	('33','extend_cost_ecosys_param', '10', 'true'),
-	('34','extend_cost_sys_param_string', '10', 'true'),
-	('35','extend_cost_sys_param_int', '10', 'true'),
-	('36','extend_cost_sys_fuel', '10', 'true'),
-	('37','extend_cost_validate_condition', '30', 'true'),
-	('38','extend_cost_eval_condition', '20', 'true'),
-	('39','extend_cost_has_prefix', '10', 'true'),
-	('40','extend_cost_contains', '10', 'true'),
-	('41','extend_cost_replace', '10', 'true'),
-	('42','extend_cost_join', '10', 'true'),
-	('43','extend_cost_update_lang', '10', 'true'),
-	('44','extend_cost_size', '10', 'true'),
-	('45','extend_cost_substr', '10', 'true'),
-	('46','extend_cost_contracts_list', '10', 'true'),
-	('47','extend_cost_is_object', '10', 'true'),
-	('48','extend_cost_compile_contract', '100', 'true'),
-	('49','extend_cost_flush_contract', '50', 'true'),
-	('50','extend_cost_eval', '10', 'true'),
-	('51','extend_cost_len', '5', 'true'),
-	('52','extend_cost_activate', '10', 'true'),
-	('53','extend_cost_deactivate', '10', 'true'),
-	('54','extend_cost_create_ecosystem', '100', 'true'),
-	('55','extend_cost_table_conditions', '100', 'true'),
-	('56','extend_cost_create_table', '100', 'true'),
-	('57','extend_cost_perm_table', '100', 'true'),
-	('58','extend_cost_column_condition', '50', 'true'),
-	('59','extend_cost_create_column', '50', 'true'),
-	('60','extend_cost_perm_column', '50', 'true'),
-	('61','extend_cost_json_to_map', '50', 'true'),
-	('62','max_block_generation_time', '2000', 'true'),
-	('63','block_reward','1000','true'),
-	('64','incorrect_blocks_per_day','10','true'),
-	('65','node_ban_time','86400000','true'),
-	('66','local_node_ban_time','1800000','true'),
-	('67','max_forsign_size', '1000000', 'true');
+	('1','default_ecosystem_page', 'If(#ecosystem_id# > 1){Include(@1welcome)}', 'ContractAccess("@1UpdateSysParam")'),
+	('2','default_ecosystem_menu', '', 'ContractAccess("@1UpdateSysParam")'),
+	('3','default_ecosystem_contract', '', 'ContractAccess("@1UpdateSysParam")'),
+	('4','gap_between_blocks', '2', 'ContractAccess("@1UpdateSysParam")'),
+	('5','rollback_blocks', '60', 'ContractAccess("@1UpdateSysParam")'),
+	('6','new_version_url', 'upd.apla.io', 'ContractAccess("@1UpdateSysParam")'),
+	('7','full_nodes', '', 'ContractAccess("@1UpdateSysParam","@1NodeRemoveByKey")'),
+	('8','number_of_nodes', '101', 'ContractAccess("@1UpdateSysParam")'),
+	('9','price_create_contract', '200', 'ContractAccess("@1UpdateSysParam")'),
+	('10','price_create_menu', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('11','price_create_page', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('12','blockchain_url', '', 'ContractAccess("@1UpdateSysParam")'),
+	('13','max_block_size', '67108864', 'ContractAccess("@1UpdateSysParam")'),
+	('14','max_tx_size', '33554432', 'ContractAccess("@1UpdateSysParam")'),
+	('15','max_tx_block', '1000', 'ContractAccess("@1UpdateSysParam")'),
+	('16','max_columns', '50', 'ContractAccess("@1UpdateSysParam")'),
+	('17','max_indexes', '5', 'ContractAccess("@1UpdateSysParam")'),
+	('18','max_tx_block_per_user', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('19','max_fuel_tx', '20000000', 'ContractAccess("@1UpdateSysParam")'),
+	('20','max_fuel_block', '200000000', 'ContractAccess("@1UpdateSysParam")'),
+	('21','commission_size', '3', 'ContractAccess("@1UpdateSysParam")'),
+	('22','commission_wallet', '', 'ContractAccess("@1UpdateSysParam")'),
+	('23','fuel_rate', '[["1","100000000000"]]', 'ContractAccess("@1UpdateSysParam")'),
+	('24','price_exec_address_to_id', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('25','price_exec_id_to_address', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('26','price_exec_sha256', '50', 'ContractAccess("@1UpdateSysParam")'),
+	('27','price_exec_pub_to_id', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('28','price_exec_ecosys_param', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('29','price_exec_sys_param_string', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('30','price_exec_sys_param_int', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('31','price_exec_sys_fuel', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('32','price_exec_validate_condition', '30', 'ContractAccess("@1UpdateSysParam")'),
+	('33','price_exec_eval_condition', '20', 'ContractAccess("@1UpdateSysParam")'),
+	('34','price_exec_has_prefix', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('35','price_exec_contains', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('36','price_exec_replace', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('37','price_exec_join', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('38','price_exec_update_lang', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('39','price_exec_size', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('40','price_exec_substr', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('41','price_exec_contracts_list', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('42','price_exec_is_object', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('43','price_exec_compile_contract', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('44','price_exec_flush_contract', '50', 'ContractAccess("@1UpdateSysParam")'),
+	('45','price_exec_eval', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('46','price_exec_len', '5', 'ContractAccess("@1UpdateSysParam")'),
+	('47','price_exec_bind_wallet', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('48','price_exec_unbind_wallet', '10', 'ContractAccess("@1UpdateSysParam")'),
+	('49','price_exec_create_ecosystem', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('50','price_exec_table_conditions', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('51','price_exec_create_table', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('52','price_exec_perm_table', '100', 'ContractAccess("@1UpdateSysParam")'),
+	('53','price_exec_column_condition', '50', 'ContractAccess("@1UpdateSysParam")'),
+	('54','price_exec_create_column', '50', 'ContractAccess("@1UpdateSysParam")'),
+	('55','price_exec_perm_column', '50', 'ContractAccess("@1UpdateSysParam")'),
+	('56','price_exec_json_to_map', '50', 'ContractAccess("@1UpdateSysParam")'),
+	('57','max_block_generation_time', '2000', 'ContractAccess("@1UpdateSysParam")'),
+	('58','block_reward','1000','ContractAccess("@1UpdateSysParam")'),
+	('59','incorrect_blocks_per_day','10','ContractAccess("@1UpdateSysParam")'),
+	('60','node_ban_time','86400000','ContractAccess("@1UpdateSysParam")'),
+	('61','local_node_ban_time','1800000','ContractAccess("@1UpdateSysParam")'),
+	('62','test','false','false'),
+	('63','price_tx_data', '0', 'ContractAccess("@1UpdateSysParam")'),
+	('64', 'price_exec_contract_by_name', '0', 'ContractAccess("@1UpdateSysParam")'),
+	('65', 'price_exec_contract_by_id', '0', 'ContractAccess("@1UpdateSysParam")'),
+	('66','private_blockchain', '1', 'false');
 `

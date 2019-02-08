@@ -1,19 +1,47 @@
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+
 package block
 
 import (
 	"bytes"
 	"fmt"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/transaction"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/transaction"
+	"github.com/AplaProject/go-apla/packages/utils"
 	log "github.com/sirupsen/logrus"
 )
 
 // MarshallBlock is marshalling block
-func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, key string) ([]byte, error) {
+func MarshallBlock(header *utils.BlockData, trData [][]byte, prev *utils.BlockData, key string) ([]byte, error) {
 	var mrklArray [][]byte
 	var blockDataTx []byte
 	var signed []byte
@@ -35,11 +63,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 		}
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
-		forSign := fmt.Sprintf("0,%d,%x,%d,%d,%d,%d,%s",
-			header.BlockID, prevHash, header.Time, header.EcosystemID, header.KeyID, header.NodePosition, mrklRoot)
-
 		var err error
-		signed, err = crypto.Sign(key, forSign)
+		signed, err = crypto.SignString(key, header.ForSign(prev, mrklRoot))
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing blocko")
 			return nil, err
@@ -55,13 +80,14 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prevHash []byte, ke
 	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
 	buf.Write(converter.DecToBin(header.NodePosition, 1))
 	buf.Write(converter.EncodeLengthPlusData(signed))
+
 	// data
 	buf.Write(blockDataTx)
 
 	return buf.Bytes(), nil
 }
 
-func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error) {
+func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock, fillData bool) (*Block, error) {
 	header, err := utils.ParseBlockHeader(blockBuffer, !firstBlock)
 	if err != nil {
 		return nil, err
@@ -91,7 +117,7 @@ func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock bool) (*Block, error)
 		}
 
 		bufTransaction := bytes.NewBuffer(blockBuffer.Next(int(transactionSize)))
-		t, err := transaction.UnmarshallTransaction(bufTransaction)
+		t, err := transaction.UnmarshallTransaction(bufTransaction, fillData)
 		if err != nil {
 			if t != nil && t.TxHash != nil {
 				transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())

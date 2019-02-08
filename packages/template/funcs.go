@@ -1,23 +1,34 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package template
 
 import (
-	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -27,14 +38,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/language"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/language"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/types"
+	"github.com/AplaProject/go-apla/packages/utils"
 
+	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
@@ -51,17 +64,23 @@ var (
 	modes = [][]rune{{'(', ')'}, {'{', '}'}, {'[', ']'}}
 )
 
+const (
+	columnNameKey = "column_name"
+	dataTypeKey   = "data_type"
+)
+
 func init() {
 	funcs[`Lower`] = tplFunc{lowerTag, defaultTag, `lower`, `Text`}
 	funcs[`AddToolButton`] = tplFunc{defaultTailTag, defaultTailTag, `addtoolbutton`, `Title,Icon,Page,PageParams`}
 	funcs[`Address`] = tplFunc{addressTag, defaultTag, `address`, `Wallet`}
-	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source`}
+	funcs[`AddressToId`] = tplFunc{addressIDTag, defaultTag, `addresstoid`, `Wallet`}
+	funcs[`AppParam`] = tplFunc{appparTag, defaultTag, `apppar`, `Name,App,Index,Source,Ecosystem`}
 	funcs[`Calculate`] = tplFunc{calculateTag, defaultTag, `calculate`, `Exp,Type,Prec`}
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
 	funcs[`CodeAsIs`] = tplFunc{defaultTag, defaultTag, `code`, `#Text`}
 	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
-	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source`}
+	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source,Ecosystem`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
 	funcs[`GetHistory`] = tplFunc{getHistoryTag, defaultTag, `gethistory`,
@@ -74,7 +93,6 @@ func init() {
 	funcs[`LangRes`] = tplFunc{langresTag, defaultTag, `langres`, `Name,Lang`}
 	funcs[`MenuGroup`] = tplFunc{menugroupTag, defaultTag, `menugroup`, `Title,Body,Icon`}
 	funcs[`MenuItem`] = tplFunc{defaultTag, defaultTag, `menuitem`, `Title,Page,PageParams,Icon,Vde`}
-	funcs[`Now`] = tplFunc{defaultTag, defaultTag, `now`, `Format,Interval`}
 	funcs[`Money`] = tplFunc{moneyTag, defaultTag, `money`, `Exp,Digit`}
 	funcs[`Range`] = tplFunc{rangeTag, defaultTag, `range`, `Source,From,To,Step`}
 	funcs[`SetTitle`] = tplFunc{defaultTag, defaultTag, `settitle`, `Title`}
@@ -106,6 +124,8 @@ func init() {
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
 	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
+	funcs[`TransactionInfo`] = tplFunc{txinfoTag, defaultTag, `txinfo`, `Hash`}
+	funcs[`VarAsIs`] = tplFunc{varasisTag, defaultTag, `varasis`, `Name,Value`}
 
 	tails[`addtoolbutton`] = forTails{map[string]tailInfo{
 		`Popup`: {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
@@ -115,9 +135,13 @@ func init() {
 		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
 		`CompositeContract`: {tplFunc{compositeTag, defaultTailFull, `composite`, `Name,Data`}, false},
+		`ErrorRedirect`: {tplFunc{errredirTag, defaultTailFull, `errorredirect`,
+			`ErrorID,PageName,PageParams`}, false},
 	}}
 	tails[`div`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
+		`Show`:  {tplFunc{showTag, defaultTailFull, `show`, `Condition`}, false},
+		`Hide`:  {tplFunc{hideTag, defaultTailFull, `hide`, `Condition`}, false},
 	}}
 	tails[`form`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -143,17 +167,16 @@ func init() {
 		`Custom`: {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
 	}}
 	tails[`dbfind`] = forTails{map[string]tailInfo{
-		`Columns`:   {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
-		`Count`:     {tplFunc{tailTag, defaultTailFull, `count`, `CountVar`}, false},
-		`Where`:     {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
-		`WhereId`:   {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
-		`Order`:     {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
-		`Limit`:     {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
-		`Offset`:    {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
-		`Ecosystem`: {tplFunc{tailTag, defaultTailFull, `ecosystem`, `Ecosystem`}, false},
-		`Custom`:    {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
-		`Vars`:      {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
-		`Cutoff`:    {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
+		`Columns`: {tplFunc{tailTag, defaultTailFull, `columns`, `Columns`}, false},
+		`Count`:   {tplFunc{tailTag, defaultTailFull, `count`, `CountVar`}, false},
+		`Where`:   {tplFunc{tailTag, defaultTailFull, `where`, `Where`}, false},
+		`WhereId`: {tplFunc{tailTag, defaultTailFull, `whereid`, `WhereId`}, false},
+		`Order`:   {tplFunc{tailTag, defaultTailFull, `order`, `Order`}, false},
+		`Limit`:   {tplFunc{tailTag, defaultTailFull, `limit`, `Limit`}, false},
+		`Offset`:  {tplFunc{tailTag, defaultTailFull, `offset`, `Offset`}, false},
+		`Custom`:  {tplFunc{customTag, customTagFull, `custom`, `Column,Body`}, false},
+		`Vars`:    {tplFunc{tailTag, defaultTailFull, `vars`, `Prefix`}, false},
+		`Cutoff`:  {tplFunc{tailTag, defaultTailFull, `cutoff`, `Cutoff`}, false},
 	}}
 	tails[`p`] = forTails{map[string]tailInfo{
 		`Style`: {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -204,15 +227,7 @@ func moneyTag(par parFunc) string {
 	if len((*par.Pars)[`Digit`]) > 0 {
 		cents = converter.StrToInt(macro((*par.Pars)[`Digit`], par.Workspace.Vars))
 	} else {
-		prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-		sp := &model.StateParameter{}
-		sp.SetTablePrefix(prefix)
-		_, err := sp.Get(nil, `money_digit`)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting ecosystem param")
-			return `unknown money_digit`
-		}
-		cents = converter.StrToInt(sp.Value)
+		cents = consts.MoneyDigits
 	}
 	if len(ret) > consts.MoneyLength {
 		return `invalid money value`
@@ -279,7 +294,7 @@ func forlistTag(par parFunc) (ret string) {
 			}
 		}
 		for key, item := range vals {
-			(*par.Workspace.Vars)[key] = item
+			setVar(par.Workspace, key, item)
 		}
 		process((*par.Pars)[`Data`], &root, par.Workspace)
 		for _, item := range root.Children {
@@ -299,7 +314,7 @@ func forlistTag(par parFunc) (ret string) {
 func addressTag(par parFunc) string {
 	idval := (*par.Pars)[`Wallet`]
 	if len(idval) == 0 {
-		idval = (*par.Workspace.Vars)[`key_id`]
+		idval = getVar(par.Workspace, `key_id`)
 	}
 	idval = processToText(par, macro(idval, par.Workspace.Vars))
 	id, _ := strconv.ParseInt(idval, 10, 64)
@@ -307,6 +322,18 @@ func addressTag(par parFunc) string {
 		return `unknown address`
 	}
 	return converter.AddressToString(id)
+}
+
+func addressIDTag(par parFunc) string {
+	address := (*par.Pars)[`Wallet`]
+	if len(address) == 0 {
+		return getVar(par.Workspace, `key_id`)
+	}
+	id := smart.AddressToID(processToText(par, macro(address, par.Workspace.Vars)))
+	if id == 0 {
+		return `0`
+	}
+	return converter.Int64ToStr(id)
 }
 
 func calculateTag(par parFunc) string {
@@ -319,9 +346,8 @@ func paramToSource(par parFunc, val string) string {
 	cols := []string{`id`, `name`}
 	types := []string{`text`, `text`}
 	for key, item := range strings.Split(val, `,`) {
-		item, _ = language.LangText(item, converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
-			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
+		item, _ = language.LangText(item,
+			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)), getVar(par.Workspace, `lang`))
 		data = append(data, []string{converter.IntToStr(key + 1), item})
 	}
 	node := node{Tag: `data`, Attr: map[string]interface{}{`columns`: &cols, `types`: &types,
@@ -340,10 +366,8 @@ func paramToIndex(par parFunc, val string) (ret string) {
 	ind := converter.StrToInt(macro((*par.Pars)[`Index`], par.Workspace.Vars))
 	if alist := strings.Split(val, `,`); ind > 0 && len(alist) >= ind {
 		ret, _ = language.LangText(alist[ind-1],
-			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
-			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-			(*par.Workspace.Vars)[`lang`],
-			par.Workspace.SmartContract.VDE)
+			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)),
+			getVar(par.Workspace, `lang`))
 	}
 	return
 }
@@ -352,10 +376,12 @@ func ecosysparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 {
 		return ``
 	}
-	prefix := (*par.Workspace.Vars)[`ecosystem_id`]
-
+	ecosystem := getVar(par.Workspace, `ecosystem_id`)
+	if len((*par.Pars)[`Ecosystem`]) != 0 {
+		ecosystem = macro((*par.Pars)[`Ecosystem`], par.Workspace.Vars)
+	}
 	sp := &model.StateParameter{}
-	sp.SetTablePrefix(prefix)
+	sp.SetTablePrefix(ecosystem)
 	parameterName := macro((*par.Pars)[`Name`], par.Workspace.Vars)
 	_, err := sp.Get(nil, parameterName)
 	if err != nil {
@@ -376,8 +402,12 @@ func appparTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) == 0 || len((*par.Pars)[`App`]) == 0 {
 		return ``
 	}
+	ecosystem := getVar(par.Workspace, `ecosystem_id`)
+	if len((*par.Pars)[`Ecosystem`]) != 0 {
+		ecosystem = macro((*par.Pars)[`Ecosystem`], par.Workspace.Vars)
+	}
 	ap := &model.AppParam{}
-	ap.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
+	ap.SetTablePrefix(ecosystem)
 	_, err := ap.Get(nil, converter.StrToInt64(macro((*par.Pars)[`App`], par.Workspace.Vars)),
 		macro((*par.Pars)[`Name`], par.Workspace.Vars))
 	if err != nil {
@@ -397,12 +427,10 @@ func appparTag(par parFunc) string {
 func langresTag(par parFunc) string {
 	lang := (*par.Pars)[`Lang`]
 	if len(lang) == 0 {
-		lang = (*par.Workspace.Vars)[`lang`]
+		lang = getVar(par.Workspace, `lang`)
 	}
 	ret, _ := language.LangText((*par.Pars)[`Name`],
-		int(converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])),
-		converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-		lang, par.Workspace.SmartContract.VDE)
+		int(converter.StrToInt64(getVar(par.Workspace, `ecosystem_id`))), lang)
 	return ret
 }
 
@@ -445,6 +473,18 @@ func defaultTailFull(par parFunc) string {
 	return ``
 }
 
+func txinfoTag(par parFunc) (out string) {
+	setAllAttr(par)
+	if par.Node.Attr[`hash`] != nil {
+		var err error
+		out, err = smart.TransactionInfo(par.Node.Attr[`hash`].(string))
+		if err != nil {
+			out = err.Error()
+		}
+	}
+	return
+}
+
 func dataTag(par parFunc) string {
 	setAllAttr(par)
 	defaultTail(par, `data`)
@@ -485,14 +525,14 @@ func dataTag(par parFunc) string {
 			lencol = len(cols)
 		}
 		row := make([]string, lencol)
-		vals := make(map[string]string)
+		vals := make(map[string]Var)
 		for i, icol := range cols {
 			var ival string
 			if i < defcol {
 				if i < len(item) {
 					ival = strings.TrimSpace(item[i])
 				}
-				vals[icol] = ival
+				vals[icol] = Var{Value: ival}
 			} else {
 				root := node{}
 				for key, item := range vals {
@@ -561,10 +601,21 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`where`] != nil {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
-			inWhere, _ := parseObject([]rune(macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)))
-			where, err = smart.GetWhere(inWhere.(map[string]interface{}))
-			if err != nil {
-				return err.Error()
+			inWhere, _ := parseObject([]rune(where))
+			switch v := inWhere.(type) {
+			case string:
+				if len(v) == 0 {
+					where = `true`
+				} else {
+					return errWhere.Error()
+				}
+			case map[string]interface{}:
+				where, err = qb.GetWhere(types.LoadMap(v))
+				if err != nil {
+					return err.Error()
+				}
+			default:
+				return errWhere.Error()
 			}
 		} else if len(where) > 0 {
 			return errWhere.Error()
@@ -573,24 +624,11 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`whereid`] != nil {
 		where = fmt.Sprintf(` id='%d'`, converter.StrToInt64(macro(par.Node.Attr[`whereid`].(string), par.Workspace.Vars)))
 	}
-	if par.Node.Attr[`order`] != nil {
-		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
-		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
-			inColumns, _ = parseObject([]rune(order))
-		} else {
-			inColumns = order
-		}
-		order, err = smart.GetOrder(inColumns)
-		if err != nil {
-			return err.Error()
-		}
-		order = ` order by ` + order
-	}
 	if par.Node.Attr[`limit`] != nil {
 		limit = converter.StrToInt(par.Node.Attr[`limit`].(string))
 	}
-	if limit > 250 {
-		limit = 250
+	if limit > consts.DBFindLimit {
+		limit = consts.DBFindLimit
 	}
 	if par.Node.Attr[`offset`] != nil {
 		offset = fmt.Sprintf(` offset %d`, converter.StrToInt(par.Node.Attr[`offset`].(string)))
@@ -600,11 +638,7 @@ func dbfindTag(par parFunc) string {
 		prefix = par.Node.Attr[`prefix`].(string)
 		limit = 1
 	}
-	if par.Node.Attr[`ecosystem`] != nil {
-		state = converter.StrToInt64(par.Node.Attr[`ecosystem`].(string))
-	} else {
-		state = converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`])
-	}
+	state = converter.StrToInt64(getVar(par.Workspace, `ecosystem_id`))
 	if par.Node.Attr["cutoff"] != nil {
 		for _, v := range strings.Split(par.Node.Attr["cutoff"].(string), ",") {
 			cutoffColumns[v] = true
@@ -612,7 +646,24 @@ func dbfindTag(par parFunc) string {
 	}
 
 	sc := par.Workspace.SmartContract
-	tblname := smart.GetTableName(sc, strings.Trim(converter.EscapeName(macro((*par.Pars)[`Name`], par.Workspace.Vars)), `"`), state)
+	tblname := converter.ParseTable(strings.Trim(macro((*par.Pars)[`Name`], par.Workspace.Vars), `"`), state)
+	tblname = strings.ToLower(tblname)
+
+	inColumns = ``
+	if par.Node.Attr[`order`] != nil {
+		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
+		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
+			inColumns, _ = parseObject([]rune(order))
+		} else {
+			inColumns = order
+		}
+	}
+	order, err = smart.GetOrder(tblname, inColumns)
+	if err != nil {
+		return err.Error()
+	}
+	order = ` order by ` + order
+
 	rows, err := model.GetAllColumnTypes(tblname)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
@@ -620,19 +671,20 @@ func dbfindTag(par parFunc) string {
 	}
 	columnTypes := make(map[string]string, len(rows))
 	for _, row := range rows {
-		columnTypes[row["column_name"]] = row["data_type"]
+		columnTypes[row[columnNameKey]] = row[dataTypeKey]
 	}
 	columnNames := make([]string, 0)
 
 	perm, err = sc.AccessTablePerm(tblname, `read`)
 	if err != nil || sc.AccessColumns(tblname, &columns, false) != nil {
+		log.WithFields(log.Fields{"table": tblname, "columns": columns}).Error("ACCESS DENIED")
 		return `Access denied`
 	}
 
 	if utils.StringInSlice(columns, `*`) {
 		for _, col := range rows {
-			queryColumns = append(queryColumns, col["column_name"])
-			columnNames = append(columnNames, col["column_name"])
+			queryColumns = append(queryColumns, col[columnNameKey])
+			columnNames = append(columnNames, col[columnNameKey])
 		}
 	} else {
 		if !utils.StringInSlice(columns, `id`) {
@@ -644,6 +696,7 @@ func dbfindTag(par parFunc) string {
 	}
 
 	for i, col := range queryColumns {
+		col = strings.Trim(col, `"`)
 		switch columnTypes[col] {
 		case "bytea":
 			extendedColumns[col] = columnTypeBlob
@@ -676,7 +729,7 @@ func dbfindTag(par parFunc) string {
 		}
 		countStr := converter.Int64ToStr(count)
 		par.Node.Attr[`count`] = countStr
-		(*par.Workspace.Vars)[par.Node.Attr[`countvar`].(string)] = countStr
+		setVar(par.Workspace, par.Node.Attr[`countvar`].(string), countStr)
 		delete(par.Node.Attr, `countvar`)
 	}
 	if len(where) > 0 {
@@ -745,7 +798,7 @@ func dbfindTag(par parFunc) string {
 			} else {
 				root := node{}
 				for key, val := range item {
-					(*par.Workspace.Vars)[key] = val
+					(*par.Workspace.Vars)[key] = Var{Value: val}
 				}
 				process(par.Node.Attr[`custombody`].([]string)[i-defcol], &root, par.Workspace)
 				for key := range item {
@@ -753,13 +806,13 @@ func dbfindTag(par parFunc) string {
 				}
 				out, err := json.Marshal(root.Children)
 				if err == nil {
-					ival = macro(string(out), &item)
+					ival = macro(string(out), mapToVar(item))
 				} else {
 					log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling root children to JSON")
 				}
 			}
 			if par.Node.Attr[`prefix`] != nil {
-				(*par.Workspace.Vars)[prefix+`_`+strings.Replace(icol, `.`, `_`, -1)] = ival
+				setVar(par.Workspace, prefix+`_`+strings.Replace(icol, `.`, `_`, -1), ival)
 			}
 			row[i] = ival
 		}
@@ -817,6 +870,19 @@ func compositeTag(par parFunc) string {
 	return ``
 }
 
+func errredirTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`ErrorID`]) == 0 {
+		return ``
+	}
+	if par.Owner.Attr[`errredirect`] == nil {
+		par.Owner.Attr[`errredirect`] = make(map[string]map[string]interface{})
+	}
+	par.Owner.Attr[`errredirect`].(map[string]map[string]interface{})[(*par.Pars)[`ErrorID`]] =
+		par.Node.Attr
+	return ``
+}
+
 func popupTag(par parFunc) string {
 	setAllAttr(par)
 
@@ -863,11 +929,50 @@ func tailTag(par parFunc) string {
 	return ``
 }
 
+func showHideTag(par parFunc, action string) string {
+	setAllAttr(par)
+	cond := par.Node.Attr[`condition`]
+	if v, ok := cond.(string); ok {
+		val := make(map[string]string)
+		items := strings.Split(v, `,`)
+		for _, item := range items {
+			lr := strings.SplitN(strings.TrimSpace(item), `=`, 2)
+			key := strings.TrimSpace(lr[0])
+			if len(lr) == 2 {
+				val[key] = macro(strings.TrimSpace(lr[1]), par.Workspace.Vars)
+			} else {
+				val[key] = ``
+			}
+		}
+		if _, ok := par.Owner.Attr[action]; ok {
+			par.Owner.Attr[action] = append(par.Owner.Attr[action].([]map[string]string), val)
+		} else {
+			par.Owner.Attr[action] = []map[string]string{val}
+		}
+	}
+	return ``
+}
+
+func showTag(par parFunc) string {
+	return showHideTag(par, `show`)
+}
+
+func hideTag(par parFunc) string {
+	return showHideTag(par, `hide`)
+}
+
 func includeTag(par parFunc) string {
-	if len((*par.Pars)[`Name`]) >= 0 && len((*par.Workspace.Vars)[`_include`]) < 5 {
+	if len((*par.Pars)[`Name`]) >= 0 && len(getVar(par.Workspace, `_include`)) < 5 {
 		bi := &model.BlockInterface{}
-		bi.SetTablePrefix((*par.Workspace.Vars)[`ecosystem_id`])
-		found, err := bi.Get(macro((*par.Pars)[`Name`], par.Workspace.Vars))
+		name := macro((*par.Pars)[`Name`], par.Workspace.Vars)
+		ecosystem, tblname := converter.ParseName(name)
+		prefix := getVar(par.Workspace, `ecosystem_id`)
+		if ecosystem != 0 {
+			prefix = converter.Int64ToStr(ecosystem)
+			name = tblname
+		}
+		bi.SetTablePrefix(prefix)
+		found, err := bi.Get(name)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block by name")
 			return err.Error()
@@ -878,9 +983,10 @@ func includeTag(par parFunc) string {
 		}
 		if len(bi.Value) > 0 {
 			root := node{}
-			(*par.Workspace.Vars)[`_include`] += `1`
+			setVar(par.Workspace, `_include`, getVar(par.Workspace, `_include`)+`1`)
 			process(bi.Value, &root, par.Workspace)
-			(*par.Workspace.Vars)[`_include`] = (*par.Workspace.Vars)[`_include`][:len((*par.Workspace.Vars)[`_include`])-1]
+			include := getVar(par.Workspace, `_include`)
+			setVar(par.Workspace, `_include`, include[:len(include)-1])
 			for _, item := range root.Children {
 				par.Owner.Children = append(par.Owner.Children, item)
 			}
@@ -894,14 +1000,30 @@ func setvarTag(par parFunc) string {
 		if strings.ContainsAny((*par.Pars)[`Value`], `({`) {
 			(*par.Pars)[`Value`] = processToText(par, (*par.Pars)[`Value`])
 		}
-		(*par.Workspace.Vars)[(*par.Pars)[`Name`]] = macroReplace((*par.Pars)[`Value`], par.Workspace.Vars)
+		setVar(par.Workspace, (*par.Pars)[`Name`], macroReplace((*par.Pars)[`Value`], par.Workspace.Vars))
+	}
+	return ``
+}
+
+func varasisTag(par parFunc) string {
+	key := (*par.Pars)[`Name`]
+	if len(key) > 0 {
+		value := (*par.Pars)[`Value`]
+		if strings.HasPrefix(value, `#`) {
+			if v, ok := (*par.Workspace.Vars)[strings.Trim(value, `#`)]; ok {
+				value = v.Value
+			}
+		} else if v, ok := (*par.Workspace.Vars)[value]; ok {
+			value = v.Value
+		}
+		(*par.Workspace.Vars)[key] = Var{Value: value, AsIs: true}
 	}
 	return ``
 }
 
 func getvarTag(par parFunc) string {
 	if len((*par.Pars)[`Name`]) > 0 {
-		return macro((*par.Workspace.Vars)[(*par.Pars)[`Name`]], par.Workspace.Vars)
+		return macro(getVar(par.Workspace, (*par.Pars)[`Name`]), par.Workspace.Vars)
 	}
 	return ``
 }
@@ -994,8 +1116,8 @@ func ifTag(par parFunc) string {
 			curFunc := tails[`if`].Tails[string(name)].tplFunc
 			pars := (*v)[:len(*v)-1]
 			callFunc(&curFunc, par.Owner, par.Workspace, &pars, nil)
-			if (*par.Workspace.Vars)[`_cond`] == `1` {
-				(*par.Workspace.Vars)[`_cond`] = `0`
+			if getVar(par.Workspace, `_cond`) == `1` {
+				setVar(par.Workspace, `_cond`, `0`)
 				break
 			}
 		}
@@ -1024,7 +1146,7 @@ func elseifTag(par parFunc) string {
 		for _, item := range par.Node.Children {
 			par.Owner.Children = append(par.Owner.Children, item)
 		}
-		(*par.Workspace.Vars)[`_cond`] = `1`
+		setVar(par.Workspace, `_cond`, `1`)
 	}
 	return ``
 }
@@ -1070,9 +1192,7 @@ func dateTimeTag(par parFunc) string {
 	format := (*par.Pars)[`Format`]
 	if len(format) == 0 {
 		format, _ = language.LangText(`timeformat`,
-			converter.StrToInt((*par.Workspace.Vars)[`ecosystem_id`]),
-			converter.StrToInt((*par.Workspace.Vars)[`app_id`]),
-			(*par.Workspace.Vars)[`lang`], par.Workspace.SmartContract.VDE)
+			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)), getVar(par.Workspace, `lang`))
 		if format == `timeformat` {
 			format = `2006-01-02 15:04:05`
 		}
@@ -1131,8 +1251,11 @@ func jsontosourceTag(par parFunc) string {
 	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
 	var out map[string]interface{}
-	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
+	dataVal := macro((*par.Pars)[`Data`], par.Workspace.Vars)
+	if len(dataVal) > 0 {
+		if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
+		}
 	}
 	for key, item := range out {
 		if item == nil {
@@ -1176,18 +1299,8 @@ func arraytosourceTag(par parFunc) string {
 	data := make([][]string, 0, 16)
 	cols := []string{prefix + `key`, prefix + `value`}
 	types := []string{`text`, `text`}
-	var out []json.RawMessage
-	if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
-		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON Array to source")
-	}
-	for key, item := range out {
-		if item == nil {
-			item = []byte("")
-		}
-
-		item = bytes.Trim(item, `"`)
-
-		data = append(data, []string{fmt.Sprint(key), string(item)})
+	for key, item := range splitArray([]rune(macro((*par.Pars)[`Data`], par.Workspace.Vars))) {
+		data = append(data, []string{fmt.Sprint(key), item})
 	}
 	setAllAttr(par)
 	par.Node.Attr[`columns`] = &cols
@@ -1255,7 +1368,7 @@ func binaryTag(par parFunc) string {
 	if par.Node.Attr[`ecosystem`] != nil {
 		ecosystemID = par.Node.Attr[`ecosystem`].(string)
 	} else {
-		ecosystemID = (*par.Workspace.Vars)[`ecosystem_id`]
+		ecosystemID = getVar(par.Workspace, `ecosystem_id`)
 	}
 	binary := &model.Binary{}
 	binary.SetTablePrefix(ecosystemID)
@@ -1291,9 +1404,7 @@ func columntypeTag(par parFunc) string {
 	if len((*par.Pars)["Table"]) > 0 && len((*par.Pars)["Column"]) > 0 {
 		tableName := macro((*par.Pars)[`Table`], par.Workspace.Vars)
 		columnName := macro((*par.Pars)[`Column`], par.Workspace.Vars)
-		tblname := smart.GetTableName(par.Workspace.SmartContract,
-			strings.Trim(converter.EscapeName(tableName), `"`),
-			converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]))
+		tblname := smart.GetTableName(par.Workspace.SmartContract, tableName)
 		colType, err := model.GetColumnType(tblname, columnName)
 		if err == nil {
 			return colType
@@ -1313,26 +1424,36 @@ func getHistoryTag(par parFunc) string {
 		return ``
 	}
 	table := macro((*par.Pars)["Name"], par.Workspace.Vars)
-	list, err := smart.GetHistoryRaw(nil, converter.StrToInt64((*par.Workspace.Vars)[`ecosystem_id`]),
+	list, err := smart.GetHistoryRaw(nil, converter.StrToInt64(getVar(par.Workspace, `ecosystem_id`)),
 		table, converter.StrToInt64(macro((*par.Pars)[`Id`], par.Workspace.Vars)), rollID)
 	if err != nil {
 		return err.Error()
 	}
+
+	colsList, err := model.GetAllColumnTypes(getVar(par.Workspace, `ecosystem_id`) + "_" + table)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting column types from db")
+		return err.Error()
+	}
+
+	cols := make([]string, 0, len(colsList))
+	typesCol := make([]string, 0, len(colsList))
+	for _, v := range colsList {
+
+		cols = append(cols, v[columnNameKey])
+		typesCol = append(typesCol, `text`)
+	}
+
 	data := make([][]string, 0)
-	cols := make([]string, 0, 8)
-	types := make([]string, 0, 8)
 	if len(list) > 0 {
 		for i := range list {
-			item := list[i].(map[string]string)
-			if i == 0 {
-				for key := range item {
-					cols = append(cols, key)
-					types = append(types, `text`)
-				}
-			}
+			item := list[i].(*types.Map)
 			items := make([]string, len(cols))
 			for ind, key := range cols {
-				val := item[key]
+				var val string
+				if v, found := item.Get(key); found {
+					val = v.(string)
+				}
 				if val == `NULL` {
 					val = ``
 				}
@@ -1342,7 +1463,7 @@ func getHistoryTag(par parFunc) string {
 		}
 	}
 	par.Node.Attr[`columns`] = &cols
-	par.Node.Attr[`types`] = &types
+	par.Node.Attr[`types`] = &typesCol
 	par.Node.Attr[`data`] = &data
 	newSource(par)
 	par.Owner.Children = append(par.Owner.Children, par.Node)

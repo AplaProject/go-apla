@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/GenesisKernel/go-genesis/tools/desync_monitor/config"
-	"github.com/GenesisKernel/go-genesis/tools/desync_monitor/query"
+	"github.com/AplaProject/go-apla/tools/desync_monitor/config"
+	"github.com/AplaProject/go-apla/tools/desync_monitor/query"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -96,14 +96,20 @@ func sendEmail(smtpConf *config.Smtp, alertConf *config.AlertMessage, message st
 func monitor(conf *config.Config) {
 	maxBlockIDs, err := query.MaxBlockIDs(conf.NodesList)
 	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Error("on sending max block request")
 		sendEmail(&conf.Smtp, &conf.AlertMessage, "problem getting node max block id :"+err.Error())
 		return
 	}
+
+	log.Infoln("max blocks ", maxBlockIDs)
+
 	blockInfos, err := query.BlockInfo(conf.NodesList, minElement(maxBlockIDs))
 	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Error("on sending block info request")
 		sendEmail(&conf.Smtp, &conf.AlertMessage, "problem getting node block info :"+err.Error())
 		return
 	}
+
 	hash2Node := map[string][]string{}
 	for node, blockInfo := range blockInfos {
 		rollbacksHash := string(blockInfo.RollbacksHash)
@@ -112,13 +118,21 @@ func monitor(conf *config.Config) {
 		}
 		hash2Node[rollbacksHash] = append(hash2Node[rollbacksHash], node)
 	}
-	if len(hash2Node) > 1 {
-		hash2NodeStrResults := []string{}
-		for k, v := range hash2Node {
-			hash2NodeStrResults = append(hash2NodeStrResults, fmt.Sprintf("%x: %s", k, v))
-		}
-		sendEmail(&conf.Smtp, &conf.AlertMessage, fmt.Sprintf("nodes unsynced. Rollback hashes are: %s", strings.Join(hash2NodeStrResults, ",")))
+
+	log.Infof("requested nodes: %v", conf.NodesList)
+
+	if len(hash2Node) <= 1 {
+		log.Infoln("nodes synced")
+		return
 	}
+
+	hash2NodeStrResults := []string{}
+	for k, v := range hash2Node {
+		hash2NodeStrResults = append(hash2NodeStrResults, fmt.Sprintf("%x: %s", k, v))
+	}
+
+	log.Infof("nodes unsynced. Rollback hashes are: %s", strings.Join(hash2NodeStrResults, ","))
+	sendEmail(&conf.Smtp, &conf.AlertMessage, fmt.Sprintf("nodes unsynced. Rollback hashes are: %s", strings.Join(hash2NodeStrResults, ",")))
 }
 
 func main() {
@@ -127,13 +141,17 @@ func main() {
 	if err := conf.Read(*configPath); err != nil {
 		log.WithFields(log.Fields{"error": err}).Fatal("reading config")
 	}
+
 	flagsOverrideConfig(conf)
+
 	if conf.Daemon.DaemonMode {
+		log.Infoln("MODE: daemon")
 		ticker := time.NewTicker(time.Second * time.Duration(conf.Daemon.QueryingPeriod))
-		for _ = range ticker.C {
+		for range ticker.C {
 			monitor(conf)
 		}
 	} else {
+		log.Println("MODE: single request")
 		monitor(conf)
 	}
 }

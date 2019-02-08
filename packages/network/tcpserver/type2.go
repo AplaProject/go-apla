@@ -1,36 +1,50 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package tcpserver
 
 import (
+	"bytes"
 	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"io"
 
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/network"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/network"
+	"github.com/AplaProject/go-apla/packages/transaction"
+	"github.com/AplaProject/go-apla/packages/utils"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -58,20 +72,19 @@ func Type2(rw io.ReadWriter) (*network.DisTrResponse, error) {
 		return nil, utils.ErrInfo("len(binaryData) < 5")
 	}
 
-	decryptedBinDataFull := decryptedBinData
-	hash, err := crypto.Hash(decryptedBinDataFull)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err, "value": decryptedBinDataFull}).Fatal("cannot hash tx bindata")
+	tx := transaction.RawTransaction{}
+	if err = tx.Unmarshall(bytes.NewBuffer(decryptedBinData)); err != nil {
+		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err}).Error("unmarshalling transaction")
+		return nil, err
 	}
 
-	_, err = model.DeleteQueueTxByHash(nil, hash)
+	_, err = model.DeleteQueueTxByHash(nil, tx.Hash())
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": hash}).Error("Deleting queue_tx with hash")
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err, "hash": tx.Hash()}).Error("Deleting queue_tx with hash")
 		return nil, utils.ErrInfo(err)
 	}
 
-	//hexBinData := converter.BinToHex(decryptedBinDataFull)
-	queueTx := &model.QueueTx{Hash: hash, Data: decryptedBinData, FromGate: 0}
+	queueTx := &model.QueueTx{Hash: tx.Hash(), Data: decryptedBinData, FromGate: 0}
 	err = queueTx.Create()
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Creating queue_tx")

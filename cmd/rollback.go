@@ -1,12 +1,12 @@
 package cmd
 
 import (
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/conf/syspar"
-	"github.com/GenesisKernel/go-genesis/packages/model"
-	"github.com/GenesisKernel/go-genesis/packages/rollback"
-	"github.com/GenesisKernel/go-genesis/packages/smart"
-	"github.com/GenesisKernel/go-genesis/packages/utils"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/rollback"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +35,9 @@ var rollbackCmd = &cobra.Command{
 		if err := syspar.SysUpdate(nil); err != nil {
 			log.WithError(err).Error("can't read system parameters")
 		}
-		if err := smart.LoadContracts(nil); err != nil {
+
+		smart.InitVM()
+		if err := smart.LoadContracts(); err != nil {
 			log.WithError(err).Fatal("loading contracts")
 			return
 		}

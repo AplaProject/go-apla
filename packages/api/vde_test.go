@@ -1,18 +1,30 @@
-// Copyright 2016 The go-daylight Authors
-// This file is part of the go-daylight library.
-//
-// The go-daylight library is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Lesser General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// The go-daylight library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU Lesser General Public License for more details.
-//
-// You should have received a copy of the GNU Lesser General Public License
-// along with the go-daylight library. If not, see <http://www.gnu.org/licenses/>.
+// Apla Software includes an integrated development
+// environment with a multi-level system for the management
+// of access rights to data, interfaces, and Smart contracts. The
+// technical characteristics of the Apla Software are indicated in
+// Apla Technical Paper.
+
+// Apla Users are granted a permission to deal in the Apla
+// Software without restrictions, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of Apla Software, and to permit persons
+// to whom Apla Software is furnished to do so, subject to the
+// following conditions:
+// * the copyright notice of GenesisKernel and EGAAS S.A.
+// and this permission notice shall be included in all copies or
+// substantial portions of the software;
+// * a result of the dealing in Apla Software cannot be
+// implemented outside of the Apla Platform environment.
+
+// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
+// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
+// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
 package api
 
@@ -26,14 +38,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GenesisKernel/go-genesis/packages/conf"
-	"github.com/GenesisKernel/go-genesis/packages/consts"
-	"github.com/GenesisKernel/go-genesis/packages/converter"
-	"github.com/GenesisKernel/go-genesis/packages/crypto"
-	taskContract "github.com/GenesisKernel/go-genesis/packages/scheduler/contract"
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/crypto"
+	taskContract "github.com/AplaProject/go-apla/packages/scheduler/contract"
 )
 
-func TestVDETables(t *testing.T) {
+func TestOBSTables(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	var res tableResult
 
@@ -41,46 +53,46 @@ func TestVDETables(t *testing.T) {
 	fmt.Println(res)
 }
 
-func TestVDECreate(t *testing.T) {
+func TestOBSCreate(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 
 	form := url.Values{
-		"VDEName":    {"myvde3"},
-		"DBUser":     {"myvde3user"},
-		"DBPassword": {"vdepassword"},
-		"VDEAPIPort": {"8098"},
+		"OBSName":    {"obs1"},
+		"DBUser":     {"obsuser1"},
+		"DBPassword": {"obspassword"},
+		"OBSAPIPort": {"8095"},
 	}
-	assert.NoError(t, postTx("NewVDE", &form))
+	assert.NoError(t, postTx("NewOBS", &form))
 }
 
-func TestVDEList(t *testing.T) {
+func TestOBSList(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 
-	fmt.Println(postTx("ListVDE", nil))
+	fmt.Println(postTx("ListOBS", nil))
 }
 
-func TestStopVDE(t *testing.T) {
-	require.NoError(t, keyLogin(1))
-	form := url.Values{
-		"VDEName": {"myvde3"},
-	}
-	require.NoError(t, postTx("StopVDE", &form))
-}
-
-func TestRunVDE(t *testing.T) {
+func TestStopOBS(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	form := url.Values{
-		"VDEName": {"myvde3"},
+		"OBSName": {"myobs3"},
 	}
-	require.NoError(t, postTx("RunVDE", &form))
+	require.NoError(t, postTx("StopOBS", &form))
 }
 
-func TestRemoveVDE(t *testing.T) {
+func TestRunOBS(t *testing.T) {
 	require.NoError(t, keyLogin(1))
 	form := url.Values{
-		"VDEName": {"myvde3"},
+		"OBSName": {"myobs3"},
 	}
-	require.NoError(t, postTx("RemoveVDE", &form))
+	require.NoError(t, postTx("RunOBS", &form))
+}
+
+func TestRemoveOBS(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	form := url.Values{
+		"OBSName": {"obs"},
+	}
+	require.NoError(t, postTx("RemoveOBS", &form))
 }
 
 func TestCreateTable(t *testing.T) {
@@ -98,35 +110,35 @@ func TestCreateTable(t *testing.T) {
 	require.NoError(t, postTx("NewTable", &form))
 }
 
-func TestVDEParams(t *testing.T) {
+func TestOBSParams(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	rnd := `rnd` + crypto.RandSeq(6)
 	form := url.Values{`Name`: {rnd}, `Value`: {`Test value`}, `Conditions`: {`ContractConditions("MainCondition")`},
-		`vde`: {`true`}}
+		`obs`: {`true`}}
 
 	assert.NoError(t, postTx(`NewParameter`, &form))
 
 	var ret ecosystemParamsResult
-	assert.NoError(t, sendGet(`ecosystemparams?vde=true`, nil, &ret))
+	assert.NoError(t, sendGet(`ecosystemparams?obs=true`, nil, &ret))
 	if len(ret.List) < 5 {
 		t.Errorf(`wrong count of parameters %d`, len(ret.List))
 	}
 
-	assert.NoError(t, sendGet(`ecosystemparams?vde=true&names=stylesheet,`+rnd, nil, &ret))
+	assert.NoError(t, sendGet(`ecosystemparams?obs=true&names=stylesheet,`+rnd, nil, &ret))
 	assert.Len(t, ret.List, 2, fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
 
-	var parValue paramValue
-	assert.NoError(t, sendGet(`ecosystemparam/`+rnd+`?vde=true`, nil, &parValue))
+	var parValue paramResult
+	assert.NoError(t, sendGet(`ecosystemparam/`+rnd+`?obs=true`, nil, &parValue))
 	assert.Equal(t, rnd, parValue.Name)
 
 	var tblResult tablesResult
-	assert.NoError(t, sendGet(`tables?vde=true`, nil, &tblResult))
+	assert.NoError(t, sendGet(`tables?obs=true`, nil, &tblResult))
 	if tblResult.Count < 5 {
 		t.Error(fmt.Errorf(`wrong tables result`))
 	}
 
-	form = url.Values{"Name": {rnd}, `vde`: {`1`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1",
+	form = url.Values{"Name": {rnd}, `obs`: {`1`}, "Columns": {`[{"name":"MyName","type":"varchar", "index": "1",
 		"conditions":"true"},
 	  {"name":"Amount", "type":"number","index": "0", "conditions":"true"},
 	  {"name":"Active", "type":"character","index": "0", "conditions":"true"}]`},
@@ -134,68 +146,68 @@ func TestVDEParams(t *testing.T) {
 	assert.NoError(t, postTx(`NewTable`, &form))
 
 	var tResult tableResult
-	assert.NoError(t, sendGet(`table/`+rnd+`?vde=true`, nil, &tResult))
+	assert.NoError(t, sendGet(`table/`+rnd+`?obs=true`, nil, &tResult))
 	assert.Equal(t, rnd, tResult.Name)
 
 	var retList listResult
-	assert.NoError(t, sendGet(`list/contracts?vde=true`, nil, &retList))
+	assert.NoError(t, sendGet(`list/contracts?obs=true`, nil, &retList))
 	if converter.StrToInt64(retList.Count) < 7 {
 		t.Errorf(`The number of records %s < 7`, retList.Count)
 		return
 	}
 
 	var retRow rowResult
-	assert.NoError(t, sendGet(`row/contracts/2?vde=true`, nil, &retRow))
-	if !strings.Contains(retRow.Value[`value`], `VDEFunctions`) {
+	assert.NoError(t, sendGet(`row/contracts/2?obs=true`, nil, &retRow))
+	if !strings.Contains(retRow.Value[`value`], `OBSFunctions`) {
 		t.Error(`wrong row result`)
 		return
 	}
 
 	var retCont contractsResult
-	assert.NoError(t, sendGet(`contracts?vde=true`, nil, &retCont))
+	assert.NoError(t, sendGet(`contracts?obs=true`, nil, &retCont))
 
 	form = url.Values{`Value`: {`contract ` + rnd + ` {
 		data {
 			Par string
 		}
-		action { Test("active",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
+		action { Test("active",  $Par)}}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `obs`: {`true`}}
 
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	var cont getContractResult
-	assert.NoError(t, sendGet(`contract/`+rnd+`?vde=true`, nil, &cont))
+	assert.NoError(t, sendGet(`contract/`+rnd+`?obs=true`, nil, &cont))
 	if !strings.HasSuffix(cont.Name, rnd) {
 		t.Error(`wrong contract result`)
 		return
 	}
 
 	form = url.Values{"Name": {rnd}, "Value": {`Page`}, "Menu": {`government`},
-		"Conditions": {`true`}, `vde`: {`1`}}
+		"Conditions": {`true`}, `obs`: {`1`}}
 	assert.NoError(t, postTx(`NewPage`, &form))
 
-	assert.NoError(t, sendPost(`content/page/`+rnd, &url.Values{`vde`: {`true`}}, &ret))
+	assert.NoError(t, sendPost(`content/page/`+rnd, &url.Values{`obs`: {`true`}}, &ret))
 
-	form = url.Values{"Name": {rnd}, "Value": {`Menu`}, "Conditions": {`true`}, `vde`: {`1`}}
+	form = url.Values{"Name": {rnd}, "Value": {`Menu`}, "Conditions": {`true`}, `obs`: {`1`}}
 	assert.NoError(t, postTx(`NewMenu`, &form))
 
-	assert.NoError(t, sendPost(`content/menu/`+rnd, &url.Values{`vde`: {`true`}}, &ret))
+	assert.NoError(t, sendPost(`content/menu/`+rnd, &url.Values{`obs`: {`true`}}, &ret))
 
 	name := randName(`lng`)
-	value := `{"en": "My VDE test", "fr": "French VDE test"}`
+	value := `{"en": "My OBS test", "fr": "French OBS test"}`
 
-	form = url.Values{"Name": {name}, "Trans": {value}, "vde": {`true`}}
+	form = url.Values{"Name": {name}, "Trans": {value}, "obs": {`true`}}
 	assert.NoError(t, postTx(`NewLang`, &form))
 
 	input := fmt.Sprintf(`Span($%s$)+LangRes(%[1]s,fr)`, name)
 	var retContent contentResult
-	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {input}, `vde`: {`true`}}, &retContent))
-	assert.Equal(t, `[{"tag":"span","children":[{"tag":"text","text":"My VDE test"}]},{"tag":"text","text":"+French VDE test"}]`, RawToString(retContent.Tree))
+	assert.NoError(t, sendPost(`content`, &url.Values{`template`: {input}, `obs`: {`true`}}, &retContent))
+	assert.Equal(t, `[{"tag":"span","children":[{"tag":"text","text":"My OBS test"}]},{"tag":"text","text":"+French OBS test"}]`, RawToString(retContent.Tree))
 
 	name = crypto.RandSeq(4)
-	assert.NoError(t, postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {fmt.Sprintf(vdeimp, name)}}))
+	assert.NoError(t, postTx(`Import`, &url.Values{"obs": {`true`}, "Data": {fmt.Sprintf(obsimp, name)}}))
 }
 
-var vdeimp = `{
+var obsimp = `{
     "pages": [
         {
             "Name": "imp_page2",
@@ -261,12 +273,12 @@ var vdeimp = `{
     ]
 }`
 
-func TestVDEImport(t *testing.T) {
+func TestOBSImport(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
-	err := postTx(`Import`, &url.Values{"vde": {`true`}, "Data": {vdeimp}})
+	err := postTx(`Import`, &url.Values{"obs": {`true`}, "Data": {obsimp}})
 	if err != nil {
 		t.Error(err)
 		return
@@ -286,7 +298,6 @@ func TestHTTPRequest(t *testing.T) {
 			action {
 				var ret string 
 				var pars, heads, json map
-				$ret_table = DBFind("tables").Columns("id").Where("name=$", "notable")
 				ret = HTTPRequest("http://www.instagram.com/", "GET", heads, pars)
 				if !Contains(ret, "react-root") {
 					error "instagram error"
@@ -296,30 +307,67 @@ func TestHTTPRequest(t *testing.T) {
 					error "google error"
 				}
 				heads["Authorization"] = "Bearer " + $Auth
-				pars["vde"] = "true"
+				pars["obs"] = "true"
 				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `content/page/` + rnd + `", "POST", heads, pars)
 				json = JSONDecode(ret)
-				if json["menu"] != "myvdemenu" {
-					error "Wrong vde menu"
+				if json["menu"] != "myobsmenu" {
+					error "Wrong obs menu"
 				}
-				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `contract/VDEFunctions?vde=true", "GET", heads, pars)
-				json = JSONDecode(ret)
-				if json["name"] != "@1VDEFunctions" {
-					error "Wrong vde contract"
-				}
-			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+			}}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
 
 	if err := postTx(`NewContract`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	form = url.Values{"Name": {rnd}, "Value": {`Page`}, "Menu": {`myvdemenu`},
-		"Conditions": {`true`}, `vde`: {`true`}}
+
+	form = url.Values{
+		"Name":          {rnd},
+		"Value":         {`Page`},
+		"Menu":          {`myobsmenu`},
+		"Conditions":    {`true`},
+		`ApplicationId`: {`1`},
+	}
+
 	if err := postTx(`NewPage`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := postTx(rnd, &url.Values{`vde`: {`true`}, `Auth`: {gAuth}}); err != nil {
+
+	fmt.Println("gauth", gAuth)
+
+	if err := postTx(rnd, &url.Values{`Auth`: {gAuth}}); err != nil { //
+		t.Error(err)
+		return
+	}
+}
+
+func TestHTTPPostJSON(t *testing.T) {
+	if err := keyLogin(1); err != nil {
+		t.Error(err)
+		return
+	}
+
+	rnd := `rnd` + crypto.RandSeq(6)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+			data {
+				Data string
+			}
+			action {
+				var ret string
+				var headers, json map
+				headers["Content-Type"] = "Application/json"
+				ret = HTTPPostJSON("http://localhost:3000/ping", headers, $Data)
+				json = JSONDecode(ret)
+				Println(json)
+			}
+		}`}, `Conditions`: {`true`}, "ApplicationId": {"1"}}
+
+	if err := postTx(`NewContract`, &form); err != nil {
+		t.Error(err)
+		return
+	}
+
+	if err := postTx(rnd, &url.Values{"Data": {`{"string_value": "my string", "int_value": 1}`}}); err != nil { //`Auth`: {gAuth}}
 		t.Error(err)
 		return
 	}
@@ -351,19 +399,19 @@ func TestNodeHTTPRequest(t *testing.T) {
 				var ret string 
 				var pars, heads, json map
 				heads["Authorization"] = "Bearer " + $auth_token
-				pars["vde"] = "false"
+				pars["obs"] = "false"
 				pars["Par"] = $Par
 				ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
 				json = JSONDecode(ret)
 				$result = json["hash"]
-			}}`}, `Conditions`: {`true`}, `vde`: {`true`}}
+			}}`}, `Conditions`: {`true`}, `obs`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	var (
 		msg string
 		id  int64
 	)
-	_, msg, err = postTxResult(rnd, &url.Values{`vde`: {`true`}, `Par`: {`node`}})
+	_, msg, err = postTxResult(rnd, &url.Values{`obs`: {`true`}, `Par`: {`node`}})
 	assert.NoError(t, err)
 
 	id, err = waitTx(msg)
@@ -380,13 +428,13 @@ func TestNodeHTTPRequest(t *testing.T) {
 			var ret string 
 			var pars, heads, json map
 			heads["Authorization"] = "Bearer " + $auth_token
-			pars["vde"] = "false"
+			pars["obs"] = "false"
 			pars["Par"] = "NodeContract testing"
 			ret = HTTPRequest("http://localhost:7079` + consts.ApiPath + `node/for` + rnd + `", "POST", heads, pars)
 			json = JSONDecode(ret)
 			$result = json["hash"]
 		}
-	}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `vde`: {`true`}}
+	}`}, `Conditions`: {`ContractConditions("MainCondition")`}, `obs`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
 	// You can specify the directory with NodePrivateKey & NodePublicKey files
@@ -413,7 +461,7 @@ func TestCreateCron(t *testing.T) {
 		"Cron":       {"60 * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
-		"vde":        {"true"},
+		"obs":        {"true"},
 	}),
 		`500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }`,
 	)
@@ -425,7 +473,7 @@ func TestCreateCron(t *testing.T) {
 			"Contract":   {"TestCron"},
 			"Conditions": {`ContractConditions("MainCondition")`},
 			"Till":       {till},
-			"vde":        {"true"},
+			"obs":        {"true"},
 		}))
 }
 
@@ -433,16 +481,6 @@ func TestCron(t *testing.T) {
 	if err := keyLogin(1); err != nil {
 		t.Error(err)
 		return
-	}
-
-	err := postTx("NewCron", &url.Values{
-		"Cron":       {"60 * * * *"},
-		"Contract":   {"TestCron"},
-		"Conditions": {`ContractConditions("MainCondition")`},
-		"vde":        {"true"},
-	})
-	if err.Error() != `500 {"error": "E_SERVER", "msg": "{\"type\":\"panic\",\"error\":\"End of range (60) above maximum (59): 60\"}" }` {
-		t.Error(err)
 	}
 
 	postTx("NewContract", &url.Values{
@@ -455,16 +493,16 @@ func TestCron(t *testing.T) {
 			}
 		`},
 		"Conditions": {`ContractConditions("MainCondition")`},
-		"vde":        {"true"},
+		"obs":        {"true"},
 	})
 
 	till := time.Now().Format(time.RFC3339)
-	err = postTx("NewCron", &url.Values{
+	err := postTx("NewCron", &url.Values{
 		"Cron":       {"* * * * *"},
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},
-		"vde":        {"true"},
+		"obs":        {"true"},
 	})
 	if err != nil {
 		t.Error(err)
@@ -476,7 +514,7 @@ func TestCron(t *testing.T) {
 		"Contract":   {"TestCron"},
 		"Conditions": {`ContractConditions("MainCondition")`},
 		"Till":       {till},
-		"vde":        {"true"},
+		"obs":        {"true"},
 	})
 	if err != nil {
 		t.Error(err)
