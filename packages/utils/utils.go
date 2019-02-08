@@ -50,7 +50,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
 	uuid "github.com/satori/go.uuid"
 
 	"github.com/pkg/errors"
@@ -453,31 +452,6 @@ func GetHostPort(h string) string {
 		return h
 	}
 	return fmt.Sprintf("%s:%d", h, consts.DEFAULT_TCP_PORT)
-}
-
-func BuildBlockTimeCalculator(transaction *model.DbTransaction) (BlockTimeCalculator, error) {
-	var btc BlockTimeCalculator
-	firstBlock := model.Block{}
-	found, err := firstBlock.Get(1)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting first block")
-		return btc, err
-	}
-
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Error("first block not found")
-		return btc, err
-	}
-
-	blockGenerationDuration := time.Millisecond * time.Duration(syspar.GetMaxBlockGenerationTime())
-	blocksGapDuration := time.Second * time.Duration(syspar.GetGapsBetweenBlocks())
-
-	btc = NewBlockTimeCalculator(time.Unix(firstBlock.Time, 0),
-		blockGenerationDuration,
-		blocksGapDuration,
-		syspar.GetNumberOfNodesFromDB(transaction),
-	)
-	return btc, nil
 }
 
 func CreateDirIfNotExists(dir string, mode os.FileMode) error {
