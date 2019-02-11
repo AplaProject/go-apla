@@ -40,7 +40,7 @@ type Key struct {
 	EcosystemID int64           `json:"ecosystem_id"`
 	PublicKey   []byte          `json:"public_key"`
 	Amount      decimal.Decimal `json:"amount"`
-	Maxpay      string          `json:"maxpay"`
+	Maxpay      decimal.Decimal `json:"maxpay"`
 	Multi       bool            `json:"multi"`
 	Deleted     bool            `json:"deleted"`
 	Blocked     bool            `json:"blocked"`
@@ -55,5 +55,9 @@ func (k *Key) PrimaryKey() string {
 func (k *Key) Get(ecosystemID, id int64) (bool, error) {
 	k.ID = id
 	k.EcosystemID = ecosystemID
-	return MetaStorage.Begin(false).FindModel(k)
+
+	tr := MetaStorage.BeginRead()
+	defer tr.Commit()
+
+	return tr.FindModel(k)
 }

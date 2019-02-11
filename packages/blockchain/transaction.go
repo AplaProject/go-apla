@@ -282,6 +282,20 @@ func DecrementTxAttemptCount(tx *leveldb.Transaction, hash []byte) error {
 	return ts.Insert(tx, hash)
 }
 
+func SetTransactionComplete(tx *leveldb.Transaction, hash, blockHash []byte, blockID int64) error {
+	ts := &TxStatus{}
+	found, err := ts.Get(tx, hash)
+	if err != nil {
+		return err
+	}
+	if !found {
+		return nil
+	}
+	ts.BlockHash = blockHash
+	ts.BlockID = blockID
+	return ts.Insert(tx, hash)
+}
+
 // BuildTransaction creates transaction
 func BuildTransaction(smartTx Transaction, privKey, pubKey string, params ...string) (*Transaction, error) {
 	bytePrivKey, err := hex.DecodeString(privKey)

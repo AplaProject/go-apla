@@ -61,7 +61,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/service"
 	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
-	"github.com/AplaProject/go-apla/packages/storage/metadb"
+	"github.com/AplaProject/go-apla/packages/storage/memdb"
+	"github.com/AplaProject/go-apla/packages/storage/multi"
 	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/vdemanager"
@@ -143,7 +144,7 @@ type SmartContract struct {
 	TxSize        int64
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
-	MetaTx        *metadb.Transaction
+	MultiTr       *multi.MultiTransaction
 	UndoLog       types.StateStorage
 	Rand          *rand.Rand
 	Counter       *uint64
@@ -666,7 +667,7 @@ func InitFirstEcosystem(sc *SmartContract, data string) error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return utils.ErrInfo(err)
 	}
-	amount := decimal.New(consts.FounderAmount, consts.MoneyDigits).String()
+	amount := decimal.New(consts.FounderAmount, consts.MoneyDigits)
 	commission := &model.SystemParameter{Name: `commission_wallet`}
 	if err := commission.SaveArray(sc.DbTransaction, [][]string{{"1", converter.Int64ToStr(keyID)}}); err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("saving commission_wallet array")
@@ -709,7 +710,8 @@ func InitFirstEcosystem(sc *SmartContract, data string) error {
 		return err
 	}
 
-	err = sc.MetaTx.InsertModel(&model.Key{
+	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
+	err = tr.InsertModel(&model.Key{
 		ID:          keyID,
 		EcosystemID: 1,
 		PublicKey:   fbData.PublicKey,
@@ -1711,27 +1713,30 @@ func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err err
 	return qcost, nil
 }
 
-func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
+func NewMoney(sc *SmartContract, id int64, amountStr, comment string) (err error) {
 	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
 		return err
 	}
-	_, _, err = sc.insert([]string{`id`, `amount`, `ecosystem`}, []interface{}{id, amount,
-		sc.TxSmart.Header.EcosystemID}, `1_keys`)
-	if err == nil {
-		var block int64
-		if sc.BlockData != nil {
-			block = sc.BlockData.BlockID
-		}
-		_, _, err = sc.insert([]string{`sender_id`, `recipient_id`, `amount`,
-			`comment`, `block_id`, `txhash`, `ecosystem`},
-			[]interface{}{0, id, amount, comment, block, sc.TxHash, sc.TxSmart.Header.EcosystemID}, `1_history`)
-	}
 
+	amount, err := decimal.NewFromString(amountStr)
 	if err != nil {
 		return err
 	}
 
-	return sc.MetaTx.InsertModel(&model.Key{
+	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
+	err = tr.InsertModel(&model.History{
+		ID:          UniqueID(sc),
+		RecipientID: id,
+		Amount:      amount,
+		Comment:     comment,
+		BlockID:     sc.BlockData.BlockID,
+		TxHash:      sc.TxHash,
+	})
+	if err != nil {
+		return err
+	}
+
+	return tr.InsertModel(&model.Key{
 		ID:          id,
 		EcosystemID: sc.TxSmart.Header.EcosystemID,
 		Amount:      amount,

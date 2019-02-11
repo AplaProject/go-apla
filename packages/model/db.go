@@ -11,7 +11,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/migration"
 	"github.com/AplaProject/go-apla/packages/migration/vde"
 	"github.com/AplaProject/go-apla/packages/queue"
-	"github.com/AplaProject/go-apla/packages/storage/metadb"
+	"github.com/AplaProject/go-apla/packages/storage/memdb"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -28,7 +28,7 @@ var (
 
 	MetadataRegistry types.MetadataRegistryStorage
 
-	MetaStorage *metadb.Storage
+	MetaStorage *memdb.Storage
 
 	// ErrRecordNotFound is Not Found Record wrapper
 	ErrRecordNotFound = gorm.ErrRecordNotFound

@@ -362,7 +362,7 @@ func GetFuelRate(ecosystem int64) string {
 }
 
 // GetCommissionWallet is returns commission wallet
-func GetCommissionWallet(ecosystem int64) int64 {
+func GetCommissionWallet(ecosystem int64) string {
 	mutex.RLock()
 	defer mutex.RUnlock()
 	if ret, ok := wallets[ecosystem]; ok {

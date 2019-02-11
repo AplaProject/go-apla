@@ -34,8 +34,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/storage/metadb"
-
 	"github.com/AplaProject/go-apla/packages/blockchain"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -46,6 +44,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/protocols"
 	"github.com/AplaProject/go-apla/packages/queue"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/storage"
+	"github.com/AplaProject/go-apla/packages/storage/multi"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -83,6 +83,13 @@ func (b PlayableBlock) GetLogger() *log.Entry {
 // PlayBlockSafe is inserting block safely
 func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 	logger := b.GetLogger()
+
+	mtr, err := storage.NewMultiTransaction()
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Starting multi transaction")
+		return err
+	}
+
 	dbTransaction, err := model.StartTransaction()
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
@@ -95,9 +102,11 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 	}
 	b.LDBTX = ldbtx
 
-	metaTx := model.MetaStorage.Begin(true)
+	// metaTx := model.MetaStorage.Begin(true)
 
-	err = b.Play(dbTransaction, txs, ldbtx, metaTx)
+	err = b.Play(dbTransaction, txs, ldbtx, mtr)
+	storage.M.UndoSave()
+
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
 		txs = []*blockchain.Transaction{}
@@ -133,7 +142,7 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 	} else if err != nil {
 		dbTransaction.Rollback()
 		ldbtx.Discard()
-		metaTx.Rollback()
+		mtr.Rollback()
 
 		if b.GenBlock && b.StopCount == 0 {
 			if err == ErrLimitStop {
@@ -160,14 +169,14 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 	if err := bBlock.Insert(ldbtx, txs); err != nil {
 		dbTransaction.Rollback()
 		ldbtx.Discard()
-		metaTx.Rollback()
+		mtr.Rollback()
 		return err
 	}
 
 	// TODO double phase commit
 	dbTransaction.Commit()
 	ldbtx.Commit()
-	metaTx.Commit()
+	mtr.Commit()
 
 	b.LDBTX = nil
 	if b.SysUpdate {
@@ -204,7 +213,7 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	return nil
 }
 
-func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockchain.Transaction, ldbtx *leveldb.Transaction, metaTx *metadb.Transaction) error {
+func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockchain.Transaction, ldbtx *leveldb.Transaction, mtr *multi.MultiTransaction) error {
 	logger := b.GetLogger()
 	limits := NewLimits(b)
 
@@ -227,11 +236,15 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 		)
 		t.DbTransaction = dbTransaction
 		t.Rand = randBlock
-		t.MetaTx = metaTx
+		t.MultiTr = mtr
 		t.Counter = &counter
 
 		blockchain.IncrementTxAttemptCount(ldbtx, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
+		mtr.SavePoint(fmt.Sprintf("%x", t.TxHash))
+
+		fmt.Printf("Play %x\n", t.TxHash)
+
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
@@ -266,6 +279,7 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 				b.StopCount = curTx
 			}
 
+			mtr.RollbackSavePoint()
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
@@ -296,6 +310,8 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 			blockchain.SetTransactionError(ldbtx, hash, msg)
 			continue
 		}
+
+		mtr.ReleaseSavePoint()
 		err = dbTransaction.ReleaseSavepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")

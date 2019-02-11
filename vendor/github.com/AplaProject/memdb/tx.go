@@ -1,6 +1,7 @@
 package memdb
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -36,7 +37,8 @@ func (tx *Transaction) Set(key, value string) error {
 		return ErrTxNotWritable
 	}
 
-	_, err := tx.getKey(k)
+	v, err := tx.getKey(k)
+	fmt.Println(key, v, err)
 	if err != ErrNotFound {
 		return ErrAlreadyExists
 	}

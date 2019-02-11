@@ -44,8 +44,8 @@ type readResult struct {
 	err  error
 }
 
-func (fs *fileStorage) read() chan readResult {
-	results := make(chan readResult)
+func (fs *fileStorage) read() chan *readResult {
+	results := make(chan *readResult)
 
 	go func() {
 		rd := resp.NewReader(fs.file)
@@ -77,7 +77,7 @@ func (fs *fileStorage) read() chan readResult {
 						result.item.value = v.String()
 					}
 				}
-				results <- result
+				results <- &result
 			}
 		}
 

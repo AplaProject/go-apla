@@ -340,7 +340,6 @@ func postTxResult(name string, form getter) (id int64, msg string, err error) {
 	if len(form.Get("nowait")) > 0 {
 		return
 	}
-	fmt.Println(ret.Hashes["data"])
 	id, err = waitTx(ret.Hashes["data"])
 	if id != 0 && err != nil {
 		msg = err.Error()

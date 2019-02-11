@@ -43,6 +43,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/storage/memdb"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/shopspring/decimal"
@@ -886,38 +887,33 @@ func (sc *SmartContract) GetContractLimit() (ret int64) {
 	return sc.TxCost
 }
 
-func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.Key) error {
-	logger := sc.GetLogger()
+func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.Key, toID int64) error {
 	apl := sc.TxUsedCost.Mul(fuelRate)
 
-	wltAmount, ierr := decimal.NewFromString(payWallet.Amount)
-	if ierr != nil {
-		logger.WithFields(log.Fields{"type": consts.ConversionError, "error": ierr, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-		return ierr
-	}
-	if wltAmount.Cmp(apl) < 0 {
-		apl = wltAmount
+	if payWallet.Amount.Cmp(apl) < 0 {
+		apl = payWallet.Amount
 	}
 
 	commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 	comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
-	fromIDString := converter.Int64ToStr(fromID)
+
+	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
 
 	payCommission := func(toID int64, sum decimal.Decimal) error {
 		toWallet := &model.Key{}
-		_, err = toWallet.Get(1, toID)
+		_, err := toWallet.Get(1, toID)
 		if err != nil {
 			return err
 		}
 		toWallet.Amount = toWallet.Amount.Add(sum)
-		err = sc.MetaTx.UpdateModel(toWallet)
+		err = tr.UpdateModel(toWallet)
 		if err != nil {
 			return err
 		}
 
-		return sc.MetaTx.InsertModel(&model.History{
+		return tr.InsertModel(&model.History{
 			ID:          UniqueID(sc),
-			SenderID:    fromID,
+			SenderID:    payWallet.ID,
 			RecipientID: toID,
 			Amount:      sum,
 			Comment:     comment,
@@ -927,7 +923,7 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 		})
 	}
 
-	if err = payCommission(toID, apl.Sub(commission)); err != nil {
+	if err := payCommission(toID, apl.Sub(commission)); err != nil {
 		if err != errUpdNotExistRecord {
 			return err
 		}
@@ -935,19 +931,19 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 	}
 
 	walletID := converter.StrToInt64(syspar.GetCommissionWallet(sc.TxSmart.TokenEcosystem))
-	if err = payCommission(walletID, commission); err != nil {
+	if err := payCommission(walletID, commission); err != nil {
 		if err != errUpdNotExistRecord {
 			return err
 		}
 		apl = apl.Sub(commission)
 	}
 
-	_, err = payWallet.Get(1, payWallet.ID)
+	_, err := payWallet.Get(1, payWallet.ID)
 	if err != nil {
 		return err
 	}
 	payWallet.Amount = payWallet.Amount.Sub(apl)
-	if err = sc.MetaTx.UpdateModel(payWallet); err != nil {
+	if err = tr.UpdateModel(payWallet); err != nil {
 		return errCommission
 	}
 
@@ -1113,26 +1109,10 @@ func (sc *SmartContract) CallContract() (string, error) {
 			return retError(errDiffKeys)
 		}
 
-		amount := decimal.New(0, 0)
-		if len(payWallet.Amount) > 0 {
-			amount, err = decimal.NewFromString(payWallet.Amount)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Amount}).Error("converting pay wallet amount from string to decimal")
-				return retError(err)
-			}
-		}
+		amount := payWallet.Amount
 
-		maxpay := decimal.New(0, 0)
-		if len(payWallet.Maxpay) > 0 {
-			maxpay, err = decimal.NewFromString(payWallet.Maxpay)
-			if err != nil {
-				logger.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": payWallet.Maxpay}).Error("converting pay wallet maxpay from string to decimal")
-				return retError(err)
-			}
-		}
-
-		if maxpay.GreaterThan(decimal.New(0, 0)) && maxpay.LessThan(amount) {
-			amount = maxpay
+		if payWallet.Maxpay.GreaterThan(decimal.New(0, 0)) && payWallet.Maxpay.LessThan(amount) {
+			amount = payWallet.Maxpay
 		}
 		sizeFuel = syspar.GetSizeFuel() * sc.TxSize / 1024
 		priceCost := decimal.New(price, 0)
@@ -1186,7 +1166,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 	}
 
 	if needPayment {
-		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
+		if ierr := sc.payContract(fuelRate, payWallet, toID); ierr != nil {
 			err = ierr
 		}
 	}

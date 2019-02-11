@@ -39,6 +39,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/network/tcpclient"
 	"github.com/AplaProject/go-apla/packages/network/tcpserver"
 	"github.com/AplaProject/go-apla/packages/nodeban"
+	"github.com/AplaProject/go-apla/packages/storage"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -404,7 +405,12 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
 		return utils.ErrInfo(err)
 	}
-	metaTx := model.MetaStorage.Begin(true)
+
+	mtr, err := storage.NewMultiTransaction()
+	if err != nil {
+		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("Starting multi transaction")
+		return err
+	}
 
 	// go through new blocks from the smallest block_id to the largest block_id
 	prevBlocks := make(map[int64]*block.PlayableBlock, 0)
@@ -439,7 +445,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 			return err
 		}
 
-		if err := b.Play(dbTransaction, txs, ldbTx, metaTx); err != nil {
+		if err := b.Play(dbTransaction, txs, ldbTx, mtr); err != nil {
 			ldbTx.Discard()
 			dbTransaction.Rollback()
 			return utils.ErrInfo(err)
@@ -465,7 +471,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		if err := bBlock.Insert(ldbTx, transactions); err != nil {
 			ldbTx.Discard()
 			dbTransaction.Rollback()
-			metaTx.Rollback()
+			mtr.Rollback()
 			return err
 		}
 	}
@@ -473,7 +479,7 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 	// TODO double phase commit
 	err = dbTransaction.Commit()
 	err = ldbTx.Commit()
-	err = metaTx.Commit()
+	err = mtr.Commit()
 
 	return err
 }

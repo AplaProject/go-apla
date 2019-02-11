@@ -39,6 +39,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/storage"
+	"github.com/AplaProject/go-apla/packages/storage/multi"
+
 	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/blockchain"
 	conf "github.com/AplaProject/go-apla/packages/conf"
@@ -56,10 +59,9 @@ import (
 	"github.com/AplaProject/go-apla/packages/service"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/statsd"
-	"github.com/AplaProject/go-apla/packages/storage/metadb"
+	"github.com/AplaProject/go-apla/packages/storage/memdb"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/vdemanager"
-	"github.com/GenesisKernel/memdb"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -245,19 +247,22 @@ func Start() {
 
 	initGorm(conf.Config.DB)
 
-	// memdb, err := buntdb.Open(":memory")
-	mdb, err := memdb.OpenDB(filepath.Join(conf.Config.DataDir, "meta.db"), true)
+	memdb, err := memdb.NewStorage(filepath.Join(conf.Config.DataDir, "meta.db"))
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("starting memdb")
 		Exit(1)
 	}
 
-	tx := mdb.Begin(true)
-	tx.AddIndex(memdb.NewIndex("keys:id", "keys:*", func(a, b string) bool {
-		return a < b
-	}))
+	storage.M = multi.NewMultiStorage()
+	storage.M.Add("mem", memdb)
 
-	model.MetaStorage = metadb.NewStorage(mdb)
+	// tx := mdb.Begin(true)
+	// tx.AddIndex(memdb.NewIndex("keys:id", "keys:*", func(a, b string) bool {
+	// 	return a < b
+	// }))
+	// tx.Commit()
+
+	model.MetaStorage = memdb
 	// model.MetadataRegistry, err = metadata.NewStorage(&kv.DatabaseAdapter{Database: *metaDB}, model.GetIndexes(), false, true)
 	if err != nil {
 		log.WithFields(log.Fields{"error": err, "type": consts.IOError}).Error("adding indexes")

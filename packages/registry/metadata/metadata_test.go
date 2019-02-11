@@ -14,7 +14,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/storage/kv"
 	"github.com/AplaProject/go-apla/packages/types"
-	"github.com/GenesisKernel/memdb"
+	"github.com/AplaProject/memdb"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/syndtr/goleveldb/leveldb"

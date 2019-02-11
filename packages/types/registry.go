@@ -117,4 +117,18 @@ type MultiTransaction interface {
 type DBTransaction interface {
 	Rollback() error
 	Commit() error
+	SavePoint(id string) error
+	ReleaseSavePoint(id string) error
+	RollbackSavePoint(id string) error
+}
+
+type UndoState struct {
+	Table string `json:"table,omitempty"`
+	Key   string `json:"key"`
+	Value string `json:"value,omitempty"`
+}
+
+type UndoStack interface {
+	Release()
+	PushState(*UndoState)
 }

@@ -4,6 +4,9 @@ import (
 	"io/ioutil"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/storage"
+	"github.com/AplaProject/go-apla/packages/storage/multi"
+
 	"github.com/spf13/cobra"
 
 	"path/filepath"
@@ -17,8 +20,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/queue"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/storage/metadb"
-	"github.com/GenesisKernel/memdb"
+	"github.com/AplaProject/go-apla/packages/storage/memdb"
 
 	log "github.com/sirupsen/logrus"
 	msgpack "gopkg.in/vmihailenco/msgpack.v2"
@@ -111,11 +113,13 @@ var generateFirstBlockCmd = &cobra.Command{
 			return
 		}
 
-		memdb, err := memdb.OpenDB(filepath.Join(conf.Config.DataDir, "meta.db"), true)
+		memdb, err := memdb.NewStorage(filepath.Join(conf.Config.DataDir, "meta.db"))
 		if err != nil {
 			return
 		}
-		model.MetaStorage = metadb.NewStorage(memdb)
+		model.MetaStorage = memdb
+		storage.M = multi.NewMultiStorage()
+		storage.M.Add("mem", memdb)
 
 		err = queue.Init()
 		if err != nil {

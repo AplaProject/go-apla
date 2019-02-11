@@ -30,6 +30,7 @@ package daemons
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/block"
@@ -130,6 +131,9 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(len(txs))
+
 	trs, err := processTransactions(txs, d.logger, done)
 	if err != nil {
 		return err

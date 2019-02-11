@@ -39,7 +39,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/storage/metadb"
+	"github.com/AplaProject/go-apla/packages/storage/multi"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
 	"github.com/AplaProject/go-apla/packages/utils"
 
@@ -71,7 +71,7 @@ type Transaction struct {
 	TxHeader      *blockchain.TxHeader
 	tx            custom.TransactionInterface
 	DbTransaction *model.DbTransaction
-	MetaTx        *metadb.Transaction
+	MultiTr       *multi.MultiTransaction
 	SysUpdate     bool
 	LdbTx         *leveldb.Transaction
 	Notifications []smart.NotifyInfo
@@ -278,7 +278,7 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
 		Counter:       t.Counter,
-		MetaTx:        t.MetaTx,
+		MultiTr:       t.MultiTr,
 	}
 	resultContract, err = sc.CallContract()
 	t.TxFuel = sc.TxFuel

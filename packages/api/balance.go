@@ -69,8 +69,7 @@ func getBalanceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jsonResponse(w, &balanceResult{
-		Amount: key.Amount,
-		Money:  converter.EGSMoney(key.Amount),
-	})
+	result := &balanceResult{Amount: key.Amount.String()}
+	result.Money = converter.EGSMoney(result.Amount)
+	jsonResponse(w, result)
 }
