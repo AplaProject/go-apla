@@ -89,6 +89,12 @@ func GormInit(host string, port int, user string, pass string, dbName string) er
 		DBConn = nil
 		return err
 	}
+
+	if err := DBConn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
+		return err
+	}
+
 	return nil
 }
 
