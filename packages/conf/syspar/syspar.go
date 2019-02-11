@@ -39,6 +39,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/types"
 
 	"time"
 
@@ -105,8 +106,8 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	nodes           = make(map[int64]*FullNode)
-	nodesByPosition = make([]*FullNode, 0)
+	nodes           = make(map[int64]*types.FullNode)
+	nodesByPosition = make([]*types.FullNode, 0)
 	fuels           = make(map[int64]string)
 	wallets         = make(map[int64]string)
 	mutex           = &sync.RWMutex{}
@@ -158,10 +159,10 @@ func SysUpdate(dbTransaction *model.DbTransaction) error {
 }
 
 func updateNodes() (err error) {
-	nodes = make(map[int64]*FullNode)
-	nodesByPosition = make([]*FullNode, 0)
+	nodes = make(map[int64]*types.FullNode)
+	nodesByPosition = make([]*types.FullNode, 0)
 
-	items := make([]*FullNode, 0)
+	items := make([]*types.FullNode, 0)
 	if len(cache[FullNodes]) > 0 {
 		err = json.Unmarshal([]byte(cache[FullNodes]), &items)
 		if err != nil {
@@ -178,16 +179,16 @@ func updateNodes() (err error) {
 	return nil
 }
 
-// addFullNodeKeys adds node by keys to list of nodes
+// add FullNodeKeys adds node by keys to list of nodes
 func addFullNodeKeys(keyID int64, publicKey []byte) {
-	nodesByPosition = append(nodesByPosition, &FullNode{
+	nodesByPosition = append(nodesByPosition, &types.FullNode{
 		KeyID:     keyID,
 		PublicKey: publicKey,
 	})
 }
 
 // GetNode is retrieving node by wallet
-func GetNode(wallet int64) *FullNode {
+func GetNode(wallet int64) *types.FullNode {
 	mutex.RLock()
 	defer mutex.RUnlock()
 	if ret, ok := nodes[wallet]; ok {
@@ -196,11 +197,11 @@ func GetNode(wallet int64) *FullNode {
 	return nil
 }
 
-func GetNodes() []FullNode {
+func GetNodes() []types.FullNode {
 	mutex.RLock()
 	defer mutex.RUnlock()
 
-	result := make([]FullNode, 0, len(nodesByPosition))
+	result := make([]types.FullNode, 0, len(nodesByPosition))
 	for _, node := range nodesByPosition {
 		result = append(result, *node)
 	}
@@ -228,20 +229,20 @@ func GetNumberOfNodes() int64 {
 func GetNumberOfNodesFromDB(transaction *model.DbTransaction) int64 {
 	sp := &model.SystemParameter{}
 	sp.GetTransaction(transaction, FullNodes)
-	var fullNodes []map[string]interface{}
+	var FullNodes []map[string]interface{}
 	if len(sp.Value) > 0 {
-		if err := json.Unmarshal([]byte(sp.Value), &fullNodes); err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "value": sp.Value}).Error("unmarshalling fullnodes from JSON")
+		if err := json.Unmarshal([]byte(sp.Value), &FullNodes); err != nil {
+			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "value": sp.Value}).Error("unmarshalling types.FullNodes from JSON")
 		}
 	}
-	if len(fullNodes) == 0 {
+	if len(FullNodes) == 0 {
 		return 1
 	}
-	return int64(len(fullNodes))
+	return int64(len(FullNodes))
 }
 
 // GetNodeByPosition is retrieving node by position
-func GetNodeByPosition(position int64) (*FullNode, error) {
+func GetNodeByPosition(position int64) (*types.FullNode, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
 	if int64(len(nodesByPosition)) <= position {
@@ -250,7 +251,7 @@ func GetNodeByPosition(position int64) (*FullNode, error) {
 	return nodesByPosition[position], nil
 }
 
-func GetNodeByHost(host string) (FullNode, error) {
+func GetNodeByHost(host string) (types.FullNode, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
 	for _, n := range nodes {
@@ -259,7 +260,7 @@ func GetNodeByHost(host string) (FullNode, error) {
 		}
 	}
 
-	return FullNode{}, fmt.Errorf("incorrect host")
+	return types.FullNode{}, fmt.Errorf("incorrect host")
 }
 
 // GetNodeHostByPosition is retrieving node host by position
@@ -450,6 +451,20 @@ func GetRemoteHosts() []string {
 	for keyID, item := range nodes {
 		if keyID != conf.Config.KeyID {
 			ret = append(ret, item.TCPAddress)
+		}
+	}
+	return ret
+}
+
+func GetRemoteNodes() []*types.FullNode {
+	ret := make([]*types.FullNode, len(nodes)-1)
+
+	mutex.RLock()
+	defer mutex.RUnlock()
+
+	for keyID, item := range nodes {
+		if keyID != conf.Config.KeyID {
+			ret = append(ret, item)
 		}
 	}
 	return ret

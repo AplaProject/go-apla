@@ -37,6 +37,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 	"github.com/pkg/errors"
@@ -44,13 +45,13 @@ import (
 )
 
 type localBannedNode struct {
-	FullNode       *syspar.FullNode
+	FullNode       *types.FullNode
 	LocalUnBanTime time.Time
 }
 
 type NodesBanService struct {
 	localBannedNodes map[int64]localBannedNode
-	fullNodes        []syspar.FullNode
+	fullNodes        []types.FullNode
 
 	m *sync.Mutex
 }
@@ -74,7 +75,7 @@ func InitNodesBanService() error {
 }
 
 // RegisterBadBlock is set node to local ban and saving bad block to global registry
-func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, blockTime int64, reason string) error {
+func (nbs *NodesBanService) RegisterBadBlock(node types.FullNode, badBlockId, blockTime int64, reason string) error {
 	if nbs.IsBanned(node) {
 		return nil
 	}
@@ -90,7 +91,7 @@ func (nbs *NodesBanService) RegisterBadBlock(node syspar.FullNode, badBlockId, b
 }
 
 // IsBanned is allows to check node ban (local or global)
-func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
+func (nbs *NodesBanService) IsBanned(node types.FullNode) bool {
 	nbs.refreshNodes()
 
 	nbs.m.Lock()
@@ -129,7 +130,7 @@ func (nbs *NodesBanService) refreshNodes() {
 	nbs.m.Unlock()
 }
 
-func (nbs *NodesBanService) localBan(node syspar.FullNode) {
+func (nbs *NodesBanService) localBan(node types.FullNode) {
 	nbs.m.Lock()
 	defer nbs.m.Unlock()
 
@@ -139,7 +140,7 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 	}
 }
 
-func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64, reason string) error {
+func (nbs *NodesBanService) newBadBlock(producer types.FullNode, blockId, blockTime int64, reason string) error {
 	nodePrivateKey, err := utils.GetNodePrivateKey()
 	if err != nil || len(nodePrivateKey) < 1 {
 		if err == nil {
@@ -148,7 +149,7 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 		return err
 	}
 
-	var currentNode syspar.FullNode
+	var currentNode types.FullNode
 	nbs.m.Lock()
 	for _, fn := range nbs.fullNodes {
 		if fn.KeyID == conf.Config.KeyID {

@@ -201,7 +201,7 @@ func UpdateSysParam(sc *SmartContract, name, value, conditions string) (int64, e
 			}
 			checked = true
 		case syspar.FullNodes:
-			fnodes := []syspar.FullNode{}
+			fnodes := []types.FullNode{}
 			if err := json.Unmarshal([]byte(value), &fnodes); err != nil {
 				break check
 			}
