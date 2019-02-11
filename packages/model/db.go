@@ -90,6 +90,10 @@ func GormInit(host string, port int, user string, pass string, dbName string) er
 		return err
 	}
 
+	return setupConnOptions(DBConn)
+}
+
+func setupConnOptions(conr *gorm.DB) error {
 	if err := DBConn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
 		return err
@@ -127,13 +131,8 @@ func StartTransaction() (*DbTransaction, error) {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": conn.Error}).Error("cannot start transaction because of connection error")
 		return nil, conn.Error
 	}
-	if err := conn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
-		return nil, err
-	}
 
-	if err := conn.Exec(fmt.Sprintf(`set idle_in_transaction_session_timeout = %d;`, conf.Config.DB.IdleInTxTimeout)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set idle_in_transaction_session_timeout")
+	if err := setupConnOptions(conn); err != nil {
 		return nil, err
 	}
 
