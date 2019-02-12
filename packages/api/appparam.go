@@ -31,12 +31,11 @@ package api
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
