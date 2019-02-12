@@ -90,17 +90,18 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 		return err
 	}
 
+	var lastBlockID int64 = 0
 	lastBlock, _, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("Getting last block")
 		return err
 	}
-	if !found {
+	if found {
+		lastBlockID = lastBlock.Header.BlockID
 		log.WithFields(log.Fields{"type": consts.NotFound, "error": err}).Info("last block not found")
-		return nil
 	}
 
-	if lastBlock.Header.BlockID >= maxBlockID {
+	if lastBlockID >= maxBlockID {
 		log.WithFields(log.Fields{"blockID": lastBlock.Header.BlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
 		return nil
 	}
@@ -123,7 +124,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	)
 
 	// get current block id from our blockchain
-	curBlock, curBlockHash, found, err := blockchain.GetLastBlock(nil)
+	curBlock, curBlockHash, curBlockFound, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting last block")
 		return err
@@ -190,18 +191,21 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	}
 
 	st := time.Now()
-	d.logger.Infof("starting downloading blocks from %d to %d (%d) \n", curBlock.Header.BlockID, maxBlockID, maxBlockID-curBlock.Header.BlockID)
 
 	count = 0
-	curBlockID := curBlock.Header.BlockID + 1
-	nextBlock, found, err := blockchain.GetNextBlock(nil, curBlockHash)
-	blockHash := nextBlock.Hash
-	if err != nil {
-		return err
-	}
-	if !found {
-		blockHash = curBlockHash
-		curBlockID = curBlock.Header.BlockID
+	var curBlockID int64 = 0
+	blockHash := []byte("")
+	if curBlockFound {
+		curBlockID = curBlock.Header.BlockID + 1
+		nextBlock, found, err := blockchain.GetNextBlock(nil, curBlockHash)
+		blockHash = nextBlock.Hash
+		if err != nil {
+			return err
+		}
+		if !found {
+			blockHash = curBlockHash
+			curBlockID = curBlock.Header.BlockID
+		}
 	}
 	for blockID := curBlockID; blockID <= maxBlockID; blockID += int64(tcpserver.BlocksPerRequest) {
 		ctxDone, cancel := context.WithCancel(ctx)

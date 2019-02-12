@@ -153,6 +153,14 @@ var generateFirstBlockCmd = &cobra.Command{
 			log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Fatal("inserting first block")
 			return
 		}
+		if err := queue.SendTxQueue.Enqueue(smartTx); err != nil {
+			log.Fatal("inserting first block tx")
+			return
+		}
+		if err := queue.SendBlockQueue.Enqueue(b); err != nil {
+			log.Fatal("inserting first block")
+			return
+		}
 
 		log.Info("first block generated")
 	},

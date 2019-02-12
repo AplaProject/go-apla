@@ -230,11 +230,12 @@ func prepareFullBlockRequest(block *blockchain.Block, trs []*blockchain.Transact
 	buf.Write(converter.DecToBin(nodeID, 8))
 	buf.WriteByte(noBlockFlag)
 	if noBlockFlag == 0 {
-		b, err := block.Marshal()
+		buf.Write(converter.DecToBin(block.Header.BlockID, 3))
+		hash, err := block.Hash()
 		if err != nil {
 			return nil, err
 		}
-		buf.Write(b)
+		buf.Write(hash)
 	}
 	if trs != nil {
 		for _, tr := range trs {

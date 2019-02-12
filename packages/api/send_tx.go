@@ -155,6 +155,10 @@ func txHandler(r *http.Request, txData []byte) (string, error) {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return "", err
 	}
+	if err := queue.SendTxQueue.Enqueue(rtx); err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
+		return "", err
+	}
 
 	return string(converter.BinToHex(txHash)), nil
 }
