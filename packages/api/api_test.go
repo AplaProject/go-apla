@@ -39,20 +39,19 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/AplaProject/go-apla/packages/blockchain"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
 )
 
-const apiAddress = "http://localhost:7079"
+var apiAddress = "http://localhost:7079"
 
 var (
 	gAuth             string
@@ -272,7 +271,7 @@ func postTxResult(name string, form getter) (id int64, msg string, err error) {
 		return
 	}
 
-	params := make(map[string]interface{})
+	params := make(map[string]string)
 	for _, field := range contract.Fields {
 		name := field.Name
 		value := form.Get(name)
@@ -282,28 +281,10 @@ func postTxResult(name string, form getter) (id int64, msg string, err error) {
 		}
 
 		switch field.Type {
-		case "bool":
-			params[name], err = strconv.ParseBool(value)
-		case "int", "address":
-			params[name], err = strconv.ParseInt(value, 10, 64)
-		case "float":
-			params[name], err = strconv.ParseFloat(value, 64)
-		case "array":
-			var v interface{}
-			err = json.Unmarshal([]byte(value), &v)
-			params[name] = v
-		case "map":
-			var v map[string]interface{}
-			err = json.Unmarshal([]byte(value), &v)
-			params[name] = v
-		case "string", "money":
+		case "bool", "int", "address", "float", "string", "money":
 			params[name] = value
-		case "file", "bytes":
-			if cp, ok := form.(*contractParams); !ok {
-				err = fmt.Errorf("Form is not *contractParams type")
-			} else {
-				params[name] = cp.GetRaw(name)
-			}
+		default:
+			err = fmt.Errorf("Not implemented %s", field.Type)
 		}
 
 		if err != nil {
@@ -320,18 +301,32 @@ func postTxResult(name string, form getter) (id int64, msg string, err error) {
 		return
 	}
 
-	data, _, err := tx.NewTransaction(tx.SmartContract{
-		Header: tx.Header{
-			ID:          int(contract.ID),
+	sc := blockchain.Transaction{
+		Header: blockchain.TxHeader{
+			Name:        name,
 			Time:        time.Now().Unix(),
 			EcosystemID: 1,
 			KeyID:       crypto.Address(publicKey),
 			NetworkID:   consts.NETWORK_ID,
+			PublicKey:   publicKey,
 		},
 		Params: params,
-	}, privateKey)
+	}
+
+	hash, err := sc.Hash()
 	if err != nil {
-		return 0, "", err
+		return
+	}
+
+	signature, err := crypto.Sign(privateKey, hash)
+	if err != nil {
+		return
+	}
+	sc.Header.BinSignatures = converter.EncodeLengthPlusData(signature)
+
+	data, err := sc.Marshal()
+	if err != nil {
+		return
 	}
 
 	ret := &sendTxResult{}

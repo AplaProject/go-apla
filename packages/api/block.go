@@ -49,8 +49,7 @@ type maxBlockResult struct {
 func getMaxBlockHandler(w http.ResponseWriter, r *http.Request) {
 	logger := getLogger(r)
 
-	block := &blockchain.Block{}
-	_, _, found, err := blockchain.GetLastBlock(nil)
+	block, hash, found, err := blockchain.GetLastBlock(nil)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting max block")
 		errorResponse(w, err)
@@ -59,11 +58,6 @@ func getMaxBlockHandler(w http.ResponseWriter, r *http.Request) {
 	if !found {
 		logger.WithFields(log.Fields{"type": consts.NotFound}).Error("last block not found")
 		errorResponse(w, errNotFound)
-		return
-	}
-	hash, err := block.Hash()
-	if err != nil {
-		errorResponse(w, err)
 		return
 	}
 	result := &maxBlockResult{
