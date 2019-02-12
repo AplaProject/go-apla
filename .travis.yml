@@ -1,13 +1,16 @@
 language: go
 
+os:
+  - windows
+  - linux
+  - osx
+
 go:
   - 1.10.x
   - master
 
 go_import_path: github.com/AplaProject/go-apla
 
-
 install: true
 
 script: go build github.com/AplaProject/go-apla
-
