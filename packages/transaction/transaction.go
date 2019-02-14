@@ -33,19 +33,19 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/storage"
+
 	"github.com/AplaProject/go-apla/packages/blockchain"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/storage/multi"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // Transaction is a structure for parsing transactions
@@ -54,26 +54,28 @@ type Transaction struct {
 	PrevBlock  *blockchain.BlockHeader
 	PublicKeys [][]byte
 
-	TxBinaryData  []byte // transaction binary data
-	TxFullData    []byte // full transaction, with type and data
-	TxHash        []byte
-	TxSignature   []byte
-	TxKeyID       int64
-	TxTime        int64
-	TxType        int64
-	TxCost        int64 // Maximum cost of executing contract
-	TxFuel        int64
-	TxUsedCost    decimal.Decimal // Used cost of CPU resources
-	TxPtr         interface{}     // Pointer to the corresponding struct in consts/struct.go
-	TxData        map[string]interface{}
-	TxSmart       *blockchain.Transaction
-	TxContract    *smart.Contract
-	TxHeader      *blockchain.TxHeader
-	tx            custom.TransactionInterface
-	DbTransaction *model.DbTransaction
-	MultiTr       *multi.MultiTransaction
+	TxBinaryData     []byte // transaction binary data
+	TxFullData       []byte // full transaction, with type and data
+	TxHash           []byte
+	TxSignature      []byte
+	TxKeyID          int64
+	TxTime           int64
+	TxType           int64
+	TxCost           int64 // Maximum cost of executing contract
+	TxFuel           int64
+	TxUsedCost       decimal.Decimal // Used cost of CPU resources
+	TxPtr            interface{}     // Pointer to the corresponding struct in consts/struct.go
+	TxData           map[string]interface{}
+	TxSmart          *blockchain.Transaction
+	TxContract       *smart.Contract
+	TxHeader         *blockchain.TxHeader
+	tx               custom.TransactionInterface
+	MultiTransaction *storage.MultiTransaction
+
+	// DBTransaction  *model.DbTransaction
+	// MemTransaction *memdb.Transaction
+	// LDBTransaction *leveldb.Transaction
 	SysUpdate     bool
-	LdbTx         *leveldb.Transaction
 	Notifications []smart.NotifyInfo
 	Rand          *rand.Rand
 	Counter       *uint64
@@ -232,7 +234,7 @@ func (t *Transaction) AccessRights(condition string, iscondition bool) error {
 	logger := t.GetLogger()
 	sp := &model.StateParameter{}
 	sp.SetTablePrefix(converter.Int64ToStr(t.TxSmart.Header.EcosystemID))
-	_, err := sp.Get(t.DbTransaction, condition)
+	_, err := sp.Get(t.MultiTransaction.DBTransaction, condition)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting state parameter by name transaction")
 		return err
@@ -275,10 +277,10 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		TxSignature:   t.TxSignature,
 		TxSize:        int64(len(t.TxBinaryData)),
 		PublicKeys:    t.PublicKeys,
-		DbTransaction: t.DbTransaction,
+		DbTransaction: t.MultiTransaction.DBTransaction,
+		MemTranaction: t.MultiTransaction.MemTransaction,
 		Rand:          t.Rand,
 		Counter:       t.Counter,
-		MultiTr:       t.MultiTr,
 	}
 	resultContract, err = sc.CallContract()
 	t.TxFuel = sc.TxFuel

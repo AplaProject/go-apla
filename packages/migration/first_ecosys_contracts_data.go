@@ -876,24 +876,13 @@ VALUES
 }
 ', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NewUser', 'contract NewUser {
-	data {
-		NewPubkey string
-	}
-	conditions {
-		$newId = PubToID($NewPubkey)
-		if $newId == 0 {
-			error "Wrong pubkey"
-		}
-		if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
-			error "User already exists"
-		}
-
+    data {
+        PubKey string
+    }
+    action {
         $amount = Money(1000) * Money(1000000000000000000)
-	}
-	action {
-        NewMoney($newId, Str($amount), "New user deposit")
-        SetPubKey($newId, StringToBytes($NewPubkey))
-	}
+        CreateUser(StringToBytes($PubKey), $amount, "New user deposit")
+    }
 }
 ', 'ContractConditions("NodeOwnerCondition")', '1', '1'),
 	(next_id('1_contracts'), 'NodeOwnerCondition', 'contract NodeOwnerCondition {

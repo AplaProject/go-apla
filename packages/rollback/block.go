@@ -32,59 +32,68 @@ import (
 	"github.com/AplaProject/go-apla/packages/block"
 	"github.com/AplaProject/go-apla/packages/blockchain"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/storage"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 // BlockRollback is blocking rollback
 func RollbackBlock(blockModel *blockchain.Block, hash []byte) error {
-	ldbTx, err := blockchain.DB.OpenTransaction()
+	mtr, err := storage.NewMultiTransaction()
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
+		log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting multi transaction")
 		return err
 	}
-	txs, err := blockModel.Transactions(ldbTx)
+
+	btr := mtr.BlockchainTransaction
+
+	// ldbTx, err := blockchain.DB.OpenTransaction()
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
+	// 	return err
+	// }
+	txs, err := blockModel.Transactions(btr)
 	if err != nil {
 		return err
 	}
-	b, err := block.FromBlockchainBlock(blockModel, txs, hash, ldbTx)
+	b, err := block.FromBlockchainBlock(blockModel, txs, hash, btr)
 	if err != nil {
 		return err
 	}
 
-	dbTransaction, err := model.StartTransaction()
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
-		return err
-	}
+	// dbTransaction, err := model.StartTransaction()
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting transaction")
+	// 	return err
+	// }
 
 	// metadb := model.MetadataRegistry.Begin(ldbTx)
 	//err = rollbackBlock(dbTransaction, ldbTx, metadb, b)
-	err = rollbackBlock(dbTransaction, ldbTx, b)
+	err = rollbackBlock(mtr, b)
 	if err != nil {
-		dbTransaction.Rollback()
-		ldbTx.Discard()
+		// dbTransaction.Rollback()
+		// ldbTx.Discard()
 		// metadb.Rollback()
+		mtr.Rollback()
 		return err
 	}
 
-	err = dbTransaction.Commit()
-	err = ldbTx.Commit()
-	return err
+	// err = dbTransaction.Commit()
+	// err = ldbTx.Commit()
+	return mtr.Commit()
 }
 
-func rollbackBlock(dbTransaction *model.DbTransaction, ldbTx *leveldb.Transaction, block *block.PlayableBlock) error {
+func rollbackBlock(mtr *storage.MultiTransaction, block *block.PlayableBlock) error {
 	// rollback transactions in reverse order
 	logger := block.GetLogger()
 	for i := len(block.Transactions) - 1; i >= 0; i-- {
 		t := block.Transactions[i]
-		t.DbTransaction = dbTransaction
-		t.LdbTx = ldbTx
+		t.MultiTransaction = mtr
+		// t.DbTransaction = dbTransaction
+		// t.LdbTx = ldbTx
 
 		if t.TxContract != nil {
-			if err := rollbackTransaction(t.TxHash, t.DbTransaction, logger); err != nil {
+			if err := rollbackTransaction(t.TxHash, mtr, logger); err != nil {
 				return err
 			}
 		}

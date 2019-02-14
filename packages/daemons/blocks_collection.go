@@ -103,7 +103,7 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 	}
 
 	if lastBlockID >= maxBlockID {
-		log.WithFields(log.Fields{"blockID": lastBlock.Header.BlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
+		log.WithFields(log.Fields{"blockID": lastBlockID, "maxBlockID": maxBlockID}).Debug("Max block is already in the host")
 		return nil
 	}
 
@@ -395,16 +395,16 @@ func getBlocks(ctx context.Context, blockHash []byte, host string) ([]*block.Pla
 }
 
 func processBlocks(blocks []*block.PlayableBlock) error {
-	ldbTx, err := blockchain.DB.OpenTransaction()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("starting transaction")
-		return utils.ErrInfo(err)
-	}
-	dbTransaction, err := model.StartTransaction()
-	if err != nil {
-		log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
-		return utils.ErrInfo(err)
-	}
+	// ldbTx, err := blockchain.DB.OpenTransaction()
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"error": err, "type": consts.LevelDBError}).Error("starting transaction")
+	// 	return utils.ErrInfo(err)
+	// }
+	// dbTransaction, err := model.StartTransaction()
+	// if err != nil {
+	// 	log.WithFields(log.Fields{"error": err, "type": consts.DBError}).Error("starting transaction")
+	// 	return utils.ErrInfo(err)
+	// }
 
 	mtr, err := storage.NewMultiTransaction()
 	if err != nil {
@@ -434,26 +434,23 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		b.Hash = hash
 
 		if err := b.Check(); err != nil {
-			ldbTx.Discard()
-			dbTransaction.Rollback()
+			mtr.Rollback()
 			return err
 		}
 		_, txs, err := b.ToBlockchainBlock()
 		if err != nil {
-			ldbTx.Discard()
-			dbTransaction.Rollback()
+			mtr.Rollback()
 			return err
 		}
 
-		if err := b.Play(dbTransaction, txs, ldbTx, mtr); err != nil {
-			ldbTx.Discard()
-			dbTransaction.Rollback()
+		if err := b.Play(mtr, txs); err != nil {
+			mtr.Rollback()
 			return utils.ErrInfo(err)
 		}
 		prevBlocks[b.Header.BlockID] = b
 
 		if b.SysUpdate {
-			if err := syspar.SysUpdate(dbTransaction); err != nil {
+			if err := syspar.SysUpdate(mtr.DBTransaction); err != nil {
 				log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 				return utils.ErrInfo(err)
 			}
@@ -466,20 +463,20 @@ func processBlocks(blocks []*block.PlayableBlock) error {
 		// insert new blocks into blockchain
 		bBlock, transactions, err := b.ToBlockchainBlock()
 		if err != nil {
+			mtr.Rollback()
 			return err
 		}
-		if err := bBlock.Insert(ldbTx, transactions); err != nil {
-			ldbTx.Discard()
-			dbTransaction.Rollback()
+		if err := bBlock.Insert(mtr.BlockchainTransaction, transactions); err != nil {
+			// ldbTx.Discard()
+			// dbTransaction.Rollback()
 			mtr.Rollback()
 			return err
 		}
 	}
 
 	// TODO double phase commit
-	err = dbTransaction.Commit()
-	err = ldbTx.Commit()
-	err = mtr.Commit()
+	// err = dbTransaction.Commit()
+	// err = ldbTx.Commit()
 
-	return err
+	return mtr.Commit()
 }

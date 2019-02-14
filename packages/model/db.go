@@ -127,8 +127,8 @@ func StartTransaction() (*DbTransaction, error) {
 }
 
 // Rollback is transaction rollback
-func (tr *DbTransaction) Rollback() {
-	tr.conn.Rollback()
+func (tr *DbTransaction) Rollback() error {
+	return tr.conn.Rollback().Error
 }
 
 // Commit is transaction commit
@@ -142,18 +142,18 @@ func (tr *DbTransaction) Connection() *gorm.DB {
 }
 
 // Savepoint creates PostgreSQL savepoint
-func (tr *DbTransaction) Savepoint(idTx int) error {
-	return tr.Connection().Exec(fmt.Sprintf("SAVEPOINT \"tx-%d\";", idTx)).Error
+func (tr *DbTransaction) SavePoint(idTx string) error {
+	return tr.Connection().Exec(fmt.Sprintf("SAVEPOINT \"tx-%s\";", idTx)).Error
 }
 
 // RollbackSavepoint rollbacks PostgreSQL savepoint
-func (tr *DbTransaction) RollbackSavepoint(idTx int) error {
-	return tr.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%d\";", idTx)).Error
+func (tr *DbTransaction) RollbackSavePoint(idTx string) error {
+	return tr.Connection().Exec(fmt.Sprintf("ROLLBACK TO SAVEPOINT \"tx-%s\";", idTx)).Error
 }
 
 // ReleaseSavepoint releases PostgreSQL savepoint
-func (tr *DbTransaction) ReleaseSavepoint(idTx int) error {
-	return tr.Connection().Exec(fmt.Sprintf("RELEASE SAVEPOINT \"tx-%d\";", idTx)).Error
+func (tr *DbTransaction) ReleaseSavePoint(idTx string) error {
+	return tr.Connection().Exec(fmt.Sprintf("RELEASE SAVEPOINT \"tx-%s\";", idTx)).Error
 }
 
 // GetDB is returning gorm.DB

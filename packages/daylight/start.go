@@ -39,9 +39,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/storage"
-	"github.com/AplaProject/go-apla/packages/storage/multi"
-
 	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/blockchain"
 	conf "github.com/AplaProject/go-apla/packages/conf"
@@ -253,8 +250,8 @@ func Start() {
 		Exit(1)
 	}
 
-	storage.M = multi.NewMultiStorage()
-	storage.M.Add("mem", memdb)
+	// storage.M = multi.NewMultiStorage()
+	// storage.M.Add("mem", memdb)
 
 	// tx := mdb.Begin(true)
 	// tx.AddIndex(memdb.NewIndex("keys:id", "keys:*", func(a, b string) bool {

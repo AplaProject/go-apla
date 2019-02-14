@@ -32,10 +32,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"net/http"
-	"strings"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/blockchain"
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -45,7 +43,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/publisher"
 	"github.com/AplaProject/go-apla/packages/queue"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
@@ -159,8 +156,8 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			hexPubKey := hex.EncodeToString(publicKey)
-			params := map[string]string{"NewPubkey": hexPubKey}
-			nodePrivateKey, nodePublicKey, err := utils.GetNodeKeys()
+			params := map[string]string{"PubKey": hexPubKey}
+			/*nodePrivateKey, nodePublicKey, err := utils.GetNodeKeys()
 			if err != nil || len(nodePrivateKey) < 1 {
 				if err == nil {
 					logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
@@ -176,9 +173,6 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 					KeyID:       conf.Config.KeyID,
 					NetworkID:   consts.NETWORK_ID,
 					PublicKey:   publicKey,
-				},
-				Params: map[string]string{
-					"NewPubkey": crypto.PubToHex(publicKey),
 				},
 			}
 			signPrms := []string{sc.ForSign()}
@@ -197,6 +191,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 				errorResponse(w, err)
 				return
 			}
+			*/
 
 			smartTx, err := smart.CallContract("NewUser", 1, params, []string{hexPubKey})
 			if err != nil {

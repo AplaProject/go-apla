@@ -43,7 +43,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/storage/memdb"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/shopspring/decimal"
@@ -897,8 +896,6 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 	commission := apl.Mul(decimal.New(syspar.SysInt64(`commission_size`), 0)).Div(decimal.New(100, 0)).Floor()
 	comment := fmt.Sprintf("Commission for execution of %s contract", sc.TxContract.Name)
 
-	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
-
 	payCommission := func(toID int64, sum decimal.Decimal) error {
 		toWallet := &model.Key{}
 		_, err := toWallet.Get(1, toID)
@@ -906,12 +903,12 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 			return err
 		}
 		toWallet.Amount = toWallet.Amount.Add(sum)
-		err = tr.UpdateModel(toWallet)
+		err = sc.MemTranaction.UpdateModel(toWallet)
 		if err != nil {
 			return err
 		}
 
-		return tr.InsertModel(&model.History{
+		return sc.MemTranaction.InsertModel(&model.History{
 			ID:          UniqueID(sc),
 			SenderID:    payWallet.ID,
 			RecipientID: toID,
@@ -943,7 +940,7 @@ func (sc *SmartContract) payContract(fuelRate decimal.Decimal, payWallet *model.
 		return err
 	}
 	payWallet.Amount = payWallet.Amount.Sub(apl)
-	if err = tr.UpdateModel(payWallet); err != nil {
+	if err = sc.MemTranaction.UpdateModel(payWallet); err != nil {
 		return errCommission
 	}
 

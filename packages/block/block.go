@@ -39,13 +39,11 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/notificator"
 	"github.com/AplaProject/go-apla/packages/protocols"
 	"github.com/AplaProject/go-apla/packages/queue"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/storage"
-	"github.com/AplaProject/go-apla/packages/storage/multi"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
 	"github.com/AplaProject/go-apla/packages/utils"
@@ -90,22 +88,24 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 		return err
 	}
 
-	dbTransaction, err := model.StartTransaction()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
-		return err
-	}
-	ldbtx, err := blockchain.DB.OpenTransaction()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
-		return err
-	}
-	b.LDBTX = ldbtx
+	btr := mtr.BlockchainTransaction
+
+	// dbTransaction, err := model.StartTransaction()
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("starting db transaction")
+	// 	return err
+	// }
+	// ldbtx, err := blockchain.DB.OpenTransaction()
+	// if err != nil {
+	// 	logger.WithFields(log.Fields{"type": consts.LevelDBError, "error": err}).Error("starting transaction")
+	// 	return err
+	// }
+	// b.BlockchainTr = mtr.Blockchain()
 
 	// metaTx := model.MetaStorage.Begin(true)
 
-	err = b.Play(dbTransaction, txs, ldbtx, mtr)
-	storage.M.UndoSave()
+	err = b.Play(mtr, txs)
+	// storage.M.UndoSave()
 
 	if b.GenBlock && b.StopCount > 0 {
 		doneTx := b.Transactions[:b.StopCount]
@@ -140,8 +140,8 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 		b.SysUpdate = false
 		err = nil
 	} else if err != nil {
-		dbTransaction.Rollback()
-		ldbtx.Discard()
+		// dbTransaction.Rollback()
+		// ldbtx.Discard()
 		mtr.Rollback()
 
 		if b.GenBlock && b.StopCount == 0 {
@@ -157,28 +157,29 @@ func (b *PlayableBlock) PlaySafe(txs []*blockchain.Transaction) error {
 			if err != nil {
 				return err
 			}
-			blockchain.SetTransactionError(ldbtx, hash, err.Error())
+			blockchain.SetTransactionError(btr, hash, err.Error())
 		}
 		return err
 	}
 
 	bBlock, _, err := b.ToBlockchainBlock()
 	if err != nil {
+		mtr.Rollback()
 		return err
 	}
-	if err := bBlock.Insert(ldbtx, txs); err != nil {
-		dbTransaction.Rollback()
-		ldbtx.Discard()
+	if err := bBlock.Insert(btr, txs); err != nil {
+		// dbTransaction.Rollback()
+		// ldbtx.Discard()
 		mtr.Rollback()
 		return err
 	}
 
 	// TODO double phase commit
-	dbTransaction.Commit()
-	ldbtx.Commit()
+	// dbTransaction.Commit()
+	// ldbtx.Commit()
 	mtr.Commit()
 
-	b.LDBTX = nil
+	// b.LDBTX = nil
 	if b.SysUpdate {
 		b.SysUpdate = false
 		if err = syspar.SysUpdate(nil); err != nil {
@@ -213,9 +214,11 @@ func (b *PlayableBlock) readPreviousBlockFromBlockchainTable() error {
 	return nil
 }
 
-func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockchain.Transaction, ldbtx *leveldb.Transaction, mtr *multi.MultiTransaction) error {
+func (b *PlayableBlock) Play(mtr *storage.MultiTransaction, txs []*blockchain.Transaction) error {
 	logger := b.GetLogger()
 	limits := NewLimits(b)
+
+	btr := mtr.BlockchainTransaction
 
 	txHashes := make([][]byte, 0, len(b.Transactions))
 	for _, btx := range b.Transactions {
@@ -234,16 +237,13 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 		var (
 			err error
 		)
-		t.DbTransaction = dbTransaction
+		t.MultiTransaction = mtr
 		t.Rand = randBlock
-		t.MultiTr = mtr
 		t.Counter = &counter
 
-		blockchain.IncrementTxAttemptCount(ldbtx, t.TxHash)
-		err = dbTransaction.Savepoint(curTx)
+		blockchain.IncrementTxAttemptCount(btr, t.TxHash)
+		// err = dbTransaction.Savepoint(curTx)
 		mtr.SavePoint(fmt.Sprintf("%x", t.TxHash))
-
-		fmt.Printf("Play %x\n", t.TxHash)
 
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
@@ -280,11 +280,11 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 			}
 
 			mtr.RollbackSavePoint()
-			errRoll := dbTransaction.RollbackSavepoint(curTx)
+			/*errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
 				return errRoll
-			}
+			}*/
 			if b.GenBlock && err == ErrLimitStop {
 				if curTx == 0 {
 					return err
@@ -300,24 +300,24 @@ func (b *PlayableBlock) Play(dbTransaction *model.DbTransaction, txs []*blockcha
 			if err2 != nil {
 				return err
 			}
-			blockchain.SetTransactionError(ldbtx, hash, err.Error())
+			blockchain.SetTransactionError(btr, hash, err.Error())
 			if t.SysUpdate {
-				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
+				if err = syspar.SysUpdate(t.MultiTransaction.DBTransaction); err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 				}
 				t.SysUpdate = false
 			}
-			blockchain.SetTransactionError(ldbtx, hash, msg)
+			blockchain.SetTransactionError(btr, hash, msg)
 			continue
 		}
 
 		mtr.ReleaseSavePoint()
-		err = dbTransaction.ReleaseSavepoint(curTx)
+		/* err = dbTransaction.ReleaseSavepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
-		}
+		}*/
 
-		blockchain.DecrementTxAttemptCount(ldbtx, t.TxHash)
+		blockchain.DecrementTxAttemptCount(btr, t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true

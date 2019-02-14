@@ -62,7 +62,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/service"
 	qb "github.com/AplaProject/go-apla/packages/smart/queryBuilder"
 	"github.com/AplaProject/go-apla/packages/storage/memdb"
-	"github.com/AplaProject/go-apla/packages/storage/multi"
 	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/vdemanager"
@@ -144,8 +143,8 @@ type SmartContract struct {
 	TxSize        int64
 	PublicKeys    [][]byte
 	DbTransaction *model.DbTransaction
-	MultiTr       *multi.MultiTransaction
-	UndoLog       types.StateStorage
+	MemTranaction *memdb.Transaction
+	// UndoLog       types.StateStorage
 	Rand          *rand.Rand
 	Counter       *uint64
 	FlushRollback []FlushInfo
@@ -342,8 +341,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"AllowChangeCondition":         AllowChangeCondition,
 		"StringToBytes":                StringToBytes,
 		"BytesToString":                BytesToString,
-		"SetPubKey":                    SetPubKey,
-		"NewMoney":                     NewMoney,
+		"CreateUser":                   CreateUser,
 		"GetMapKeys":                   GetMapKeys,
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
@@ -710,8 +708,7 @@ func InitFirstEcosystem(sc *SmartContract, data string) error {
 		return err
 	}
 
-	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
-	err = tr.InsertModel(&model.Key{
+	err = sc.MemTranaction.InsertModel(&model.Key{
 		ID:          keyID,
 		EcosystemID: 1,
 		PublicKey:   fbData.PublicKey,
@@ -1682,49 +1679,14 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	return
 }
 
-// SetPubKey updates the publis key
-func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
-	if err = validateAccess(`SetPubKey`, sc, nNewUser); err != nil {
-		return
-	}
-	if len(pubKey) >= consts.PubkeySizeLength*2 {
-		pubKey, err = crypto.HexToPub(string(pubKey))
-		if err != nil {
-			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
-		}
-	}
-	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey}, `1_keys`, `id`, id)
-	// registry := &types.Registry{Name: "key", Ecosystem: &types.Ecosystem{Name: "1"}}
-
-	/* key := &model.KeySchema{}
-	err = sc.MetaDb.Get(
-		registry,
-		strconv.FormatInt(id, 10),
-		key,
-	)
-
-	key.PublicKey = pubKey
-	err = sc.MetaDb.Update(nil, registry, strconv.FormatInt(id, 10), key)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError}).Error("Writing to metadb")
-		return qcost, nil
-	}*/
-
-	return qcost, nil
-}
-
-func NewMoney(sc *SmartContract, id int64, amountStr, comment string) (err error) {
-	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
+func CreateUser(sc *SmartContract, pubKey []byte, amount decimal.Decimal, comment string) (err error) {
+	if err = validateAccess("CreateUser", sc, nNewUser); err != nil {
 		return err
 	}
 
-	amount, err := decimal.NewFromString(amountStr)
-	if err != nil {
-		return err
-	}
+	id := crypto.Address(pubKey)
 
-	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
-	err = tr.InsertModel(&model.History{
+	err = sc.MemTranaction.InsertModel(&model.History{
 		ID:          UniqueID(sc),
 		RecipientID: id,
 		Amount:      amount,
@@ -1736,9 +1698,10 @@ func NewMoney(sc *SmartContract, id int64, amountStr, comment string) (err error
 		return err
 	}
 
-	return tr.InsertModel(&model.Key{
+	return sc.MemTranaction.InsertModel(&model.Key{
 		ID:          id,
 		EcosystemID: sc.TxSmart.Header.EcosystemID,
+		PublicKey:   pubKey,
 		Amount:      amount,
 	})
 }

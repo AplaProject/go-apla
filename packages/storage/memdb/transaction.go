@@ -32,7 +32,7 @@ func (t *Transaction) Set(key string, val *types.Map) error {
 		return err
 	}
 
-	t.undo.PushState(&undo.State{
+	t.undo.PushState(&types.UndoState{
 		Key: key,
 	})
 
@@ -62,7 +62,7 @@ func (t *Transaction) Update(key string, val *types.Map) error {
 		return err
 	}
 
-	t.undo.PushState(&undo.State{
+	t.undo.PushState(&types.UndoState{
 		Key:   key,
 		Value: prevValue,
 	})
@@ -83,27 +83,27 @@ func (t *Transaction) Commit() error {
 }
 
 func (t *Transaction) SavePoint(tx string) error {
-	t.undo.Reset(tx)
+	// t.undo.Reset(tx)
 	return nil
 }
 
 func (t *Transaction) RollbackSavePoint(_ string) (err error) {
-	stack := t.undo.Current()
-	for i := len(stack) - 1; i > 0; i-- {
-		err = t.Undo(stack[i])
-		if err != nil {
-			return
-		}
-	}
+	// stack := t.undo.Current()
+	// for i := len(stack) - 1; i > 0; i-- {
+	// 	err = t.Undo(stack[i])
+	// 	if err != nil {
+	// 		return
+	// 	}
+	// }
 	return
 }
 
 func (t *Transaction) ReleaseSavePoint(_ string) error {
-	t.undo.Release()
+	// t.undo.Release()
 	return nil
 }
 
-func (t *Transaction) Undo(s *undo.State) (err error) {
+func (t *Transaction) Undo(s *types.UndoState) (err error) {
 	if len(s.Value) > 0 {
 		_, err = t.tx.Update(s.Key, s.Value)
 		return

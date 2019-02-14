@@ -37,6 +37,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/storage"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -73,7 +74,9 @@ func rollbackInsertedRow(tx map[string]string, where string, dbTransaction *mode
 	return nil
 }
 
-func rollbackTransaction(txHash []byte, dbTransaction *model.DbTransaction, logger *log.Entry) error {
+func rollbackTransaction(txHash []byte, mtr *storage.MultiTransaction, logger *log.Entry) error {
+	dbTransaction := mtr.DBTransaction
+
 	rollbackTx := &model.RollbackTx{}
 	txs, err := rollbackTx.GetRollbackTransactions(dbTransaction, txHash)
 	if err != nil {

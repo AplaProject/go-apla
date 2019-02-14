@@ -35,8 +35,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/transaction"
 
@@ -225,15 +223,15 @@ func (bl *txUserEcosysLimit) check(t *transaction.Transaction, mode int) error {
 		}
 	} else {
 		limit := syspar.GetMaxBlockUserTx()
-		sp := &model.StateParameter{}
-		sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
-		found, err := sp.Get(t.DbTransaction, `max_tx_block_per_user`)
-		if err != nil {
-			return limitError(`txUserEcosysLimit`, err.Error())
-		}
-		if found {
-			limit = converter.StrToInt(sp.Value)
-		}
+		// sp := &model.StateParameter{}
+		// sp.SetTablePrefix(converter.Int64ToStr(ecosystemID))
+		// found, err := sp.Get(t.MultiTransaction.DBTransaction, `max_tx_block_per_user`)
+		// if err != nil {
+		// 	return limitError(`txUserEcosysLimit`, err.Error())
+		// }
+		// if found {
+		// 	limit = converter.StrToInt(sp.Value)
+		// }
 		bl.TxEcosys[ecosystemID] = ecosysLimit{TxUsers: make(map[int64]int), Limit: limit}
 		bl.TxEcosys[ecosystemID].TxUsers[keyID] = 1
 	}

@@ -1,7 +1,6 @@
 package smart
 
 import (
-	"github.com/AplaProject/go-apla/packages/storage/memdb"
 	"github.com/AplaProject/go-apla/packages/types"
 )
 
@@ -37,8 +36,7 @@ func MemInsert(sc *SmartContract, table, key string, val *types.Map) error {
 		return err
 	}
 
-	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
-	return tr.Set(concatKey(table, key), val)
+	return sc.MemTranaction.Set(concatKey(table, key), val)
 }
 
 func MemGet(sc *SmartContract, table, key string) (*types.Map, error) {
@@ -82,16 +80,13 @@ func MemUpdate(sc *SmartContract, table, key string, val *types.Map) error {
 	// 	return err
 	// }
 
-	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
-	return tr.Update(concatKey(table, key), val)
+	return sc.MemTranaction.Update(concatKey(table, key), val)
 }
 
 func memGet(sc *SmartContract, key string) (*types.Map, error) {
-	tr := sc.MultiTr.Get("mem").(*memdb.Transaction)
-
-	val, err := tr.Get(key)
+	val, err := sc.MemTranaction.Get(key)
 	if err != nil {
-		if tr.IsFound(err) {
+		if sc.MemTranaction.IsFound(err) {
 			return nil, err
 		}
 	}

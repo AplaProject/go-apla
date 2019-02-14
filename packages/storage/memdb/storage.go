@@ -2,7 +2,6 @@ package memdb
 
 import (
 	"github.com/AplaProject/go-apla/packages/storage/undo"
-	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/memdb"
 )
 
@@ -10,7 +9,7 @@ type Storage struct {
 	db *memdb.Database
 }
 
-func (s *Storage) Begin(undo *undo.Stack) (types.DBTransaction, error) {
+func (s *Storage) Begin(undo *undo.Stack) (*Transaction, error) {
 	return &Transaction{
 		tx:   s.db.Begin(true),
 		undo: undo,

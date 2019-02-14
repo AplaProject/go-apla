@@ -4,9 +4,6 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/AplaProject/go-apla/packages/storage"
-	"github.com/AplaProject/go-apla/packages/storage/multi"
-
 	"github.com/spf13/cobra"
 
 	"path/filepath"
@@ -118,8 +115,8 @@ var generateFirstBlockCmd = &cobra.Command{
 			return
 		}
 		model.MetaStorage = memdb
-		storage.M = multi.NewMultiStorage()
-		storage.M.Add("mem", memdb)
+		// storage.M = multi.NewMultiStorage()
+		// storage.M.Add("mem", memdb)
 
 		err = queue.Init()
 		if err != nil {

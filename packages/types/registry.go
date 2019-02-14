@@ -122,13 +122,36 @@ type DBTransaction interface {
 	RollbackSavePoint(id string) error
 }
 
+type SourceType int8
+
+func (s SourceType) String() string {
+	switch s {
+	case SourceTypeContract:
+		return "contract"
+	case SourceTypeMem:
+		return "mem"
+	case SourceTypeRegistry:
+		return "registry"
+	default:
+		return ""
+	}
+}
+
+const (
+	SourceTypeContract SourceType = iota
+	SourceTypeMem
+	SourceTypeRegistry
+)
+
 type UndoState struct {
-	Table string `json:"table,omitempty"`
-	Key   string `json:"key"`
-	Value string `json:"value,omitempty"`
+	Type  SourceType `json:"type"`
+	Table string     `json:"table,omitempty"`
+	Key   string     `json:"key"`
+	Value string     `json:"value,omitempty"`
 }
 
 type UndoStack interface {
-	Release()
 	PushState(*UndoState)
+	Stack() []*UndoState
+	Reset()
 }
