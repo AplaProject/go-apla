@@ -110,7 +110,6 @@ var (
 	fuels             = make(map[int64]string)
 	wallets           = make(map[int64]string)
 	mutex             = &sync.RWMutex{}
-	activeNodes       = make(map[*FullNode]struct{})
 	firstBlockData    *consts.FirstBlock
 	errFirstBlockData = errors.New("Failed to get data of the first block")
 	errNodeDisabled   = errors.New("node is disabled")
@@ -172,13 +171,12 @@ func updateNodes() (err error) {
 		}
 	}
 
-	activeNodes = make(map[*FullNode]struct{})
-	nodesByPosition = items
-	for _, item := range items {
-		nodes[item.KeyID] = item
+	nodesByPosition = []*FullNode{}
+	for i := 0; i < len(items); i++ {
+		nodes[items[i].KeyID] = items[i]
 
-		if !item.Stopped {
-			activeNodes[item] = struct{}{}
+		if !items[i].Stopped {
+			nodesByPosition = append(nodesByPosition, items[i])
 		}
 	}
 
@@ -241,7 +239,7 @@ func GetNodePositionByKeyID(keyID int64) (int64, error) {
 
 // GetCountOfActiveNodes is count of nodes with stopped = false
 func GetCountOfActiveNodes() int64 {
-	return int64(len(activeNodes))
+	return int64(len(nodesByPosition))
 }
 
 // GetNumberOfNodes is count number of nodes
@@ -308,6 +306,7 @@ func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return nodeData.PublicKey, nil
 }
 
@@ -470,11 +469,11 @@ func SetFirstBlockData(data *consts.FirstBlock) {
 		keyID := crypto.Address(firstBlockData.PublicKey)
 		addFullNodeKeys(keyID, firstBlockData.NodePublicKey)
 
-		activeNodes[&FullNode{
+		nodesByPosition = []*FullNode{&FullNode{
 			KeyID:     keyID,
 			PublicKey: firstBlockData.NodePublicKey,
 			Stopped:   false,
-		}] = struct{}{}
+		}}
 	}
 }
 
