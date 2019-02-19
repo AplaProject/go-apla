@@ -64,9 +64,10 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prev *utils.BlockDa
 		mrklRoot := utils.MerkleTreeRoot(mrklArray)
 
 		var err error
-		signed, err = crypto.SignString(key, header.ForSign(prev, mrklRoot))
+		signSource := header.ForSign(prev, mrklRoot)
+		signed, err = crypto.SignString(key, signSource)
 		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing blocko")
+			logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("signing block")
 			return nil, err
 		}
 	}
