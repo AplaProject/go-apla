@@ -28,7 +28,7 @@
 
 package updates
 
-var M124 = `ALTER TABLE "1_app_params" DROP CONSTRAINT "1_app_params_ecosystem_name_key";
+var M125 = `ALTER TABLE "1_app_params" DROP CONSTRAINT "1_app_params_ecosystem_name_key";
     ALTER TABLE "1_app_params" ADD CONSTRAINT "1_app_params_ecosys_app_name_key" UNIQUE (ecosystem,app_id,name);
 	DROP INDEX "1_app_params_index_name";
 	CREATE INDEX "1_app_params_index_name" ON "1_app_params" (ecosystem,app_id,name);
