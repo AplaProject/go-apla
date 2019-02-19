@@ -31,7 +31,6 @@ package model
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/AplaProject/go-apla/packages/converter"
 )
@@ -43,8 +42,8 @@ type RolesParticipants struct {
 	Role        string `gorm:"type":jsonb(PostgreSQL)`
 	Member      string `gorm:"type":jsonb(PostgreSQL)`
 	Appointed   string `gorm:"type":jsonb(PostgreSQL)`
-	DateCreated time.Time
-	DateDeleted time.Time
+	DateCreated int64
+	DateDeleted int64
 	Deleted     bool
 }
 
