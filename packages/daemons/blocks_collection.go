@@ -91,14 +91,16 @@ func InitialLoad(logger *log.Entry) error {
 }
 
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
+	btc := protocols.NewBlockTimeCounter()
+
 	host, maxBlockID, err := getHostWithMaxID(ctx, d.logger)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"error": err}).Warn("on checking best host")
 		return err
 	}
 
-	btc := protocols.NewBlockTimeCounter()
-	if btc.MaxBlockForTime(time.Now()) < maxBlockID {
+	mbft := btc.MaxBlockForTime(time.Now())
+	if mbft < maxBlockID {
 		block := &block.Block{
 			Header: utils.BlockData{
 				BlockID: maxBlockID,
