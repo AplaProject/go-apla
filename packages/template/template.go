@@ -47,7 +47,6 @@ import (
 
 const (
 	tagText = `text`
-	tagData = `data`
 	maxDeep = 16
 )
 
