@@ -375,8 +375,14 @@ func (b *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey},
-			[]byte(b.Header.ForSign(b.PrevHeader, b.MrklRoot)), b.Header.Sign, true)
+		signSource := b.Header.ForSign(b.PrevHeader, b.MrklRoot)
+
+		resultCheckSign, err := utils.CheckSign(
+			[][]byte{nodePublicKey},
+			[]byte(signSource),
+			b.Header.Sign,
+			true)
+
 		if err != nil {
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
