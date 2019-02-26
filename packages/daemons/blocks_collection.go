@@ -155,15 +155,21 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		}
 
 		// hash compare could be failed in the case of fork
-		hashMatched, thisErrIsOk := bl.CheckHash()
-		if thisErrIsOk != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
+		hashMatched, errCheck := bl.CheckHash()
+		if errCheck != nil {
+			d.logger.WithFields(log.Fields{"error": errCheck, "type": consts.BlockError}).Error("checking block hash")
 		}
 
 		if !hashMatched {
 			transaction.CleanCache()
+
+			blockID := bl.Header.BlockID - 1
+			if errCheck == block.ErrIncorrectRollbackHash {
+				blockID--
+			}
+
 			//it should be fork, replace our previous blocks to ones from the host
-			err = GetBlocks(ctx, bl.Header.BlockID-1, host)
+			err = GetBlocks(ctx, blockID, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				return err

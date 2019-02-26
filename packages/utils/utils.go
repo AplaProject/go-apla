@@ -58,6 +58,13 @@ import (
 	"github.com/theckman/go-flock"
 )
 
+const (
+	firstBlock   = 1
+	minBlockSize = 9
+)
+
+var ErrBlockSize = errors.New("Bad block size")
+
 // BlockData is a structure of the block's header
 type BlockData struct {
 	BlockID           int64
@@ -97,52 +104,46 @@ func (b BlockData) ForSign(prev *BlockData, mrklRoot []byte) string {
 }
 
 // ParseBlockHeader is parses block header
-func ParseBlockHeader(binaryBlock *bytes.Buffer, checkMaxSize bool) (BlockData, error) {
-	var block BlockData
-	var err error
-
-	if binaryBlock.Len() < 9 {
-		log.WithFields(log.Fields{"size": binaryBlock.Len(), "type": consts.SizeDoesNotMatch}).Error("binary block size is too small")
-		return BlockData{}, fmt.Errorf("bad binary block length")
+func ParseBlockHeader(buf *bytes.Buffer) (header, prev BlockData, err error) {
+	if buf.Len() < minBlockSize {
+		err = ErrBlockSize
+		return
 	}
 
-	blockVersion := int(converter.BinToDec(binaryBlock.Next(2)))
-
-	if checkMaxSize && int64(binaryBlock.Len()) > syspar.GetMaxBlockSize() {
-		log.WithFields(log.Fields{"size": binaryBlock.Len(), "max_size": syspar.GetMaxBlockSize(), "type": consts.ParameterExceeded}).Error("binary block size exceeds max block size")
-		err = fmt.Errorf(`len(binaryBlock) > variables.Int64["max_block_size"]  %v > %v`,
-			binaryBlock.Len(), syspar.GetMaxBlockSize())
-
-		return BlockData{}, err
-	}
-
-	block.BlockID = converter.BinToDec(binaryBlock.Next(4))
-	block.Time = converter.BinToDec(binaryBlock.Next(4))
-	block.Version = blockVersion
-	block.EcosystemID = converter.BinToDec(binaryBlock.Next(4))
-	block.KeyID, err = converter.DecodeLenInt64Buf(binaryBlock)
+	header.Version = int(converter.BinToDec(buf.Next(2)))
+	header.BlockID = converter.BinToDec(buf.Next(4))
+	header.Time = converter.BinToDec(buf.Next(4))
+	header.EcosystemID = converter.BinToDec(buf.Next(4))
+	header.KeyID, err = converter.DecodeLenInt64Buf(buf)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "block_time": block.Time, "block_version": block.Version, "error": err}).Error("decoding binary block walletID")
-		return BlockData{}, err
+		return
 	}
-	block.NodePosition = converter.BinToDec(binaryBlock.Next(1))
+	header.NodePosition = converter.BinToDec(buf.Next(1))
 
-	if block.BlockID > 1 {
-		signSize, err := converter.DecodeLengthBuf(binaryBlock)
+	// for version of block with included the rollback hash
+	if header.Version >= consts.BV_INCLUDE_ROLLBACK_HASH {
+		prev.RollbacksHash, err = converter.DecodeBytesBuf(buf)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign size")
-			return BlockData{}, err
+			return
 		}
-		if binaryBlock.Len() < signSize {
-			log.WithFields(log.Fields{"type": consts.UnmarshallingError, "block_id": block.BlockID, "time": block.Time, "version": block.Version, "error": err}).Error("decoding binary sign")
-			return BlockData{}, fmt.Errorf("bad block format (no sign)")
-		}
-		block.Sign = binaryBlock.Next(int(signSize))
-	} else {
-		binaryBlock.Next(1)
 	}
 
-	return block, nil
+	if header.BlockID == firstBlock {
+		buf.Next(1)
+		return
+	}
+
+	if int64(buf.Len()) > syspar.GetMaxBlockSize() {
+		err = ErrBlockSize
+		return
+	}
+
+	header.Sign, err = converter.DecodeBytesBuf(buf)
+	if err != nil {
+		return
+	}
+
+	return
 }
 
 var (

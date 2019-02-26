@@ -2100,7 +2100,7 @@ func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
 	data = &TxInfo{}
 	data.Block = converter.Int64ToStr(blockId)
 	blockBuffer := bytes.NewBuffer(blockOwner.Data)
-	_, err = utils.ParseBlockHeader(blockBuffer, blockOwner.ID != 1)
+	_, _, err = utils.ParseBlockHeader(blockBuffer)
 	if err != nil {
 		return
 	}

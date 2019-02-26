@@ -30,6 +30,7 @@ package block
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"math/rand"
 	"time"
@@ -49,17 +50,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
+
 // Block is storing block data
 type Block struct {
-	Header        utils.BlockData
-	PrevHeader    *utils.BlockData
-	MrklRoot      []byte
-	BinData       []byte
-	Transactions  []*transaction.Transaction
-	SysUpdate     bool
-	GenBlock      bool // it equals true when we are generating a new block
-	StopCount     int  // The count of good tx in the block
-	Notifications []smart.NotifyInfo
+	Header            utils.BlockData
+	PrevHeader        *utils.BlockData
+	PrevRollbacksHash []byte
+	MrklRoot          []byte
+	BinData           []byte
+	Transactions      []*transaction.Transaction
+	SysUpdate         bool
+	GenBlock          bool // it equals true when we are generating a new block
+	StopCount         int  // The count of good tx in the block
+	Notifications     []smart.NotifyInfo
 }
 
 func (b Block) String() string {
@@ -100,8 +104,7 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 
-		isFirstBlock := b.Header.BlockID == 1
-		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock, true)
+		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -375,9 +378,17 @@ func (b *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey},
-			[]byte(b.Header.ForSign(b.PrevHeader, b.MrklRoot)), b.Header.Sign, true)
+		resultCheckSign, err := utils.CheckSign(
+			[][]byte{nodePublicKey},
+			[]byte(b.Header.ForSign(b.PrevHeader, b.MrklRoot)),
+			b.Header.Sign, true,
+		)
 		if err != nil {
+			if err == crypto.ErrIncorrectSign {
+				if !bytes.Equal(b.PrevRollbacksHash, b.PrevHeader.RollbacksHash) {
+					return false, ErrIncorrectRollbackHash
+				}
+			}
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
 		}
@@ -421,7 +432,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := UnmarshallBlock(buf, !checkSize, true)
+	block, err := UnmarshallBlock(buf, true)
 	if err != nil {
 		return nil, err
 	}
