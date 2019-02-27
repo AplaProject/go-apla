@@ -1144,7 +1144,8 @@ func (sc *SmartContract) CallContract() (string, error) {
 			(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
 		}
 	}
-
+	(*sc.TxContract.Extend)["gen_block"] = sc.GenBlock
+	(*sc.TxContract.Extend)["time_limit"] = sc.TimeLimit
 	ctrctExtend := *sc.TxContract.Extend
 	before := ctrctExtend[`txcost`].(int64)
 

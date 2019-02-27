@@ -36,6 +36,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -85,6 +86,8 @@ var sysVars = map[string]struct{}{
 	`txcost`:            {},
 	`txhash`:            {},
 	`guest_key`:         {},
+	`gen_block`:         {},
+	`time_limit`:        {},
 }
 
 var ErrMemoryLimit = errors.New("Memory limit exceeded")
@@ -110,6 +113,7 @@ type RunTime struct {
 	cost      int64
 	err       error
 	unwrap    bool
+	timeLimit bool
 	callDepth uint16
 	mem       int64
 	memVars   map[interface{}]int64
@@ -617,6 +621,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		if rt.cost <= 0 {
 			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn("paid CPU resource is over")
 			return 0, fmt.Errorf(`paid CPU resource is over`)
+		}
+		if rt.timeLimit {
+			return 0, fmt.Errorf(`time limit exceeded`)
 		}
 
 		if rt.mem > memoryLimit {
@@ -1265,11 +1272,27 @@ func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]in
 	}()
 	info := block.Info.(*FuncInfo)
 	rt.extend = extend
+	var (
+		genBlock bool
+		timer    *time.Timer
+	)
+	if gen, ok := (*extend)[`gen_block`]; ok {
+		genBlock = gen.(bool)
+	}
+	timeOver := func() {
+		rt.timeLimit = true
+	}
+	if genBlock {
+		timer = time.AfterFunc(time.Millisecond*time.Duration((*extend)[`time_limit`].(int64)), timeOver)
+	}
 	if _, err = rt.RunCode(block); err == nil {
 		off := len(rt.stack) - len(info.Results)
 		for i := 0; i < len(info.Results); i++ {
 			ret = append(ret, rt.stack[off+i])
 		}
+	}
+	if genBlock {
+		timer.Stop()
 	}
 	return
 }
