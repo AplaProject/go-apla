@@ -378,11 +378,14 @@ func (b *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
+		signSource := b.Header.ForSign(b.PrevHeader, b.MrklRoot)
+
 		resultCheckSign, err := utils.CheckSign(
 			[][]byte{nodePublicKey},
-			[]byte(b.Header.ForSign(b.PrevHeader, b.MrklRoot)),
-			b.Header.Sign, true,
-		)
+			[]byte(signSource),
+			b.Header.Sign,
+			true)
+
 		if err != nil {
 			if err == crypto.ErrIncorrectSign {
 				if !bytes.Equal(b.PrevRollbacksHash, b.PrevHeader.RollbacksHash) {

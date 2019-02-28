@@ -117,3 +117,7 @@ public/
 .vscode/
 ./*-data/
 packages/api/helper_test.go
+apla-data/go-apla.lock
+node1-data/go-genesis.lock
+node3-data/apla.lock
+node2-data/apla.lock

@@ -298,7 +298,7 @@ func CheckSign(publicKeys [][]byte, forSign []byte, signs []byte, nodeKeyOrLogin
 		return false, ErrInfoFmt("len(signs) == 0")
 	}
 
-	// node always has olny one signature
+	// node always has only one signature
 	if nodeKeyOrLogin {
 		signsSlice = append(signsSlice, signs)
 	} else {
@@ -315,6 +315,7 @@ func CheckSign(publicKeys [][]byte, forSign []byte, signs []byte, nodeKeyOrLogin
 			return false, fmt.Errorf("sign error %d!=%d", len(publicKeys), len(signsSlice))
 		}
 	}
+
 	return crypto.CheckSign(publicKeys[0], forSign, signsSlice[0])
 }
 
