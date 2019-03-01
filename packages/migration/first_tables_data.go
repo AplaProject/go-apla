@@ -51,13 +51,13 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
     (next_id('1_tables'), 'ecosystems',
         '{
             "insert": "ContractAccess(\"@1NewEcosystem\")",
-            "update": "ContractAccess(\"@1EditEcosystemName\",\"@1VotingDecisionCheck\",\"@1EcManageInfo\")",
+            "update": "ContractAccess(\"@1EditEcosystemName\",\"@1VotingVesAccept\",\"@1EcManageInfo\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
             "name": "ContractAccess(\"@1EditEcosystemName\")",
             "info": "ContractAccess(\"@1EcManageInfo\")",
-            "is_valued": "ContractAccess(\"@1VotingDecisionCheck\")"
+            "is_valued": "ContractAccess(\"@1VotingVesAccept\")"
         }',
         'ContractConditions("@1AdminCondition")'
     ),
