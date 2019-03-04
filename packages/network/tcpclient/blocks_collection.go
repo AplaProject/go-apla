@@ -84,8 +84,10 @@ func GetBlocksBodies(ctx context.Context, host string, blockID int64, reverseOrd
 
 	blocksChan, errChan := GetBlockBodiesChan(ctx, conn, blocksCount)
 	go func() {
-		if err := <-errChan; err != nil {
-			log.WithFields(log.Fields{"type": "dbError", consts.NetworkError: err}).Error("on reading block bodies")
+		for err := range errChan {
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on reading block bodies")
+			}
 		}
 	}()
 
