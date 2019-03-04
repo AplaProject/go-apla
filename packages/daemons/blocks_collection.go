@@ -140,6 +140,8 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 
 // UpdateChain load from host all blocks from our last block to maxBlockID
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
+
+	maxBlockReached := false
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
 	if _, err := curBlock.Get(); err != nil {
@@ -196,6 +198,9 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return err
 		}
 
+		if maxBlockID == bl.Header.BlockID {
+			maxBlockReached = true
+		}
 		return nil
 	}
 
@@ -203,23 +208,24 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	st := time.Now()
 
 	defer func() {
-		if count == 0 {
-
-			header := utils.BlockData{
-				BlockID: maxBlockID,
-				Time:    time.Now().Unix(),
-			}
-			block := &block.Block{Header: header}
-			banNode(host, block, fmt.Errorf("host returns max block, but not sent block bodies"))
+		if count > 0 && maxBlockReached {
+			return
 		}
+
+		header := utils.BlockData{
+			BlockID: maxBlockID,
+			Time:    time.Now().Unix(),
+		}
+		block := &block.Block{Header: header}
+		banNode(host, block, fmt.Errorf("host returns max block, but max block not reached"))
 	}()
 
 	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
-		ctxDone, cancel := context.WithCancel(ctx)
 
 		if loopErr := func() error {
+			ctxDone, cancel := context.WithCancel(ctx)
 			defer func() {
 				cancel()
 				d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
@@ -244,6 +250,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return loopErr
 		}
 	}
+
 	return nil
 }
 
