@@ -982,7 +982,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 	retError := func(err error) (string, error) {
 		eText := err.Error()
-		if !strings.HasPrefix(eText, `{`) {
+		if !strings.HasPrefix(eText, `{`) && err != script.ErrVMTimeLimit {
 			if throw, ok := err.(*ThrowError); ok {
 				out, errThrow := json.Marshal(throw)
 				if errThrow != nil {

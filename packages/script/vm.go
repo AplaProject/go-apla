@@ -90,7 +90,10 @@ var sysVars = map[string]struct{}{
 	`time_limit`:        {},
 }
 
-var ErrMemoryLimit = errors.New("Memory limit exceeded")
+var (
+	ErrMemoryLimit = errors.New("Memory limit exceeded")
+	ErrVMTimeLimit = errors.New(`time limit exceeded`)
+)
 
 // VMError represents error of VM
 type VMError struct {
@@ -623,7 +626,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			return 0, fmt.Errorf(`paid CPU resource is over`)
 		}
 		if rt.timeLimit {
-			return 0, fmt.Errorf(`time limit exceeded`)
+			return 0, ErrVMTimeLimit
 		}
 
 		if rt.mem > memoryLimit {
