@@ -321,7 +321,6 @@ func CheckSign(publicKeys [][]byte, forSign []byte, signs []byte, nodeKeyOrLogin
 
 // MerkleTreeRoot rertun Merkle value
 func MerkleTreeRoot(dataArray [][]byte) []byte {
-	log.Debug("dataArray: %s", dataArray)
 	result := make(map[int32][][]byte)
 	for _, v := range dataArray {
 		hash, err := crypto.DoubleHash(v)

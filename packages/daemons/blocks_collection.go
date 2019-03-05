@@ -347,7 +347,7 @@ func GetBlocks(ctx context.Context, blockID int64, host string) error {
 		return utils.ErrInfo(err)
 	}
 	for _, block := range myRollbackBlocks {
-		err := rollback.RollbackBlock(block.Data, false)
+		err := rollback.RollbackBlock(block.Data, true)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}

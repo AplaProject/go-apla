@@ -32,7 +32,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -176,17 +175,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	}
 
 	limits := NewLimits(b)
-
-	txHashes := make([][]byte, 0, len(b.Transactions))
-	for _, btx := range b.Transactions {
-		txHashes = append(txHashes, btx.TxHash)
-	}
-	seed, err := crypto.CalcChecksum(bytes.Join(txHashes, []byte{}))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating seed")
-		return err
-	}
-	randBlock := rand.New(rand.NewSource(int64(seed)))
+	rand := utils.NewRand(b.Header.Time)
 
 	for curTx, t := range b.Transactions {
 		var (
@@ -194,7 +183,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			err error
 		)
 		t.DbTransaction = dbTransaction
-		t.Rand = randBlock
+		t.Rand = rand.BytesSeed(t.TxHash)
 
 		model.IncrementTxAttemptCount(nil, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
