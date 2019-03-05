@@ -208,7 +208,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 	st := time.Now()
 
 	defer func() {
-		if count > 0 && maxBlockReached {
+		if maxBlockReached {
 			return
 		}
 
