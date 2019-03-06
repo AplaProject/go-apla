@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"runtime"
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 
@@ -28,6 +29,11 @@ type keyMetric struct {
 
 type fullNodeMetric struct {
 	Count int64 `json:"count"`
+}
+
+type memMetric struct {
+	Alloc uint64 `json:"alloc"`
+	Sys   uint64 `json:"sys"`
 }
 
 func blocksCountHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,4 +98,11 @@ func fullNodesCountHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponse(w, fnMetric)
+}
+
+func memStat(w http.ResponseWriter, r *http.Request) {
+	var m runtime.MemStats
+	runtime.ReadMemStats(&m)
+
+	jsonResponse(w, memMetric{Alloc: m.Alloc, Sys: m.Sys})
 }
