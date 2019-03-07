@@ -100,7 +100,11 @@ func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant
 		return false, errors.Wrapf(err, "retrieving info block from db")
 	}
 
-	remoteHosts := syspar.GetRemoteHosts()
+	nbs := GetNodesBanService()
+	remoteHosts, err := nbs.FilterBannedHosts(syspar.GetRemoteHosts())
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on filtering banned hosts")
+	}
 	// Node is single in blockchain network and it can't be irrelevant
 	if len(remoteHosts) == 0 {
 		return true, nil
