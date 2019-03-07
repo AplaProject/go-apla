@@ -41,6 +41,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/notificator"
 	"github.com/AplaProject/go-apla/packages/protocols"
+	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
@@ -184,6 +185,10 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		return err
 	}
 	randBlock := rand.New(rand.NewSource(int64(seed)))
+	var timeLimit int64
+	if b.GenBlock {
+		timeLimit = syspar.GetMaxBlockGenerationTime()
+	}
 
 	for curTx, t := range b.Transactions {
 		var (
@@ -200,7 +205,12 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			return err
 		}
 		var flush []smart.FlushInfo
+		t.GenBlock = b.GenBlock
+		t.TimeLimit = timeLimit
 		msg, flush, err = t.Play()
+		if err == script.ErrVMTimeLimit {
+			err = ErrLimitStop
+		}
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}

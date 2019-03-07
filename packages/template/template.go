@@ -238,8 +238,8 @@ func ifValue(val string, workspace *Workspace) bool {
 	cond := []string{val}
 	if len(sep) > 0 {
 		cond = strings.SplitN(val, sep, 2)
-		cond[0], cond[1] = macro(strings.Trim(cond[0], `"`), workspace.Vars),
-			macro(strings.Trim(cond[1], `"`), workspace.Vars)
+		cond[0], cond[1] = macro(strings.Trim(strings.TrimSpace(cond[0]), `"`), workspace.Vars),
+			macro(strings.Trim(strings.TrimSpace(cond[1]), `"`), workspace.Vars)
 	} else {
 		val = macro(val, workspace.Vars)
 	}

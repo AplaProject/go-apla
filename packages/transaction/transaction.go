@@ -135,6 +135,8 @@ type Transaction struct {
 	SysUpdate     bool
 	Rand          *rand.Rand
 	Notifications []smart.NotifyInfo
+	GenBlock      bool
+	TimeLimit     int64
 
 	SmartContract smart.SmartContract
 }
@@ -387,6 +389,8 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
+		GenBlock:      t.GenBlock,
+		TimeLimit:     t.TimeLimit,
 	}
 	resultContract, err = sc.CallContract()
 	t.TxFuel = sc.TxFuel
@@ -417,6 +421,8 @@ func (t *Transaction) CallOBSContract() (resultContract string, flushRollback []
 		PublicKeys:    t.PublicKeys,
 		DbTransaction: t.DbTransaction,
 		Rand:          t.Rand,
+		GenBlock:      t.GenBlock,
+		TimeLimit:     t.TimeLimit,
 	}
 	resultContract, err = sc.CallContract()
 	t.SysUpdate = sc.SysUpdate
