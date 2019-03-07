@@ -982,7 +982,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 	retError := func(err error) (string, error) {
 		eText := err.Error()
-		if !strings.HasPrefix(eText, `{`) {
+		if !strings.HasPrefix(eText, `{`) && err != script.ErrVMTimeLimit {
 			if throw, ok := err.(*ThrowError); ok {
 				out, errThrow := json.Marshal(throw)
 				if errThrow != nil {
@@ -1144,7 +1144,8 @@ func (sc *SmartContract) CallContract() (string, error) {
 			(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
 		}
 	}
-
+	(*sc.TxContract.Extend)["gen_block"] = sc.GenBlock
+	(*sc.TxContract.Extend)["time_limit"] = sc.TimeLimit
 	ctrctExtend := *sc.TxContract.Extend
 	before := ctrctExtend[`txcost`].(int64)
 

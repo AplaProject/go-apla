@@ -361,37 +361,19 @@ VALUES
     data {
         Data string
     }
-    func decodeGlobals(s string) string {
-        var globs array i lenGlobs int r map prefix from to string
-        prefix = "import_"
-        globs = ["guest_key", "ecosystem_id", "key_id", "isMobile", "role_id", "ecosystem_name", "app_id", "info_value_pages_count", "info_value_pages", "info_value_blocks_count", "info_value_blocks","info_value_menu_count", "info_value_menu", "info_value_parameters_count", "info_value_parameters","info_value_languages_count", "info_value_languages", "info_value_contracts_count", "info_value_contracts", "info_value_tables_count", "info_value_tables", "DataName", "DataCount", "DataInfo", "info_value_app_name", "import_id"]
-        lenGlobs = Len(globs)
-        while i < lenGlobs{
-            r = globs[i]
-            from = ToUpper("#" + prefix + r + "#")
-            to = "#" + r + "#"
-            s = Replace(s, from, to)
-            i = i + 1
-        }
-        return s
-    }
-
     conditions {
-        $Data = decodeGlobals($Data)
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("@1buffer_data").Columns("value->app_name").Where({key: "import_info", member_id: $key_id, ecosystem: $ecosystem_id}).Row()
-
-        if app_map{
+        app_map = DBFind("@1buffer_data").Columns("value->app_name").Where({"key": "import_info", "member_id": $key_id, "ecosystem": $ecosystem_id}).Row()
+        if app_map {
             var app_id int ival string
             ival = Str(app_map["value.app_name"])
-            app_id = DBFind("@1applications").Columns("id").Where({name: ival, ecosystem: $ecosystem_id}).One("id")
+            app_id = DBFind("@1applications").Columns("id").Where({"name": ival, "ecosystem": $ecosystem_id}).One("id")
             if app_id {
                 $ApplicationId = Int(app_id)
             }
         }
     }
-
     action {
         var editors, creators map
         editors["pages"] = "EditPage"
@@ -401,7 +383,6 @@ VALUES
         editors["languages"] = "EditLang"
         editors["contracts"] = "EditContract"
         editors["tables"] = "" // nothing
-
         creators["pages"] = "NewPage"
         creators["blocks"] = "NewBlock"
         creators["menu"] = "NewMenu"
@@ -409,11 +390,10 @@ VALUES
         creators["languages"] = "NewLang"
         creators["contracts"] = "NewContract"
         creators["tables"] = "NewTable"
-
         var dataImport array
         dataImport = JSONDecode($Data)
         var i int
-        while i < Len(dataImport){
+        while i < Len(dataImport) {
             var item cdata map type name string
             cdata = dataImport[i]
             if cdata {
@@ -421,20 +401,23 @@ VALUES
                 type = cdata["Type"]
                 name = cdata["Name"]
                 // Println(Sprintf("import %%v: %%v", type, cdata["Name"]))
-
                 var tbl string
                 tbl = "@1" + Str(type)
-                item = DBFind(tbl).Where({name: name, ecosystem: $ecosystem_id}).Row()
+                if type == "app_params" {
+                    item = DBFind(tbl).Where({"name": name, "ecosystem": $ecosystem_id, "app_id": $ApplicationId}).Row()
+                } else {
+                    item = DBFind(tbl).Where({"name": name, "ecosystem": $ecosystem_id}).Row()
+                }
                 var contractName string
                 if item {
                     contractName = editors[type]
                     cdata["Id"] = Int(item["id"])
                     if type == "contracts" {
-                        if item["conditions"] == "false"{
-                            // ignore updating impossibled
+                        if item["conditions"] == "false" {
+                            // ignore updating impossible
                             contractName = ""
                         }
-                    } elif type == "menu"{
+                    } elif type == "menu" {
                         var menu menuItem string
                         menu = Replace(item["value"], " ", "")
                         menu = Replace(menu, "\n", "")
@@ -445,15 +428,14 @@ VALUES
                         if Contains(menu, menuItem) {
                             // ignore repeated
                             contractName = ""
-                        }else{
+                        } else {
                             cdata["Value"] = item["value"] + "\n" + cdata["Value"]
                         }
                     }
                 } else {
                     contractName = creators[type]
                 }
-
-                if contractName != ""{
+                if contractName != "" {
                     CallContract(contractName, cdata)
                 }
             }
@@ -465,79 +447,55 @@ VALUES
 ', 'ContractConditions("MainCondition")', '1', '1'),
 	(next_id('1_contracts'), 'ImportUpload', 'contract ImportUpload {
     data {
-        input_file file
+        Data file
     }
-    func encodeGlobals(s string) string {
-        var globs array i lenGlobs int r map prefix from to string
-        prefix = "import_"
-        globs = ["guest_key", "ecosystem_id", "key_id", "isMobile", "role_id", "ecosystem_name", "app_id", "info_value_pages_count", "info_value_pages", "info_value_blocks_count", "info_value_blocks","info_value_menu_count", "info_value_menu", "info_value_parameters_count", "info_value_parameters","info_value_languages_count", "info_value_languages", "info_value_contracts_count", "info_value_contracts", "info_value_tables_count", "info_value_tables", "DataName", "DataCount", "DataInfo", "info_value_app_name", "import_id"]
-        lenGlobs = Len(globs)
-        while i < lenGlobs{
-            r = globs[i]
-            from = "#" + r + "#"
-            to = ToUpper("#" + prefix + r + "#")
-            s = Replace(s, from, to)
-            i = i + 1
-        }
-        return s
-    }
-
     conditions {
-        $input_file = BytesToString($input_file["Body"])
-        $input_file = encodeGlobals($input_file)
+        $Data = BytesToString($Data["Body"])
         $limit = 10 // data piece size of import
     }
-
     action {
         // init buffer_data, cleaning old buffer
         var initJson map
-        $import_id = DBFind("@1buffer_data").Where({member_id:$key_id, key: "import", ecosystem: $ecosystem_id}).One("id")
+        $import_id = DBFind("@1buffer_data").Where({"member_id": $key_id, "key": "import", "ecosystem": $ecosystem_id}).One("id")
         if $import_id {
             $import_id = Int($import_id)
             DBUpdate("@1buffer_data", $import_id, {"value": initJson})
         } else {
-            $import_id = DBInsert("@1buffer_data", {"member_id":$key_id,"key": "import", "value": initJson,"ecosystem": $ecosystem_id})
+            $import_id = DBInsert("@1buffer_data", {"member_id": $key_id, "key": "import", "value": initJson, "ecosystem": $ecosystem_id})
         }
-
-        $info_id = DBFind("@1buffer_data").Where({member_id:$key_id, key: "import_info", ecosystem: $ecosystem_id}).One("id")
+        $info_id = DBFind("@1buffer_data").Where({"member_id": $key_id, "key": "import_info", "ecosystem": $ecosystem_id}).One("id")
         if $info_id {
             $info_id = Int($info_id)
             DBUpdate("@1buffer_data", $info_id, {"value": initJson})
         } else {
-            $info_id = DBInsert("@1buffer_data", {"member_id":$key_id,"key": "import_info", "value": initJson,"ecosystem": $ecosystem_id})
+            $info_id = DBInsert("@1buffer_data", {"member_id": $key_id,"key": "import_info", "value": initJson, "ecosystem": $ecosystem_id})
         }
-        
         var input map arrData array
-        input = JSONDecode($input_file)
+        input = JSONDecode($Data)
         arrData = input["data"]
-
         var pages_arr blocks_arr menu_arr parameters_arr languages_arr contracts_arr tables_arr array
-
-        // import info
+        // IMPORT INFO
         var i lenArrData int item map
         lenArrData = Len(arrData)
-        while i < lenArrData{
+        while i < lenArrData {
             item = arrData[i]
-
             if item["Type"] == "pages" {
                 pages_arr = Append(pages_arr, item["Name"])
-            }elif item["Type"] == "blocks" {
+            } elif item["Type"] == "blocks" {
                 blocks_arr = Append(blocks_arr, item["Name"])
-            }elif item["Type"] == "menu" {
+            } elif item["Type"] == "menu" {
                 menu_arr = Append(menu_arr, item["Name"])
-            }elif item["Type"] == "app_params" {
+            } elif item["Type"] == "app_params" {
                 parameters_arr = Append(parameters_arr, item["Name"])
-            }elif item["Type"] == "languages" {
+            } elif item["Type"] == "languages" {
                 languages_arr = Append(languages_arr, item["Name"])
-            }elif item["Type"] == "contracts" {
+            } elif item["Type"] == "contracts" {
                 contracts_arr = Append(contracts_arr, item["Name"])
-            }elif item["Type"] == "tables" {
+            } elif item["Type"] == "tables" {
                 tables_arr = Append(tables_arr, item["Name"])
             }
-
             i = i + 1
         }
-
         var inf map
         inf["app_name"] = input["name"]
         inf["pages"] = Join(pages_arr, ", ")
@@ -554,22 +512,20 @@ VALUES
         inf["contracts_count"] = Len(contracts_arr)
         inf["tables"] = Join(tables_arr, ", ")
         inf["tables_count"] = Len(tables_arr)
-
         if 0 == inf["pages_count"] + inf["blocks_count"] + inf["menu_count"] + inf["parameters_count"] + inf["languages_count"] + inf["contracts_count"] + inf["tables_count"] {
             warning "Invalid or empty import file"
         }
-
-        // import data
-        // the contracts is imported in one piece, the rest is cut under the $limit, a crutch to bypass the error when you import dependent contracts in different pieces
+        // IMPORT DATA
+        // the contracts is imported in one piece, the rest is cut under the $limit
         var sliced contracts array
         i = 0
-        while i <lenArrData{
+        while i < lenArrData {
             var items array l int item map
             while l < $limit && (i + l < lenArrData) {
                 item = arrData[i + l]
                 if item["Type"] == "contracts" {
                     contracts = Append(contracts, item)
-                }else{
+                } else {
                     items = Append(items, item)
                 }
                 l = l + 1
@@ -579,24 +535,21 @@ VALUES
             sliced = Append(sliced, batch)
             i = i + $limit
         }
-        if Len(contracts) > 0{
+        if Len(contracts) > 0 {
             var batch map
             batch["Data"] = JSONEncode(contracts)
             sliced = Append(sliced, batch)
         }
         input["data"] = sliced
-
         // storing
         DBUpdate("@1buffer_data", $import_id, {"value": input})
         DBUpdate("@1buffer_data", $info_id, {"value": inf})
-
         var name string
         name = Str(input["name"])
         var cndns string
         cndns = Str(input["conditions"])
-
-        if !DBFind("@1applications").Columns("id").Where({name:name, ecosystem: $ecosystem_id}).One("id") {
-            DBInsert("@1applications", {"name": name, "conditions": cndns,"ecosystem": $ecosystem_id})
+        if !DBFind("@1applications").Columns("id").Where({"name": name, "ecosystem": $ecosystem_id}).One("id") {
+            DBInsert("@1applications", {"name": name, "conditions": cndns, "ecosystem": $ecosystem_id})
         }
     }
 }
