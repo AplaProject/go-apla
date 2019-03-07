@@ -55,6 +55,7 @@ type fullNodeJSON struct {
 	KeyID      json.Number `json:"key_id"`
 	PublicKey  string      `json:"public_key"`
 	UnbanTime  json.Number `json:"unban_time,er"`
+	Stopped    bool        `json:"stopped"`
 }
 
 // FullNode is storing full node data
@@ -64,6 +65,7 @@ type FullNode struct {
 	KeyID      int64
 	PublicKey  []byte
 	UnbanTime  time.Time
+	Stopped    bool
 }
 
 // UnmarshalJSON is custom json unmarshaller
@@ -77,7 +79,7 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 	fn.TCPAddress = data.TCPAddress
 	fn.APIAddress = data.APIAddress
 	fn.KeyID = converter.StrToInt64(data.KeyID.String())
-
+	fn.Stopped = data.Stopped
 	if fn.PublicKey, err = crypto.HexToPub(data.PublicKey); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.PublicKey}).Error("converting full nodes public key from hex")
 		return err
