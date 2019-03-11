@@ -186,6 +186,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	randBlock := rand.New(rand.NewSource(int64(seed)))
 
 	savepoint := 0
+	err = dbTransaction.Savepoint(savepoint)
 	for curTx, t := range b.Transactions {
 		var (
 			msg string
@@ -195,7 +196,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.Rand = randBlock
 
 		model.IncrementTxAttemptCount(nil, t.TxHash)
-		err = dbTransaction.Savepoint(savepoint)
+
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
@@ -224,6 +225,11 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 				}
 			}
 			if err == custom.ErrNetworkStopping {
+				errRoll := dbTransaction.RollbackSavepoint(savepoint)
+				if errRoll != nil {
+					logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
+					return errRoll
+				}
 				return err
 			}
 			if b.GenBlock && err == ErrLimitStop {
@@ -252,10 +258,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			}
 			return ErrStop
 		}
-		err = dbTransaction.ReleaseSavepoint(curTx)
-		if err != nil {
-			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
-		}
 
 		model.DecrementTxAttemptCount(nil, t.TxHash)
 
@@ -279,6 +281,11 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			return utils.ErrInfo(err)
 		}
 		b.Notifications = append(b.Notifications, t.Notifications...)
+	}
+
+	err = dbTransaction.ReleaseSavepoint(savepoint)
+	if err != nil {
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("releasing savepoint")
 	}
 	return nil
 }
