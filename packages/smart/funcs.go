@@ -147,6 +147,8 @@ type SmartContract struct {
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
 	Notifications []NotifyInfo
+	GenBlock      bool
+	TimeLimit     int64
 }
 
 var (

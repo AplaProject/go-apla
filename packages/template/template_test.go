@@ -102,6 +102,12 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(group_access, "[zz]")If(#group_access# != "[]"){test}.Else{ok}
+	If(Or(#group_access# != "[]", false)){testOr}.Else{okOr}
+	If(And(#group_access# != "[]", true)){testAnd}.Else{okAnd}`, `[{"tag":"text","text":"test"},{"tag":"text","text":"testOr"},{"tag":"text","text":"testAnd"}]`},
+	{`SetVar(group_access, "[]")If(#group_access# != "[]"){test}.Else{ok}
+	If(Or(#group_access# != "[]", false)){testOr}.Else{okOr}
+	If(And(#group_access# != "[]", true)){testAnd}.Else{okAnd}`, `[{"tag":"text","text":"ok"},{"tag":"text","text":"okOr"},{"tag":"text","text":"okAnd"}]`},
 	{`ArrayToSource(src, )`,
 		`[{"tag":"arraytosource","attr":{"columns":["key","value"],"data":[],"source":"src","types":["text","text"]}}]`},
 	{`SetVar(arr, [1, "hello", {"val": "123000000000000000000", "OK":{"time": "1545788052"}, "type": "emission"}, {"val": "555000000000000000000", "arr":["time", "1545788125"], "type": "emission"}, 23])
