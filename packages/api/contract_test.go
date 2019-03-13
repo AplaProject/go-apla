@@ -105,6 +105,25 @@ func TestArray(t *testing.T) {
 	assert.EqualError(t, postTx(`NewContract`, &form), `{"type":"panic","error":"multi-index is not supported"}`)
 }
 
+func TestCheckCondition(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	rnd := `cnt` + crypto.RandSeq(4)
+	form := url.Values{`Value`: {`contract ` + rnd + ` {
+    action {
+			$result = Sprintf("%v %v %v %v %v", CheckCondition("1"), CheckCondition("0"), 
+					CheckCondition("ContractConditions(\"MainCondition\")"), CheckCondition("true"), 
+					CheckCondition("false"))
+    }
+}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	_, msg, err := postTxResult(rnd, &url.Values{})
+	assert.NoError(t, err)
+	if msg != `true false true true false` {
+		t.Error(fmt.Errorf(`wrong msg %s`, msg))
+	}
+}
+
 func TestDBFindContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 

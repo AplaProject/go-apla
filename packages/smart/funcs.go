@@ -147,6 +147,8 @@ type SmartContract struct {
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
 	Notifications []NotifyInfo
+	GenBlock      bool
+	TimeLimit     int64
 }
 
 var (
@@ -244,6 +246,7 @@ var (
 		"Sqrt":                         15,
 		"Round":                        15,
 		"Floor":                        15,
+		"CheckCondition":               10,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -379,6 +382,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Sqrt":                         Sqrt,
 		"Round":                        Round,
 		"Floor":                        Floor,
+		"CheckCondition":               CheckCondition,
 	}
 
 	switch vt {
@@ -1104,6 +1108,18 @@ func Eval(sc *SmartContract, condition string) error {
 		return logErrorShort(errAccessDenied, consts.AccessDenied)
 	}
 	return nil
+}
+
+// CheckCondition evaluates the condition
+func CheckCondition(sc *SmartContract, condition string) (bool, error) {
+	if len(condition) == 0 {
+		return false, nil
+	}
+	ret, err := sc.EvalIf(condition)
+	if err != nil {
+		return false, logError(err, consts.EvalError, "eval condition")
+	}
+	return ret, nil
 }
 
 // FlushContract is flushing contract

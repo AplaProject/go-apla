@@ -26,51 +26,18 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package api
+package updates
 
-import (
-	"net/http"
+import "strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/model"
+var M126 = addPermissions()
 
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
-)
-
-func (m Mode) GetAppParamHandler(w http.ResponseWriter, r *http.Request) {
-	logger := getLogger(r)
-
-	form := &ecosystemForm{
-		Validator: m.EcosysIDValidator,
+func addPermissions() string {
+	var out []string
+	for _, tbl := range []string{`pages`, `blocks`, `contracts`, `menu`, `app_params`,
+		`parameters`, `languages`} {
+		out = append(out, `ALTER TABLE "1_`+tbl+`" ADD COLUMN "permissions" jsonb;
+		 update "1_tables" set "columns" = "columns" || jsonb '{"permissions": "ContractConditions(\"@1AdminCondition\")"}' where name='`+tbl+`';`)
 	}
-	if err := parseForm(r, form); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return
-	}
-
-	params := mux.Vars(r)
-
-	ap := &model.AppParam{}
-	ap.SetTablePrefix(form.EcosystemPrefix)
-	name := params["name"]
-	found, err := ap.Get(nil, converter.StrToInt64(params["appID"]), name)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting app parameter by name")
-		errorResponse(w, err)
-		return
-	}
-	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "key": name}).Error("app parameter not found")
-		errorResponse(w, errParamNotFound.Errorf(name))
-		return
-	}
-
-	jsonResponse(w, &paramResult{
-		ID:         converter.Int64ToStr(ap.ID),
-		Name:       ap.Name,
-		Value:      ap.Value,
-		Conditions: ap.Conditions,
-	})
+	return strings.Join(out, "\n")
 }

@@ -26,51 +26,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package api
+package updates
 
-import (
-	"net/http"
-
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/model"
-
-	"github.com/gorilla/mux"
-	log "github.com/sirupsen/logrus"
-)
-
-func (m Mode) GetAppParamHandler(w http.ResponseWriter, r *http.Request) {
-	logger := getLogger(r)
-
-	form := &ecosystemForm{
-		Validator: m.EcosysIDValidator,
-	}
-	if err := parseForm(r, form); err != nil {
-		errorResponse(w, err, http.StatusBadRequest)
-		return
-	}
-
-	params := mux.Vars(r)
-
-	ap := &model.AppParam{}
-	ap.SetTablePrefix(form.EcosystemPrefix)
-	name := params["name"]
-	found, err := ap.Get(nil, converter.StrToInt64(params["appID"]), name)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting app parameter by name")
-		errorResponse(w, err)
-		return
-	}
-	if !found {
-		logger.WithFields(log.Fields{"type": consts.NotFound, "key": name}).Error("app parameter not found")
-		errorResponse(w, errParamNotFound.Errorf(name))
-		return
-	}
-
-	jsonResponse(w, &paramResult{
-		ID:         converter.Int64ToStr(ap.ID),
-		Name:       ap.Name,
-		Value:      ap.Value,
-		Conditions: ap.Conditions,
-	})
-}
+var M125 = `ALTER TABLE "1_app_params" DROP CONSTRAINT "1_app_params_ecosystem_name_key";
+    ALTER TABLE "1_app_params" ADD CONSTRAINT "1_app_params_ecosys_app_name_key" UNIQUE (ecosystem,app_id,name);
+	DROP INDEX "1_app_params_index_name";
+	CREATE INDEX "1_app_params_index_name" ON "1_app_params" (ecosystem,app_id,name);
+`

@@ -75,6 +75,7 @@ var (
 	errDiffKey           = errType{"E_DIFKEY", "Sender's key is different from tx key", defaultStatus}
 	errBannded           = errType{"E_BANNED", "The key is banned till %s", http.StatusForbidden}
 	errCheckRole         = errType{"E_CHECKROLE", "Access denied", http.StatusForbidden}
+	errNewUser           = errType{"E_NEWUSER", "Can't create a new user", http.StatusUnauthorized}
 )
 
 type errType struct {

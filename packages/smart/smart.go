@@ -982,7 +982,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 	retError := func(err error) (string, error) {
 		eText := err.Error()
-		if !strings.HasPrefix(eText, `{`) {
+		if !strings.HasPrefix(eText, `{`) && err != script.ErrVMTimeLimit {
 			if throw, ok := err.(*ThrowError); ok {
 				out, errThrow := json.Marshal(throw)
 				if errThrow != nil {
@@ -1069,7 +1069,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 		cntrctOwnerInfo := sc.TxContract.Block.Info.(*script.ContractInfo).Owner
 
-		if cntrctOwnerInfo.WalletID > 0 {
+		if cntrctOwnerInfo.WalletID != 0 {
 			fromID = cntrctOwnerInfo.WalletID
 			sc.TxSmart.TokenEcosystem = cntrctOwnerInfo.TokenID
 		} else if len(sc.TxSmart.PayOver) > 0 {
@@ -1080,6 +1080,17 @@ func (sc *SmartContract) CallContract() (string, error) {
 			}
 
 			fuelRate = fuelRate.Add(payOver)
+		}
+		var (
+			sp             model.StateParameter
+			isEcosysWallet bool
+		)
+		sp.SetTablePrefix(converter.Int64ToStr(sc.TxSmart.EcosystemID))
+		if found, err := sp.Get(sc.DbTransaction, "ecosystem_wallet"); err != nil {
+			return retError(err)
+		} else if found && len(sp.Value) > 0 {
+			fromID = AddressToID(sp.Value)
+			isEcosysWallet = true
 		}
 
 		payWallet.SetTablePrefix(sc.TxSmart.TokenEcosystem)
@@ -1092,7 +1103,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 			return retError(err)
 		}
 
-		if cntrctOwnerInfo.WalletID <= 0 &&
+		if cntrctOwnerInfo.WalletID == 0 && !isEcosysWallet &&
 			!bytes.Equal(wallet.PublicKey, payWallet.PublicKey) &&
 			!bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) &&
 			sc.TxSmart.SignedBy == 0 {
@@ -1133,7 +1144,8 @@ func (sc *SmartContract) CallContract() (string, error) {
 			(*sc.TxContract.Extend)[`txcost`] = converter.StrToInt64(maxCost.String()) - price
 		}
 	}
-
+	(*sc.TxContract.Extend)["gen_block"] = sc.GenBlock
+	(*sc.TxContract.Extend)["time_limit"] = sc.TimeLimit
 	ctrctExtend := *sc.TxContract.Extend
 	before := ctrctExtend[`txcost`].(int64)
 
