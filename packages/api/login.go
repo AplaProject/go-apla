@@ -188,9 +188,29 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 		txData, txHash, err := tx.NewInternalTransaction(sc, nodePrivateKey)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ContractError}).Error("Building transaction")
+			log.WithFields(log.Fields{"type": consts.ContractError, "err": err}).Error("Building transaction")
 		} else {
-			m.ContractRunner.RunContract(txData, txHash, sc.KeyID, logger)
+			err = m.ContractRunner.RunContract(txData, txHash, sc.KeyID, logger)
+		}
+		if err != nil {
+			errorResponse(w, err)
+			return
+		}
+		ts := &model.LogTransaction{}
+		for i := 0; i < 30; i++ {
+			found, err := ts.GetByHash(txHash)
+			if err != nil {
+				errorResponse(w, err)
+				return
+			}
+			if found && ts.Block > 0 {
+				break
+			}
+			time.Sleep(time.Second)
+		}
+		if ts.Block == 0 {
+			errorResponse(w, errNewUser)
+			return
 		}
 	}
 
