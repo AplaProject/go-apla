@@ -170,7 +170,7 @@ func (b *Block) readPreviousBlockFromBlockchainTable() error {
 
 func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	logger := b.GetLogger()
-	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
+	if _, err := model.DeleteUsedTransactions(nil); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
