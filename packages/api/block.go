@@ -290,7 +290,6 @@ func getBlocksDetailedInfoHandler(w http.ResponseWriter, r *http.Request) {
 			BinData:       blck.BinData,
 			SysUpdate:     blck.SysUpdate,
 			GenBlock:      blck.GenBlock,
-			StopCount:     blck.StopCount,
 			Transactions:  txDetailedInfoCollection,
 		}
 		result[blockModel.ID] = bdi

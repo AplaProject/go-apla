@@ -62,7 +62,6 @@ type Block struct {
 	Transactions      []*transaction.Transaction
 	SysUpdate         bool
 	GenBlock          bool // it equals true when we are generating a new block
-	StopCount         int  // The count of good tx in the block
 	Notifications     []smart.NotifyInfo
 }
 
@@ -85,11 +84,27 @@ func (b *Block) PlaySafe() error {
 		return err
 	}
 
+	count := len(b.Transactions)
+
 	err = b.Play(dbTransaction)
-	if b.GenBlock && b.StopCount > 0 {
-		doneTx := b.Transactions[:b.StopCount]
-		trData := make([][]byte, 0, b.StopCount)
-		for _, tr := range doneTx {
+	if err != nil {
+		dbTransaction.Rollback()
+
+		if b.GenBlock && len(b.Transactions) == 0 {
+			if err == ErrLimitStop {
+				err = ErrLimitTime
+			}
+			BadTxForBan(b.Transactions[0].TxHeader.KeyID)
+			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
+			return err
+		}
+
+		return err
+	}
+
+	if b.GenBlock && count != len(b.Transactions) {
+		trData := make([][]byte, 0, len(b.Transactions))
+		for _, tr := range b.Transactions {
 			trData = append(trData, tr.TxFullData)
 		}
 		NodePrivateKey, _, err := utils.GetNodeKeys()
@@ -113,17 +128,6 @@ func (b *Block) PlaySafe() error {
 		b.Transactions = nb.Transactions
 		b.MrklRoot = nb.MrklRoot
 		b.SysUpdate = nb.SysUpdate
-		err = nil
-	} else if err != nil {
-		dbTransaction.Rollback()
-		if b.GenBlock && b.StopCount == 0 {
-			if err == ErrLimitStop {
-				err = ErrLimitTime
-			}
-			BadTxForBan(b.Transactions[0].TxHeader.KeyID)
-			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
-		}
-		return err
 	}
 
 	if err := UpdBlockInfo(dbTransaction, b); err != nil {
@@ -182,8 +186,13 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		timeLimit = syspar.GetMaxBlockGenerationTime()
 	}
 
-	savepoint := 0
-	err = dbTransaction.Savepoint(savepoint)
+	proccessedTx := make([]*transaction.Transaction, 0, len(b.Transactions))
+	defer func() {
+		if b.GenBlock {
+			b.Transactions = proccessedTx
+		}
+	}()
+
 	for curTx, t := range b.Transactions {
 		var (
 			msg string
@@ -193,7 +202,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.Rand = rand.BytesSeed(t.TxHash)
 
 		model.IncrementTxAttemptCount(nil, t.TxHash)
-
+		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
@@ -227,38 +236,38 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 				}
 			}
 			if err == custom.ErrNetworkStopping {
-				errRoll := dbTransaction.RollbackSavepoint(savepoint)
-				if errRoll != nil {
-					logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
-					return errRoll
-				}
 				return err
 			}
-			if b.GenBlock && err == ErrLimitStop {
-				b.StopCount = curTx
-			}
 
-			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
-			if t.SysUpdate {
-				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
-					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
-				}
-				t.SysUpdate = false
+			errRoll := dbTransaction.RollbackSavepoint(curTx)
+			if errRoll != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
+				return errRoll
 			}
-
 			if b.GenBlock && err == ErrLimitStop {
 				if curTx == 0 {
 					return err
 				}
 				break
 			}
-
-			errRoll := dbTransaction.RollbackSavepoint(savepoint)
-			if errRoll != nil {
-				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
-				return errRoll
+			// skip this transaction
+			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
+			if t.SysUpdate {
+				if err := syspar.SysUpdate(t.DbTransaction); err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
+				}
+				t.SysUpdate = false
 			}
-			return ErrStop
+
+			if b.GenBlock {
+				continue
+			}
+
+			return err
+		}
+		err = dbTransaction.ReleaseSavepoint(curTx)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
 		model.DecrementTxAttemptCount(nil, t.TxHash)
@@ -283,12 +292,9 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			return utils.ErrInfo(err)
 		}
 		b.Notifications = append(b.Notifications, t.Notifications...)
+		proccessedTx = append(proccessedTx, t)
 	}
 
-	err = dbTransaction.ReleaseSavepoint(savepoint)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("releasing savepoint")
-	}
 	return nil
 }
 
