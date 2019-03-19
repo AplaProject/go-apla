@@ -683,6 +683,22 @@ func TestVMCompile(t *testing.T) {
 		{`func result() {
 				error "test"*
 				}`, `result`, `unexpected end of the expression`},
+		{`func bool_test string {
+					var i bool
+					var k bool
+					var out string
+					i = true
+					if i == true {
+						out = "OK"
+					}
+					if i != k {
+						out = out + "ok"
+					}
+					if i {
+						out = out + "I"
+					}
+					return out
+				}`, `bool_test`, `OKokI`},
 	}
 	vm := NewVM()
 	vm.Extern = true

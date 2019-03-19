@@ -1127,6 +1127,13 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					default:
 						return 0, errUnsupportedType
 					}
+				case bool:
+					switch top[0].(type) {
+					case bool:
+						bin = top[1].(bool) == top[0].(bool)
+					default:
+						return 0, errUnsupportedType
+					}
 				default:
 					if tmpDec, err = ValueToDecimal(top[0]); err != nil {
 						return 0, err
