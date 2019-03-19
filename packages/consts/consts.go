@@ -36,9 +36,10 @@ import (
 const VERSION = "1.2.7"
 
 const BV_ROLLBACK_HASH = 2
+const BV_INCLUDE_ROLLBACK_HASH = 3
 
 // BLOCK_VERSION is block version
-const BLOCK_VERSION = BV_ROLLBACK_HASH
+const BLOCK_VERSION = BV_INCLUDE_ROLLBACK_HASH
 
 // NETWORK_ID is id of network
 const NETWORK_ID = 1

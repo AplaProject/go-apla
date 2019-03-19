@@ -72,7 +72,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prev *utils.BlockDa
 		}
 	}
 
-	var buf bytes.Buffer
+	buf := new(bytes.Buffer)
+
 	// fill header
 	buf.Write(converter.DecToBin(header.Version, 2))
 	buf.Write(converter.DecToBin(header.BlockID, 4))
@@ -80,6 +81,9 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prev *utils.BlockDa
 	buf.Write(converter.DecToBin(header.EcosystemID, 4))
 	buf.Write(converter.EncodeLenInt64InPlace(header.KeyID))
 	buf.Write(converter.DecToBin(header.NodePosition, 1))
+	buf.Write(converter.EncodeLengthPlusData(prev.RollbacksHash))
+
+	// fill signature
 	buf.Write(converter.EncodeLengthPlusData(signed))
 
 	// data
@@ -88,8 +92,8 @@ func MarshallBlock(header *utils.BlockData, trData [][]byte, prev *utils.BlockDa
 	return buf.Bytes(), nil
 }
 
-func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock, fillData bool) (*Block, error) {
-	header, err := utils.ParseBlockHeader(blockBuffer, !firstBlock)
+func UnmarshallBlock(blockBuffer *bytes.Buffer, fillData bool) (*Block, error) {
+	header, prev, err := utils.ParseBlockHeader(blockBuffer)
 	if err != nil {
 		return nil, err
 	}
@@ -146,8 +150,9 @@ func UnmarshallBlock(blockBuffer *bytes.Buffer, firstBlock, fillData bool) (*Blo
 	}
 
 	return &Block{
-		Header:       header,
-		Transactions: transactions,
-		MrklRoot:     utils.MerkleTreeRoot(mrklSlice),
+		Header:            header,
+		PrevRollbacksHash: prev.RollbacksHash,
+		Transactions:      transactions,
+		MrklRoot:          utils.MerkleTreeRoot(mrklSlice),
 	}, nil
 }

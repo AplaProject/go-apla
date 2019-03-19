@@ -62,8 +62,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
-	QueueParserBlocks(ctx, d)
-
 	DBLock()
 	defer DBUnlock()
 

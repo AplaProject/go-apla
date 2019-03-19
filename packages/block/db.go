@@ -174,7 +174,7 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 		return BlockData, utils.ErrInfo(err)
 	}
 
-	header, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data), false)
+	header, _, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data))
 	if err != nil {
 		return nil, utils.ErrInfo(err)
 	}
@@ -198,7 +198,7 @@ func GetDataFromFirstBlock() (data *consts.FirstBlock, ok bool) {
 		return
 	}
 
-	pb, err := UnmarshallBlock(bytes.NewBuffer(block.Data), true, true)
+	pb, err := UnmarshallBlock(bytes.NewBuffer(block.Data), true)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.ParserError, "error": err}).Error("parsing data of first block")
 		return

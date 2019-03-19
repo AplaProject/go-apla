@@ -30,8 +30,8 @@ package block
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -50,17 +50,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
+
 // Block is storing block data
 type Block struct {
-	Header        utils.BlockData
-	PrevHeader    *utils.BlockData
-	MrklRoot      []byte
-	BinData       []byte
-	Transactions  []*transaction.Transaction
-	SysUpdate     bool
-	GenBlock      bool // it equals true when we are generating a new block
-	StopCount     int  // The count of good tx in the block
-	Notifications []smart.NotifyInfo
+	Header            utils.BlockData
+	PrevHeader        *utils.BlockData
+	PrevRollbacksHash []byte
+	MrklRoot          []byte
+	BinData           []byte
+	Transactions      []*transaction.Transaction
+	SysUpdate         bool
+	GenBlock          bool // it equals true when we are generating a new block
+	StopCount         int  // The count of good tx in the block
+	Notifications     []smart.NotifyInfo
 }
 
 func (b Block) String() string {
@@ -101,8 +104,7 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 
-		isFirstBlock := b.Header.BlockID == 1
-		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock, true)
+		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -168,23 +170,13 @@ func (b *Block) readPreviousBlockFromBlockchainTable() error {
 
 func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	logger := b.GetLogger()
-	if _, err := model.DeleteUsedTransactions(dbTransaction); err != nil {
+	if _, err := model.DeleteUsedTransactions(nil); err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("delete used transactions")
 		return err
 	}
 
 	limits := NewLimits(b)
-
-	txHashes := make([][]byte, 0, len(b.Transactions))
-	for _, btx := range b.Transactions {
-		txHashes = append(txHashes, btx.TxHash)
-	}
-	seed, err := crypto.CalcChecksum(bytes.Join(txHashes, []byte{}))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating seed")
-		return err
-	}
-	randBlock := rand.New(rand.NewSource(int64(seed)))
+	rand := utils.NewRand(b.Header.Time)
 	var timeLimit int64
 	if b.GenBlock {
 		timeLimit = syspar.GetMaxBlockGenerationTime()
@@ -198,7 +190,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			err error
 		)
 		t.DbTransaction = dbTransaction
-		t.Rand = randBlock
+		t.Rand = rand.BytesSeed(t.TxHash)
 
 		model.IncrementTxAttemptCount(nil, t.TxHash)
 
@@ -403,6 +395,11 @@ func (b *Block) CheckHash() (bool, error) {
 			true)
 
 		if err != nil {
+			if err == crypto.ErrIncorrectSign {
+				if !bytes.Equal(b.PrevRollbacksHash, b.PrevHeader.RollbacksHash) {
+					return false, ErrIncorrectRollbackHash
+				}
+			}
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
 		}
@@ -446,7 +443,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := UnmarshallBlock(buf, !checkSize, true)
+	block, err := UnmarshallBlock(buf, true)
 	if err != nil {
 		return nil, err
 	}
