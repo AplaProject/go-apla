@@ -92,6 +92,25 @@ func UpdBlockInfo(dbTransaction *model.DbTransaction, block *Block) error {
 	return nil
 }
 
+func GetRollbacksHash(transaction *model.DbTransaction, blockID int64) ([]byte, error) {
+	r := &model.RollbackTx{}
+	list, err := r.GetBlockRollbackTransactions(transaction, blockID)
+	if err != nil {
+		return nil, err
+	}
+
+	buf := new(bytes.Buffer)
+	enc := json.NewEncoder(buf)
+
+	for _, rtx := range list {
+		if err = enc.Encode(&rtx); err != nil {
+			return nil, err
+		}
+	}
+
+	return crypto.Hash(buf.Bytes())
+}
+
 // InsertIntoBlockchain inserts a block into the blockchain
 func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error {
 	// for local tests
@@ -104,27 +123,12 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
 		return err
 	}
-	rollbackTx := &model.RollbackTx{}
-	blockRollbackTxs, err := rollbackTx.GetBlockRollbackTransactions(transaction, blockID)
+	rollbacksHash, err := GetRollbacksHash(transaction, blockID)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting block rollback txs")
+		log.WithFields(log.Fields{"type": consts.BlockError, "error": err}).Error("getting rollbacks hash")
 		return err
 	}
-	buffer := bytes.Buffer{}
-	for _, rollbackTx := range blockRollbackTxs {
-		rollbackTxBytes, err := json.Marshal(rollbackTx)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling rollback_tx to json")
-			return err
-		}
 
-		buffer.Write(rollbackTxBytes)
-	}
-	rollbackTxsHash, err := crypto.Hash(buffer.Bytes())
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("hashing block rollback_txs")
-		return err
-	}
 	b := &model.Block{
 		ID:            blockID,
 		Hash:          block.Header.Hash,
@@ -133,7 +137,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 		KeyID:         block.Header.KeyID,
 		NodePosition:  block.Header.NodePosition,
 		Time:          block.Header.Time,
-		RollbacksHash: rollbackTxsHash,
+		RollbacksHash: rollbacksHash,
 		Tx:            int32(len(block.Transactions)),
 	}
 	validBlockTime := true
@@ -151,7 +155,7 @@ func InsertIntoBlockchain(transaction *model.DbTransaction, block *Block) error 
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating block")
 			return err
 		}
-		if err = model.UpdRollbackHash(transaction, rollbackTxsHash); err != nil {
+		if err = model.UpdRollbackHash(transaction, rollbacksHash); err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating info block")
 			return err
 		}

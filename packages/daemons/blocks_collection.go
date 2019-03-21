@@ -163,13 +163,14 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		if !hashMatched {
 			transaction.CleanCache()
 
-			blockID := bl.Header.BlockID - 1
+			rollbackBlockID := bl.Header.BlockID - 1
 			if errCheck == block.ErrIncorrectRollbackHash {
-				blockID--
+				rollbackBlockID--
 			}
+			limit := bl.Header.BlockID - rollbackBlockID
 
 			//it should be fork, replace our previous blocks to ones from the host
-			err = GetBlocks(ctx, blockID, host)
+			err = GetBlocks(ctx, rollbackBlockID, limit, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				return err
@@ -185,11 +186,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return err
 		}
 
-		if err = bl.PlaySafe(); err != nil {
-			return err
-		}
-
-		return nil
+		return bl.PlaySafe()
 	}
 
 	st := time.Now()
@@ -316,8 +313,8 @@ func getHostWithMaxID(ctx context.Context, logger *log.Entry) (host string, maxB
 }
 
 // GetBlocks is returning blocks
-func GetBlocks(ctx context.Context, blockID int64, host string) error {
-	blocks, err := getBlocks(ctx, blockID, host)
+func GetBlocks(ctx context.Context, blockID, limit int64, host string) error {
+	blocks, err := getBlocks(ctx, blockID+1, limit, host)
 	if err != nil {
 		return err
 	}
@@ -356,7 +353,7 @@ func GetBlocks(ctx context.Context, blockID int64, host string) error {
 	return processBlocks(blocks)
 }
 
-func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block, error) {
+func getBlocks(ctx context.Context, blockID, limit int64, host string) ([]*block.Block, error) {
 	rollback := syspar.GetRbBlocks1()
 
 	badBlocks := make(map[int64]string)
@@ -380,6 +377,10 @@ func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block,
 			break
 		}
 
+		if count >= limit {
+			break
+		}
+
 		block, err := block.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
 		if err != nil {
 			return nil, utils.ErrInfo(err)
@@ -394,27 +395,10 @@ func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block,
 			return nil, utils.ErrInfo(errors.New("bad block_data['block_id']"))
 		}
 
-		// TODO: add checking for MAX_BLOCK_SIZE
-
-		// the public key of the one who has generated this block
-		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
-		if err != nil {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
-			return nil, utils.ErrInfo(err)
-		}
-
 		// save the block
 		blocks = append(blocks, block)
 		blockID--
 		count++
-
-		// check the signature
-		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey},
-			[]byte(block.Header.ForSign(block.PrevHeader, block.MrklRoot)),
-			block.Header.Sign, true)
-		if okSignErr == nil {
-			break
-		}
 	}
 
 	return blocks, nil
@@ -435,7 +419,11 @@ func processBlocks(blocks []*block.Block) error {
 
 		if prevBlocks[b.Header.BlockID-1] != nil {
 			b.PrevHeader.Hash = prevBlocks[b.Header.BlockID-1].Header.Hash
-			b.PrevHeader.RollbacksHash = prevBlocks[b.Header.BlockID-1].Header.RollbacksHash
+			b.PrevHeader.RollbacksHash, err = block.GetRollbacksHash(dbTransaction, b.Header.BlockID-1)
+			if err != nil {
+				dbTransaction.Rollback()
+				return err
+			}
 			b.PrevHeader.Time = prevBlocks[b.Header.BlockID-1].Header.Time
 			b.PrevHeader.BlockID = prevBlocks[b.Header.BlockID-1].Header.BlockID
 			b.PrevHeader.EcosystemID = prevBlocks[b.Header.BlockID-1].Header.EcosystemID
