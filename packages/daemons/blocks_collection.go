@@ -33,6 +33,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"sync/atomic"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/block"
@@ -87,16 +88,15 @@ func InitialLoad(logger *log.Entry) error {
 	return nil
 }
 
-var bcOnRun bool
+var bcOnRun uint32
 
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
-	if bcOnRun {
+	if !atomic.CompareAndSwapUint32(&bcOnRun, 0, 1) {
 		return nil
 	}
 	defer func() {
-		bcOnRun = false
+		atomic.StoreUint32(&bcOnRun, 0)
 	}()
-	bcOnRun = true
 	host, maxBlockID, err := getHostWithMaxID(ctx, d.logger)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"error": err}).Warn("on checking best host")
