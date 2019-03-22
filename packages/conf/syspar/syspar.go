@@ -89,7 +89,7 @@ const (
 	// NodeBanTime is value of ban time for bad nodes (in ms)
 	NodeBanTime = `node_ban_time`
 	// LocalNodeBanTime is value of local ban time for bad nodes (in ms)
-	LocalNodeBanTime = `node_ban_time_local`
+	LocalNodeBanTime = `local_node_ban_time`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
 	// Test equals true or 1 if we have a test blockchain

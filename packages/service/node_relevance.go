@@ -85,11 +85,9 @@ func (n *NodeRelevanceService) Run(ctx context.Context) {
 }
 
 func NodeDoneUpdatingBlockchain() {
-	go func() {
-		if IsNodePaused() {
-			updatingEndWhilePaused <- struct{}{}
-		}
-	}()
+	if IsNodePaused() {
+		updatingEndWhilePaused <- struct{}{}
+	}
 }
 
 func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant bool, err error) {
@@ -100,7 +98,10 @@ func (n *NodeRelevanceService) checkNodeRelevance(ctx context.Context) (relevant
 		return false, errors.Wrapf(err, "retrieving info block from db")
 	}
 
-	remoteHosts := syspar.GetRemoteHosts()
+	remoteHosts, err := GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+	if err != nil {
+		return false, err
+	}
 	// Node is single in blockchain network and it can't be irrelevant
 	if len(remoteHosts) == 0 {
 		return true, nil

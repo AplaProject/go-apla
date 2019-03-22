@@ -33,6 +33,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"sync/atomic"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/block"
@@ -87,7 +88,15 @@ func InitialLoad(logger *log.Entry) error {
 	return nil
 }
 
+var bcOnRun uint32
+
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
+	if !atomic.CompareAndSwapUint32(&bcOnRun, 0, 1) {
+		return nil
+	}
+	defer func() {
+		atomic.StoreUint32(&bcOnRun, 0)
+	}()
 	host, maxBlockID, err := getHostWithMaxID(ctx, d.logger)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"error": err}).Warn("on checking best host")
@@ -112,8 +121,8 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 
 	DBLock()
 	defer func() {
-		DBUnlock()
 		service.NodeDoneUpdatingBlockchain()
+		DBUnlock()
 	}()
 
 	// update our chain till maxBlockID from the host
@@ -123,10 +132,9 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 // UpdateChain load from host all blocks from our last block to maxBlockID
 func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
 	var (
-		err   error
-		count int
+		err error
 	)
-
+	maxBlockReached := false
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
 	if _, err = curBlock.Get(); err != nil {
@@ -182,17 +190,35 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		if err = bl.PlaySafe(); err != nil {
 			return err
 		}
-
+		if maxBlockID == bl.Header.BlockID {
+			maxBlockReached = true
+		}
 		return nil
 	}
 
+	var count int
 	st := time.Now()
+
+	defer func() {
+		if maxBlockReached {
+			return
+		}
+		nodePosition, _ := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+		header := utils.BlockData{
+			BlockID:      maxBlockID,
+			Time:         time.Now().Unix(),
+			NodePosition: nodePosition,
+		}
+		block := &block.Block{Header: header}
+		banNode(host, block, fmt.Errorf("host returns max block, but max block not reached"))
+		time.Sleep(1000 * time.Millisecond)
+	}()
 	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
-		ctxDone, cancel := context.WithCancel(ctx)
 
 		if loopErr := func() error {
+			ctxDone, cancel := context.WithCancel(ctx)
 			defer func() {
 				cancel()
 				d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
