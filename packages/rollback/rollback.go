@@ -76,8 +76,7 @@ func ToBlockID(blockID int64, dbTransaction *model.DbTransaction, logger *log.En
 		return err
 	}
 
-	isFirstBlock := blockID == 1
-	header, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data), !isFirstBlock)
+	header, _, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data))
 	if err != nil {
 		return err
 	}
