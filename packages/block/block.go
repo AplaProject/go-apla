@@ -84,8 +84,7 @@ func (b *Block) PlaySafe() error {
 		return err
 	}
 
-	count := len(b.Transactions)
-
+	inputTx := b.Transactions[:]
 	err = b.Play(dbTransaction)
 	if err != nil {
 		dbTransaction.Rollback()
@@ -94,15 +93,15 @@ func (b *Block) PlaySafe() error {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
 			}
-			BadTxForBan(b.Transactions[0].TxHeader.KeyID)
-			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
+			BadTxForBan(inputTx[0].TxHeader.KeyID)
+			transaction.MarkTransactionBad(nil, inputTx[0].TxHash, err.Error())
 			return err
 		}
 
 		return err
 	}
 
-	if b.GenBlock && count != len(b.Transactions) {
+	if b.GenBlock && len(inputTx) != len(b.Transactions) {
 		trData := make([][]byte, 0, len(b.Transactions))
 		for _, tr := range b.Transactions {
 			trData = append(trData, tr.TxFullData)
