@@ -175,12 +175,12 @@ func GetBlockDataFromBlockChain(blockID int64) (*utils.BlockData, error) {
 	_, err := block.Get(blockID)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("Getting block by ID")
-		return BlockData, utils.ErrInfo(err)
+		return BlockData, err
 	}
 
 	header, _, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data))
 	if err != nil {
-		return nil, utils.ErrInfo(err)
+		return nil, err
 	}
 
 	BlockData = &header
