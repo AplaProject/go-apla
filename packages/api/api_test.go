@@ -52,7 +52,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 )
 
-const apiAddress = "http://localhost:7079"
+var apiAddress = "http://localhost:7079"
 
 var (
 	gAuth             string

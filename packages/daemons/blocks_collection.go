@@ -132,11 +132,7 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 }
 
 // UpdateChain load from host all blocks from our last block to maxBlockID
-func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
-	var (
-		err error
-	)
-	maxBlockReached := false
+func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) (err error) {
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
 	if _, err = curBlock.Get(); err != nil {
@@ -149,20 +145,22 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		return ctx.Err()
 	}
 
+	var lastBlockID, lastBlockTime int64
+	defer func() {
+		if err != nil {
+			banNode(host, lastBlockID, lastBlockTime, err)
+		}
+	}()
+
 	playRawBlock := func(rb []byte) error {
-
 		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(rb, true)
-		defer func() {
-			if err != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
-				banNode(host, bl, err)
-			}
-		}()
-
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
 			return err
 		}
+
+		lastBlockID = bl.Header.BlockID
+		lastBlockTime = bl.Header.Time
 
 		// hash compare could be failed in the case of fork
 		hashMatched, errCheck := bl.CheckHash()
@@ -196,34 +194,13 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			return err
 		}
 
-		if err = bl.PlaySafe(); err != nil {
-			return err
-		}
-		if maxBlockID == bl.Header.BlockID {
-			maxBlockReached = true
-		}
-		return nil
+		return bl.PlaySafe()
 	}
 
 	var count int
 	st := time.Now()
 
-	defer func() {
-		if maxBlockReached {
-			return
-		}
-		nodePosition, _ := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
-		header := utils.BlockData{
-			BlockID:      maxBlockID,
-			Time:         time.Now().Unix(),
-			NodePosition: nodePosition,
-		}
-		block := &block.Block{Header: header}
-		banNode(host, block, ErrBlockNotReached)
-		time.Sleep(1000 * time.Millisecond)
-	}()
 	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
-
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
 
 		if loopErr := func() error {
@@ -236,7 +213,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			rawBlocksChan, err := tcpclient.GetBlocksBodies(ctxDone, host, blockID, false)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-				return err
+				return utils.WithBan(err)
 			}
 
 			for rawBlock := range rawBlocksChan {
@@ -294,20 +271,12 @@ func needLoad(logger *log.Entry) (bool, error) {
 	return false, nil
 }
 
-func banNode(host string, bl *block.Block, err error) {
+func banNode(host string, blockID, blockTime int64, err error) {
 	if err == nil || !utils.IsBanError(err) {
 		return
 	}
 
 	reason := err.Error()
-
-	var blockID, blockTime int64
-	if bl != nil {
-		blockID, blockTime = bl.Header.BlockID, bl.Header.Time
-	} else {
-		blockID, blockTime = -1, time.Now().Unix()
-	}
-
 	log.WithFields(log.Fields{"reason": reason, "host": host, "block_id": blockID, "block_time": blockTime}).Debug("ban node")
 
 	n, err := syspar.GetNodeByHost(host)
