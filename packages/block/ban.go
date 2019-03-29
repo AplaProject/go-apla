@@ -31,17 +31,13 @@ package block
 import (
 	"sync"
 	"time"
-)
 
-const (
-	badTime  = 5  // time period
-	maxBadTx = 3  // maximum bad tx during badTime minutes
-	banTime  = 15 // ban time in minutes
+	"github.com/AplaProject/go-apla/packages/conf"
 )
 
 type banKey struct {
-	Time time.Time           // banned till
-	Bad  [maxBadTx]time.Time // time of bad tx
+	Time time.Time   // banned till
+	Bad  []time.Time // time of bad tx
 }
 
 var (
@@ -58,8 +54,8 @@ func IsKeyBanned(keyID int64) bool {
 		if now.Before(ban.Time) {
 			return true
 		}
-		for i := 0; i < maxBadTx; i++ {
-			if ban.Bad[i].Add(badTime * time.Minute).After(now) {
+		for i := 0; i < conf.Config.BanKey.BadTx; i++ {
+			if ban.Bad[i].Add(time.Duration(conf.Config.BanKey.BadTime) * time.Minute).After(now) {
 				return false
 			}
 		}
@@ -94,8 +90,8 @@ func BadTxForBan(keyID int64) {
 	now := time.Now()
 	if ban, ok = banList[keyID]; ok {
 		var bMin, count int
-		for i := 0; i < maxBadTx; i++ {
-			if ban.Bad[i].Add(badTime * time.Minute).After(now) {
+		for i := 0; i < conf.Config.BanKey.BadTx; i++ {
+			if ban.Bad[i].Add(time.Duration(conf.Config.BanKey.BadTime) * time.Minute).After(now) {
 				count++
 			}
 			if i > bMin && ban.Bad[i].Before(ban.Bad[bMin]) {
@@ -103,11 +99,11 @@ func BadTxForBan(keyID int64) {
 			}
 		}
 		ban.Bad[bMin] = now
-		if count >= maxBadTx-1 {
-			ban.Time = now.Add(banTime * time.Minute)
+		if count >= conf.Config.BanKey.BadTx-1 {
+			ban.Time = now.Add(time.Duration(conf.Config.BanKey.BanTime) * time.Minute)
 		}
 	} else {
-		ban = banKey{}
+		ban = banKey{Bad: make([]time.Time, conf.Config.BanKey.BadTx)}
 		ban.Bad[0] = time.Now()
 	}
 	banList[keyID] = ban
