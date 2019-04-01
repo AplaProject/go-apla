@@ -302,7 +302,7 @@ func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 	if t.TxTime > checkTime {
 		if t.TxTime-consts.MAX_TX_FORW > checkTime {
 			logger.WithFields(log.Fields{"tx_max_forw": consts.MAX_TX_FORW, "type": consts.ParameterExceeded}).Error("time in the tx cannot be more than MAX_TX_FORW seconds of block time ")
-			return utils.ErrInfo(fmt.Errorf("transaction time is too big"))
+			return ErrNotComeTime
 		}
 		return ErrEarlyTime
 	}
@@ -310,14 +310,14 @@ func (t *Transaction) Check(checkTime int64, checkForDupTr bool) error {
 	// time in transaction cannot be less than -24 of block time
 	if t.TxTime < checkTime-consts.MAX_TX_BACK {
 		logger.WithFields(log.Fields{"tx_max_back": consts.MAX_TX_BACK, "type": consts.ParameterExceeded, "tx_time": t.TxTime}).Error("time in the tx cannot be less then -24 of block time")
-		return utils.ErrInfo(fmt.Errorf("incorrect transaction time"))
+		return ErrExpiredTime
 	}
 
 	if t.TxContract == nil {
 		if t.BlockData != nil && t.BlockData.BlockID != 1 {
 			if t.TxKeyID == 0 {
 				logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Empty user id")
-				return utils.ErrInfo(fmt.Errorf("empty user id"))
+				return ErrEmptyKey
 			}
 		}
 	}

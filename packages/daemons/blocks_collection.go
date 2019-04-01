@@ -55,8 +55,6 @@ import (
 var (
 	// ErrNodesUnavailable is returned when all nodes is unavailable
 	ErrNodesUnavailable = errors.New("All nodes unavailable")
-
-	ErrBlockNotReached = utils.WithBan(errors.New("host returns max block, but max block not reached"))
 )
 
 // BlocksCollection collects and parses blocks
@@ -277,7 +275,7 @@ func banNode(host string, blockID, blockTime int64, err error) {
 	}
 
 	reason := err.Error()
-	log.WithFields(log.Fields{"reason": reason, "host": host, "block_id": blockID, "block_time": blockTime}).Debug("ban node")
+	log.WithFields(log.Fields{"reason": reason, "host": host, "block_id": blockID, "block_time": blockTime}).Info("ban node")
 
 	n, err := syspar.GetNodeByHost(host)
 	if err != nil {

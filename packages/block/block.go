@@ -348,7 +348,7 @@ func (b *Block) Check() error {
 		}
 
 		if err := t.Check(b.Header.Time, false); err != nil {
-			return utils.WithBan(err)
+			return errors.Wrap(err, "check transaction")
 		}
 	}
 
