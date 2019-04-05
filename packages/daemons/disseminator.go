@@ -80,11 +80,7 @@ func sendTransactions(ctx context.Context, logger *log.Entry) error {
 		return nil
 	}
 
-	hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
-	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
-		return err
-	}
+	hosts := syspar.GetRemoteHosts()
 
 	if err := tcpclient.SendTransacitionsToAll(ctx, hosts, *trs); err != nil {
 		log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on sending transactions")
@@ -122,12 +118,17 @@ func sendBlockWithTxHashes(ctx context.Context, fullNodeID int64, logger *log.En
 		return nil
 	}
 
-	hosts, err := service.GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+	hosts, banHosts, err := service.GetNodesBanService().FilterHosts(syspar.GetRemoteHosts())
 	if err != nil {
 		log.WithFields(log.Fields{"error": err}).Error("on getting remotes hosts")
 		return err
 	}
-
+	if len(banHosts) > 0 {
+		if err := tcpclient.SendFullBlockToAll(ctx, banHosts, nil, *trs, fullNodeID); err != nil {
+			log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Warn("on sending block with hashes to ban hosts")
+			return err
+		}
+	}
 	if err := tcpclient.SendFullBlockToAll(ctx, hosts, block, *trs, fullNodeID); err != nil {
 		log.WithFields(log.Fields{"type": consts.TCPClientError, "error": err}).Warn("on sending block with hashes to all")
 		return err
