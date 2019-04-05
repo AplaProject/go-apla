@@ -124,6 +124,13 @@ func init() {
 	viper.BindPFlag("TokenMovement.From", configCmd.Flags().Lookup("tmovFrom"))
 	viper.BindPFlag("TokenMovement.Subject", configCmd.Flags().Lookup("tmovSubj"))
 
+	configCmd.Flags().IntVar(&conf.Config.BanKey.BadTime, "badTime", 5, "Period for bad tx (minutes)")
+	configCmd.Flags().IntVar(&conf.Config.BanKey.BanTime, "banTime", 15, "Ban time in minutes")
+	configCmd.Flags().IntVar(&conf.Config.BanKey.BadTx, "badTx", 3, "Maximum bad tx during badTime minutes")
+	viper.BindPFlag("BanKey.BadTime", configCmd.Flags().Lookup("badTime"))
+	viper.BindPFlag("BanKey.BanTime", configCmd.Flags().Lookup("banTime"))
+	viper.BindPFlag("BanKey.BadTx", configCmd.Flags().Lookup("badTx"))
+
 	// Etc
 	configCmd.Flags().StringVar(&conf.Config.PidFilePath, "pid", "",
 		fmt.Sprintf("Apla pid file name (default dataDir/%s)", consts.DefaultPidFilename),
