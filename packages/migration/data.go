@@ -109,6 +109,7 @@ var (
 		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 		"hash" bytea  NOT NULL DEFAULT '',
+		"rollbacks_hash" bytea NOT NULL DEFAULT '',
 		"block_id" int NOT NULL DEFAULT '0',
 		"node_position" int  NOT NULL DEFAULT '0',
 		"ecosystem_id" bigint NOT NULL DEFAULT '0',

@@ -72,7 +72,7 @@ var schemaOBS = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" int  NOT NULL DEFAULT '0',
 		"txhash" bytea  NOT NULL DEFAULT '',
-		"created_at" timestamp,
+		"created_at" bigint NOT NULL DEFAULT '0',
 		"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
 		ALTER TABLE ONLY "%[1]d_history" ADD CONSTRAINT "%[1]d_history_pkey" PRIMARY KEY (id);

@@ -35,7 +35,11 @@ CREATE TABLE "1_ecosystems" (
 		"id" bigint NOT NULL DEFAULT '0',
 		"name"	varchar(255) NOT NULL DEFAULT '',
 		"info" jsonb,
-		"is_valued" bigint NOT NULL DEFAULT '0'
+		"is_valued" bigint NOT NULL DEFAULT '0',
+		"emission_amount" jsonb,
+		"token_title" varchar(255),
+		"type_emission" bigint NOT NULL DEFAULT '0',
+		"type_withdraw" bigint NOT NULL DEFAULT '0'
 );
 ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
 
@@ -102,6 +106,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 	"pub" bytea  NOT NULL DEFAULT '',
 	"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
 	"maxpay" decimal(30) NOT NULL DEFAULT '0' CHECK (maxpay >= 0),
+	"deposit" decimal(30) NOT NULL DEFAULT '0' CHECK (deposit >= 0),
 	"multi" bigint NOT NULL DEFAULT '0',
 	"deleted" bigint NOT NULL DEFAULT '0',
 	"blocked" bigint NOT NULL DEFAULT '0',
@@ -116,6 +121,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"title" character varying(255) NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text NOT NULL DEFAULT '',
+		"permissions" jsonb,
 		"ecosystem" bigint NOT NULL DEFAULT '1',
 		UNIQUE (ecosystem, name)
 	);
@@ -130,6 +136,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"menu" character varying(255) NOT NULL DEFAULT '',
 		"validate_count" bigint NOT NULL DEFAULT '1',
 		"conditions" text NOT NULL DEFAULT '',
+		"permissions" jsonb,
 		"app_id" bigint NOT NULL DEFAULT '1',
 		"validate_mode" character(1) NOT NULL DEFAULT '0',
 		"ecosystem" bigint NOT NULL DEFAULT '1',
@@ -144,6 +151,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"name" character varying(255) NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text NOT NULL DEFAULT '',
+		"permissions" jsonb,
 		"app_id" bigint NOT NULL DEFAULT '1',
 		"ecosystem" bigint NOT NULL DEFAULT '1',
 		UNIQUE (ecosystem, name)
@@ -156,6 +164,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"name" character varying(100) NOT NULL DEFAULT '',
 		"res" text NOT NULL DEFAULT '',
 		"conditions" text NOT NULL DEFAULT '',
+		"permissions" jsonb,
 		"ecosystem" bigint NOT NULL DEFAULT '1'
 	  );
 	  ALTER TABLE ONLY "1_languages" ADD CONSTRAINT "1_languages_pkey" PRIMARY KEY (id);
@@ -168,6 +177,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"wallet_id" bigint NOT NULL DEFAULT '0',
 		"token_id" bigint NOT NULL DEFAULT '1',
 		"conditions" text  NOT NULL DEFAULT '',
+		"permissions" jsonb,
 		"app_id" bigint NOT NULL DEFAULT '1',
 		"ecosystem" bigint NOT NULL DEFAULT '1',
 		UNIQUE(ecosystem,name)
@@ -195,6 +205,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 	"name" varchar(255) NOT NULL DEFAULT '',
 	"value" text NOT NULL DEFAULT '',
 	"conditions" text  NOT NULL DEFAULT '',
+	"permissions" jsonb,
 	"ecosystem" bigint NOT NULL DEFAULT '1',
 	UNIQUE(ecosystem,name)
 	);
@@ -209,7 +220,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"comment" text NOT NULL DEFAULT '',
 		"block_id" bigint  NOT NULL DEFAULT '0',
 		"txhash" bytea  NOT NULL DEFAULT '',
-		"created_at" timestamp,
+		"created_at" bigint NOT NULL DEFAULT '0',
 		"ecosystem" bigint NOT NULL DEFAULT '1',
 		"type" bigint NOT NULL DEFAULT '1'
 		);
@@ -286,9 +297,9 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"page_params"	jsonb,
 			"processing_info" jsonb,
 			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_created"	timestamp,
-			"date_start_processing" timestamp,
-			"date_closed" timestamp,
+			"date_created"	bigint NOT NULL DEFAULT '0',
+			"date_start_processing" bigint NOT NULL DEFAULT '0',
+			"date_closed" bigint NOT NULL DEFAULT '0',
 			"closed" bigint NOT NULL DEFAULT '0',
 			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
@@ -328,12 +339,12 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		"name" varchar(255) NOT NULL DEFAULT '',
 		"value" text NOT NULL DEFAULT '',
 		"conditions" text  NOT NULL DEFAULT '',
+		"permissions" jsonb,
 		"ecosystem" bigint NOT NULL DEFAULT '1',
-		UNIQUE(ecosystem,name)
+		CONSTRAINT "1_app_params_ecosys_app_name_key" UNIQUE (ecosystem, app_id, name)
 		);
 		ALTER TABLE ONLY "1_app_params" ADD CONSTRAINT "1_app_params_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_app_params_index_name" ON "1_app_params" (ecosystem,name);
-		CREATE INDEX "1_app_params_index_app" ON "1_app_params" (ecosystem,app_id);
+		CREATE INDEX ON "1_app_params" (ecosystem,app_id,name);
 		
 		DROP TABLE IF EXISTS "1_buffer_data";
 		CREATE TABLE "1_buffer_data" (
@@ -355,8 +366,8 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"deleted"    bigint NOT NULL DEFAULT '0',
 			"role_type" bigint NOT NULL DEFAULT '0',
 			"creator" jsonb NOT NULL DEFAULT '{}',
-			"date_created" timestamp,
-			"date_deleted" timestamp,
+			"date_created" bigint NOT NULL DEFAULT '0',
+			"date_deleted" bigint NOT NULL DEFAULT '0',
 			"company_id" bigint NOT NULL DEFAULT '0',
 			"roles_access" jsonb, 
 			"image_id" bigint NOT NULL DEFAULT '0',
@@ -373,8 +384,8 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"role" jsonb,
 			"member" jsonb,
 			"appointed" jsonb,
-			"date_created" timestamp,
-			"date_deleted" timestamp,
+			"date_created" bigint NOT NULL DEFAULT '0',
+			"date_deleted" bigint NOT NULL DEFAULT '0',
 			"deleted" bigint NOT NULL DEFAULT '0',
 			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);

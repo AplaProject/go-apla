@@ -34,7 +34,6 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/migration/updates"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,21 +48,21 @@ var migrations = []*migration{
 	// Initial schema
 	&migration{"0.1.6", migrationInitialSchema},
 
-	&migration{"0.1.7", updates.M123}, // duplicate of 1.2.3 version
+	// &migration{"0.1.7", updates.M123}, // duplicate of 1.2.3 version
 }
 
 var updateMigrations = []*migration{
-	&migration{"1.0.7", updates.M107},
-	&migration{"1.1.4", updates.M114},
-	&migration{"1.1.5", updates.M115},
-	&migration{"1.2.0", updates.M120},
-	&migration{"1.2.1", updates.M121},
-	&migration{"1.2.2", updates.M122},
-	&migration{"1.2.3", updates.M123},
-	&migration{"1.2.4", updates.M124},
-	&migration{"1.2.5", updates.M125},
-	&migration{"1.2.6", updates.M126},
-	&migration{"1.2.7", updates.M127},
+	// &migration{"1.0.7", updates.M107},
+	// &migration{"1.1.4", updates.M114},
+	// &migration{"1.1.5", updates.M115},
+	// &migration{"1.2.0", updates.M120},
+	// &migration{"1.2.1", updates.M121},
+	// &migration{"1.2.2", updates.M122},
+	// &migration{"1.2.3", updates.M123},
+	// &migration{"1.2.4", updates.M124},
+	// &migration{"1.2.5", updates.M125},
+	// &migration{"1.2.6", updates.M126},
+	// &migration{"1.2.7", updates.M127},
 }
 
 type migration struct {
