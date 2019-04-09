@@ -50,7 +50,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
+var (
+	ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
+	ErrEmptyBlock            = errors.New("Block doesn't contain transactions")
+)
 
 // Block is storing block data
 type Block struct {
@@ -88,45 +91,26 @@ func (b *Block) PlaySafe() error {
 	err = b.Play(dbTransaction)
 	if err != nil {
 		dbTransaction.Rollback()
-
 		if b.GenBlock && len(b.Transactions) == 0 {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
 			}
 			BadTxForBan(inputTx[0].TxHeader.KeyID)
 			transaction.MarkTransactionBad(nil, inputTx[0].TxHash, err.Error())
-			return err
 		}
-
 		return err
 	}
 
-	if b.GenBlock && len(inputTx) != len(b.Transactions) {
-		trData := make([][]byte, 0, len(b.Transactions))
-		for _, tr := range b.Transactions {
-			trData = append(trData, tr.TxFullData)
+	if b.GenBlock {
+		if len(b.Transactions) == 0 {
+			dbTransaction.Commit()
+			return ErrEmptyBlock
+		} else if len(inputTx) != len(b.Transactions) {
+			if err = b.repeatMarshallBlock(); err != nil {
+				dbTransaction.Rollback()
+				return err
+			}
 		}
-		NodePrivateKey, _, err := utils.GetNodeKeys()
-		if err != nil || len(NodePrivateKey) < 1 {
-			log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
-			return err
-		}
-
-		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
-			return err
-		}
-
-		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
-			return err
-		}
-		b.BinData = newBlockData
-		b.Transactions = nb.Transactions
-		b.MrklRoot = nb.MrklRoot
-		b.SysUpdate = nb.SysUpdate
 	}
 
 	if err := UpdBlockInfo(dbTransaction, b); err != nil {
@@ -154,6 +138,35 @@ func (b *Block) PlaySafe() error {
 			notificator.UpdateNotifications(item.EcosystemID, item.List)
 		}
 	}
+	return nil
+}
+
+func (b *Block) repeatMarshallBlock() error {
+	trData := make([][]byte, 0, len(b.Transactions))
+	for _, tr := range b.Transactions {
+		trData = append(trData, tr.TxFullData)
+	}
+	NodePrivateKey, _, err := utils.GetNodeKeys()
+	if err != nil || len(NodePrivateKey) < 1 {
+		log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
+		return err
+	}
+
+	newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
+		return err
+	}
+
+	nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
+		return err
+	}
+	b.BinData = newBlockData
+	b.Transactions = nb.Transactions
+	b.MrklRoot = nb.MrklRoot
+	b.SysUpdate = nb.SysUpdate
 	return nil
 }
 
