@@ -1630,3 +1630,23 @@ func TestCost(t *testing.T) {
 	t.Error(`OK`)
 
 }
+
+func TestHard(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	name := randName(`h`)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	_, msg, err := postTxResult(`NewContract`, &form)
+	require.NoError(t, err)
+	fmt.Println(`MSg=`, msg)
+
+	for i := 0; i < 1000; i++ {
+		form = url.Values{"Id": {msg}, "Value": {fmt.Sprintf(`contract %s {action { 
+			Println("OK %d")
+		}}`, name, i)}, "Conditions": {`true`}, "nowait": {`true`}}
+		if err = postTx(`EditContract`, &form); err != nil {
+			t.Error(err)
+		}
+	}
+	t.Error(`OK`)
+}
