@@ -62,8 +62,8 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 
 	var (
 		cost            int64
-		err             error
 		rollbackInfoStr string
+		logData         map[string]string
 	)
 
 	logger := sc.GetLogger()
@@ -82,27 +82,25 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 	}
 
 	queryCoster := querycost.GetQueryCoster(querycost.FormulaQueryCosterType)
-
-	selectQuery, err := sqlBuilder.GetSelectExpr()
-	if err != nil {
-		logger.WithFields(log.Fields{"error": err}).Error("on getting sql select statement")
-		return 0, "", err
-	}
-
-	selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "where": inWhere}).Error("getting query total cost")
-		return 0, "", err
-	}
-
-	logData, err := model.GetOneRowTransaction(sc.DbTransaction, selectQuery).String()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting one row transaction")
-		return 0, "", err
-	}
-
-	cost += selectCost
 	if exists {
+		selectQuery, err := sqlBuilder.GetSelectExpr()
+		if err != nil {
+			logger.WithFields(log.Fields{"error": err}).Error("on getting sql select statement")
+			return 0, "", err
+		}
+
+		selectCost, err := queryCoster.QueryCost(sc.DbTransaction, selectQuery)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table, "query": selectQuery, "fields": fields, "values": ivalues, "where": inWhere}).Error("getting query total cost")
+			return 0, "", err
+		}
+
+		logData, err = model.GetOneRowTransaction(sc.DbTransaction, selectQuery).String()
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "query": selectQuery}).Error("getting one row transaction")
+			return 0, "", err
+		}
+		cost += selectCost
 		if len(logData) == 0 {
 			logger.WithFields(log.Fields{"type": consts.NotFound, "err": errUpdNotExistRecord, "table": table, "fields": fields, "values": shortString(fmt.Sprintf("%+v", ivalues), 100), "where": inWhere, "query": shortString(selectQuery, 100)}).Error("updating for not existing record")
 			return 0, "", errUpdNotExistRecord
