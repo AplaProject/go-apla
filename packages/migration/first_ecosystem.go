@@ -401,9 +401,9 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"page_params"	jsonb,
 			"processing_info" jsonb,
 			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_created"	timestamp,
-			"date_start_processing" timestamp,
-			"date_closed" timestamp,
+			"date_created"	bigint default '0'::bigint not null,
+			"date_start_processing" bigint default '0'::bigint not null,
+			"date_closed" bigint default '0'::bigint not null,
 			"closed" bigint NOT NULL DEFAULT '0',
 			"ecosystem" bigint NOT NULL DEFAULT '1'
 		);
