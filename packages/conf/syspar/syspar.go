@@ -32,7 +32,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
 	"sync"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -90,7 +89,7 @@ const (
 	// NodeBanTime is value of ban time for bad nodes (in ms)
 	NodeBanTime = `node_ban_time`
 	// LocalNodeBanTime is value of local ban time for bad nodes (in ms)
-	LocalNodeBanTime = `node_ban_time_local`
+	LocalNodeBanTime = `local_node_ban_time`
 	// CommissionSize is the value of the commission
 	CommissionSize = `commission_size`
 	// Test equals true or 1 if we have a test blockchain
@@ -106,14 +105,14 @@ var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	nodes           = make(map[int64]*FullNode)
-	nodesByPosition = make([]*FullNode, 0)
-	fuels           = make(map[int64]string)
-	wallets         = make(map[int64]string)
-	mutex           = &sync.RWMutex{}
-
+	nodes             = make(map[int64]*FullNode)
+	nodesByPosition   = make([]*FullNode, 0)
+	fuels             = make(map[int64]string)
+	wallets           = make(map[int64]string)
+	mutex             = &sync.RWMutex{}
 	firstBlockData    *consts.FirstBlock
 	errFirstBlockData = errors.New("Failed to get data of the first block")
+	errNodeDisabled   = errors.New("node is disabled")
 )
 
 // SysUpdate reloads/updates values of system parameters
@@ -165,15 +164,20 @@ func updateNodes() (err error) {
 	items := make([]*FullNode, 0)
 	if len(cache[FullNodes]) > 0 {
 		err = json.Unmarshal([]byte(cache[FullNodes]), &items)
+
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err, "v": cache[FullNodes]}).Error("unmarshalling full nodes from json")
 			return err
 		}
 	}
 
-	nodesByPosition = items
-	for _, item := range items {
-		nodes[item.KeyID] = item
+	nodesByPosition = []*FullNode{}
+	for i := 0; i < len(items); i++ {
+		nodes[items[i].KeyID] = items[i]
+
+		if !items[i].Stopped {
+			nodesByPosition = append(nodesByPosition, items[i])
+		}
 	}
 
 	return nil
@@ -213,12 +217,29 @@ func GetNodes() []FullNode {
 func GetNodePositionByKeyID(keyID int64) (int64, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
-	for i, item := range nodesByPosition {
-		if item.KeyID == keyID {
-			return int64(i), nil
+
+	var counter int64
+	for _, item := range nodesByPosition {
+		if item.Stopped {
+			if item.KeyID == keyID {
+				return 0, errNodeDisabled
+			}
+			continue
 		}
+
+		if item.KeyID == keyID {
+			return counter, nil
+		}
+
+		counter++
 	}
+
 	return 0, fmt.Errorf("Incorrect keyID")
+}
+
+// GetCountOfActiveNodes is count of nodes with stopped = false
+func GetCountOfActiveNodes() int64 {
+	return int64(len(nodesByPosition))
 }
 
 // GetNumberOfNodes is count number of nodes
@@ -285,49 +306,8 @@ func GetNodePublicKeyByPosition(position int64) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return nodeData.PublicKey, nil
-}
-
-// GetSleepTimeByKey is returns sleep time by key
-func GetSleepTimeByKey(myKeyID, prevBlockNodePosition int64) (int64, error) {
-
-	myPosition, err := GetNodePositionByKeyID(myKeyID)
-	if err != nil {
-		return 0, err
-	}
-	sleepTime := int64(0)
-	if myPosition == prevBlockNodePosition {
-		sleepTime = ((GetNumberOfNodes() + myPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if myPosition > prevBlockNodePosition {
-		sleepTime = (myPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if myPosition < prevBlockNodePosition {
-		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
-	}
-
-	return int64(sleepTime), nil
-}
-
-// GetSleepTimeByPosition is returns sleep time by position
-func GetSleepTimeByPosition(CurrentPosition, prevBlockNodePosition int64) (int64, error) {
-
-	sleepTime := int64(0)
-	if CurrentPosition == prevBlockNodePosition {
-		sleepTime = ((GetNumberOfNodes() + CurrentPosition) - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if CurrentPosition > prevBlockNodePosition {
-		sleepTime = (CurrentPosition - (prevBlockNodePosition)) * GetGapsBetweenBlocks()
-	}
-
-	if CurrentPosition < prevBlockNodePosition {
-		sleepTime = (GetNumberOfNodes() - prevBlockNodePosition) * GetGapsBetweenBlocks()
-	}
-
-	return int64(sleepTime), nil
 }
 
 // SysInt64 is converting sys string to int64
@@ -449,7 +429,7 @@ func GetRemoteHosts() []string {
 	defer mutex.RUnlock()
 
 	for keyID, item := range nodes {
-		if keyID != conf.Config.KeyID {
+		if keyID != conf.Config.KeyID && !item.Stopped {
 			ret = append(ret, item.TCPAddress)
 		}
 	}
@@ -488,6 +468,12 @@ func SetFirstBlockData(data *consts.FirstBlock) {
 	if len(nodesByPosition) == 0 {
 		keyID := crypto.Address(firstBlockData.PublicKey)
 		addFullNodeKeys(keyID, firstBlockData.NodePublicKey)
+
+		nodesByPosition = []*FullNode{&FullNode{
+			KeyID:     keyID,
+			PublicKey: firstBlockData.NodePublicKey,
+			Stopped:   false,
+		}}
 	}
 }
 
@@ -505,12 +491,8 @@ func GetFirstBlockData() (*consts.FirstBlock, error) {
 
 // IsPrivateBlockchain returns the value of private_blockchain system parameter or true
 func IsPrivateBlockchain() bool {
-	res, err := strconv.ParseBool(SysString(PrivateBlockchain))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ParameterExceeded, "error": err}).Error("getting private_blockchain system parameters")
-		return true
-	}
-	return res
+	par := SysString(PrivateBlockchain)
+	return len(par) > 0 && par != `0` && par != `false`
 }
 
 func GetMaxCost() int64 {

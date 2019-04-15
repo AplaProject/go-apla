@@ -33,10 +33,13 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.0"
+const VERSION = "1.2.7"
+
+const BV_ROLLBACK_HASH = 2
+const BV_INCLUDE_ROLLBACK_HASH = 3
 
 // BLOCK_VERSION is block version
-const BLOCK_VERSION = 1
+const BLOCK_VERSION = BV_INCLUDE_ROLLBACK_HASH
 
 // DEFAULT_TCP_PORT used when port number missed in host addr
 const DEFAULT_TCP_PORT = 7078
@@ -172,8 +175,8 @@ const TxRequestExpire = 1 * time.Minute
 // DefaultTempDirName is default name of temporary directory
 const DefaultTempDirName = "apla-temp"
 
-// DefaultVDE allways is 1
-const DefaultVDE = 1
+// DefaultOBS allways is 1
+const DefaultOBS = 1
 
 // MoneyLength is the maximum number of digits in money value
 const MoneyLength = 30
@@ -193,3 +196,10 @@ const GuestKey = `4544233900443112470`
 
 // GuestPublic is the public guest key
 const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86`
+
+// StatusMainPage is a status for Main Page
+const StatusMainPage = `2`
+
+const NoneVDE = "none"
+
+const DBFindLimit = 10000

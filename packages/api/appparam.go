@@ -31,23 +31,25 @@ package api
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
-func getAppParamHandler(w http.ResponseWriter, r *http.Request) {
-	form := &ecosystemForm{}
+func (m Mode) GetAppParamHandler(w http.ResponseWriter, r *http.Request) {
+	logger := getLogger(r)
+
+	form := &ecosystemForm{
+		Validator: m.EcosysIDValidator,
+	}
 	if err := parseForm(r, form); err != nil {
 		errorResponse(w, err, http.StatusBadRequest)
 		return
 	}
 
-	logger := getLogger(r)
 	params := mux.Vars(r)
 
 	ap := &model.AppParam{}

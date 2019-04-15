@@ -71,6 +71,7 @@ type blockInfoResult struct {
 	Time          int64  `json:"time"`
 	Tx            int32  `json:"tx_count"`
 	RollbacksHash []byte `json:"rollbacks_hash"`
+	NodePosition  int64  `json:"node_position"`
 }
 
 func getBlockInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -98,6 +99,7 @@ func getBlockInfoHandler(w http.ResponseWriter, r *http.Request) {
 		Time:          block.Time,
 		Tx:            block.Tx,
 		RollbacksHash: block.RollbacksHash,
+		NodePosition:  block.NodePosition,
 	})
 }
 
@@ -143,7 +145,7 @@ func getBlocksTxInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := map[int64][]TxInfo{}
 	for _, blockModel := range blocks {
-		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1, false)
+		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), false)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "bolck_id": blockModel.ID}).Error("on unmarshalling block")
 			errorResponse(w, err)
@@ -190,18 +192,18 @@ type TxDetailedInfo struct {
 type BlockHeaderInfo struct {
 	BlockID      int64  `json:"block_id"`
 	Time         int64  `json:"time"`
-	EcosystemID  int64  `json:"ecosystem_id"`
+	EcosystemID  int64  `json:"-"`
 	KeyID        int64  `json:"key_id"`
 	NodePosition int64  `json:"node_position"`
-	Sign         []byte `json:"sign"`
-	Hash         []byte `json:"hash"`
+	Sign         []byte `json:"-"`
+	Hash         []byte `json:"-"`
 	Version      int    `json:"version"`
 }
 
 type BlockDetailedInfo struct {
 	Header        BlockHeaderInfo  `json:"header"`
 	Hash          []byte           `json:"hash"`
-	EcosystemID   int64            `json:"ecosystem_id"`
+	EcosystemID   int64            `json:"-"`
 	NodePosition  int64            `json:"node_position"`
 	KeyID         int64            `json:"key_id"`
 	Time          int64            `json:"time"`
@@ -209,8 +211,8 @@ type BlockDetailedInfo struct {
 	RollbacksHash []byte           `json:"rollbacks_hash"`
 	MrklRoot      []byte           `json:"mrkl_root"`
 	BinData       []byte           `json:"bin_data"`
-	SysUpdate     bool             `json:"sys_update"`
-	GenBlock      bool             `json:"gen_block"`
+	SysUpdate     bool             `json:"-"`
+	GenBlock      bool             `json:"-"`
 	StopCount     int              `json:"stop_count"`
 	Transactions  []TxDetailedInfo `json:"transactions"`
 }
@@ -238,7 +240,7 @@ func getBlocksDetailedInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	result := map[int64]BlockDetailedInfo{}
 	for _, blockModel := range blocks {
-		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), blockModel.ID == 1, false)
+		blck, err := block.UnmarshallBlock(bytes.NewBuffer(blockModel.Data), false)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.UnmarshallingError, "error": err, "bolck_id": blockModel.ID}).Error("on unmarshalling block")
 			errorResponse(w, err)

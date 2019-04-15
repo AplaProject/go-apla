@@ -33,13 +33,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/types"
 
 	"github.com/dgrijalva/jwt-go"
-	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -85,7 +83,7 @@ func parseJWTToken(header string) (*jwt.Token, error) {
 	})
 }
 
-func getClientFromToken(token *jwt.Token) (*Client, error) {
+func getClientFromToken(token *jwt.Token, ecosysNameService types.EcosystemNameGetter) (*Client, error) {
 	claims, ok := token.Claims.(*JWTClaims)
 	if !ok {
 		return nil, nil
@@ -101,18 +99,12 @@ func getClientFromToken(token *jwt.Token) (*Client, error) {
 		RoleID:      converter.StrToInt64(claims.RoleID),
 	}
 
-	ecosystem := &model.Ecosystem{}
-	found, err := ecosystem.Get(client.EcosystemID)
+	sID := converter.StrToInt64(claims.EcosystemID)
+	name, err := ecosysNameService.GetEcosystemName(sID)
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on getting ecosystem from db")
-		return nil, err
-	}
-	if !found {
-		log.WithFields(log.Fields{"type": consts.NotFound, "id": client.EcosystemID, "error": errEcosystemNotFound}).Error("ecosystem not found")
 		return nil, err
 	}
 
-	client.EcosystemName = ecosystem.Name
-
+	client.EcosystemName = name
 	return client, nil
 }

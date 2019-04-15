@@ -30,7 +30,7 @@ package migration
 
 var firstSystemParametersDataSQL = `
 INSERT INTO "1_system_parameters" ("id","name", "value", "conditions") VALUES 
-	('1','default_ecosystem_page', '', 'ContractAccess("@1UpdateSysParam")'),
+	('1','default_ecosystem_page', 'If(#ecosystem_id# > 1){Include(@1welcome)}', 'ContractAccess("@1UpdateSysParam")'),
 	('2','default_ecosystem_menu', '', 'ContractAccess("@1UpdateSysParam")'),
 	('3','default_ecosystem_contract', '', 'ContractAccess("@1UpdateSysParam")'),
 	('4','gap_between_blocks', '2', 'ContractAccess("@1UpdateSysParam")'),

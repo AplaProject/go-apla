@@ -32,6 +32,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -48,6 +49,29 @@ import (
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
+
+var ErrSliceSize = errors.New("Slice size larger than buffer size")
+
+var FirstEcosystemTables = map[string]bool{
+	`keys`:               false,
+	`menu`:               true,
+	`pages`:              true,
+	`blocks`:             true,
+	`languages`:          true,
+	`contracts`:          true,
+	`tables`:             true,
+	`parameters`:         true,
+	`history`:            true,
+	`sections`:           true,
+	`members`:            false,
+	`roles`:              true,
+	`roles_participants`: true,
+	`notifications`:      true,
+	`applications`:       true,
+	`binaries`:           true,
+	`buffer_data`:        true,
+	`app_params`:         true,
+}
 
 // FillLeft is filling slice
 func FillLeft(slice []byte) []byte {
@@ -197,6 +221,17 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 	}
 
 	return n, nil
+}
+
+func DecodeBytesBuf(buf *bytes.Buffer) ([]byte, error) {
+	n, err := DecodeLengthBuf(buf)
+	if err != nil {
+		return nil, err
+	}
+	if buf.Len() < n {
+		return nil, ErrSliceSize
+	}
+	return buf.Next(n), nil
 }
 
 // BinMarshal converts v parameter to []byte slice.
@@ -858,7 +893,11 @@ func ParseName(in string) (id int64, name string) {
 func ParseTable(tblname string, defaultEcosystem int64) string {
 	ecosystem, name := ParseName(tblname)
 	if ecosystem == 0 {
-		ecosystem = defaultEcosystem
+		if FirstEcosystemTables[tblname] {
+			ecosystem = 1
+		} else {
+			ecosystem = defaultEcosystem
+		}
 		name = tblname
 	}
 	return strings.ToLower(fmt.Sprintf(`%d_%s`, ecosystem, Sanitize(name, ``)))

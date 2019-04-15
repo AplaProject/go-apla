@@ -230,7 +230,7 @@ var (
 			lexNewLine:                      {stateRoot, 0},
 			lexKeyword | (keyContract << 8): {stateContract | statePush, 0},
 			lexKeyword | (keyFunc << 8):     {stateFunc | statePush, 0},
-			0: {errUnknownCmd, cfError},
+			0:                               {errUnknownCmd, cfError},
 		},
 		{ // stateBody
 			lexNewLine:                      {stateBody, 0},
@@ -943,7 +943,7 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 			value = mapItem{Type: mapArray, Value: subArr}
 		}
 	case isLCurly:
-		subMap, err = vm.getInitMap(lexems, &i, block)
+		subMap, err = vm.getInitMap(lexems, &i, block, false)
 		if err == nil {
 			value = mapItem{Type: mapMap, Value: subMap}
 		}
@@ -965,8 +965,12 @@ func (vm *VM) getInitValue(lexems *Lexems, ind *int, block *[]*Block) (value map
 	return
 }
 
-func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block) (*types.Map, error) {
-	i := *ind + 1
+func (vm *VM) getInitMap(lexems *Lexems, ind *int, block *[]*Block, oneItem bool) (*types.Map, error) {
+	var next int
+	if !oneItem {
+		next = 1
+	}
+	i := *ind + next
 	key := ``
 	ret := types.NewMap()
 	state := mustKey
@@ -978,6 +982,11 @@ main:
 			continue
 		case isRCurly:
 			break main
+		case isComma, isRBrack:
+			if oneItem {
+				*ind = i - 1
+				return ret, nil
+			}
 		}
 		switch state {
 		case mustComma:
@@ -994,6 +1003,8 @@ main:
 			switch lexem.Type & 0xff {
 			case lexIdent:
 				key = lexem.Value.(string)
+			case lexExtend:
+				key = `$` + lexem.Value.(string)
 			case lexString:
 				key = lexem.Value.(string)
 			case lexKeyword:
@@ -1046,11 +1057,19 @@ main:
 			}
 			state = mustValue
 		case mustValue:
-			arri, err := vm.getInitValue(lexems, &i, block)
-			if err != nil {
-				return nil, err
+			if i+1 < len(*lexems) && (*lexems)[i+1].Type == isColon {
+				subMap, err := vm.getInitMap(lexems, &i, block, true)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, mapItem{Type: mapMap, Value: subMap})
+			} else {
+				arri, err := vm.getInitValue(lexems, &i, block)
+				if err != nil {
+					return nil, err
+				}
+				ret = append(ret, arri)
 			}
-			ret = append(ret, arri)
 			state = mustComma
 		}
 	}
@@ -1085,6 +1104,7 @@ func (vm *VM) compileEval(lexems *Lexems, ind *int, block *[]*Block) error {
 	parcount := make([]int, 0, 20)
 	setIndex := false
 	noMap := false
+	prevLex := uint32(0)
 main:
 	for ; i < len(*lexems); i++ {
 		var cmd *ByteCode
@@ -1093,7 +1113,7 @@ main:
 		logger := lexem.GetLogger()
 		if !noMap {
 			if lexem.Type == isLCurly {
-				pMap, err := vm.getInitMap(lexems, &i, block)
+				pMap, err := vm.getInitMap(lexems, &i, block, false)
 				if err != nil {
 					return err
 				}
@@ -1114,6 +1134,9 @@ main:
 		switch lexem.Type {
 		case isRCurly, isLCurly:
 			i--
+			if prevLex == isComma || prevLex == lexOper {
+				return errEndExp
+			}
 			break main
 		case lexNewLine:
 			if i > 0 && ((*lexems)[i-1].Type == isComma || (*lexems)[i-1].Type == lexOper) {
@@ -1264,6 +1287,9 @@ main:
 					bytecode = append(bytecode, prev)
 				}
 			}
+			if (*lexems)[i+1].Type == isLBrack {
+				return errMultiIndex
+			}
 		case lexOper:
 			if oper, ok := opers[lexem.Value.(uint32)]; ok {
 				var prevType uint32
@@ -1275,6 +1301,8 @@ main:
 					prevType != isRBrack && prevType != isRPar)) {
 					oper.Cmd = cmdSign
 					oper.Priority = cmdUnary
+				} else if prevLex == lexOper && oper.Priority != cmdUnary {
+					return errOper
 				}
 				byteOper := &ByteCode{oper.Cmd, oper.Priority}
 				for {
@@ -1411,6 +1439,9 @@ main:
 				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
 			}
 		}
+		if lexem.Type != lexNewLine {
+			prevLex = lexem.Type
+		}
 		if lexem.Type&0xff == lexKeyword {
 			if lexem.Value.(uint32) == keyTail {
 				cmd = &ByteCode{cmdUnwrapArr, 0}
@@ -1421,6 +1452,9 @@ main:
 		}
 	}
 	*ind = i
+	if prevLex == lexOper {
+		return errEndExp
+	}
 	for i := len(buffer) - 1; i >= 0; i-- {
 		if buffer[i].Cmd == cmdSys {
 			log.WithFields(log.Fields{"type": consts.ParseError}).Error("there is not pair")

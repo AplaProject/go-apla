@@ -76,27 +76,24 @@ var firstEcosystemPagesDataSQL = `INSERT INTO "1_pages" (id, name, value, menu, 
         }
         If(#import_id# > 0){
             Div(list-group-item text-right){
-                Button(Body: "Import", Class: btn btn-primary, Page: @1apps_list).CompositeContract(@1Import, "#import_value_data#")
+                VarAsIs(imp_data, "#import_value_data#")
+                Button(Body: "Import", Class: btn btn-primary, Page: @1apps_list).CompositeContract(@1Import, "#imp_data#")
             }
         }
     }
 }', 'developer_menu', 'ContractConditions("@1DeveloperCondition")', '1', '1'),
 	(next_id('1_pages'), 'import_upload', 'Div(content-wrapper){
-    SetTitle("Import")
-    Div(breadcrumb){
-        Span(Class: text-muted, Body: "Select payload that you want to import")
-    }
-    If(#ecosystem_id#>1){
-        AddToolButton(Title: "Install platform apps", Page: @1platform_apps, Icon: icon-cloud-upload)
-    }
-
-    Form(panel panel-primary){
-        Div(list-group-item){
-            Input(Name: input_file, Type: file)
+        SetTitle("Import")
+        Div(breadcrumb){
+            Span(Class: text-muted, Body: "Select payload that you want to import")
         }
-        Div(list-group-item text-right){
-            Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: @1import_app)
+        Form(panel panel-primary){
+            Div(list-group-item){
+                Input(Name: Data, Type: file)
+            }
+            Div(list-group-item text-right){
+                Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: @1import_app)
+            }
         }
-    }
-}', 'developer_menu', 'ContractConditions("@1DeveloperCondition")', '1', '1');
+    }', 'developer_menu', 'ContractConditions("@1DeveloperCondition")', '1', '1');
 `

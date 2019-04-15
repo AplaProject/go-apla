@@ -74,12 +74,14 @@ func init() {
 	configCmd.Flags().StringVar(&conf.Config.DB.User, "dbUser", "postgres", "DB username")
 	configCmd.Flags().StringVar(&conf.Config.DB.Password, "dbPassword", "apla", "DB password")
 	configCmd.Flags().IntVar(&conf.Config.DB.LockTimeout, "dbLockTimeout", 5000, "DB lock timeout")
+	configCmd.Flags().IntVar(&conf.Config.DB.IdleInTxTimeout, "dbIdleInTxTimeout", 5000, "DB idle tx timeout")
 	viper.BindPFlag("DB.Name", configCmd.Flags().Lookup("dbName"))
 	viper.BindPFlag("DB.Host", configCmd.Flags().Lookup("dbHost"))
 	viper.BindPFlag("DB.Port", configCmd.Flags().Lookup("dbPort"))
 	viper.BindPFlag("DB.User", configCmd.Flags().Lookup("dbUser"))
 	viper.BindPFlag("DB.Password", configCmd.Flags().Lookup("dbPassword"))
 	viper.BindPFlag("DB.LockTimeout", configCmd.Flags().Lookup("dbLockTimeout"))
+	viper.BindPFlag("DB.IdleInTxTimeout", configCmd.Flags().Lookup("dbIdleInTxTimeout"))
 
 	// StatsD
 	configCmd.Flags().StringVar(&conf.Config.StatsD.Host, "statsdHost", "127.0.0.1", "StatsD host")
@@ -123,6 +125,13 @@ func init() {
 	viper.BindPFlag("TokenMovement.From", configCmd.Flags().Lookup("tmovFrom"))
 	viper.BindPFlag("TokenMovement.Subject", configCmd.Flags().Lookup("tmovSubj"))
 
+	configCmd.Flags().IntVar(&conf.Config.BanKey.BadTime, "badTime", 5, "Period for bad tx (minutes)")
+	configCmd.Flags().IntVar(&conf.Config.BanKey.BanTime, "banTime", 15, "Ban time in minutes")
+	configCmd.Flags().IntVar(&conf.Config.BanKey.BadTx, "badTx", 3, "Maximum bad tx during badTime minutes")
+	viper.BindPFlag("BanKey.BadTime", configCmd.Flags().Lookup("badTime"))
+	viper.BindPFlag("BanKey.BanTime", configCmd.Flags().Lookup("banTime"))
+	viper.BindPFlag("BanKey.BadTx", configCmd.Flags().Lookup("badTx"))
+
 	// Etc
 	configCmd.Flags().StringVar(&conf.Config.PidFilePath, "pid", "",
 		fmt.Sprintf("Apla pid file name (default dataDir/%s)", consts.DefaultPidFilename),
@@ -140,8 +149,8 @@ func init() {
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
 	configCmd.Flags().Int64Var(&conf.Config.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
-	configCmd.Flags().StringVar(&conf.Config.VDEMode, "vdeMode", "none", "VDE running mode")
 	configCmd.Flags().Int64Var(&conf.Config.NetworkID, "networkID", 1, "Network ID")
+	configCmd.Flags().StringVar(&conf.Config.OBSMode, "obsMode", consts.NoneVDE, "OBS running mode")
 
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
 	viper.BindPFlag("LockFilePath", configCmd.Flags().Lookup("lock"))
@@ -155,6 +164,6 @@ func init() {
 	viper.BindPFlag("HTTPServerMaxBodySize", configCmd.Flags().Lookup("mbs"))
 	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
 	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
-	viper.BindPFlag("VDEMode", configCmd.Flags().Lookup("vdeMode"))
 	viper.BindPFlag("NetworkID", configCmd.Flags().Lookup("networkID"))
+	viper.BindPFlag("OBSMode", configCmd.Flags().Lookup("obsMode"))
 }

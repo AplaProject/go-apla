@@ -48,7 +48,6 @@ import (
 
 const (
 	tagText = `text`
-	tagData = `data`
 	maxDeep = 16
 )
 
@@ -66,10 +65,16 @@ type Source struct {
 	Data    *[][]string
 }
 
+// Var stores value and additional parameter of variable
+type Var struct {
+	Value string
+	AsIs  bool
+}
+
 // Workspace represents a workspace of executable template
 type Workspace struct {
 	Sources       *map[string]Source
-	Vars          *map[string]string
+	Vars          *map[string]Var
 	SmartContract *smart.SmartContract
 	Timeout       *bool
 }
@@ -189,7 +194,7 @@ func setAllAttr(par parFunc) {
 			if len(imap) > 0 {
 				par.Node.Attr[strings.ToLower(key)] = imap
 			}
-		} else if key != `Body` && (key != `Data` || (*par.Workspace.Vars)[`_full`] == `1`) &&
+		} else if key != `Body` && (key != `Data` || getVar(par.Workspace, `_full`) == `1`) &&
 			len(v) > 0 {
 			par.Node.Attr[strings.ToLower(key)] = v
 		}
@@ -234,8 +239,8 @@ func ifValue(val string, workspace *Workspace) bool {
 	cond := []string{val}
 	if len(sep) > 0 {
 		cond = strings.SplitN(val, sep, 2)
-		cond[0], cond[1] = macro(strings.Trim(cond[0], `"`), workspace.Vars),
-			macro(strings.Trim(cond[1], `"`), workspace.Vars)
+		cond[0], cond[1] = macro(strings.Trim(strings.TrimSpace(cond[0]), `"`), workspace.Vars),
+			macro(strings.Trim(strings.TrimSpace(cond[1]), `"`), workspace.Vars)
 	} else {
 		val = macro(val, workspace.Vars)
 	}
@@ -265,7 +270,7 @@ func ifValue(val string, workspace *Workspace) bool {
 	return false
 }
 
-func replace(input string, level *[]string, vars *map[string]string) string {
+func replace(input string, level *[]string, vars *map[string]Var) string {
 	if len(input) == 0 {
 		return input
 	}
@@ -291,7 +296,8 @@ func replace(input string, level *[]string, vars *map[string]string) string {
 			continue
 		}
 		if isName {
-			if value, ok := (*vars)[string(name)]; ok {
+			if varValue, ok := (*vars)[string(name)]; ok {
+				value := varValue.Value
 				var loop bool
 				if len(*level) < maxDeep {
 					for _, item := range *level {
@@ -304,17 +310,17 @@ func replace(input string, level *[]string, vars *map[string]string) string {
 					loop = true
 				}
 				if !loop {
-					*level = append(*level, string(name))
-					value = replace(value, level, vars)
-					*level = (*level)[:len(*level)-1]
+					if !varValue.AsIs {
+						*level = append(*level, string(name))
+						value = replace(value, level, vars)
+						*level = (*level)[:len(*level)-1]
+					}
 					result = append(result, []rune(value)...)
 				} else {
 					result = append(append(result, syschar), append(name, syschar)...)
 				}
-				isName = false
-			} else {
-				result = append(append(result, syschar), name...)
 			}
+			isName = false
 			name = name[:0]
 		} else {
 			isName = true
@@ -326,14 +332,14 @@ func replace(input string, level *[]string, vars *map[string]string) string {
 	return string(result)
 }
 
-func macro(input string, vars *map[string]string) string {
-	if (*vars)[`_full`] == `1` || strings.IndexByte(input, '#') == -1 {
+func macro(input string, vars *map[string]Var) string {
+	if (*vars)[`_full`].Value == `1` || strings.IndexByte(input, '#') == -1 {
 		return input
 	}
 	return macroReplace(input, vars)
 }
 
-func macroReplace(input string, vars *map[string]string) string {
+func macroReplace(input string, vars *map[string]Var) string {
 	level := make([]string, 0, maxDeep)
 	return replace(input, &level, vars)
 }
@@ -398,10 +404,10 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 			}
 		}
 	}
-	state := int(converter.StrToInt64((*workspace.Vars)[`ecosystem_id`]))
-	if (*workspace.Vars)[`_full`] != `1` {
+	state := int(converter.StrToInt64(getVar(workspace, `ecosystem_id`)))
+	if getVar(workspace, `_full`) != `1` {
 		for i, v := range pars {
-			pars[i] = language.LangMacro(v, state, (*workspace.Vars)[`lang`])
+			pars[i] = language.LangMacro(v, state, getVar(workspace, `lang`))
 			if pars[i] != v {
 				if parFunc.RawPars == nil {
 					rawpars := make(map[string]string)
@@ -415,7 +421,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		curNode.Tag = curFunc.Tag
 		curNode.Attr = make(map[string]interface{})
 		if len(pars[`Body`]) > 0 && curFunc.Tag != `custom` {
-			if (curFunc.Tag != `if` && curFunc.Tag != `elseif`) || (*workspace.Vars)[`_full`] == `1` {
+			if (curFunc.Tag != `if` && curFunc.Tag != `elseif`) || getVar(workspace, `_full`) == `1` {
 				process(pars[`Body`], &curNode, workspace)
 			}
 		}
@@ -427,7 +433,7 @@ func callFunc(curFunc *tplFunc, owner *node, workspace *Workspace, params *[][]r
 		return
 	}
 	parFunc.Pars = &pars
-	if (*workspace.Vars)[`_full`] == `1` {
+	if getVar(workspace, `_full`) == `1` {
 		out = curFunc.Full(parFunc)
 	} else {
 		out = curFunc.Func(parFunc)
@@ -668,8 +674,9 @@ func process(input string, owner *node, workspace *Workspace) {
 		params         *[][]rune
 		tailpars       *[]*[][]rune
 	)
+	inrune := []rune(input)
 	name := make([]rune, 0, 128)
-	for off, ch := range input {
+	for off, ch := range inrune {
 		if shift > 0 {
 			shift--
 			continue
@@ -682,11 +689,12 @@ func process(input string, owner *node, workspace *Workspace) {
 				appendText(owner, macro(string(name[:nameOff]), workspace.Vars))
 				name = name[:0]
 				nameOff = 0
-				params, shift, tailpars = getFunc(input[off:], curFunc)
+				params, shift, tailpars = getFunc(string(inrune[off:]), curFunc)
 				callFunc(&curFunc, owner, workspace, params, tailpars)
-				for off+shift+3 < len(input) && input[off+shift+1:off+shift+3] == `.(` {
+				for off+shift+3 < len([]rune(input)) &&
+					string(inrune[off+shift+1:off+shift+3]) == `.(` {
 					var next int
-					params, next, tailpars = getFunc(input[off+shift+2:], curFunc)
+					params, next, tailpars = getFunc(string(inrune[off+shift+2:]), curFunc)
 					callFunc(&curFunc, owner, workspace, params, tailpars)
 					shift += next + 2
 				}
@@ -719,9 +727,9 @@ func parseArg(arg string, workspace *Workspace) (val string) {
 // Template2JSON converts templates to JSON data
 func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte {
 	root := node{}
-	isvde := (*vars)[`vde`] == `true` || (*vars)[`vde`] == `1`
+	isobs := (*vars)[`obs`] == `true` || (*vars)[`obs`] == `1`
 	sc := smart.SmartContract{
-		VDE: isvde,
+		OBS: isobs,
 		VM:  smart.GetVM(),
 		TxSmart: tx.SmartContract{
 			Header: tx.Header{
@@ -731,13 +739,14 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 			},
 		},
 	}
-	process(input, &root, &Workspace{Vars: vars, Timeout: timeout, SmartContract: &sc})
+	toVars := mapToVar(*vars)
+	process(input, &root, &Workspace{Vars: toVars, Timeout: timeout, SmartContract: &sc})
 	if root.Children == nil || *timeout {
 		return []byte(`[]`)
 	}
 	for i, v := range root.Children {
 		if v.Tag == `text` {
-			root.Children[i].Text = macro(v.Text, vars)
+			root.Children[i].Text = macro(v.Text, toVars)
 		}
 	}
 	out, err := json.Marshal(root.Children)
@@ -746,4 +755,81 @@ func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte 
 		return []byte(err.Error())
 	}
 	return out
+}
+
+func splitArray(in []rune) []string {
+	var quote, trim rune
+	var off int
+	ret := make([]string, 0, 32)
+	brace := make([]rune, 0, 32)
+	if len(in) == 0 {
+		return ret
+	}
+	if in[0] == '[' && in[len(in)-1] == ']' {
+		in = in[1 : len(in)-1]
+	}
+	newPar := func(cur int) {
+		par := strings.TrimSpace(string(in[off:cur]))
+		if rune(par[len(par)-1]) == trim {
+			par = par[:len(par)-1]
+		}
+		ret = append(ret, par)
+	}
+	for i, ch := range in {
+		if ch == '[' {
+			brace = append(brace, ']')
+		}
+		if ch == '{' {
+			brace = append(brace, '}')
+		}
+		if len(brace) > 0 {
+			if ch == brace[len(brace)-1] {
+				brace = brace[:len(brace)-1]
+			}
+			continue
+		}
+		if ch == quote {
+			quote = 0
+			continue
+		}
+		if quote != 0 {
+			continue
+		}
+		if ch == ' ' && off == i {
+			off++
+			continue
+		}
+		if ch == '"' || ch == '`' || ch == '\'' {
+			quote = ch
+			if off == i {
+				trim = ch
+				off++
+			}
+		}
+		if ch == ',' {
+			newPar(i)
+			off = i + 1
+			trim = 0
+		}
+	}
+	if off < len(in) {
+		newPar(len(in))
+	}
+	return ret
+}
+
+func setVar(par *Workspace, key, value string) {
+	(*par.Vars)[key] = Var{Value: value}
+}
+
+func getVar(par *Workspace, key string) string {
+	return (*par.Vars)[key].Value
+}
+
+func mapToVar(in map[string]string) *map[string]Var {
+	ret := make(map[string]Var)
+	for key, v := range in {
+		ret[key] = Var{Value: v}
+	}
+	return &ret
 }

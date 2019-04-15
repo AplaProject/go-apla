@@ -31,10 +31,7 @@ package tcpserver
 import (
 	"net"
 	"strings"
-	"sync/atomic"
 	"time"
-
-	"github.com/AplaProject/go-apla/packages/conf"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/network"
@@ -43,21 +40,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	counter int64
-)
-
 // HandleTCPRequest proceed TCP requests
 func HandleTCPRequest(rw net.Conn) {
-	defer func() {
-		atomic.AddInt64(&counter, -1)
-	}()
-
-	count := atomic.AddInt64(&counter, +1)
-	if count > 20 {
-		return
-	}
-
 	dType := &network.RequestType{}
 	err := dType.Read(rw)
 	if err != nil {
@@ -120,10 +104,6 @@ func HandleTCPRequest(rw net.Conn) {
 
 // TcpListener is listening tcp address
 func TcpListener(laddr string) error {
-
-	if conf.Config.IsSupportingVDE() {
-		return nil
-	}
 
 	if strings.HasPrefix(laddr, "127.") {
 		log.Warn("Listening at local address: ", laddr)

@@ -35,6 +35,8 @@ var rollbackCmd = &cobra.Command{
 		if err := syspar.SysUpdate(nil); err != nil {
 			log.WithError(err).Error("can't read system parameters")
 		}
+
+		smart.InitVM()
 		if err := smart.LoadContracts(); err != nil {
 			log.WithError(err).Fatal("loading contracts")
 			return

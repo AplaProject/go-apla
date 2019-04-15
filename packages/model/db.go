@@ -36,8 +36,9 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/migration"
-	"github.com/AplaProject/go-apla/packages/migration/vde"
+	"github.com/AplaProject/go-apla/packages/migration/obs"
 
 	"github.com/jinzhu/gorm"
 	log "github.com/sirupsen/logrus"
@@ -55,33 +56,12 @@ var (
 
 	// ErrDBConn database connection error
 	ErrDBConn = errors.New("Database connection error")
-
-	FirstEcosystemTables = map[string]bool{
-		`keys`:               false,
-		`menu`:               true,
-		`pages`:              true,
-		`blocks`:             true,
-		`languages`:          true,
-		`contracts`:          true,
-		`tables`:             true,
-		`parameters`:         true,
-		`history`:            true,
-		`sections`:           true,
-		`members`:            false,
-		`roles`:              true,
-		`roles_participants`: true,
-		`notifications`:      true,
-		`applications`:       true,
-		`binaries`:           true,
-		`buffer_data`:        true,
-		`app_params`:         true,
-	}
 )
 
 type KeyTableChecker struct{}
 
 func (ktc KeyTableChecker) IsKeyTable(tableName string) bool {
-	val, exist := FirstEcosystemTables[tableName]
+	val, exist := converter.FirstEcosystemTables[tableName]
 	return exist && !val
 }
 
@@ -109,6 +89,21 @@ func GormInit(host string, port int, user string, pass string, dbName string) er
 		DBConn = nil
 		return err
 	}
+
+	return setupConnOptions(DBConn)
+}
+
+func setupConnOptions(conr *gorm.DB) error {
+	if err := DBConn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
+		return err
+	}
+
+	if err := DBConn.Exec(fmt.Sprintf(`set idle_in_transaction_session_timeout = %d;`, conf.Config.DB.IdleInTxTimeout)).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set idle_in_transaction_session_timeout")
+		return err
+	}
+
 	return nil
 }
 
@@ -136,11 +131,11 @@ func StartTransaction() (*DbTransaction, error) {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": conn.Error}).Error("cannot start transaction because of connection error")
 		return nil, conn.Error
 	}
-	err := conn.Exec(fmt.Sprintf(`set lock_timeout = %d;`, conf.Config.DB.LockTimeout)).Error
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("can't set lock timeout")
+
+	if err := setupConnOptions(conn); err != nil {
 		return nil, err
 	}
+
 	return &DbTransaction{
 		conn: conn,
 	}, nil
@@ -235,10 +230,15 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 	return nil
 }
 
-// ExecSchemaLocalData is executing schema with local data
-func ExecSchemaLocalData(id int, wallet int64) error {
-	if err := DBConn.Exec(fmt.Sprintf(vde.GetVDEScript(), id, wallet)).Error; err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing vde script")
+// ExecOBSSchema is executing schema for off blockchainService
+func ExecOBSSchema(id int, wallet int64) error {
+	if !conf.Config.IsSupportingOBS() {
+		return nil
+	}
+
+	query := fmt.Sprintf(obs.GetOBSScript(), id, wallet)
+	if err := DBConn.Exec(query).Error; err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing obs script")
 		return err
 	}
 
@@ -486,11 +486,9 @@ func InitDB(cfg conf.DBConfig) error {
 		return err
 	}
 
-	if conf.Config.IsSupportingVDE() {
-		if err := ExecSchemaLocalData(consts.DefaultVDE, conf.Config.KeyID); err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating VDE schema")
-			return err
-		}
+	if err := ExecOBSSchema(consts.DefaultOBS, conf.Config.KeyID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("creating OBS schema")
+		return err
 	}
 
 	return nil

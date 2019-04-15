@@ -36,6 +36,7 @@ import (
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"time"
 	"unsafe"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -64,6 +65,7 @@ const (
 	maxMapCount   = 100000
 	maxCallDepth  = 1000
 	memoryLimit   = 128 << 20 // 128 MB
+	MaxErrLen     = 150
 )
 
 var sysVars = map[string]struct{}{
@@ -84,9 +86,14 @@ var sysVars = map[string]struct{}{
 	`txcost`:            {},
 	`txhash`:            {},
 	`guest_key`:         {},
+	`gen_block`:         {},
+	`time_limit`:        {},
 }
 
-var ErrMemoryLimit = errors.New("Memory limit exceeded")
+var (
+	ErrMemoryLimit = errors.New("Memory limit exceeded")
+	ErrVMTimeLimit = errors.New(`time limit exceeded`)
+)
 
 // VMError represents error of VM
 type VMError struct {
@@ -109,6 +116,7 @@ type RunTime struct {
 	cost      int64
 	err       error
 	unwrap    bool
+	timeLimit bool
 	callDepth uint16
 	mem       int64
 	memVars   map[interface{}]int64
@@ -471,7 +479,11 @@ func (vm *VM) RunInit(cost int64) *RunTime {
 
 // SetVMError sets error of VM
 func SetVMError(eType string, eText interface{}) error {
-	out, err := json.Marshal(&VMError{Type: eType, Error: fmt.Sprintf(`%v`, eText)})
+	errText := fmt.Sprintf(`%v`, eText)
+	if len(errText) > MaxErrLen {
+		errText = errText[:MaxErrLen] + `...`
+	}
+	out, err := json.Marshal(&VMError{Type: eType, Error: errText})
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("marshalling VMError")
 		out = []byte(`{"type": "panic", "error": "marshalling VMError"}`)
@@ -530,6 +542,33 @@ func (rt *RunTime) getResultMap(cmd *types.Map) (*types.Map, error) {
 	return initMap, nil
 }
 
+func isSelfAssignment(dest, value interface{}) bool {
+	if _, ok := value.([]interface{}); !ok {
+		if _, ok = value.(*types.Map); !ok {
+			return false
+		}
+	}
+	if reflect.ValueOf(dest).Pointer() == reflect.ValueOf(value).Pointer() {
+		return true
+	}
+	switch v := value.(type) {
+	case []interface{}:
+		for _, item := range v {
+
+			if isSelfAssignment(dest, item) {
+				return true
+			}
+		}
+	case *types.Map:
+		for _, item := range v.Values() {
+			if isSelfAssignment(dest, item) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // RunCode executes Block
 func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	top := make([]interface{}, 8)
@@ -561,9 +600,6 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 	if namemap != nil {
 		for key, item := range namemap {
 			params := (*block.Info.(*FuncInfo).Names)[key]
-			if params.Variadic {
-
-			}
 			for i, value := range item {
 				if params.Variadic && i >= len(params.Params)-1 {
 					off := varoff + params.Offset[len(params.Params)-1]
@@ -588,6 +624,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		if rt.cost <= 0 {
 			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn("paid CPU resource is over")
 			return 0, fmt.Errorf(`paid CPU resource is over`)
+		}
+		if rt.timeLimit {
+			return 0, ErrVMTimeLimit
 		}
 
 		if rt.mem > memoryLimit {
@@ -803,6 +842,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 						break
 					}
 				}
+			}
+			if isSelfAssignment(rt.stack[size-3], rt.stack[size-1]) {
+				return 0, errSelfAssignment
 			}
 
 			switch {
@@ -1085,6 +1127,13 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					default:
 						return 0, errUnsupportedType
 					}
+				case bool:
+					switch top[0].(type) {
+					case bool:
+						bin = top[1].(bool) == top[0].(bool)
+					default:
+						return 0, errUnsupportedType
+					}
 				default:
 					if tmpDec, err = ValueToDecimal(top[0]); err != nil {
 						return 0, err
@@ -1233,11 +1282,27 @@ func (rt *RunTime) Run(block *Block, params []interface{}, extend *map[string]in
 	}()
 	info := block.Info.(*FuncInfo)
 	rt.extend = extend
+	var (
+		genBlock bool
+		timer    *time.Timer
+	)
+	if gen, ok := (*extend)[`gen_block`]; ok {
+		genBlock = gen.(bool)
+	}
+	timeOver := func() {
+		rt.timeLimit = true
+	}
+	if genBlock {
+		timer = time.AfterFunc(time.Millisecond*time.Duration((*extend)[`time_limit`].(int64)), timeOver)
+	}
 	if _, err = rt.RunCode(block); err == nil {
 		off := len(rt.stack) - len(info.Results)
 		for i := 0; i < len(info.Results); i++ {
 			ret = append(ret, rt.stack[off+i])
 		}
+	}
+	if genBlock {
+		timer.Stop()
 	}
 	return
 }

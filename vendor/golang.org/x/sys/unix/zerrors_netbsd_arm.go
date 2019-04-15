@@ -250,7 +250,7 @@ const (
 	DLT_LAPB_WITH_DIR                 = 0xcf
 	DLT_LAPD                          = 0xcb
 	DLT_LIN                           = 0xd4
-	DLT_LINUX_EVDEV                   = 0xd8
+	DLT_LINUX_EOBSV                   = 0xd8
 	DLT_LINUX_IRDA                    = 0x90
 	DLT_LINUX_LAPD                    = 0xb1
 	DLT_LINUX_SLL                     = 0x71

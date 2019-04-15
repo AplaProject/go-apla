@@ -93,7 +93,10 @@ func (n *NodeActualizer) checkBlockchainActuality(ctx context.Context) (bool, er
 		return false, errors.Wrapf(err, "retrieving info block")
 	}
 
-	remoteHosts := syspar.GetRemoteHosts()
+	remoteHosts, err := GetNodesBanService().FilterBannedHosts(syspar.GetRemoteHosts())
+	if err != nil {
+		return false, err
+	}
 
 	_, maxBlockID, err := tcpclient.HostWithMaxBlock(ctx, remoteHosts)
 	if err != nil {

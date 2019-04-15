@@ -62,8 +62,6 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
-	QueueParserBlocks(ctx, d)
-
 	DBLock()
 	defer DBUnlock()
 
@@ -140,13 +138,20 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		Version:      consts.BLOCK_VERSION,
 	}
 
-	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, prevBlock.Hash)
+	pb := &utils.BlockData{
+		BlockID:       prevBlock.BlockID,
+		Hash:          prevBlock.Hash,
+		RollbacksHash: prevBlock.RollbacksHash,
+	}
+
+	blockBin, err := generateNextBlock(header, trs, NodePrivateKey, pb)
 	if err != nil {
 		return err
 	}
 
 	err = block.InsertBlockWOForks(blockBin, true, false)
 	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on inserting new block")
 		return err
 	}
 	log.WithFields(log.Fields{"Block": header.String(), "type": consts.SyncProcess}).Debug("Generated block ID")
@@ -155,13 +160,13 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	return nil
 }
 
-func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, key string, prevBlockHash []byte) ([]byte, error) {
+func generateNextBlock(blockHeader *utils.BlockData, trs []*model.Transaction, key string, prevBlock *utils.BlockData) ([]byte, error) {
 	trData := make([][]byte, 0, len(trs))
 	for _, tr := range trs {
 		trData = append(trData, tr.Data)
 	}
 
-	return block.MarshallBlock(blockHeader, trData, prevBlockHash, key)
+	return block.MarshallBlock(blockHeader, trData, prevBlock, key)
 }
 
 func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Transaction, error) {

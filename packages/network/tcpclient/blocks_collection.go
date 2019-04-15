@@ -32,6 +32,7 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -78,14 +79,15 @@ func GetBlocksBodies(ctx context.Context, host string, blockID int64, reverseOrd
 	}
 
 	if blocksCount == 0 {
-		log.Warnf("host: %s does'nt contains block", host)
-		return nil, nil
+		return nil, fmt.Errorf("host: %s does'nt contains blocks", host)
 	}
 
 	blocksChan, errChan := GetBlockBodiesChan(ctx, conn, blocksCount)
 	go func() {
-		if err := <-errChan; err != nil {
-			log.WithFields(log.Fields{"type": "dbError", consts.NetworkError: err}).Error("on reading block bodies")
+		for err := range errChan {
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("on reading block bodies")
+			}
 		}
 	}()
 

@@ -30,8 +30,8 @@ package block
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -41,6 +41,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/notificator"
 	"github.com/AplaProject/go-apla/packages/protocols"
+	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
@@ -49,17 +50,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
+
 // Block is storing block data
 type Block struct {
-	Header        utils.BlockData
-	PrevHeader    *utils.BlockData
-	MrklRoot      []byte
-	BinData       []byte
-	Transactions  []*transaction.Transaction
-	SysUpdate     bool
-	GenBlock      bool // it equals true when we are generating a new block
-	StopCount     int  // The count of good tx in the block
-	Notifications []smart.NotifyInfo
+	Header            utils.BlockData
+	PrevHeader        *utils.BlockData
+	PrevRollbacksHash []byte
+	MrklRoot          []byte
+	BinData           []byte
+	Transactions      []*transaction.Transaction
+	SysUpdate         bool
+	GenBlock          bool // it equals true when we are generating a new block
+	StopCount         int  // The count of good tx in the block
+	Notifications     []smart.NotifyInfo
 }
 
 func (b Block) String() string {
@@ -94,14 +98,13 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 
-		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader.Hash, NodePrivateKey)
+		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
 			return err
 		}
 
-		isFirstBlock := b.Header.BlockID == 1
-		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), isFirstBlock, true)
+		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
 			return err
@@ -173,17 +176,11 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	}
 
 	limits := NewLimits(b)
-
-	txHashes := make([][]byte, 0, len(b.Transactions))
-	for _, btx := range b.Transactions {
-		txHashes = append(txHashes, btx.TxHash)
+	rand := utils.NewRand(b.Header.Time)
+	var timeLimit int64
+	if b.GenBlock {
+		timeLimit = syspar.GetMaxBlockGenerationTime()
 	}
-	seed, err := crypto.CalcChecksum(bytes.Join(txHashes, []byte{}))
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("calculating seed")
-		return err
-	}
-	randBlock := rand.New(rand.NewSource(int64(seed)))
 
 	for curTx, t := range b.Transactions {
 		var (
@@ -191,16 +188,21 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			err error
 		)
 		t.DbTransaction = dbTransaction
-		t.Rand = randBlock
+		t.Rand = rand.BytesSeed(t.TxHash)
 
-		model.IncrementTxAttemptCount(dbTransaction, t.TxHash)
+		model.IncrementTxAttemptCount(nil, t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
 			return err
 		}
 		var flush []smart.FlushInfo
+		t.GenBlock = b.GenBlock
+		t.TimeLimit = timeLimit
 		msg, flush, err = t.Play()
+		if err == script.ErrVMTimeLimit {
+			err = ErrLimitStop
+		}
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}
@@ -255,7 +257,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
-		model.DecrementTxAttemptCount(dbTransaction, t.TxHash)
+		model.DecrementTxAttemptCount(nil, t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true
@@ -375,8 +377,20 @@ func (b *Block) CheckHash() (bool, error) {
 			return false, utils.ErrInfo(fmt.Errorf("empty nodePublicKey"))
 		}
 
-		resultCheckSign, err := utils.CheckSign([][]byte{nodePublicKey}, []byte(b.ForSign()), b.Header.Sign, true)
+		signSource := b.Header.ForSign(b.PrevHeader, b.MrklRoot)
+
+		resultCheckSign, err := utils.CheckSign(
+			[][]byte{nodePublicKey},
+			[]byte(signSource),
+			b.Header.Sign,
+			true)
+
 		if err != nil {
+			if err == crypto.ErrIncorrectSign {
+				if !bytes.Equal(b.PrevRollbacksHash, b.PrevHeader.RollbacksHash) {
+					return false, ErrIncorrectRollbackHash
+				}
+			}
 			logger.WithFields(log.Fields{"error": err, "type": consts.CryptoError}).Error("checking block header sign")
 			return false, utils.ErrInfo(fmt.Errorf("err: %v / block.PrevHeader.BlockID: %d /  block.PrevHeader.Hash: %x / ", err, b.PrevHeader.BlockID, b.PrevHeader.Hash))
 		}
@@ -385,19 +399,6 @@ func (b *Block) CheckHash() (bool, error) {
 	}
 
 	return true, nil
-}
-
-func (b Block) ForSha() string {
-	return fmt.Sprintf("%d,%x,%s,%d,%d,%d,%d",
-		b.Header.BlockID, b.PrevHeader.Hash, b.MrklRoot, b.Header.Time,
-		b.Header.EcosystemID, b.Header.KeyID, b.Header.NodePosition)
-}
-
-// ForSign from 128 bytes to 512 bytes. Signature of TYPE, BLOCK_ID, PREV_BLOCK_HASH, TIME, WALLET_ID, state_id, MRKL_ROOT
-func (b Block) ForSign() string {
-	return fmt.Sprintf("0,%v,%x,%v,%v,%v,%v,%s",
-		b.Header.BlockID, b.PrevHeader.Hash, b.Header.Time, b.Header.EcosystemID,
-		b.Header.KeyID, b.Header.NodePosition, b.MrklRoot)
 }
 
 // InsertBlockWOForks is inserting blocks
@@ -433,7 +434,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 		return nil, fmt.Errorf("empty buffer")
 	}
 
-	block, err := UnmarshallBlock(buf, !checkSize, true)
+	block, err := UnmarshallBlock(buf, true)
 	if err != nil {
 		return nil, err
 	}

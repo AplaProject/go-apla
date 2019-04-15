@@ -56,12 +56,13 @@ func (h HostPort) Str() string {
 
 // DBConfig database connection parameters
 type DBConfig struct {
-	Name        string
-	Host        string // ipaddr, hostname, or "0.0.0.0"
-	Port        int    // must be in range 1..65535
-	User        string
-	Password    string
-	LockTimeout int // lock_timeout in milliseconds
+	Name            string
+	Host            string // ipaddr, hostname, or "0.0.0.0"
+	Port            int    // must be in range 1..65535
+	User            string
+	Password        string
+	LockTimeout     int // lock_timeout in milliseconds
+	IdleInTxTimeout int // postgres parameter idle_in_transaction_session_timeout
 }
 
 // StatsDConfig statd connection parameters
@@ -102,6 +103,13 @@ type TokenMovementConfig struct {
 	Subject  string
 }
 
+// BanKey parameters
+type BanKeyConfig struct {
+	BadTime int // control time period in minutes
+	BanTime int // ban time in minutes
+	BadTx   int // maximum bad tx during badTime minutes
+}
+
 // GlobalConfig is storing all startup config as global struct
 type GlobalConfig struct {
 	KeyID        int64  `toml:"-"`
@@ -118,7 +126,7 @@ type GlobalConfig struct {
 	TLS                   bool   // TLS is on/off. It is required for https
 	TLSCert               string // TLSCert is a filepath of the fullchain of certificate.
 	TLSKey                string // TLSKey is a filepath of the private key.
-	VDEMode               string
+	OBSMode               string
 	HTTPServerMaxBodySize int64
 	NetworkID             int64
 
@@ -132,6 +140,7 @@ type GlobalConfig struct {
 	Centrifugo    CentrifugoConfig
 	Log           LogConfig
 	TokenMovement TokenMovementConfig
+	BanKey        BanKeyConfig
 
 	NodesAddr []string
 }
@@ -275,22 +284,22 @@ func GetNodesAddr() []string {
 	return Config.NodesAddr[:]
 }
 
-// IsVDE check running mode
-func (c GlobalConfig) IsVDE() bool {
-	return RunMode(c.VDEMode).IsVDE()
+// IsOBS check running mode
+func (c GlobalConfig) IsOBS() bool {
+	return RunMode(c.OBSMode).IsOBS()
 }
 
-// IsVDEMaster check running mode
-func (c GlobalConfig) IsVDEMaster() bool {
-	return RunMode(c.VDEMode).IsVDEMaster()
+// IsOBSMaster check running mode
+func (c GlobalConfig) IsOBSMaster() bool {
+	return RunMode(c.OBSMode).IsOBSMaster()
 }
 
-// IsSupportingVDE check running mode
-func (c GlobalConfig) IsSupportingVDE() bool {
-	return RunMode(c.VDEMode).IsSupportingVDE()
+// IsSupportingOBS check running mode
+func (c GlobalConfig) IsSupportingOBS() bool {
+	return RunMode(c.OBSMode).IsSupportingOBS()
 }
 
 // IsNode check running mode
 func (c GlobalConfig) IsNode() bool {
-	return RunMode(c.VDEMode).IsNode()
+	return RunMode(c.OBSMode).IsNode()
 }

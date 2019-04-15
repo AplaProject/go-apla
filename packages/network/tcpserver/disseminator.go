@@ -76,19 +76,22 @@ func Type1(rw io.ReadWriter) error {
 	log.Debug("fullNodeID", fullNodeID)
 
 	n := syspar.GetNode(fullNodeID)
-	if n != nil && service.GetNodesBanService().IsBanned(*n) {
-		return nil
-	}
+	banned := n != nil && service.GetNodesBanService().IsBanned(*n)
 
 	// get data type (0 - block and transactions, 1 - only transactions)
 	newDataType := converter.BinToDec(buf.Next(1))
 
 	log.Debug("newDataType", newDataType)
 	if newDataType == 0 {
-		err := processBlock(buf, fullNodeID)
-		if err != nil {
-			log.WithFields(log.Fields{"error": err}).Error("on process block")
-			return err
+		if banned {
+			buf.Next(3)
+			buf.Next(consts.HashSize)
+		} else {
+			err := processBlock(buf, fullNodeID)
+			if err != nil {
+				log.WithFields(log.Fields{"error": err}).Error("on process block")
+				return err
+			}
 		}
 	}
 
