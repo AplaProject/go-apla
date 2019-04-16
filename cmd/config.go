@@ -31,8 +31,6 @@ var configCmd = &cobra.Command{
 		if configPath == "" {
 			configPath = filepath.Join(conf.Config.DataDir, consts.DefaultConfigFile)
 		}
-		conf.Config.NetworkID = rand.New(rand.NewSource(time.Now().Unix())).Int63()
-
 		err = viper.Unmarshal(&conf.Config)
 		if err != nil {
 			log.WithError(err).Fatal("Marshalling config to global struct variable")
@@ -149,7 +147,8 @@ func init() {
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
 	configCmd.Flags().Int64Var(&conf.Config.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
-	configCmd.Flags().Int64Var(&conf.Config.NetworkID, "networkID", 1, "Network ID")
+	configCmd.Flags().Int64Var(&conf.Config.NetworkID, "networkID",
+		rand.New(rand.NewSource(time.Now().Unix())).Int63(), "Network ID")
 	configCmd.Flags().StringVar(&conf.Config.OBSMode, "obsMode", consts.NoneVDE, "OBS running mode")
 
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
