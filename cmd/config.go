@@ -2,10 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"math/rand"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -147,8 +145,7 @@ func init() {
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
 	configCmd.Flags().Int64Var(&conf.Config.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
-	configCmd.Flags().Int64Var(&conf.Config.NetworkID, "networkID",
-		rand.New(rand.NewSource(time.Now().Unix())).Int63(), "Network ID")
+	configCmd.Flags().Int64Var(&conf.Config.NetworkID, "networkID", 1, "Network ID")
 	configCmd.Flags().StringVar(&conf.Config.OBSMode, "obsMode", consts.NoneVDE, "OBS running mode")
 
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
