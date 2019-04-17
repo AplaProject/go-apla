@@ -1137,7 +1137,7 @@ If(#buffer_value_app_id# > 0){
 			}
 		}
 	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d'),
+}', 'admin_menu', 'ContractConditions("@1DeveloperCondition")', '%[1]d'),
 	(next_id('1_pages'), 'import_upload', 'Div(content-wrapper){
 	SetTitle("Import")
 	Div(breadcrumb){
@@ -1151,7 +1151,7 @@ If(#buffer_value_app_id# > 0){
 			Button(Body: "Load", Class: btn btn-primary, Contract: @1ImportUpload, Page: import_app)
 		}
 	}
-}', 'admin_menu', 'ContractAccess("@1EditPage")', '%[1]d'),
+}', 'admin_menu', 'ContractConditions("@1DeveloperCondition")', '%[1]d'),
 	(next_id('1_pages'), 'langres_add', 'If(GetVar(application_id)){}.Else{
 	DBFind(buffer_data).Columns("value->app_id").Where("key=''export'' and member_id=#key_id#").Vars(buffer)
 	If(#buffer_value_app_id#>0){
@@ -1829,5 +1829,5 @@ ForList(notifications_roles){
 			}
 		}
 	}
-}$$,'default_menu','ContractAccess("@1EditPage")', '%[1]d');
+}$$,'default_menu','ContractConditions("@1DeveloperCondition")', '%[1]d');
 `

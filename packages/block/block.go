@@ -50,7 +50,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
+var (
+	ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
+	ErrEmptyBlock            = errors.New("Block doesn't contain transactions")
+)
 
 // Block is storing block data
 type Block struct {
@@ -62,7 +65,6 @@ type Block struct {
 	Transactions      []*transaction.Transaction
 	SysUpdate         bool
 	GenBlock          bool // it equals true when we are generating a new block
-	StopCount         int  // The count of good tx in the block
 	Notifications     []smart.NotifyInfo
 }
 
@@ -85,45 +87,30 @@ func (b *Block) PlaySafe() error {
 		return err
 	}
 
+	inputTx := b.Transactions[:]
 	err = b.Play(dbTransaction)
-	if b.GenBlock && b.StopCount > 0 {
-		doneTx := b.Transactions[:b.StopCount]
-		trData := make([][]byte, 0, b.StopCount)
-		for _, tr := range doneTx {
-			trData = append(trData, tr.TxFullData)
-		}
-		NodePrivateKey, _, err := utils.GetNodeKeys()
-		if err != nil || len(NodePrivateKey) < 1 {
-			log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
-			return err
-		}
-
-		newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
-			return err
-		}
-
-		nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
-			return err
-		}
-		b.BinData = newBlockData
-		b.Transactions = nb.Transactions
-		b.MrklRoot = nb.MrklRoot
-		b.SysUpdate = nb.SysUpdate
-		err = nil
-	} else if err != nil {
+	if err != nil {
 		dbTransaction.Rollback()
-		if b.GenBlock && b.StopCount == 0 {
+		if b.GenBlock && len(b.Transactions) == 0 {
 			if err == ErrLimitStop {
 				err = ErrLimitTime
 			}
-			BadTxForBan(b.Transactions[0].TxHeader.KeyID)
-			transaction.MarkTransactionBad(nil, b.Transactions[0].TxHash, err.Error())
+			BadTxForBan(inputTx[0].TxHeader.KeyID)
+			transaction.MarkTransactionBad(nil, inputTx[0].TxHash, err.Error())
 		}
 		return err
+	}
+
+	if b.GenBlock {
+		if len(b.Transactions) == 0 {
+			dbTransaction.Commit()
+			return ErrEmptyBlock
+		} else if len(inputTx) != len(b.Transactions) {
+			if err = b.repeatMarshallBlock(); err != nil {
+				dbTransaction.Rollback()
+				return err
+			}
+		}
 	}
 
 	if err := UpdBlockInfo(dbTransaction, b); err != nil {
@@ -154,6 +141,35 @@ func (b *Block) PlaySafe() error {
 	return nil
 }
 
+func (b *Block) repeatMarshallBlock() error {
+	trData := make([][]byte, 0, len(b.Transactions))
+	for _, tr := range b.Transactions {
+		trData = append(trData, tr.TxFullData)
+	}
+	NodePrivateKey, _, err := utils.GetNodeKeys()
+	if err != nil || len(NodePrivateKey) < 1 {
+		log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
+		return err
+	}
+
+	newBlockData, err := MarshallBlock(&b.Header, trData, b.PrevHeader, NodePrivateKey)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("marshalling new block")
+		return err
+	}
+
+	nb, err := UnmarshallBlock(bytes.NewBuffer(newBlockData), true)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("parsing new block")
+		return err
+	}
+	b.BinData = newBlockData
+	b.Transactions = nb.Transactions
+	b.MrklRoot = nb.MrklRoot
+	b.SysUpdate = nb.SysUpdate
+	return nil
+}
+
 func (b *Block) readPreviousBlockFromBlockchainTable() error {
 	if b.Header.BlockID == 1 {
 		b.PrevHeader = &utils.BlockData{}
@@ -181,6 +197,13 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 	if b.GenBlock {
 		timeLimit = syspar.GetMaxBlockGenerationTime()
 	}
+
+	proccessedTx := make([]*transaction.Transaction, 0, len(b.Transactions))
+	defer func() {
+		if b.GenBlock {
+			b.Transactions = proccessedTx
+		}
+	}()
 
 	for curTx, t := range b.Transactions {
 		var (
@@ -227,9 +250,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			if err == custom.ErrNetworkStopping {
 				return err
 			}
-			if b.GenBlock && err == ErrLimitStop {
-				b.StopCount = curTx
-			}
 
 			errRoll := dbTransaction.RollbackSavepoint(curTx)
 			if errRoll != nil {
@@ -245,12 +265,17 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			// skip this transaction
 			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
 			if t.SysUpdate {
-				if err = syspar.SysUpdate(t.DbTransaction); err != nil {
+				if err := syspar.SysUpdate(t.DbTransaction); err != nil {
 					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("updating syspar")
 				}
 				t.SysUpdate = false
 			}
-			continue
+
+			if b.GenBlock {
+				continue
+			}
+
+			return err
 		}
 		err = dbTransaction.ReleaseSavepoint(curTx)
 		if err != nil {
@@ -279,7 +304,9 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			return utils.ErrInfo(err)
 		}
 		b.Notifications = append(b.Notifications, t.Notifications...)
+		proccessedTx = append(proccessedTx, t)
 	}
+
 	return nil
 }
 
