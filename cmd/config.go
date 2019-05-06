@@ -1,18 +1,16 @@
 package cmd
 
 import (
+	"fmt"
+	"path/filepath"
 	"strings"
+
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/consts"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-
-	"path/filepath"
-
-	"fmt"
-
-	"github.com/AplaProject/go-apla/packages/conf"
-	"github.com/AplaProject/go-apla/packages/consts"
 )
 
 // configCmd represents the config command
@@ -31,7 +29,6 @@ var configCmd = &cobra.Command{
 		if configPath == "" {
 			configPath = filepath.Join(conf.Config.DataDir, consts.DefaultConfigFile)
 		}
-
 		err = viper.Unmarshal(&conf.Config)
 		if err != nil {
 			log.WithError(err).Fatal("Marshalling config to global struct variable")
@@ -148,6 +145,7 @@ func init() {
 	configCmd.Flags().Int64Var(&conf.Config.MaxPageGenerationTime, "mpgt", 1000, "Max page generation time in ms")
 	configCmd.Flags().Int64Var(&conf.Config.HTTPServerMaxBodySize, "mbs", 1<<20, "Max server body size in byte")
 	configCmd.Flags().StringSliceVar(&conf.Config.NodesAddr, "nodesAddr", []string{}, "List of addresses for downloading blockchain")
+	configCmd.Flags().Int64Var(&conf.Config.NetworkID, "networkID", 1, "Network ID")
 	configCmd.Flags().StringVar(&conf.Config.OBSMode, "obsMode", consts.NoneVDE, "OBS running mode")
 
 	viper.BindPFlag("PidFilePath", configCmd.Flags().Lookup("pid"))
@@ -162,5 +160,6 @@ func init() {
 	viper.BindPFlag("HTTPServerMaxBodySize", configCmd.Flags().Lookup("mbs"))
 	viper.BindPFlag("TempDir", configCmd.Flags().Lookup("tempDir"))
 	viper.BindPFlag("NodesAddr", configCmd.Flags().Lookup("nodesAddr"))
+	viper.BindPFlag("NetworkID", configCmd.Flags().Lookup("networkID"))
 	viper.BindPFlag("OBSMode", configCmd.Flags().Lookup("obsMode"))
 }

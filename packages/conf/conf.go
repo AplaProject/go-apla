@@ -128,6 +128,7 @@ type GlobalConfig struct {
 	TLSKey                string // TLSKey is a filepath of the private key.
 	OBSMode               string
 	HTTPServerMaxBodySize int64
+	NetworkID             int64
 
 	MaxPageGenerationTime int64 // in milliseconds
 

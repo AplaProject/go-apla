@@ -32,6 +32,7 @@ import (
 	"encoding/hex"
 	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
@@ -78,7 +79,7 @@ func (dtx *DelayedTx) createTx(delayedContactID, keyID int64) error {
 			Time:        time.Now().Unix(),
 			EcosystemID: firstEcosystemID,
 			KeyID:       keyID,
-			NetworkID:   consts.NETWORK_ID,
+			NetworkID:   conf.Config.NetworkID,
 		},
 		SignedBy: smart.PubToID(dtx.publicKey),
 		Params: map[string]interface{}{
