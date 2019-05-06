@@ -46,6 +46,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -153,7 +154,7 @@ func keyLogin(state int64) (err error) {
 
 	var pub string
 
-	sign, err = crypto.SignString(string(key), nonceSalt+ret.UID)
+	sign, err = crypto.SignString(string(key), `LOGIN`+ret.NetworkID+ret.UID)
 	if err != nil {
 		return
 	}
@@ -326,7 +327,7 @@ func postTxResult(name string, form getter) (id int64, msg string, err error) {
 			Time:        time.Now().Unix(),
 			EcosystemID: 1,
 			KeyID:       crypto.Address(publicKey),
-			NetworkID:   consts.NETWORK_ID,
+			NetworkID:   conf.Config.NetworkID,
 		},
 		Params: params,
 	}, privateKey)
