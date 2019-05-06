@@ -453,7 +453,7 @@ func InsertBlockWOForks(data []byte, genBlock, firstBlock bool) error {
 
 var (
 	ErrMaxBlockSize    = utils.WithBan(errors.New("Block size exceeds maximum limit"))
-	ErrEmptyBlock      = utils.WithBan(errors.New("Empty block"))
+	ErrZeroBlockSize   = utils.WithBan(errors.New("Block size is zero"))
 	ErrUnmarshallBlock = utils.WithBan(errors.New("Unmarshall block"))
 )
 
@@ -467,7 +467,7 @@ func ProcessBlockWherePrevFromBlockchainTable(data []byte, checkSize bool) (*Blo
 	buf := bytes.NewBuffer(data)
 	if buf.Len() == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("buffer is empty")
-		return nil, ErrEmptyBlock
+		return nil, ErrZeroBlockSize
 	}
 
 	block, err := UnmarshallBlock(buf, true)
