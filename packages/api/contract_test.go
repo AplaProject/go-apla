@@ -1654,3 +1654,31 @@ func TestHard(t *testing.T) {
 	}
 	t.Error(`OK`)
 }
+
+func TestInsert(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`cnt`)
+
+	form := url.Values{`Value`: {`contract ` + name + `1 {
+		conditions {
+		}
+		action {
+			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2", 
+				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
+				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{`Value`: {`contract ` + name + `2 {
+		action {
+			DBInsert("` + name + `2", {MyName: "insert"})
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	require.NoError(t, postTx(name+`1`, &url.Values{}))
+	require.NoError(t, postTx(name+`2`, &url.Values{}))
+	t.Error(`OK`)
+}

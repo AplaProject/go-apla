@@ -71,7 +71,9 @@ func (sc *SmartContract) selectiveLoggingAndUpd(fields []string, ivalues []inter
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("Block is undefined")
 		return 0, ``, fmt.Errorf(`It is impossible to write to DB when Block is undefined`)
 	}
-
+	for i, field := range fields {
+		fields[i] = strings.ToLower(field)
+	}
 	sqlBuilder := &qb.SQLQueryBuilder{
 		Entry:        logger,
 		Table:        table,
