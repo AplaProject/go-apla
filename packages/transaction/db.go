@@ -40,8 +40,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var ErrDuplicatedTx = errors.New("Duplicated transaction")
-var ErrEarlyTime = errors.New("Early transaction time")
+var (
+	ErrDuplicatedTx = errors.New("Duplicated transaction")
+	ErrNotComeTime  = errors.New("Transaction processing time has not come")
+	ErrExpiredTime  = errors.New("Transaction processing time is expired")
+	ErrEarlyTime    = utils.WithBan(errors.New("Early transaction time"))
+	ErrEmptyKey     = utils.WithBan(errors.New("KeyID is empty"))
+)
 
 // InsertInLogTx is inserting tx in log
 func InsertInLogTx(t *Transaction, blockID int64) error {

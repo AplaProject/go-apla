@@ -5,9 +5,10 @@ import (
 	"runtime"
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
-
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/service"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -34,6 +35,11 @@ type fullNodeMetric struct {
 type memMetric struct {
 	Alloc uint64 `json:"alloc"`
 	Sys   uint64 `json:"sys"`
+}
+
+type banMetric struct {
+	NodePosition int  `json:"node_position"`
+	Status       bool `json:"status"`
 }
 
 func blocksCountHandler(w http.ResponseWriter, r *http.Request) {
@@ -92,7 +98,7 @@ func keysCountHandler(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, keyMetric{Count: cnt})
 }
 
-func fullNodesCountHandler(w http.ResponseWriter, r *http.Request) {
+func fullNodesCountHandler(w http.ResponseWriter, _ *http.Request) {
 	fnMetric := fullNodeMetric{
 		Count: syspar.GetNumberOfNodesFromDB(nil),
 	}
@@ -100,9 +106,24 @@ func fullNodesCountHandler(w http.ResponseWriter, r *http.Request) {
 	jsonResponse(w, fnMetric)
 }
 
-func memStat(w http.ResponseWriter, r *http.Request) {
+func memStatHandler(w http.ResponseWriter, _ *http.Request) {
 	var m runtime.MemStats
 	runtime.ReadMemStats(&m)
 
 	jsonResponse(w, memMetric{Alloc: m.Alloc, Sys: m.Sys})
+}
+
+func banStatHandler(w http.ResponseWriter, _ *http.Request) {
+	nodes := syspar.GetNodes()
+	list := make([]banMetric, 0, len(nodes))
+
+	b := service.GetNodesBanService()
+	for i, n := range nodes {
+		list = append(list, banMetric{
+			NodePosition: i,
+			Status:       b.IsBanned(n),
+		})
+	}
+
+	jsonResponse(w, list)
 }

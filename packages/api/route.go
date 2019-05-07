@@ -97,7 +97,8 @@ func (m Mode) SetCommonRoutes(r Router) {
 	api.HandleFunc("/metrics/transactions", txCountHandler).Methods("GET")
 	api.HandleFunc("/metrics/ecosystems", m.ecosysCountHandler).Methods("GET")
 	api.HandleFunc("/metrics/keys", keysCountHandler).Methods("GET")
-	api.HandleFunc("/metrics/mem", memStat).Methods("GET")
+	api.HandleFunc("/metrics/mem", memStatHandler).Methods("GET")
+	api.HandleFunc("/metrics/ban", banStatHandler).Methods("GET")
 }
 
 func (m Mode) SetBlockchainRoutes(r Router) {
