@@ -31,6 +31,7 @@ package rollback
 import (
 	"bytes"
 	"errors"
+	"strconv"
 
 	"github.com/AplaProject/go-apla/packages/block"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -90,7 +91,16 @@ func RollbackBlock(data []byte) error {
 		return err
 	}
 
-	err = block.UpdBlockInfo(dbTransaction, bl)
+	ib := &model.InfoBlock{
+		Hash:           b.Hash,
+		RollbacksHash:  b.RollbacksHash,
+		BlockID:        b.ID,
+		NodePosition:   strconv.Itoa(int(b.NodePosition)),
+		KeyID:          b.KeyID,
+		Time:           b.Time,
+		CurrentVersion: strconv.Itoa(bl.Header.Version),
+	}
+	err = ib.Update(dbTransaction)
 	if err != nil {
 		dbTransaction.Rollback()
 		return err
