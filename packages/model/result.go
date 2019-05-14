@@ -158,7 +158,11 @@ func (r *OneRow) Int() (map[string]int, error) {
 
 // GetAllTransaction is retrieve all query result rows
 func GetAllTransaction(transaction *DbTransaction, query string, countRows int, args ...interface{}) ([]map[string]string, error) {
-	rows, err := GetDB(transaction).Raw(query, args...).Rows()
+	request := GetDB(transaction).Raw(query, args...)
+	if countRows > 0 {
+		request = request.Limit(countRows)
+	}
+	rows, err := request.Rows()
 	if err != nil {
 		return nil, fmt.Errorf("%s in query %s %s", err, query, args)
 	}
