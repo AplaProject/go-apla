@@ -32,6 +32,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"reflect"
@@ -48,6 +49,8 @@ import (
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 )
+
+var ErrSliceSize = errors.New("Slice size larger than buffer size")
 
 var FirstEcosystemTables = map[string]bool{
 	`keys`:               false,
@@ -218,6 +221,17 @@ func DecodeLengthBuf(buf *bytes.Buffer) (int, error) {
 	}
 
 	return n, nil
+}
+
+func DecodeBytesBuf(buf *bytes.Buffer) ([]byte, error) {
+	n, err := DecodeLengthBuf(buf)
+	if err != nil {
+		return nil, err
+	}
+	if buf.Len() < n {
+		return nil, ErrSliceSize
+	}
+	return buf.Next(n), nil
 }
 
 // BinMarshal converts v parameter to []byte slice.

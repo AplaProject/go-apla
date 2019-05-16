@@ -66,7 +66,7 @@ func checkAccess(tableName, columns string, client *Client) (table string, cols 
 			Header: tx.Header{
 				EcosystemID: client.EcosystemID,
 				KeyID:       client.KeyID,
-				NetworkID:   consts.NETWORK_ID,
+				NetworkID:   conf.Config.NetworkID,
 			},
 		},
 	}

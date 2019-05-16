@@ -41,6 +41,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "wallet_id": "ContractAccess(\"@1BindWallet\", \"@1UnbindWallet\")",
             "token_id": "ContractAccess(\"@1EditContract\")",
             "conditions": "ContractAccess(\"@1EditContract\")",
+            "permissions": "ContractConditions(\"@1AdminCondition\")",
             "app_id": "ContractAccess(\"@1ItemChangeAppId\")",
             "ecosystem": "false"
         }',
@@ -49,23 +50,22 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
     (next_id('1_tables'), 'keys',
         '{
             "insert": "true",
-            "update": "ContractAccess(\"@1TokensTransfer\",\"@1TokensLockoutMember\",\"@1MultiwalletCreate\")",
+            "update": "ContractAccess(\"@1TokensTransfer\",\"@1TokensLockoutMember\",\"@1MultiwalletCreate\",\"@1TeCreate\",\"@1TeBurn\",\"@1TokensDecDeposit\",\"@1TokensIncDeposit\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
             "pub": "false",
-            "amount": "ContractAccess(\"@1TokensTransfer\")",
+            "amount": "ContractAccess(\"@1TokensTransfer\",\"@1TeCreate\",\"@1TeBurn\")",
             "maxpay": "ContractConditions(\"@1AdminCondition\")",
+            "deposit": "ContractAccess(\"@1TokensDecDeposit\",\"@1TokensIncDeposit\")",
             "deleted": "ContractConditions(\"@1AdminCondition\")",
-            "blocked": "ContractAccess(\"@1TokensLockoutMember\")",
-            "multi": "ContractAccess(\"@1MultiwalletCreate\")",
-            "ecosystem": "false"
+            "blocked": "ContractAccess(\"@1TokensLockoutMember\")"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),
     (next_id('1_tables'), 'history',
         '{
-            "insert": "ContractAccess(\"@1TokensTransfer\")",
+            "insert": "ContractAccess(\"@1TokensTransfer\",\"@1TeCreate\",\"@1TeBurn\")",
             "update": "ContractConditions(\"@1AdminCondition\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
@@ -77,7 +77,8 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "block_id":  "false",
             "txhash": "false",
             "ecosystem": "false",
-            "type": "false"
+            "type": "false",
+            "created_at": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),
@@ -91,6 +92,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "name": "ContractAccess(\"@1EditLang\")",
             "res": "ContractAccess(\"@1EditLang\")",
             "conditions": "ContractAccess(\"@1EditLang\")",
+            "permissions": "ContractConditions(\"@1AdminCondition\")",
             "ecosystem": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
@@ -106,6 +108,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "value": "ContractAccess(\"@1EditMenu\",\"@1AppendMenu\")",
             "title": "ContractAccess(\"@1EditMenu\")",
             "conditions": "ContractAccess(\"@1EditMenu\")",
+            "permissions": "ContractConditions(\"@1AdminCondition\")",
             "ecosystem": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
@@ -124,6 +127,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "validate_mode": "ContractAccess(\"@1EditPage\")",
             "app_id": "ContractAccess(\"@1ItemChangeAppId\")",
             "conditions": "ContractAccess(\"@1EditPage\")",
+            "permissions": "ContractConditions(\"@1AdminCondition\")",
             "ecosystem": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
@@ -138,6 +142,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "name": "false",
             "value": "ContractAccess(\"@1EditBlock\")",
             "conditions": "ContractAccess(\"@1EditBlock\")",
+            "permissions": "ContractConditions(\"@1AdminCondition\")",
             "app_id": "ContractAccess(\"@1ItemChangeAppId\")",
             "ecosystem": "false"
         }',
@@ -273,6 +278,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "name": "false",
             "value": "ContractAccess(\"@1EditParameter\")",
             "conditions": "ContractAccess(\"@1EditParameter\")",
+            "permissions": "ContractConditions(\"@1AdminCondition\")",
             "ecosystem": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
@@ -288,6 +294,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "name": "false",
             "value": "ContractAccess(\"@1EditAppParam\")",
             "conditions": "ContractAccess(\"@1EditAppParam\")",
+            "permissions": "ContractConditions(\"@1AdminCondition\")",
             "ecosystem": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'

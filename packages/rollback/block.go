@@ -30,7 +30,8 @@ package rollback
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
+	"strconv"
 
 	"github.com/AplaProject/go-apla/packages/block"
 	"github.com/AplaProject/go-apla/packages/consts"
@@ -41,17 +42,24 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// BlockRollback is blocking rollback
-func RollbackBlock(data []byte, deleteBlock bool) error {
-	buf := bytes.NewBuffer(data)
-	if buf.Len() == 0 {
-		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty buffer")
-		return fmt.Errorf("empty buffer")
-	}
+var (
+	ErrLastBlock = errors.New("Block is not the last")
+)
 
-	block, err := block.UnmarshallBlock(buf, false, true)
+// BlockRollback is blocking rollback
+func RollbackBlock(data []byte) error {
+	bl, err := block.UnmarshallBlock(bytes.NewBuffer(data), true)
 	if err != nil {
 		return err
+	}
+
+	b := &model.Block{}
+	if _, err = b.GetMaxBlock(); err != nil {
+		return err
+	}
+
+	if b.ID != bl.Header.BlockID {
+		return ErrLastBlock
 	}
 
 	dbTransaction, err := model.StartTransaction()
@@ -60,25 +68,45 @@ func RollbackBlock(data []byte, deleteBlock bool) error {
 		return err
 	}
 
-	err = rollbackBlock(dbTransaction, block)
-
+	err = rollbackBlock(dbTransaction, bl)
 	if err != nil {
 		dbTransaction.Rollback()
 		return err
 	}
 
-	if deleteBlock {
-		b := &model.Block{}
-		err = b.DeleteById(dbTransaction, block.Header.BlockID)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
-			dbTransaction.Rollback()
-			return err
-		}
+	if err = b.DeleteById(dbTransaction, bl.Header.BlockID); err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting block by id")
+		dbTransaction.Rollback()
+		return err
 	}
 
-	err = dbTransaction.Commit()
-	return err
+	if _, err = b.Get(bl.Header.BlockID - 1); err != nil {
+		dbTransaction.Rollback()
+		return err
+	}
+
+	bl, err = block.UnmarshallBlock(bytes.NewBuffer(b.Data), false)
+	if err != nil {
+		dbTransaction.Rollback()
+		return err
+	}
+
+	ib := &model.InfoBlock{
+		Hash:           b.Hash,
+		RollbacksHash:  b.RollbacksHash,
+		BlockID:        b.ID,
+		NodePosition:   strconv.Itoa(int(b.NodePosition)),
+		KeyID:          b.KeyID,
+		Time:           b.Time,
+		CurrentVersion: strconv.Itoa(bl.Header.Version),
+	}
+	err = ib.Update(dbTransaction)
+	if err != nil {
+		dbTransaction.Rollback()
+		return err
+	}
+
+	return dbTransaction.Commit()
 }
 
 func rollbackBlock(dbTransaction *model.DbTransaction, block *block.Block) error {

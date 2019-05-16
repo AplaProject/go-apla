@@ -33,15 +33,13 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "1.2.7"
+const VERSION = "2.0.0"
 
 const BV_ROLLBACK_HASH = 2
+const BV_INCLUDE_ROLLBACK_HASH = 3
 
 // BLOCK_VERSION is block version
-const BLOCK_VERSION = BV_ROLLBACK_HASH
-
-// NETWORK_ID is id of network
-const NETWORK_ID = 1
+const BLOCK_VERSION = BV_INCLUDE_ROLLBACK_HASH
 
 // DEFAULT_TCP_PORT used when port number missed in host addr
 const DEFAULT_TCP_PORT = 7078

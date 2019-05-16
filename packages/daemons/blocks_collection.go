@@ -30,9 +30,8 @@ package daemons
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io/ioutil"
+	"sync/atomic"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/block"
@@ -42,7 +41,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/rollback"
@@ -50,11 +48,14 @@ import (
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/utils"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
-// ErrNodesUnavailable is returned when all nodes is unavailable
-var ErrNodesUnavailable = errors.New("All nodes unavailable")
+var (
+	// ErrNodesUnavailable is returned when all nodes is unavailable
+	ErrNodesUnavailable = errors.New("All nodes unavailable")
+)
 
 // BlocksCollection collects and parses blocks
 func BlocksCollection(ctx context.Context, d *daemon) error {
@@ -87,7 +88,15 @@ func InitialLoad(logger *log.Entry) error {
 	return nil
 }
 
+var bcOnRun uint32
+
 func blocksCollection(ctx context.Context, d *daemon) (err error) {
+	if !atomic.CompareAndSwapUint32(&bcOnRun, 0, 1) {
+		return nil
+	}
+	defer func() {
+		atomic.StoreUint32(&bcOnRun, 0)
+	}()
 	host, maxBlockID, err := getHostWithMaxID(ctx, d.logger)
 	if err != nil {
 		d.logger.WithFields(log.Fields{"error": err}).Warn("on checking best host")
@@ -112,8 +121,8 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 
 	DBLock()
 	defer func() {
-		DBUnlock()
 		service.NodeDoneUpdatingBlockchain()
+		DBUnlock()
 	}()
 
 	// update our chain till maxBlockID from the host
@@ -121,12 +130,7 @@ func blocksCollection(ctx context.Context, d *daemon) (err error) {
 }
 
 // UpdateChain load from host all blocks from our last block to maxBlockID
-func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) error {
-	var (
-		err   error
-		count int
-	)
-
+func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) (err error) {
 	// get current block id from our blockchain
 	curBlock := &model.InfoBlock{}
 	if _, err = curBlock.Get(); err != nil {
@@ -139,31 +143,40 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 		return ctx.Err()
 	}
 
+	var lastBlockID, lastBlockTime int64
+	defer func() {
+		if err != nil {
+			banNode(host, lastBlockID, lastBlockTime, err)
+		}
+	}()
+
 	playRawBlock := func(rb []byte) error {
-
 		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(rb, true)
-		defer func() {
-			if err != nil {
-				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("retrieving blockchain from node")
-				banNode(host, bl, err)
-			}
-		}()
-
 		if err != nil {
 			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("processing block")
 			return err
 		}
 
+		lastBlockID = bl.Header.BlockID
+		lastBlockTime = bl.Header.Time
+
 		// hash compare could be failed in the case of fork
-		hashMatched, thisErrIsOk := bl.CheckHash()
-		if thisErrIsOk != nil {
-			d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("checking block hash")
+		hashMatched, errCheck := bl.CheckHash()
+		if errCheck != nil {
+			d.logger.WithFields(log.Fields{"error": errCheck, "type": consts.BlockError}).Error("checking block hash")
 		}
 
 		if !hashMatched {
 			transaction.CleanCache()
+
+			rollbackBlockID := bl.Header.BlockID - 1
+			if errCheck == block.ErrIncorrectRollbackHash {
+				rollbackBlockID--
+			}
+			limit := bl.Header.BlockID - rollbackBlockID
+
 			//it should be fork, replace our previous blocks to ones from the host
-			err = GetBlocks(ctx, bl.Header.BlockID-1, host)
+			err = GetBlocks(ctx, rollbackBlockID, limit, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				return err
@@ -172,27 +185,24 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 
 		bl.PrevHeader, err = block.GetBlockDataFromBlockChain(bl.Header.BlockID - 1)
 		if err != nil {
-			return utils.ErrInfo(fmt.Errorf("can't get block %d", bl.Header.BlockID-1))
+			return errors.Wrapf(err, "can't get block %d", bl.Header.BlockID-1)
 		}
 
 		if err = bl.Check(); err != nil {
 			return err
 		}
 
-		if err = bl.PlaySafe(); err != nil {
-			return err
-		}
-
-		return nil
+		return bl.PlaySafe()
 	}
 
+	var count int
 	st := time.Now()
-	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 
+	d.logger.WithFields(log.Fields{"min_block": curBlock.BlockID, "max_block": maxBlockID, "count": maxBlockID - curBlock.BlockID}).Info("starting downloading blocks")
 	for blockID := curBlock.BlockID + 1; blockID <= maxBlockID; blockID += int64(network.BlocksPerRequest) {
-		ctxDone, cancel := context.WithCancel(ctx)
 
 		if loopErr := func() error {
+			ctxDone, cancel := context.WithCancel(ctx)
 			defer func() {
 				cancel()
 				d.logger.WithFields(log.Fields{"count": count, "time": time.Since(st).String()}).Info("blocks downloaded")
@@ -201,7 +211,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			rawBlocksChan, err := tcpclient.GetBlocksBodies(ctxDone, host, blockID, false)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-				return err
+				return utils.WithBan(err)
 			}
 
 			for rawBlock := range rawBlocksChan {
@@ -259,25 +269,13 @@ func needLoad(logger *log.Entry) (bool, error) {
 	return false, nil
 }
 
-func banNode(host string, block *block.Block, err error) {
-	var (
-		reason             string
-		blockId, blockTime int64
-	)
-	if err != nil {
-		if err == transaction.ErrDuplicatedTx {
-			return
-		}
-		reason = err.Error()
+func banNode(host string, blockID, blockTime int64, err error) {
+	if err == nil || !utils.IsBanError(err) {
+		return
 	}
 
-	if block != nil {
-		blockId, blockTime = block.Header.BlockID, block.Header.Time
-	} else {
-		blockId, blockTime = -1, time.Now().Unix()
-	}
-
-	log.WithFields(log.Fields{"reason": reason, "host": host, "block_id": blockId, "block_time": blockTime}).Debug("ban node")
+	reason := err.Error()
+	log.WithFields(log.Fields{"reason": reason, "host": host, "block_id": blockID, "block_time": blockTime}).Info("ban node")
 
 	n, err := syspar.GetNodeByHost(host)
 	if err != nil {
@@ -285,9 +283,9 @@ func banNode(host string, block *block.Block, err error) {
 		return
 	}
 
-	err = service.GetNodesBanService().RegisterBadBlock(n, blockId, blockTime, reason)
+	err = service.GetNodesBanService().RegisterBadBlock(n, blockID, blockTime, reason)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "node": n.KeyID, "block": blockId}).Error("registering bad block from node")
+		log.WithFields(log.Fields{"error": err, "node": n.KeyID, "block": blockID}).Error("registering bad block from node")
 	}
 }
 
@@ -310,8 +308,8 @@ func getHostWithMaxID(ctx context.Context, logger *log.Entry) (host string, maxB
 }
 
 // GetBlocks is returning blocks
-func GetBlocks(ctx context.Context, blockID int64, host string) error {
-	blocks, err := getBlocks(ctx, blockID, host)
+func GetBlocks(ctx context.Context, blockID, limit int64, host string) error {
+	blocks, err := getBlocks(ctx, blockID+1, limit, host)
 	if err != nil {
 		return err
 	}
@@ -341,7 +339,7 @@ func GetBlocks(ctx context.Context, blockID int64, host string) error {
 		return utils.ErrInfo(err)
 	}
 	for _, block := range myRollbackBlocks {
-		err := rollback.RollbackBlock(block.Data, false)
+		err := rollback.RollbackBlock(block.Data)
 		if err != nil {
 			return utils.ErrInfo(err)
 		}
@@ -350,10 +348,8 @@ func GetBlocks(ctx context.Context, blockID int64, host string) error {
 	return processBlocks(blocks)
 }
 
-func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block, error) {
+func getBlocks(ctx context.Context, blockID, limit int64, host string) ([]*block.Block, error) {
 	rollback := syspar.GetRbBlocks1()
-
-	badBlocks := make(map[int64]string)
 
 	blocks := make([]*block.Block, 0)
 	var count int64
@@ -361,7 +357,7 @@ func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block,
 	// load the block bodies from the host
 	blocksCh, err := tcpclient.GetBlocksBodies(ctx, host, blockID, true)
 	if err != nil {
-		return nil, utils.ErrInfo(err)
+		return nil, utils.WithBan(errors.Wrapf(err, "Getting bodies of blocks by id %d", blockID))
 	}
 
 	for binaryBlock := range blocksCh {
@@ -374,41 +370,24 @@ func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block,
 			break
 		}
 
-		block, err := block.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
+		if count >= limit {
+			break
+		}
+
+		bl, err := block.ProcessBlockWherePrevFromBlockchainTable(binaryBlock, true)
 		if err != nil {
-			return nil, utils.ErrInfo(err)
+			return nil, err
 		}
 
-		if badBlocks[block.Header.BlockID] == string(converter.BinToHex(block.Header.Sign)) {
-			log.WithFields(log.Fields{"block_id": block.Header.BlockID, "type": consts.InvalidObject}).Error("block is bad")
-			return nil, utils.ErrInfo(errors.New("bad block"))
-		}
-		if block.Header.BlockID != blockID {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
-			return nil, utils.ErrInfo(errors.New("bad block_data['block_id']"))
-		}
-
-		// TODO: add checking for MAX_BLOCK_SIZE
-
-		// the public key of the one who has generated this block
-		nodePublicKey, err := syspar.GetNodePublicKeyByPosition(block.Header.NodePosition)
-		if err != nil {
-			log.WithFields(log.Fields{"header_block_id": block.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
-			return nil, utils.ErrInfo(err)
+		if bl.Header.BlockID != blockID {
+			log.WithFields(log.Fields{"header_block_id": bl.Header.BlockID, "block_id": blockID, "type": consts.InvalidObject}).Error("block ids does not match")
+			return nil, utils.WithBan(errors.New("bad block_data['block_id']"))
 		}
 
 		// save the block
-		blocks = append(blocks, block)
+		blocks = append(blocks, bl)
 		blockID--
 		count++
-
-		// check the signature
-		_, okSignErr := utils.CheckSign([][]byte{nodePublicKey},
-			[]byte(block.Header.ForSign(block.PrevHeader, block.MrklRoot)),
-			block.Header.Sign, true)
-		if okSignErr == nil {
-			break
-		}
 	}
 
 	return blocks, nil
@@ -429,7 +408,11 @@ func processBlocks(blocks []*block.Block) error {
 
 		if prevBlocks[b.Header.BlockID-1] != nil {
 			b.PrevHeader.Hash = prevBlocks[b.Header.BlockID-1].Header.Hash
-			b.PrevHeader.RollbacksHash = prevBlocks[b.Header.BlockID-1].Header.RollbacksHash
+			b.PrevHeader.RollbacksHash, err = block.GetRollbacksHash(dbTransaction, b.Header.BlockID-1)
+			if err != nil {
+				dbTransaction.Rollback()
+				return err
+			}
 			b.PrevHeader.Time = prevBlocks[b.Header.BlockID-1].Header.Time
 			b.PrevHeader.BlockID = prevBlocks[b.Header.BlockID-1].Header.BlockID
 			b.PrevHeader.EcosystemID = prevBlocks[b.Header.BlockID-1].Header.EcosystemID

@@ -1630,3 +1630,55 @@ func TestCost(t *testing.T) {
 	t.Error(`OK`)
 
 }
+
+func TestHard(t *testing.T) {
+	require.NoError(t, keyLogin(1))
+	name := randName(`h`)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {
+			Par int
+		}
+		action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	_, msg, err := postTxResult(`NewContract`, &form)
+	require.NoError(t, err)
+	fmt.Println(`MSg=`, msg, name)
+
+	for i := 0; i < 1000; i++ {
+		form = url.Values{"Id": {msg}, "Value": {fmt.Sprintf(`contract %s {action { 
+			Println("OK %d")
+		}}`, name, i)}, "Conditions": {`true`}, "nowait": {`true`}, "Par": {fmt.Sprintf("%d", i)}}
+		if err = postTx( /*name */ `EditContract`, &form); err != nil {
+			t.Error(err)
+		}
+	}
+	t.Error(`OK`)
+}
+
+func TestInsert(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`cnt`)
+
+	form := url.Values{`Value`: {`contract ` + name + `1 {
+		conditions {
+		}
+		action {
+			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2", 
+				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
+				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{`Value`: {`contract ` + name + `2 {
+		action {
+			DBInsert("` + name + `2", {MyName: "insert"})
+		}
+	}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	require.NoError(t, postTx(`NewContract`, &form))
+
+	require.NoError(t, postTx(name+`1`, &url.Values{}))
+	require.NoError(t, postTx(name+`2`, &url.Values{}))
+	t.Error(`OK`)
+}

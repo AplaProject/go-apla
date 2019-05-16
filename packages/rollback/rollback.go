@@ -62,7 +62,7 @@ func ToBlockID(blockID int64, dbTransaction *model.DbTransaction, logger *log.En
 		}
 		for _, block := range blocks {
 			// roll back our blocks to the block blockID
-			err = RollbackBlock(block.Data, true)
+			err = RollbackBlock(block.Data)
 			if err != nil {
 				return err
 			}
@@ -76,8 +76,7 @@ func ToBlockID(blockID int64, dbTransaction *model.DbTransaction, logger *log.En
 		return err
 	}
 
-	isFirstBlock := blockID == 1
-	header, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data), !isFirstBlock)
+	header, _, err := utils.ParseBlockHeader(bytes.NewBuffer(block.Data))
 	if err != nil {
 		return err
 	}

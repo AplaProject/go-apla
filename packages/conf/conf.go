@@ -103,6 +103,13 @@ type TokenMovementConfig struct {
 	Subject  string
 }
 
+// BanKey parameters
+type BanKeyConfig struct {
+	BadTime int // control time period in minutes
+	BanTime int // ban time in minutes
+	BadTx   int // maximum bad tx during badTime minutes
+}
+
 // GlobalConfig is storing all startup config as global struct
 type GlobalConfig struct {
 	KeyID        int64  `toml:"-"`
@@ -121,6 +128,7 @@ type GlobalConfig struct {
 	TLSKey                string // TLSKey is a filepath of the private key.
 	OBSMode               string
 	HTTPServerMaxBodySize int64
+	NetworkID             int64
 
 	MaxPageGenerationTime int64 // in milliseconds
 
@@ -132,6 +140,7 @@ type GlobalConfig struct {
 	Centrifugo    CentrifugoConfig
 	Log           LogConfig
 	TokenMovement TokenMovementConfig
+	BanKey        BanKeyConfig
 
 	NodesAddr []string
 }
