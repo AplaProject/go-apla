@@ -38,7 +38,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/service"
 	"github.com/AplaProject/go-apla/packages/statsd"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
@@ -118,14 +117,6 @@ func tokenMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			logger := getLogger(r)
 			logger.WithFields(log.Fields{"type": consts.JWTError, "error": err}).Error("starting session")
-			if err, ok := err.(jwt.ValidationError); ok {
-				if (err.Errors & jwt.ValidationErrorExpired) != 0 {
-					errorResponse(w, errTokenExpired.Errorf(err.Error()))
-					return
-				}
-			}
-			errorResponse(w, err, http.StatusBadRequest)
-			return
 		}
 		if token != nil && token.Valid {
 			r = setToken(r, token)
