@@ -1682,3 +1682,47 @@ func TestInsert(t *testing.T) {
 	require.NoError(t, postTx(name+`2`, &url.Values{}))
 	t.Error(`OK`)
 }
+
+func TestExternalNetwork(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	var form url.Values
+	/*	form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
+			data {
+				Value string
+			}
+			action {
+			}
+		}`},
+			"ApplicationId": {`1`}, "Conditions": {`true`}}
+		assert.NoError(t, postTx(`NewContract`, &form))
+	*/
+	name := `cnt` + crypto.RandSeq(4)
+	net := `{"mynet": {
+		"url": "http://localhost:7090", 
+		"contract": "@1ReceiveHashes", 
+		"condition": "true", 
+		"interval": "1h"
+		}
+	}`
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			UpdateSysParam("Name,Value","external_blockchain",` + "`" + net + "`" + `)
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name, &url.Values{}))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `2 {
+		action { 
+			var params map
+			params["hash"] = PubToHex($txhash)
+			params["block"] = $block
+			SendToNetwork("mynet", params)
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name+`2`, &url.Values{}))
+
+}

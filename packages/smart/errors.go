@@ -62,6 +62,7 @@ const (
 	eTableNotEmpty       = `Table %s is not empty`
 	eColumnNotDeleted    = `Column %s cannot be deleted`
 	eRollbackContract    = `Wrong rollback of the latest contract %d != %d`
+	eExternalNet         = `External network %s is not defined`
 )
 
 var (
