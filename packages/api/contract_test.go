@@ -1686,22 +1686,33 @@ func TestInsert(t *testing.T) {
 func TestExternalNetwork(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	var form url.Values
-	/*	form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
+	/*form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
 			data {
 				Value string
 			}
 			action {
 			}
 		}`},
-			"ApplicationId": {`1`}, "Conditions": {`true`}}
-		assert.NoError(t, postTx(`NewContract`, &form))
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
 	*/
 	name := `cnt` + crypto.RandSeq(4)
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
+		data {
+			List string
+		}
+		action { 
+			Println("SUCCESS", $List )
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	net := `{"mynet": {
-		"url": "http://localhost:7090", 
-		"contract": "@1ReceiveHashes", 
+		"url": "http://localhost:7079", 
+		"contract": "@1` + name + `Hashes", 
 		"condition": "true", 
-		"interval": "1h"
+		"interval": "20s"
 		}
 	}`
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
