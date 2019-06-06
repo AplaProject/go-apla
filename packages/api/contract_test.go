@@ -1686,23 +1686,25 @@ func TestInsert(t *testing.T) {
 func TestExternalNetwork(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	var form url.Values
-	/*form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
-			data {
-				Value string
-			}
-			action {
-			}
-		}`},
+	// The one time only after install
+
+	form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
+				data {
+					Value string
+				}
+			}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
-	*/
+
+	//
 	name := `cnt` + crypto.RandSeq(4)
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
 		data {
-			List string
+			List array
 		}
 		action { 
 			Println("SUCCESS", $List )
+			Println("First", $List[0] )
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}

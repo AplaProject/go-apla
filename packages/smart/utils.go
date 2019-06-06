@@ -167,17 +167,27 @@ func FillTxData(fieldInfos []*script.FieldInfo, params map[string]interface{}) (
 				err = fmt.Errorf("Invalid array type")
 				break
 			}
+			for i, subv := range v.([]interface{}) {
+				switch val := subv.(type) {
+				case map[interface{}]interface{}:
+					imap := make(map[string]interface{})
+					for ikey, ival := range val {
+						imap[fmt.Sprint(ikey)] = ival
+					}
+					v.([]interface{})[i] = types.LoadMap(imap)
+				}
+			}
 		case script.DtMap:
 			var val map[interface{}]interface{}
 			if val, ok = params[index].(map[interface{}]interface{}); !ok {
 				err = fmt.Errorf("Invalid map type")
 				break
 			}
-			vMap := types.NewMap()
-			for key, item := range val {
-				vMap.Set(fmt.Sprint(key), item)
+			imap := make(map[string]interface{})
+			for ikey, ival := range val {
+				imap[fmt.Sprint(ikey)] = ival
 			}
-			v = vMap
+			v = types.LoadMap(imap)
 		case script.DtFile:
 			var val map[interface{}]interface{}
 			if val, ok = params[index].(map[interface{}]interface{}); !ok {

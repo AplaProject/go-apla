@@ -30,10 +30,9 @@ package daemons
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"net/url"
+	"sync/atomic"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
@@ -56,41 +55,29 @@ var (
 	authNet        = map[string]string{}
 )
 
-func loginNetwork(netName, urlPath string) error {
-	var (
-		err  error
-		sign []byte
-	)
+var enOnRun uint32
+
+func loginNetwork(netName, urlPath string) (connect *api.Connect, err error) {
 	if len(nodePrivateKey) == 0 {
 		var pubKey []byte
 		if nodePrivateKey, err = utils.GetNodePrivateKey(); err != nil {
-			return err
+			return
 		}
 		if pubKey, err = crypto.PrivateToPublic(nodePrivateKey); err != nil {
-			return err
+			return
 		}
 		nodePublicKey = crypto.PubToHex(pubKey)
 	}
-
-	var ret api.GetUIDResult
-	err = api.SendGet(urlPath+`getuid`, authNet[netName], nil, &ret)
-	if err != nil {
-		return err
+	connect = &api.Connect{
+		Auth:       authNet[netName],
+		PrivateKey: nodePrivateKey,
+		PublicKey:  nodePublicKey,
+		Root:       urlPath,
 	}
-	if len(ret.UID) == 0 {
-		return nil
+	if err = connect.Login(); err != nil {
+		authNet[netName] = connect.Auth
 	}
-	authNet[netName] = ret.Token
-	sign, err = crypto.SignString(hex.EncodeToString(nodePrivateKey), `LOGIN`+ret.NetworkID+ret.UID)
-	if err != nil {
-		return err
-	}
-	form := url.Values{"pubkey": {nodePublicKey}, "signature": {hex.EncodeToString(sign)},
-		`ecosystem`: {`1`}, "role_id": {"0"}}
-	var logret api.LoginResult
-	err = api.SendPost(urlPath+`login`, authNet[netName], &form, &logret)
-	authNet[netName] = logret.Token
-	return err
+	return
 }
 
 func SendToNetwork() error {
@@ -98,6 +85,7 @@ func SendToNetwork() error {
 		external map[string]smart.ExternalNetInfo
 		err      error
 		ok       bool
+		connect  *api.Connect
 		duration time.Duration
 		prevTime time.Time
 	)
@@ -134,7 +122,7 @@ func SendToNetwork() error {
 			continue
 		}
 		root := netInfo.URL + `/api/v2/`
-		if err = loginNetwork(key, root); err != nil {
+		if connect, err = loginNetwork(key, root); err != nil {
 			return err
 		}
 		outList := make([]interface{}, 0, len(list))
@@ -151,8 +139,7 @@ func SendToNetwork() error {
 		if err != nil {
 			continue
 		}
-		id, _, err := api.PostTxResult(root, authNet[key], netInfo.Contract, nodePrivateKey,
-			&url.Values{"List": {string(out)}})
+		id, _, err := connect.PostTxResult(netInfo.Contract, &url.Values{"List": {string(out)}})
 		timeNet[key] = time.Now()
 		if id != 0 && err == nil {
 			if err = model.DelExternalList(sentList); err != nil {
@@ -165,10 +152,12 @@ func SendToNetwork() error {
 
 // ExternalNetwork sends txinfo to the external network
 func ExternalNetwork(ctx context.Context, d *daemon) error {
-	d.sleepTime = 30 * time.Second
-	err := SendToNetwork()
-	if err != nil {
-		fmt.Println(`ERROR`, err)
+	if !atomic.CompareAndSwapUint32(&enOnRun, 0, 1) {
+		return nil
 	}
-	return err
+	defer func() {
+		atomic.StoreUint32(&enOnRun, 0)
+	}()
+	d.sleepTime = 30 * time.Second
+	return SendToNetwork()
 }

@@ -30,6 +30,7 @@ package api
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -48,27 +49,11 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 )
 
-type GetUIDResult struct {
-	UID         string `json:"uid,omitempty"`
-	Token       string `json:"token,omitempty"`
-	Expire      string `json:"expire,omitempty"`
-	EcosystemID string `json:"ecosystem_id,omitempty"`
-	KeyID       string `json:"key_id,omitempty"`
-	Address     string `json:"address,omitempty"`
-	NetworkID   string `json:"network_id,omitempty"`
-}
-
-type LoginResult struct {
-	Token       string        `json:"token,omitempty"`
-	EcosystemID string        `json:"ecosystem_id,omitempty"`
-	KeyID       string        `json:"key_id,omitempty"`
-	Address     string        `json:"address,omitempty"`
-	NotifyKey   string        `json:"notify_key,omitempty"`
-	IsNode      bool          `json:"isnode,omitempty"`
-	IsOwner     bool          `json:"isowner,omitempty"`
-	IsOBS       bool          `json:"obs,omitempty"`
-	Timestamp   string        `json:"timestamp,omitempty"`
-	Roles       []rolesResult `json:"roles,omitempty"`
+type Connect struct {
+	Auth       string
+	Root       string
+	PrivateKey []byte
+	PublicKey  string
 }
 
 func SendRawRequest(rtype, url, auth string, form *url.Values) ([]byte, error) {
@@ -113,15 +98,15 @@ func SendRequest(rtype, url, auth string, form *url.Values, v interface{}) error
 	return json.Unmarshal(data, v)
 }
 
-func SendGet(url, auth string, form *url.Values, v interface{}) error {
-	return SendRequest("GET", url, auth, form, v)
+func (connect *Connect) SendGet(url string, form *url.Values, v interface{}) error {
+	return SendRequest("GET", connect.Root+url, connect.Auth, form, v)
 }
 
-func SendPost(url, auth string, form *url.Values, v interface{}) error {
-	return SendRequest("POST", url, auth, form, v)
+func (connect *Connect) SendPost(url string, form *url.Values, v interface{}) error {
+	return SendRequest("POST", connect.Root+url, connect.Auth, form, v)
 }
 
-func SendMultipart(url, auth string, files map[string][]byte, v interface{}) error {
+func (connect *Connect) SendMultipart(url string, files map[string][]byte, v interface{}) error {
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 
@@ -139,15 +124,15 @@ func SendMultipart(url, auth string, files map[string][]byte, v interface{}) err
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, body)
+	req, err := http.NewRequest("POST", connect.Root+url, body)
 	if err != nil {
 		return err
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 
-	if len(auth) > 0 {
-		req.Header.Set("Authorization", jwtPrefix+auth)
+	if len(connect.Auth) > 0 {
+		req.Header.Set("Authorization", jwtPrefix+connect.Auth)
 	}
 
 	client := &http.Client{}
@@ -169,7 +154,7 @@ func SendMultipart(url, auth string, files map[string][]byte, v interface{}) err
 	return json.Unmarshal(data, &v)
 }
 
-func WaitTx(urlPath, auth, hash string) (int64, error) {
+func (connect *Connect) WaitTx(hash string) (int64, error) {
 	data, err := json.Marshal(&txstatusRequest{
 		Hashes: []string{hash},
 	})
@@ -179,7 +164,7 @@ func WaitTx(urlPath, auth, hash string) (int64, error) {
 
 	for i := 0; i < 15; i++ {
 		var multiRet multiTxStatusResult
-		err := SendPost(urlPath+`txstatus`, auth, &url.Values{
+		err := connect.SendPost(`txstatus`, &url.Values{
 			"data": {string(data)},
 		}, &multiRet)
 		if err != nil {
@@ -203,10 +188,9 @@ func WaitTx(urlPath, auth, hash string) (int64, error) {
 	return 0, fmt.Errorf(`TxStatus timeout`)
 }
 
-func PostTxResult(url, auth, name string, privateKey []byte,
-	form *url.Values) (id int64, msg string, err error) {
+func (connect *Connect) PostTxResult(name string, form *url.Values) (id int64, msg string, err error) {
 	var contract getContractResult
-	if err = SendGet(url+"contract/"+name, auth, nil, &contract); err != nil {
+	if err = connect.SendGet("contract/"+name, nil, &contract); err != nil {
 		return
 	}
 	params := make(map[string]interface{})
@@ -244,7 +228,7 @@ func PostTxResult(url, auth, name string, privateKey []byte,
 	}
 
 	var publicKey []byte
-	if publicKey, err = crypto.PrivateToPublic(privateKey); err != nil {
+	if publicKey, err = crypto.PrivateToPublic(connect.PrivateKey); err != nil {
 		return
 	}
 
@@ -257,13 +241,13 @@ func PostTxResult(url, auth, name string, privateKey []byte,
 			NetworkID:   conf.Config.NetworkID,
 		},
 		Params: params,
-	}, privateKey)
+	}, connect.PrivateKey)
 	if err != nil {
 		return 0, "", err
 	}
 
 	ret := &sendTxResult{}
-	err = SendMultipart(url+"sendTx", auth, map[string][]byte{
+	err = connect.SendMultipart("sendTx", map[string][]byte{
 		"data": data,
 	}, &ret)
 	if err != nil {
@@ -272,11 +256,36 @@ func PostTxResult(url, auth, name string, privateKey []byte,
 	if len(form.Get("nowait")) > 0 {
 		return
 	}
-	id, err = WaitTx(url, auth, ret.Hashes["data"])
+	id, err = connect.WaitTx(ret.Hashes["data"])
 	if id != 0 && err != nil {
 		msg = err.Error()
 		err = nil
 	}
 
 	return
+}
+
+func (connect *Connect) Login() error {
+	var (
+		sign []byte
+		ret  getUIDResult
+		err  error
+	)
+	if err = connect.SendGet(`getuid`, nil, &ret); err != nil {
+		return err
+	}
+	if len(ret.UID) == 0 {
+		return nil
+	}
+	connect.Auth = ret.Token
+	sign, err = crypto.SignString(hex.EncodeToString(connect.PrivateKey), `LOGIN`+ret.NetworkID+ret.UID)
+	if err != nil {
+		return err
+	}
+	form := url.Values{"pubkey": {connect.PublicKey}, "signature": {hex.EncodeToString(sign)},
+		`ecosystem`: {`1`}, "role_id": {"0"}}
+	var logret loginResult
+	err = connect.SendPost(`login`, &form, &logret)
+	connect.Auth = logret.Token
+	return err
 }
