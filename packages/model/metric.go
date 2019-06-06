@@ -29,8 +29,9 @@
 package model
 
 import (
-	"github.com/AplaProject/go-apla/packages/types"
 	"time"
+
+	"github.com/AplaProject/go-apla/packages/types"
 )
 
 const tableNameMetrics = "1_metrics"
