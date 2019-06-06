@@ -173,10 +173,9 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			if errCheck == block.ErrIncorrectRollbackHash {
 				rollbackBlockID--
 			}
-			limit := bl.Header.BlockID - rollbackBlockID
 
 			//it should be fork, replace our previous blocks to ones from the host
-			err = GetBlocks(ctx, rollbackBlockID, limit, host)
+			err = GetBlocks(ctx, rollbackBlockID, host)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.ParserError}).Error("processing block")
 				return err
@@ -211,7 +210,7 @@ func UpdateChain(ctx context.Context, d *daemon, host string, maxBlockID int64) 
 			rawBlocksChan, err := tcpclient.GetBlocksBodies(ctxDone, host, blockID, false)
 			if err != nil {
 				d.logger.WithFields(log.Fields{"error": err, "type": consts.BlockError}).Error("getting block body")
-				return utils.WithBan(err)
+				return err
 			}
 
 			for rawBlock := range rawBlocksChan {
@@ -308,8 +307,8 @@ func getHostWithMaxID(ctx context.Context, logger *log.Entry) (host string, maxB
 }
 
 // GetBlocks is returning blocks
-func GetBlocks(ctx context.Context, blockID, limit int64, host string) error {
-	blocks, err := getBlocks(ctx, blockID+1, limit, host)
+func GetBlocks(ctx context.Context, blockID int64, host string) error {
+	blocks, err := getBlocks(ctx, blockID+1, host)
 	if err != nil {
 		return err
 	}
@@ -348,7 +347,7 @@ func GetBlocks(ctx context.Context, blockID, limit int64, host string) error {
 	return processBlocks(blocks)
 }
 
-func getBlocks(ctx context.Context, blockID, limit int64, host string) ([]*block.Block, error) {
+func getBlocks(ctx context.Context, blockID int64, host string) ([]*block.Block, error) {
 	rollback := syspar.GetRbBlocks1()
 
 	blocks := make([]*block.Block, 0)
@@ -367,10 +366,6 @@ func getBlocks(ctx context.Context, blockID, limit int64, host string) ([]*block
 
 		// if the limit of blocks received from the node was exaggerated
 		if count > int64(rollback) {
-			break
-		}
-
-		if count >= limit {
 			break
 		}
 
@@ -456,13 +451,6 @@ func processBlocks(blocks []*block.Block) error {
 	// If all right we can delete old blockchain and write new
 	for i := len(blocks) - 1; i >= 0; i-- {
 		b := blocks[i]
-		// Delete old blocks from blockchain
-		bl := &model.Block{}
-		err = bl.DeleteById(dbTransaction, b.Header.BlockID)
-		if err != nil {
-			dbTransaction.Rollback()
-			return err
-		}
 		// insert new blocks into blockchain
 		if err := block.InsertIntoBlockchain(dbTransaction, b); err != nil {
 			dbTransaction.Rollback()
