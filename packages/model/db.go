@@ -104,7 +104,7 @@ func setupConnOptions(conr *gorm.DB) error {
 		return err
 	}
 
-	return nil
+	return DBConn.Exec("SET TIME ZONE 'UTC'").Error
 }
 
 // GormClose is closing Gorm connection
