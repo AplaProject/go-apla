@@ -133,6 +133,11 @@ func TestDBFindContract(t *testing.T) {
 			}
 			action { 
 				var ret i j k m array
+				var inr inc map
+				var rids array
+                rids = JSONDecode("[]")//role["roles_access"])
+				inr = DBFind("@1roles_participants").Where({"ecosystem": $ecosystem_id, "role->id": {"$in": rids}, "member->member_id": $key_id, "deleted": 0}).Row()
+				inc = DBFind("contracts").Where({"ecosystem": $ecosystem_id, "id": {"$in": rids}}).Row()
 				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}}).Limit(100)
 				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}}).Limit(100)
 				j = DBFind("contracts").Where({id: {$lt: 10}})
