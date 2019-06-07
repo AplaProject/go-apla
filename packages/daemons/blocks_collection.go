@@ -269,6 +269,9 @@ func needLoad(logger *log.Entry) (bool, error) {
 }
 
 func banNode(host string, blockID, blockTime int64, err error) {
+	// disable ban node
+	return
+
 	if err == nil || !utils.IsBanError(err) {
 		return
 	}
