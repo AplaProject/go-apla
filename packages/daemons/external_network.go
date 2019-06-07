@@ -37,7 +37,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
@@ -93,21 +92,9 @@ func SendToNetwork() error {
 		return err
 	}
 	for key, netInfo := range external {
-		if len(netInfo.Interval) < 2 {
-			netInfo.Interval = `1h`
-		}
-		typeInterval := netInfo.Interval[len(netInfo.Interval)-1]
-		interval := converter.StrToInt64(netInfo.Interval[:len(netInfo.Interval)-1])
-		if interval == 0 {
-			interval = 1
-		}
-		switch typeInterval {
-		case 'm':
-			duration = time.Duration(interval) * time.Minute
-		case 's':
-			duration = time.Duration(interval) * time.Second
-		default:
-			duration = time.Duration(interval) * time.Hour
+		duration, err = time.ParseDuration(netInfo.Interval)
+		if err != nil {
+			continue
 		}
 		if prevTime, ok = timeNet[key]; ok {
 			if time.Now().Before(prevTime.Add(duration)) {

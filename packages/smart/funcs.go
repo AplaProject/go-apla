@@ -2394,7 +2394,7 @@ type ExternalNetInfo struct {
 	Interval  string `json:"interval"`  // Interval of sending data
 }
 
-func SendToNetwork(sc *SmartContract, netName string, params interface{}) (err error) {
+func SendToNetwork(sc *SmartContract, netName string, params *types.Map) (err error) {
 	var (
 		out, insertQuery string
 		external         map[string]ExternalNetInfo
