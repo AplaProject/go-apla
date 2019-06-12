@@ -31,6 +31,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -107,4 +108,27 @@ func getClientFromToken(token *jwt.Token, ecosysNameService types.EcosystemNameG
 
 	client.EcosystemName = name
 	return client, nil
+}
+
+type authStatusResponse struct {
+	IsActive  bool  `json:"active"`
+	ExpiresAt int64 `json:"exp,omitempty"`
+}
+
+func getAuthStatus(w http.ResponseWriter, r *http.Request) {
+	result := new(authStatusResponse)
+	defer jsonResponse(w, result)
+
+	token := getToken(r)
+	if token == nil {
+		return
+	}
+
+	claims, ok := token.Claims.(*JWTClaims)
+	if !ok {
+		return
+	}
+
+	result.IsActive = true
+	result.ExpiresAt = claims.ExpiresAt
 }
