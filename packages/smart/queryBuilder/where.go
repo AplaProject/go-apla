@@ -100,6 +100,11 @@ func GetWhere(inWhere *types.Map) (string, error) {
 	}
 	in := func(action string, v interface{}) (ret string, err error) {
 		switch value := v.(type) {
+		case string:
+			if len(value) == 0 {
+				return `false`, errWhereFalse
+			}
+			ret = fmt.Sprintf(`%s ('%s')`, action, value)
 		case []interface{}:
 			var list []string
 			for _, ival := range value {
