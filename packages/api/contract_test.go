@@ -1682,3 +1682,67 @@ func TestInsert(t *testing.T) {
 	require.NoError(t, postTx(name+`2`, &url.Values{}))
 	t.Error(`OK`)
 }
+
+func TestErrors(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`cnt`)
+
+	form := url.Values{`Value`: {`contract ` + name + `1 {
+		action {
+			// comment
+			 DBFind("qq")
+		}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.EqualError(t, postTx(name+`1`, &url.Values{}),
+		`{"type":"panic","error":"pq: relation \"1_qq\" does not exist [DBSelect @1`+name+`1:4]"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `2 {
+				action {
+					// comment
+					var i int
+					i = 1/0
+				}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`2`, &url.Values{}),
+		`{"type":"panic","error":"divided by zero [@1`+name+`2:5]"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `5 {
+			action {
+				// comment
+				Throw("Problem", "throw message")
+			}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`5`, &url.Values{}),
+		`{"type":"panic","error":"throw message [Throw @1`+name+`5:4]"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `4 {
+			action {
+				// comment
+				error("error message")
+			}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`4`, &url.Values{}),
+		`{"type":"error","error":"error message"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `3 {
+		        data {
+					Par int
+				}
+				action {
+					if $Par == 1 {
+					   ` + name + `1()
+					}
+					if $Par == 2 {
+						` + name + `2()
+					 }
+				 }}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`3`, &url.Values{`Par`: {`1`}}),
+		`{"type":"panic","error":"pq: relation \"1_qq\" does not exist [DBSelect @1`+name+`1:4 @1`+name+`3:6]"}`)
+	assert.EqualError(t, postTx(name+`3`, &url.Values{`Par`: {`2`}}),
+		`{"type":"panic","error":"divided by zero [@1`+name+`2:5 @1`+name+`3:9]"}`)
+
+	t.Error(`OK`)
+}
