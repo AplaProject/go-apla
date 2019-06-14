@@ -76,6 +76,7 @@ const (
 
 var (
 	ErrNotImplementedOnOBS = errors.New("Contract not implemented on OBS")
+	ErrExtBlockchain       = errors.New("System param external_blockchain is empty")
 )
 
 type ThrowError struct {
@@ -2405,7 +2406,11 @@ func SendToNetwork(sc *SmartContract, netName string, params *types.Map) (err er
 	if err != nil {
 		return err
 	}
-	if err = unmarshalJSON([]byte(syspar.SysString(syspar.ExternalBlockchain)), &external,
+	extBlockchain := syspar.SysString(syspar.ExternalBlockchain)
+	if len(extBlockchain) == 0 {
+		return ErrExtBlockchain
+	}
+	if err = unmarshalJSON([]byte(extBlockchain), &external,
 		`parsing external_blockchain`); err != nil {
 		return
 	}

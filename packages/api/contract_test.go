@@ -1689,10 +1689,10 @@ func TestExternalNetwork(t *testing.T) {
 	// The one time only after install
 
 	form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
-				data {
-					Value string
-				}
-			}`},
+					data {
+						Value string
+					}
+				}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
