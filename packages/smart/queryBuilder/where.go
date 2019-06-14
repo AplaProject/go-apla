@@ -29,12 +29,17 @@
 package queryBuilder
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/types"
+)
+
+var (
+	errWhereFalse = errors.New(`false result`)
 )
 
 func PrepareWhere(where string) string {
@@ -95,6 +100,11 @@ func GetWhere(inWhere *types.Map) (string, error) {
 	}
 	in := func(action string, v interface{}) (ret string, err error) {
 		switch value := v.(type) {
+		case string:
+			if len(value) == 0 {
+				return `false`, errWhereFalse
+			}
+			ret = fmt.Sprintf(`%s ('%s')`, action, value)
 		case []interface{}:
 			var list []string
 			for _, ival := range value {
@@ -102,6 +112,8 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			}
 			if len(list) > 0 {
 				ret = fmt.Sprintf(`%s ('%s')`, action, strings.Join(list, `', '`))
+			} else {
+				return `false`, errWhereFalse
 			}
 		}
 		return
@@ -183,10 +195,14 @@ func GetWhere(inWhere *types.Map) (string, error) {
 					switch avalue := iarr.(type) {
 					case *types.Map:
 						ret, err := GetWhere(avalue)
-						if err != nil {
-							return ``, err
+						if err == errWhereFalse {
+							acond = append(acond, ret)
+						} else {
+							if err != nil {
+								return ``, err
+							}
+							acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
 						}
-						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
 					default:
 						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(avalue)))
 					}
@@ -196,10 +212,14 @@ func GetWhere(inWhere *types.Map) (string, error) {
 				}
 			case *types.Map:
 				ret, err := GetWhere(value)
-				if err != nil {
-					return ``, err
+				if err == errWhereFalse {
+					cond = append(cond, ret)
+				} else {
+					if err != nil {
+						return ``, err
+					}
+					cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
 				}
-				cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
 			default:
 				ival := escape(value)
 				if ival == `$isnull` {

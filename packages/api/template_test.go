@@ -131,6 +131,8 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind("@1roles_participants", src).Where({"ecosystem": #ecosystem_id#, "role->id": {"$in": []}, "member->member_id": #key_id#, "deleted": 0})`, `[{"tag":"dbfind","attr":{"columns":["id","role","member","appointed","date_created","date_deleted","deleted","ecosystem"],"data":[],"name":"@1roles_participants","source":"src","types":[],"where":"{"ecosystem": 1, "role-\u003eid": {"$in": []}, "member-\u003emember_id": 2665397054248150876, "deleted": 0}"}}]`},
+	{`DBFind("@1roles_participants").Where({"ecosystem": #ecosystem_id#, "role->id": {"$in": []}, "member->member_id": #key_id#, "deleted": 0}).Vars(v)`, `[{"tag":"dbfind","attr":{"columns":["id","role","member","appointed","date_created","date_deleted","deleted","ecosystem"],"data":[],"name":"@1roles_participants","types":[],"where":"{"ecosystem": 1, "role-\u003eid": {"$in": []}, "member-\u003emember_id": 2665397054248150876, "deleted": 0}"}}]`},
 	{`DBFind(@1pages).Where({{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}).Columns("id,name").Order(id)`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"],["2","developer_index"],["3","notifications"]],"name":"@1pages","order":"id","types":["text","text"],"where":"{{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}"}}]`},
 	{`DBFind(@1pages).Where({{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}).Columns("id,name")`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["2","developer_index"]],"name":"@1pages","types":["text","text"],"where":"{{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}"}}]`},
@@ -177,7 +179,7 @@ var forTest = tplList{
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
 		Span(#vCmpStartDate# #simple#)`,
-		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
+		`[{"tag":"span","children":[{"tag":"text","text":"-1 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: Now(MMYY))`,
 		`[{"tag":"input","attr":{"type":"text","value":"Now(MMYY)"}}]`},
 	{`Button(Body: LangRes(savex), Class: btn btn-primary, Contract: EditProfile, 
