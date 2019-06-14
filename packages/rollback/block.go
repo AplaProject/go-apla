@@ -80,6 +80,7 @@ func RollbackBlock(data []byte) error {
 		return err
 	}
 
+	b = &model.Block{}
 	if _, err = b.Get(bl.Header.BlockID - 1); err != nil {
 		dbTransaction.Rollback()
 		return err
