@@ -37,6 +37,12 @@ func (p blockchainTxPreprocessor) ProcessClientTranstaction(txData []byte, key i
 		return "", ErrDiffKey
 	}
 
+	le.WithFields(log.Fields{
+		"tx_body":        txData,
+		"tx_contract_id": smartTx.ID,
+		"tx_hash":        rtx.Hash(),
+	}).Info("Send tx")
+
 	if err := model.SendTx(rtx, key); err != nil {
 		le.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("sending tx")
 		return "", err
