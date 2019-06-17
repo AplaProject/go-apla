@@ -178,14 +178,32 @@ func (t *Transaction) Create() error {
 }
 
 // IncrementTxAttemptCount increases attempt column
-func IncrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+func IncrementTxAttemptCount(transactionHash []byte) error {
+	transaction, err := StartTransaction()
+	if err != nil {
+		return err
+	}
 	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt >= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
-	return query.RowsAffected, query.Error
+	if query.Error != nil {
+		transaction.Rollback()
+	} else {
+		transaction.Commit()
+	}
+	return query.Error
 }
 
-func DecrementTxAttemptCount(transaction *DbTransaction, transactionHash []byte) (int64, error) {
+func DecrementTxAttemptCount(transactionHash []byte) error {
+	transaction, err := StartTransaction()
+	if err != nil {
+		return err
+	}
 	query := GetDB(transaction).Exec("update transactions set attempt=attempt-1, used = case when attempt <= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
-	return query.RowsAffected, query.Error
+	if query.Error != nil {
+		transaction.Rollback()
+	} else {
+		transaction.Commit()
+	}
+	return query.Error
 }
 
 func getTxRateByTxType(txType int8) transactionRate {
