@@ -105,10 +105,10 @@ func (t *FirstBlockTransaction) Action() error {
 		return utils.ErrInfo(err)
 	}
 
-	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_keys" (id,pub,amount) values(?, ?,?)`,
-		keyID, data.PublicKey, amount).Error
+	err = model.GetDB(t.DbTransaction).Exec(`insert into "1_keys" (id,account,pub,amount) values(?,?,?,?)`,
+		keyID, converter.AddressToString(keyID), data.PublicKey, amount).Error
 	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting default page")
+		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("inserting key")
 		return utils.ErrInfo(err)
 	}
 	id, err := model.GetNextID(t.DbTransaction, "1_pages")

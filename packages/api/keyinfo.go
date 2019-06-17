@@ -56,7 +56,7 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
-	keysList := make([]keyInfoResult, 0)
+	keysList := make([]*keyInfoResult, 0)
 	keyID := converter.StringToAddress(params["wallet"])
 	if keyID == 0 {
 		errorResponse(w, errInvalidWallet.Errorf(params["wallet"]))
@@ -74,7 +74,9 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	)
 
 	for i, ecosystemID := range ids {
-		found, err = getEcosystemKey(keyID, ecosystemID)
+		key := &model.Key{}
+		key.SetTablePrefix(ecosystemID)
+		found, err = key.Get(keyID)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -82,12 +84,12 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 		if !found {
 			continue
 		}
-		keyRes := keyInfoResult{
+		keyRes := &keyInfoResult{
 			Ecosystem: converter.Int64ToStr(ecosystemID),
 			Name:      names[i],
 		}
 		ra := &model.RolesParticipants{}
-		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(keyID)
+		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(key.AccountKeyID())
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -98,30 +100,19 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
 				errorResponse(w, err)
 				return
-			} else {
-				keyRes.Roles = append(keyRes.Roles, role)
 			}
+			keyRes.Roles = append(keyRes.Roles, role)
 		}
 		keysList = append(keysList, keyRes)
 	}
 
+	// in test mode, registration is open in the first ecosystem
 	if len(keysList) == 0 && syspar.IsTestMode() {
-		keysList = append(keysList, keyInfoResult{
+		keysList = append(keysList, &keyInfoResult{
 			Ecosystem: converter.Int64ToStr(ids[0]),
 			Name:      names[0],
 		})
 	}
 
 	jsonResponse(w, &keysList)
-}
-
-func getEcosystemKey(keyID, ecosystemID int64) (bool, error) {
-	// registration for the first ecosystem is open in test mode
-	if ecosystemID == 1 && syspar.IsTestMode() {
-		return true, nil
-	}
-
-	key := &model.Key{}
-	key.SetTablePrefix(ecosystemID)
-	return key.Get(keyID)
 }

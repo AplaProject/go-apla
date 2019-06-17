@@ -55,6 +55,7 @@ type JWTClaims struct {
 	UID         string `json:"uid,omitempty"`
 	EcosystemID string `json:"ecosystem_id,omitempty"`
 	KeyID       string `json:"key_id,omitempty"`
+	AccountID   string `json:"account_id,omitempty"`
 	RoleID      string `json:"role_id,omitempty"`
 	IsMobile    bool   `json:"is_mobile,omitempty"`
 	jwt.StandardClaims
@@ -96,6 +97,7 @@ func getClientFromToken(token *jwt.Token, ecosysNameService types.EcosystemNameG
 	client := &Client{
 		EcosystemID: converter.StrToInt64(claims.EcosystemID),
 		KeyID:       converter.StrToInt64(claims.KeyID),
+		AccountID:   claims.AccountID,
 		IsMobile:    claims.IsMobile,
 		RoleID:      converter.StrToInt64(claims.RoleID),
 	}

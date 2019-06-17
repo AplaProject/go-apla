@@ -1669,7 +1669,7 @@ func TestInsert(t *testing.T) {
 		conditions {
 		}
 		action {
-			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2",
 				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
 		}

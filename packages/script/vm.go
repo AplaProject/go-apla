@@ -75,6 +75,7 @@ var sysVars = map[string]struct{}{
 	`data`:              {},
 	`ecosystem_id`:      {},
 	`key_id`:            {},
+	`account_id`:        {},
 	`node_position`:     {},
 	`parent`:            {},
 	`original_contract`: {},
