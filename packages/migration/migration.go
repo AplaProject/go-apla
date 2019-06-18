@@ -34,6 +34,7 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/migration/updates"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -49,7 +50,9 @@ var migrations = []*migration{
 	&migration{"0.1.6", migrationInitialSchema},
 }
 
-var updateMigrations = []*migration{}
+var updateMigrations = []*migration{
+	&migration{"2.1.0", updates.M210},
+}
 
 type migration struct {
 	version string

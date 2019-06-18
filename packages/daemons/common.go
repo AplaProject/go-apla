@@ -62,6 +62,7 @@ var daemonsList = map[string]func(context.Context, *daemon) error{
 	"QueueParserBlocks": QueueParserBlocks,
 	"Confirmations":     Confirmations,
 	"Scheduler":         Scheduler,
+	"ExternalNetwork":   ExternalNetwork,
 }
 
 var rollbackList = []string{
