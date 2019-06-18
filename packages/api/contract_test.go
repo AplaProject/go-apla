@@ -1744,3 +1744,32 @@ func TestExternalNetwork(t *testing.T) {
 	assert.NoError(t, postTx(name+`2`, &url.Values{}))
 
 }
+
+func TestNames(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := `123` + randName(`t`)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {
+			Par int
+		}
+		action {}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	err := postTx(`NewContract`, &form)
+	assert.EqualError(t, err, `{"type":"panic","error":"unknown lexem t [Ln:1 Col:13]"}`)
+	form = url.Values{"Name": {name}, "Value": {`P(Test)`}, "Menu": {`admin`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	err = postTx(`NewPage`, &form)
+	assert.EqualError(t, err, `{"type":"panic","error":"`+name+` name is not allowed"}`)
+
+	name = randName(`cnt`)
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action {
+			DBUpdate("@1pages", 1, {"name": "1234t"})
+
+		}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name, &form),
+		`{"type":"panic","error":"1234t name is not allowed"}`)
+
+}

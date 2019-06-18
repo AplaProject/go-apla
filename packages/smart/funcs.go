@@ -46,6 +46,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 	"unicode/utf8"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -808,6 +809,25 @@ func mapToParams(values *types.Map) (params []string, val []interface{}, err err
 	return
 }
 
+func checkName(tblname string, values *types.Map) error {
+	var under int
+	if under = strings.IndexByte(tblname, '_'); under == -1 {
+		return nil
+	}
+	for _, systable := range []string{`menu`, `blocks`, `pages`, `contracts`} {
+		if systable == tblname[under+1:] {
+			if val, found := values.Get(`name`); found {
+				name := fmt.Sprint(val)
+				if len(name) > 0 && unicode.IsDigit([]rune(name)[0]) {
+					return fmt.Errorf(eName, name)
+				}
+			}
+			break
+		}
+	}
+	return nil
+}
+
 // DBInsert inserts a record into the specified database table
 func DBInsert(sc *SmartContract, tblname string, values *types.Map) (qcost int64, ret int64, err error) {
 	if tblname == "system_parameters" {
@@ -815,6 +835,9 @@ func DBInsert(sc *SmartContract, tblname string, values *types.Map) (qcost int64
 	}
 
 	tblname = GetTableName(sc, tblname)
+	if err = checkName(tblname, values); err != nil {
+		return
+	}
 	if err = sc.AccessTable(tblname, "insert"); err != nil {
 		return
 	}
@@ -1057,6 +1080,9 @@ func DBUpdateExt(sc *SmartContract, tblname string, where *types.Map,
 		return 0, fmt.Errorf("system parameters access denied")
 	}
 	tblname = GetTableName(sc, tblname)
+	if err = checkName(tblname, values); err != nil {
+		return
+	}
 	if err = sc.AccessTable(tblname, "update"); err != nil {
 		return
 	}
