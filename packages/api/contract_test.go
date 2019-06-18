@@ -1771,5 +1771,14 @@ func TestNames(t *testing.T) {
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.EqualError(t, postTx(name, &form),
 		`{"type":"panic","error":"1234t name is not allowed"}`)
+	form = url.Values{"Name": {name + `1`}, "Value": {`contract ` + name + `1 {
+			action {
+				DBUpdate("@1pages", 1, {"name": "@98t"})
+	
+			}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`1`, &form),
+		`{"type":"panic","error":"@98t name is not allowed"}`)
 
 }

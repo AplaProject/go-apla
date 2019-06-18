@@ -818,7 +818,7 @@ func checkName(tblname string, values *types.Map) error {
 		if systable == tblname[under+1:] {
 			if val, found := values.Get(`name`); found {
 				name := fmt.Sprint(val)
-				if len(name) > 0 && unicode.IsDigit([]rune(name)[0]) {
+				if len(name) > 0 && (unicode.IsDigit([]rune(name)[0]) || name[0] == '@') {
 					return fmt.Errorf(eName, name)
 				}
 			}
