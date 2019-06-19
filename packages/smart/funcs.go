@@ -76,6 +76,7 @@ const (
 
 var (
 	ErrNotImplementedOnOBS = errors.New("Contract not implemented on OBS")
+	ErrExtBlockchain       = errors.New("System param external_blockchain is empty")
 )
 
 type ThrowError struct {
@@ -247,6 +248,7 @@ var (
 		"Round":                        15,
 		"Floor":                        15,
 		"CheckCondition":               10,
+		"SendToNetwork":                100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -383,6 +385,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Round":                        Round,
 		"Floor":                        Floor,
 		"CheckCondition":               CheckCondition,
+		"SendToNetwork":                SendToNetwork,
 	}
 
 	switch vt {
@@ -2382,4 +2385,55 @@ func PubToHex(in interface{}) (ret string) {
 		ret = crypto.PubToHex(v)
 	}
 	return
+}
+
+// ExternalNetInfo describes external blockchains
+type ExternalNetInfo struct {
+	URL       string `json:"url"`       // Node address
+	Contract  string `json:"contract"`  // The name of the contract
+	Condition string `json:"condition"` // Access rights
+	Interval  string `json:"interval"`  // Interval of sending data
+}
+
+func SendToNetwork(sc *SmartContract, netName string, params *types.Map) (err error) {
+	var (
+		out, insertQuery string
+		external         map[string]ExternalNetInfo
+		netInfo          ExternalNetInfo
+		ok               bool
+	)
+	out, err = JSONEncode(params)
+	if err != nil {
+		return err
+	}
+	extBlockchain := syspar.SysString(syspar.ExternalBlockchain)
+	if len(extBlockchain) == 0 {
+		return ErrExtBlockchain
+	}
+	if err = unmarshalJSON([]byte(extBlockchain), &external,
+		`parsing external_blockchain`); err != nil {
+		return
+	}
+	if netInfo, ok = external[netName]; !ok {
+		return fmt.Errorf(eExternalNet, netName)
+	}
+	if ok, err = CheckCondition(sc, netInfo.Condition); !ok {
+		if err == nil {
+			err = errAccessDenied
+		}
+		return
+	}
+	logger := sc.GetLogger()
+	sqlBuilder := &qb.SQLQueryBuilder{
+		Entry:        logger,
+		Table:        `external_blockchain`,
+		Fields:       []string{`netname`, `value`},
+		FieldValues:  []interface{}{netName, out},
+		KeyTableChkr: model.KeyTableChecker{},
+	}
+	insertQuery, err = sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{Tx: sc.DbTransaction})
+	if err != nil {
+		return
+	}
+	return model.GetDB(sc.DbTransaction).Exec(insertQuery).Error
 }

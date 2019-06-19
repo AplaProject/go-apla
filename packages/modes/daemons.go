@@ -24,6 +24,7 @@ func (f BlockchainDaemonsListsFactory) GetDaemonsList() []string {
 		"Disseminator",
 		"Confirmations",
 		"Scheduler",
+		"ExternalNetwork",
 	}
 }
 

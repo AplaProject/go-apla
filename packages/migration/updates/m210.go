@@ -26,20 +26,19 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package smart
+package updates
 
-import (
-	"testing"
-)
+var M210 = `
+    insert into "1_system_parameters" (id, name, value, conditions) values
+ (next_id('1_system_parameters'), 'external_blockchain', '', 'ContractAccess("@1UpdateSysParam")');
 
-func concat(raw, wrapper string) string {
-	return wrapper + raw + wrapper
-}
-
-func BenchmarkWrappingConcat(b *testing.B) {
-	concat("someRawString", `"`)
-}
-
-func BenchmarkWrapWithBuffer(b *testing.B) {
-	wrapString("someRawString", `"`)
-}
+    DROP TABLE IF EXISTS "external_blockchain";
+	CREATE TABLE "external_blockchain" (
+	"id" bigint NOT NULL DEFAULT '0',
+	"netname" varchar(255)  NOT NULL DEFAULT '',
+	"value" text NOT NULL DEFAULT ''
+	);
+	ALTER TABLE ONLY "external_blockchain" ADD CONSTRAINT "external_blockchain_pkey" PRIMARY KEY (id);
+	CREATE INDEX "external_blockchain_index_name" ON "external_blockchain" (netname);
+	
+`
