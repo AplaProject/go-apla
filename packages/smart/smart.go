@@ -1188,7 +1188,9 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 	if needPayment {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
-			err = ierr
+			if err == nil {
+				err = ierr
+			}
 		}
 	}
 

@@ -177,7 +177,7 @@ type Lexem struct {
 	Type   uint32 // Type of the lexem
 	Ext    uint32
 	Value  interface{} // Value of lexem
-	Line   uint32      // Line of the lexem
+	Line   uint16      // Line of the lexem
 	Column uint32      // Position inside the line
 }
 
@@ -262,7 +262,7 @@ func lexParser(input []rune) (Lexems, error) {
 				if name != `else` && name != `elif` {
 					for i := 0; i < ifbuf[len(ifbuf)-1].count; i++ {
 						lexems = append(lexems, &Lexem{lexSys | (uint32('}') << 8), 0,
-							uint32('}'), line, lexOff - offline + 1})
+							uint32('}'), uint16(line), lexOff - offline + 1})
 					}
 					ifbuf = ifbuf[:len(ifbuf)-1]
 				} else {
@@ -337,8 +337,8 @@ func lexParser(input []rune) (Lexems, error) {
 					case keyElif:
 						if len(ifbuf) > 0 {
 							lexems = append(lexems, &Lexem{lexKeyword | (keyElse << 8), 0,
-								uint32(keyElse), line, lexOff - offline + 1},
-								&Lexem{lexSys | ('{' << 8), 0, uint32('{'), line, lexOff - offline + 1})
+								uint32(keyElse), uint16(line), lexOff - offline + 1},
+								&Lexem{lexSys | ('{' << 8), 0, uint32('{'), uint16(line), lexOff - offline + 1})
 							lexID = lexKeyword | (keyIf << 8)
 							value = uint32(keyIf)
 							ifbuf[len(ifbuf)-1].count++
@@ -348,7 +348,7 @@ func lexParser(input []rune) (Lexems, error) {
 							lexf := *lexems[len(lexems)-1]
 							if lexf.Type&0xff != lexKeyword || lexf.Value.(uint32) != keyFunc {
 								lexems = append(lexems, &Lexem{lexKeyword | (keyFunc << 8), 0,
-									keyFunc, line, lexOff - offline + 1})
+									keyFunc, uint16(line), lexOff - offline + 1})
 							}
 						}
 						value = name
@@ -374,7 +374,7 @@ func lexParser(input []rune) (Lexems, error) {
 				}
 			}
 			if lexID != lexComment {
-				lexems = append(lexems, &Lexem{lexID, ext, value, line, lexOff - offline + 1})
+				lexems = append(lexems, &Lexem{lexID, ext, value, uint16(line), lexOff - offline + 1})
 			}
 		}
 		if (flags & lexfPush) != 0 {
