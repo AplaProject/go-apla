@@ -213,7 +213,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.DbTransaction = dbTransaction
 		t.Rand = rand.BytesSeed(t.TxHash)
 
-		model.IncrementTxAttemptCount(nil, t.TxHash)
+		model.IncrementTxAttemptCount(t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
@@ -282,7 +282,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
 
-		model.DecrementTxAttemptCount(nil, t.TxHash)
+		model.DecrementTxAttemptCount(t.TxHash)
 
 		if t.SysUpdate {
 			b.SysUpdate = true
