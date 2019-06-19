@@ -1765,5 +1765,5 @@ func TestApos(t *testing.T) {
 		}}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
-	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Rue d'Ettelbruck"}}))
+	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Name d'Company"}}))
 }
