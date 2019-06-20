@@ -925,19 +925,26 @@ VALUES
 		NewPubkey string
 	}
 	conditions {
-		$newId = PubToID($NewPubkey)
-		if $newId == 0 {
+		$id = PubToID($NewPubkey)
+		if $id == 0 {
 			error "Wrong pubkey"
 		}
-		if DBFind("keys").Columns("id").WhereId($newId).One("id") != nil {
+		if DBFind("keys").Columns("id").WhereId($id).One("id") != nil {
 			error "User already exists"
 		}
-
-        $amount = Money(1000) * Money(1000000000000000000)
 	}
 	action {
-        NewMoney($newId, Str($amount), "New user deposit")
-        SetPubKey($newId, StringToBytes($NewPubkey))
+		$pub = HexToPub($NewPubkey)
+		$account = IdToAddress($id)
+		$amount = Money(1000) * Money(1000000000000000000)
+
+		DBInsert("keys", {
+			"id": $id,
+			"account": $account,
+			"pub": $pub,
+			"amount": $amount,
+			"ecosystem": 1
+		})
 	}
 }
 ', 'ContractConditions("NodeOwnerCondition")', '1', '%[1]d'),

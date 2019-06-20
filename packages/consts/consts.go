@@ -127,79 +127,79 @@ var ApiPath = `/api/v2/`
 // BuildInfo should be defined through -ldflags
 var BuildInfo string
 
-// DefaultConfigFile name of config file (toml format)
-const DefaultConfigFile = "config.toml"
+const (
+	// DefaultConfigFile name of config file (toml format)
+	DefaultConfigFile = "config.toml"
 
-// DefaultWorkdirName name of working directory
-const DefaultWorkdirName = "apla-data"
+	// DefaultWorkdirName name of working directory
+	DefaultWorkdirName = "apla-data"
 
-// DefaultPidFilename is default filename of pid file
-const DefaultPidFilename = "go-apla.pid"
+	// DefaultPidFilename is default filename of pid file
+	DefaultPidFilename = "go-apla.pid"
 
-// DefaultLockFilename is default filename of lock file
-const DefaultLockFilename = "go-apla.lock"
+	// DefaultLockFilename is default filename of lock file
+	DefaultLockFilename = "go-apla.lock"
 
-// FirstBlockFilename name of first block binary file
-const FirstBlockFilename = "1block"
+	// FirstBlockFilename name of first block binary file
+	FirstBlockFilename = "1block"
 
-// PrivateKeyFilename name of wallet private key file
-const PrivateKeyFilename = "PrivateKey"
+	// PrivateKeyFilename name of wallet private key file
+	PrivateKeyFilename = "PrivateKey"
 
-// PublicKeyFilename name of wallet public key file
-const PublicKeyFilename = "PublicKey"
+	// PublicKeyFilename name of wallet public key file
+	PublicKeyFilename = "PublicKey"
 
-// NodePrivateKeyFilename name of node private key file
-const NodePrivateKeyFilename = "NodePrivateKey"
+	// NodePrivateKeyFilename name of node private key file
+	NodePrivateKeyFilename = "NodePrivateKey"
 
-// NodePublicKeyFilename name of node public key file
-const NodePublicKeyFilename = "NodePublicKey"
+	// NodePublicKeyFilename name of node public key file
+	NodePublicKeyFilename = "NodePublicKey"
 
-// KeyIDFilename generated KeyID
-const KeyIDFilename = "KeyID"
+	// KeyIDFilename generated KeyID
+	KeyIDFilename = "KeyID"
 
-// RollbackResultFilename rollback result file
-const RollbackResultFilename = "rollback_result"
+	// RollbackResultFilename rollback result file
+	RollbackResultFilename = "rollback_result"
 
-// FromToPerDayLimit day limit token transfer between accounts
-const FromToPerDayLimit = 10000
+	// FromToPerDayLimit day limit token transfer between accounts
+	FromToPerDayLimit = 10000
 
-// TokenMovementQtyPerBlockLimit block limit token transfer
-const TokenMovementQtyPerBlockLimit = 100
+	// TokenMovementQtyPerBlockLimit block limit token transfer
+	TokenMovementQtyPerBlockLimit = 100
 
-// TCPConnTimeout timeout of tcp connection
-const TCPConnTimeout = 5 * time.Second
+	// TCPConnTimeout timeout of tcp connection
+	TCPConnTimeout = 5 * time.Second
 
-// TxRequestExpire is expiration time for request of transaction
-const TxRequestExpire = 1 * time.Minute
+	// TxRequestExpire is expiration time for request of transaction
+	TxRequestExpire = 1 * time.Minute
 
-// DefaultTempDirName is default name of temporary directory
-const DefaultTempDirName = "apla-temp"
+	// DefaultTempDirName is default name of temporary directory
+	DefaultTempDirName = "apla-temp"
 
-// DefaultOBS allways is 1
-const DefaultOBS = 1
+	// DefaultOBS allways is 1
+	DefaultOBS = 1
 
-// MoneyLength is the maximum number of digits in money value
-const MoneyLength = 30
+	// MoneyLength is the maximum number of digits in money value
+	MoneyLength = 30
 
-const TokenEcosystem = 1
+	TokenEcosystem = 1
 
-const HTTPServerMaxBodySize = 1 << 20
+	HTTPServerMaxBodySize = 1 << 20
 
-// ShiftContractID is the offset of tx identifiers
-const ShiftContractID = 5000
+	// ShiftContractID is the offset of tx identifiers
+	ShiftContractID = 5000
 
-// ContractList is the number of contracts per page on loading
-const ContractList = 200
+	// ContractList is the number of contracts per page on loading
+	ContractList = 200
 
-// GuestKey is the guest id
-const GuestKey = `4544233900443112470`
+	// Guest key
+	GuestPublic  = "489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86"
+	GuestKey     = "8529184409882256911"
+	GuestAddress = "0852-9184-4098-8225-6911"
 
-// GuestPublic is the public guest key
-const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86`
+	// StatusMainPage is a status for Main Page
+	StatusMainPage = `2`
 
-// StatusMainPage is a status for Main Page
-const StatusMainPage = `2`
-
-const NoneVDE = "none"
-
-const DBFindLimit = 10000
+	NoneVDE     = "none"
+	DBFindLimit = 10000
+)
