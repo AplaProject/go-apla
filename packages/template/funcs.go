@@ -79,7 +79,7 @@ func init() {
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
 	funcs[`CodeAsIs`] = tplFunc{defaultTag, defaultTag, `code`, `#Text`}
-	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
+	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format,Location`}
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source,Ecosystem`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
@@ -1170,7 +1170,7 @@ func elseFull(par parFunc) string {
 }
 
 func dateTimeTag(par parFunc) string {
-	datetime := macro((*par.Pars)[`DateTime`], par.Workspace.Vars)
+	datetime := par.ParamWithMacros("DateTime")
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
@@ -1189,7 +1189,7 @@ func dateTimeTag(par parFunc) string {
 			return err.Error()
 		}
 	}
-	format := (*par.Pars)[`Format`]
+	format := par.Param("Format")
 	if len(format) == 0 {
 		format, _ = language.LangText(`timeformat`,
 			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)), getVar(par.Workspace, `lang`))
@@ -1206,6 +1206,15 @@ func dateTimeTag(par parFunc) string {
 	format = strings.Replace(format, `HH`, `15`, -1)
 	format = strings.Replace(format, `MI`, `04`, -1)
 	format = strings.Replace(format, `SS`, `05`, -1)
+
+	locationName := par.Param("Location")
+	if len(locationName) > 0 {
+		loc, err := time.LoadLocation(locationName)
+		if err != nil {
+			return err.Error()
+		}
+		itime = itime.In(loc)
+	}
 
 	return itime.Format(format)
 }
@@ -1253,9 +1262,7 @@ func jsontosourceTag(par parFunc) string {
 	var out map[string]interface{}
 	dataVal := macro((*par.Pars)[`Data`], par.Workspace.Vars)
 	if len(dataVal) > 0 {
-		if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
-		}
+		json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out)
 	}
 	for key, item := range out {
 		if item == nil {

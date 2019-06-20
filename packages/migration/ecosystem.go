@@ -75,6 +75,7 @@ func GetFirstTableScript() string {
 func GetCommonEcosystemScript() string {
 	scripts := []string{
 		firstEcosystemCommon,
+		timeZonesSQL,
 	}
 	return strings.Join(scripts, "\r\n")
 }

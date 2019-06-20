@@ -391,6 +391,12 @@ var forTest = tplList{
 		`[{"tag":"inputMap","attr":{"@value":"{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}","maptype":"satelite","name":"mapName","type":"PolyType","validate":{"ping":"pong"}}}]`},
 	{`Map(Input data, satelite, 300)`,
 		`[{"tag":"map","attr":{"@value":"Input data","hmap":"300","maptype":"satelite"}}]`},
+	{`DateTime(DateTime: 1560938400, Location: "Location/Bad")`,
+		`[{"tag":"text","text":"unknown time zone Location/Bad"}]`},
+	{`DateTime(DateTime: 1560938400, Location: "Europe/Luxembourg")`,
+		`[{"tag":"text","text":"2019-06-19 12:00:00"}]`},
+	{`DateTime(DateTime: 1560938400, Location: "Europe/Moscow")`,
+		`[{"tag":"text","text":"2019-06-19 13:00:00"}]`},
 }
 
 func TestFullJSON(t *testing.T) {
