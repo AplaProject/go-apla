@@ -44,6 +44,7 @@ import (
 // ByteCode stores a command and an additional parameter.
 type ByteCode struct {
 	Cmd   uint16
+	Line  uint16
 	Value interface{}
 }
 
@@ -291,7 +292,10 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 	}
 	rt.cost -= CostContract
 
-	var stack Stacker
+	var (
+		stack Stacker
+		err   error
+	)
 	if stack, ok = (*rt.extend)["sc"].(Stacker); ok {
 		if err := stack.AppendStack(name); err != nil {
 			return nil, err
@@ -309,16 +313,19 @@ func ExecContract(rt *RunTime, name, txs string, params ...interface{}) (interfa
 		if block, ok := (*cblock).Objects[method]; ok && block.Type == ObjFunc {
 			rtemp := rt.vm.RunInit(rt.cost)
 			(*rt.extend)[`parent`] = parent
-			_, err := rtemp.Run(block.Value.(*Block), nil, rt.extend)
+			_, err = rtemp.Run(block.Value.(*Block), nil, rt.extend)
 			rt.cost = rtemp.cost
 			if err != nil {
 				logger.WithFields(log.Fields{"error": err, "method_name": method, "type": consts.ContractError}).Error("executing contract method")
-				return nil, err
+				break
 			}
 		}
 	}
 	if stack != nil {
 		stack.PopStack(name)
+	}
+	if err != nil {
+		return nil, err
 	}
 	(*rt.extend)[`parent`] = prevparent
 	(*rt.extend)[`this_contract`] = prevthis

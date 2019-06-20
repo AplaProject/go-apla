@@ -76,11 +76,14 @@ func getRowHandler(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, err)
 		return
 	}
-
+	col := `id`
+	if len(params["column"]) > 0 {
+		col = converter.Sanitize(params["column"], `-`)
+	}
 	if converter.FirstEcosystemTables[params["name"]] {
-		q = q.Table(table).Where("id = ? and ecosystem = ?", params["id"], client.EcosystemID)
+		q = q.Table(table).Where(col+" = ? and ecosystem = ?", params["id"], client.EcosystemID)
 	} else {
-		q = q.Table(table).Where("id = ?", params["id"])
+		q = q.Table(table).Where(col+" = ?", params["id"])
 	}
 
 	if len(form.Columns) > 0 {

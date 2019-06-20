@@ -60,6 +60,7 @@ type Mode struct {
 // Client represents data of client
 type Client struct {
 	KeyID         int64
+	AccountID     string
 	EcosystemID   int64
 	EcosystemName string
 	RoleID        int64

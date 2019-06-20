@@ -150,6 +150,7 @@ type SmartContract struct {
 	Notifications []NotifyInfo
 	GenBlock      bool
 	TimeLimit     int64
+	Key           *model.Key
 }
 
 var (
@@ -354,8 +355,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"AllowChangeCondition":         AllowChangeCondition,
 		"StringToBytes":                StringToBytes,
 		"BytesToString":                BytesToString,
-		"SetPubKey":                    SetPubKey,
-		"NewMoney":                     NewMoney,
 		"GetMapKeys":                   GetMapKeys,
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
@@ -437,8 +436,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 			"BindWallet":       {},
 			"UnbindWallet":     {},
 			"EditEcosysName":   {},
-			"SetPubKey":        {},
-			"NewMoney":         {},
 			"UpdateNodesBan":   {},
 			"UpdateCron":       {},
 			"CreateOBS":        {},
@@ -504,7 +501,7 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 
 // RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
 func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
-	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.TxSmart.KeyID)
+	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.Key.AccountKeyID())
 	if err != nil {
 		return false, err
 	}
@@ -542,18 +539,11 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			if block == nil {
 				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
 			}
-			vars := map[string]interface{}{
-				`ecosystem_id`:      int64(sc.TxSmart.EcosystemID),
-				`key_id`:            sc.TxSmart.KeyID,
-				`sc`:                sc,
-				`original_contract`: ``,
-				`this_contract`:     ``,
-				`guest_key`:         consts.GuestKey,
-			}
+			vars := sc.getExtend()
 			if err := sc.AppendStack(name); err != nil {
 				return false, err
 			}
-			_, err := VMRun(sc.VM, block, []interface{}{}, &vars)
+			_, err := VMRun(sc.VM, block, []interface{}{}, vars)
 			if err != nil {
 				return false, err
 			}
@@ -1033,12 +1023,10 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 		result = append(result, reflect.ValueOf(row).Interface())
 	}
 	if perm != nil && len(perm[`filter`]) > 0 {
-		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
-			&map[string]interface{}{
-				`data`: result, `original_contract`: ``, `this_contract`: ``,
-				`ecosystem_id`: sc.TxSmart.EcosystemID,
-				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
-				`block_time`: 0, `time`: sc.TxSmart.Time})
+		fltResult, err := VMEvalIf(
+			sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
+			sc.getExtend(),
+		)
 		if err != nil {
 			return 0, nil, err
 		}
@@ -1496,30 +1484,6 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		return SysRollback(sc, SysRollData{Type: "NewColumn", TableName: tblname, Data: name})
 	}
 	return
-}
-
-// SetPubKey updates the publis key
-func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
-	if err = validateAccess(`SetPubKey`, sc, nNewUser); err != nil {
-		return
-	}
-	if len(pubKey) >= consts.PubkeySizeLength*2 {
-		pubKey, err = crypto.HexToPub(string(pubKey))
-		if err != nil {
-			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
-		}
-	}
-	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey}, `1_keys`, `id`, id)
-	return
-}
-
-func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
-	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
-		return err
-	}
-	_, _, err = sc.insert([]string{`id`, `amount`, `ecosystem`}, []interface{}{id, amount,
-		sc.TxSmart.EcosystemID}, `1_keys`)
-	return err
 }
 
 // PermColumn is contract func

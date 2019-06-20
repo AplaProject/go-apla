@@ -209,7 +209,7 @@ func processTransactions(logger *log.Entry, done <-chan time.Time) ([]*model.Tra
 		ch := make(chan []byte)
 		go func() {
 			for tx := range ch {
-				model.IncrementTxAttemptCount(nil, tx)
+				model.IncrementTxAttemptCount(tx)
 			}
 		}()
 

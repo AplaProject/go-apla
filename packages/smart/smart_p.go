@@ -494,8 +494,12 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 			pub = v.(string)
 		}
 	}
-	if _, _, err := DBInsert(sc, `@1keys`, types.LoadMap(
-		map[string]interface{}{"id": wallet, "pub": pub, "ecosystem": idStr})); err != nil {
+	if _, _, err := DBInsert(sc, `@1keys`, types.LoadMap(map[string]interface{}{
+		"id":        wallet,
+		"account":   converter.AddressToString(wallet),
+		"pub":       pub,
+		"ecosystem": idStr,
+	})); err != nil {
 		return 0, logErrorDB(err, "inserting key")
 	}
 
