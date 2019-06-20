@@ -74,6 +74,7 @@ func (m Mode) SetCommonRoutes(r Router) {
 	api.HandleFunc("/list/{name}", authRequire(getListHandler)).Methods("GET")
 	api.HandleFunc("/sections", authRequire(getSectionsHandler)).Methods("GET")
 	api.HandleFunc("/row/{name}/{id}", authRequire(getRowHandler)).Methods("GET")
+	api.HandleFunc("/row/{name}/{column}/{id}", authRequire(getRowHandler)).Methods("GET")
 	api.HandleFunc("/interface/page/{name}", authRequire(getPageRowHandler)).Methods("GET")
 	api.HandleFunc("/interface/menu/{name}", authRequire(getMenuRowHandler)).Methods("GET")
 	api.HandleFunc("/interface/block/{name}", authRequire(getBlockInterfaceRowHandler)).Methods("GET")
