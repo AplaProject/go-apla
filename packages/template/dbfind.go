@@ -107,6 +107,14 @@ func parseObject(in []rune) (interface{}, int) {
 	} else {
 		return nil, 0
 	}
+	addEmptyKey := func() {
+		if mapMode {
+			ret.(map[string]interface{})[key] = ``
+		} else if len(key) > 0 {
+			ret = append(ret.([]interface{}), map[string]interface{}{key: ``})
+		}
+		key = ``
+	}
 	start := 1
 	i := 1
 main:
@@ -156,8 +164,8 @@ main:
 			}
 		case ',':
 			val := trimString(in[start:i])
-			if len(val) == 0 && (len(key) > 0 || mapMode) {
-				key = ``
+			if len(val) == 0 && len(key) > 0 {
+				addEmptyKey()
 			}
 			if len(val) > 0 {
 				if mapMode {
@@ -187,8 +195,8 @@ main:
 					ret = append(ret.([]interface{}), last)
 				}
 			}
-		} else if len(key) > 0 || mapMode {
-			ret.(map[string]interface{})[key] = ``
+		} else if mapMode || len(key) > 0 {
+			addEmptyKey()
 		}
 	}
 	switch v := ret.(type) {
