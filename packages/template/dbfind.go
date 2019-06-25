@@ -34,6 +34,8 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/types"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -102,7 +104,7 @@ func parseObject(in []rune) (interface{}, int) {
 	if in[0] == '[' {
 		ret = make([]interface{}, 0)
 	} else if in[0] == '{' {
-		ret = make(map[string]interface{})
+		ret = types.NewMap()
 		mapMode = true
 	} else {
 		return nil, 0
@@ -131,11 +133,11 @@ main:
 					switch v := par.(type) {
 					case map[string]interface{}:
 						for ikey, ival := range v {
-							ret.(map[string]interface{})[ikey] = ival
+							ret.(*types.Map).Set(ikey, ival)
 						}
 					}
 				} else {
-					ret.(map[string]interface{})[key] = par
+					ret.(*types.Map).Set(key, par)
 					key = ``
 				}
 			} else {
@@ -161,7 +163,7 @@ main:
 			}
 			if len(val) > 0 {
 				if mapMode {
-					ret.(map[string]interface{})[key] = val
+					ret.(*types.Map).Set(key, val)
 					key = ``
 				} else {
 					if len(key) > 0 {
@@ -178,7 +180,7 @@ main:
 	if start < i {
 		if last := trimString(in[start:i]); len(last) > 0 {
 			if mapMode {
-				ret.(map[string]interface{})[key] = last
+				ret.(*types.Map).Set(key, last)
 			} else {
 				if len(key) > 0 {
 					ret = append(ret.([]interface{}), map[string]interface{}{key: last})
@@ -188,7 +190,7 @@ main:
 				}
 			}
 		} else if len(key) > 0 || mapMode {
-			ret.(map[string]interface{})[key] = ``
+			ret.(*types.Map).Set(key, "")
 		}
 	}
 	switch v := ret.(type) {
