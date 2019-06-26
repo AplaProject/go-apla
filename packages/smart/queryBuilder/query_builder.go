@@ -209,7 +209,7 @@ func (b *SQLQueryBuilder) GetSQLUpdateExpr(logData map[string]string) (string, e
 				if jsonFields[colfield[0]] == nil {
 					jsonFields[colfield[0]] = make(map[string]string)
 				}
-				jsonFields[colfield[0]][colfield[1]] = b.stringValues[i]
+				jsonFields[colfield[0]][colfield[1]] = escapeSingleQuotes(b.stringValues[i])
 				continue
 			}
 		}
@@ -390,7 +390,7 @@ func toArithmeticUpdateExpr(field, value string) string {
 }
 
 func toTimestampUpdateExpr(field, value string) string {
-	return field[len(prefTimestampSpace):] + `= to_timestamp('` + value + `')`
+	return field[len(prefTimestampSpace):] + `= to_timestamp('` + escapeSingleQuotes(value) + `')`
 }
 
 func toWrapedTimestamp(value string) string {

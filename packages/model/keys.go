@@ -28,12 +28,19 @@
 
 package model
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/AplaProject/go-apla/packages/converter"
+)
 
 // Key is model
 type Key struct {
-	ecosystem int64
+	ecosystem    int64
+	accountKeyID int64 `gorm:"-"`
+
 	ID        int64  `gorm:"primary_key;not null"`
+	AccountID string `gorm:"column:account;not null"`
 	PublicKey []byte `gorm:"column:pub;not null"`
 	Amount    string `gorm:"not null"`
 	Maxpay    string `gorm:"not null"`
@@ -58,6 +65,13 @@ func (m Key) TableName() string {
 // Get is retrieving model from database
 func (m *Key) Get(wallet int64) (bool, error) {
 	return isFound(DBConn.Where("id = ? and ecosystem = ?", wallet, m.ecosystem).First(m))
+}
+
+func (m *Key) AccountKeyID() int64 {
+	if m.accountKeyID == 0 {
+		m.accountKeyID = converter.StringToAddress(m.AccountID)
+	}
+	return m.accountKeyID
 }
 
 // KeyTableName returns name of key table

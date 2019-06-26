@@ -88,6 +88,7 @@ type loginResult struct {
 	Token       string        `json:"token,omitempty"`
 	EcosystemID string        `json:"ecosystem_id,omitempty"`
 	KeyID       string        `json:"key_id,omitempty"`
+	AccountID   string        `json:"account_id,omitempty"`
 	Address     string        `json:"address,omitempty"`
 	NotifyKey   string        `json:"notify_key,omitempty"`
 	IsNode      bool          `json:"isnode,omitempty"`
@@ -98,7 +99,7 @@ type loginResult struct {
 }
 
 type rolesResult struct {
-	RoleId   int64  `json:"role_id"`
+	RoleID   int64  `json:"role_id"`
 	RoleName string `json:"role_name"`
 }
 
@@ -285,6 +286,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	claims := JWTClaims{
 		KeyID:       result.KeyID,
+		AccountID:   account.AccountID,
 		EcosystemID: result.EcosystemID,
 		IsMobile:    form.IsMobile,
 		RoleID:      converter.Int64ToStr(form.RoleID),
@@ -325,9 +327,12 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
 			errorResponse(w, err)
 			return
-		} else {
-			result.Roles = append(result.Roles, rolesResult{RoleId: converter.StrToInt64(res["id"]), RoleName: res["name"]})
 		}
+
+		result.Roles = append(result.Roles, rolesResult{
+			RoleID:   converter.StrToInt64(res["id"]),
+			RoleName: res["name"],
+		})
 	}
 
 	jsonResponse(w, result)

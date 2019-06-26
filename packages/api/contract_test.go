@@ -1669,7 +1669,7 @@ func TestInsert(t *testing.T) {
 		conditions {
 		}
 		action {
-			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2",
 				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
 		}
@@ -1806,4 +1806,27 @@ func TestExternalNetwork(t *testing.T) {
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name+`2`, &url.Values{}))
+}
+
+func TestApos(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := randName(`cnt`)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {
+			Address string
+		}
+		action {
+			var m map
+			var id int
+			m["member_name"] = "test"
+			m["member_info->country"] = $Address 
+			m["member_info->ooops"] = "seses' seseses "
+			id = DBInsert("members", m)
+			m["member_info->new"] = "ok'; ok"
+			m["memb'er_info->ne'wq"] = "stop'"
+			DBUpdate("members", id, m)
+		}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Name d'Company"}}))
 }
