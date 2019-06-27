@@ -194,8 +194,8 @@ const (
 
 	// Guest key
 	GuestPublic  = "489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86"
-	GuestKey     = "8529184409882256911"
-	GuestAddress = "0852-9184-4098-8225-6911"
+	GuestKey     = "4544233900443112470"
+	GuestAddress = "0454-4233-9004-4311-2470"
 
 	// StatusMainPage is a status for Main Page
 	StatusMainPage = `2`
