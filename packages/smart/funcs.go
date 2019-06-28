@@ -34,7 +34,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -62,6 +61,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
+
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -70,7 +71,6 @@ import (
 const (
 	nodeBanNotificationHeader = "Your node was banned"
 	historyLimit              = 250
-	dateTimeFormat            = "2006-01-02 15:04:05"
 	contractTxType            = 128
 )
 
@@ -366,6 +366,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"IsObject":                     IsObject,
 		"DateTime":                     DateTime,
 		"UnixDateTime":                 UnixDateTime,
+		"DateTimeLocation":             DateTimeLocation,
+		"UnixDateTimeLocation":         UnixDateTimeLocation,
 		"UpdateNotifications":          UpdateNotifications,
 		"UpdateRolesNotifications":     UpdateRolesNotifications,
 		"TransactionInfo":              TransactionInfo,
@@ -1582,12 +1584,6 @@ func SortedKeys(m *types.Map) []interface{} {
 	return ret
 }
 
-// Date formats timestamp to specified date format
-func Date(timeFormat string, timestamp int64) string {
-	t := time.Unix(timestamp, 0)
-	return t.Format(timeFormat)
-}
-
 func httpRequest(req *http.Request, headers map[string]interface{}) (string, error) {
 	for key, v := range headers {
 		req.Header.Set(key, fmt.Sprint(v))
@@ -2008,29 +2004,6 @@ func GetHistoryRow(sc *SmartContract, tableName string, id, idRollback int64) (*
 
 func StackOverflow(sc *SmartContract) {
 	StackOverflow(sc)
-}
-
-func BlockTime(sc *SmartContract) string {
-	var blockTime int64
-	if sc.BlockData != nil {
-		blockTime = sc.BlockData.Time
-	}
-	if sc.OBS {
-		blockTime = time.Now().Unix()
-	}
-	return Date(dateTimeFormat, blockTime)
-}
-
-func DateTime(unix int64) string {
-	return Date(dateTimeFormat, unix)
-}
-
-func UnixDateTime(value string) int64 {
-	t, err := time.Parse(dateTimeFormat, value)
-	if err != nil {
-		return 0
-	}
-	return t.Unix()
 }
 
 func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interface{}) {
