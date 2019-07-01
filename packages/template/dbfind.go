@@ -109,6 +109,14 @@ func parseObject(in []rune) (interface{}, int) {
 	} else {
 		return nil, 0
 	}
+	addEmptyKey := func() {
+		if mapMode {
+			ret.(*types.Map).Set(key, "")
+		} else if len(key) > 0 {
+			ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: ``}))
+		}
+		key = ``
+	}
 	start := 1
 	i := 1
 main:
@@ -142,7 +150,7 @@ main:
 				}
 			} else {
 				if len(key) > 0 {
-					par = map[string]interface{}{key: par}
+					par = types.LoadMap(map[string]interface{}{key: par})
 					key = ``
 				}
 				ret = append(ret.([]interface{}), par)
@@ -158,8 +166,8 @@ main:
 			}
 		case ',':
 			val := trimString(in[start:i])
-			if len(val) == 0 && (len(key) > 0 || mapMode) {
-				key = ``
+			if len(val) == 0 && len(key) > 0 {
+				addEmptyKey()
 			}
 			if len(val) > 0 {
 				if mapMode {
@@ -167,7 +175,7 @@ main:
 					key = ``
 				} else {
 					if len(key) > 0 {
-						ret = append(ret.([]interface{}), map[string]interface{}{key: val})
+						ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: val}))
 						key = ``
 					} else {
 						ret = append(ret.([]interface{}), val)
@@ -183,17 +191,21 @@ main:
 				ret.(*types.Map).Set(key, last)
 			} else {
 				if len(key) > 0 {
-					ret = append(ret.([]interface{}), map[string]interface{}{key: last})
+					ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: last}))
 					key = ``
 				} else {
 					ret = append(ret.([]interface{}), last)
 				}
 			}
-		} else if len(key) > 0 || mapMode {
-			ret.(*types.Map).Set(key, "")
+		} else if mapMode || len(key) > 0 {
+			addEmptyKey()
 		}
 	}
 	switch v := ret.(type) {
+	case *types.Map:
+		if v.Size() == 0 {
+			ret = ``
+		}
 	case map[string]interface{}:
 		if len(v) == 0 {
 			ret = ``

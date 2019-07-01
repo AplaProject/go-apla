@@ -131,6 +131,8 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar(where, {"$or": ["name": #poa#,"valueN": #poa#]})
+	DBFind(contracts, src).Columns("id").Where(#where#)`, `[{"tag":"text","text":"pq: column "valuen" does not exist in query select "id" from "1_contracts" where ("name" = '' or "valuen" = '') order by id [[]]"}]`},
 	{`DBFind("@1roles_participants", src).Where({"ecosystem": #ecosystem_id#, "role->id": {"$in": []}, "member->member_id": #key_id#, "deleted": 0})`, `[{"tag":"dbfind","attr":{"columns":["id","role","member","appointed","date_created","date_deleted","deleted","ecosystem"],"data":[],"name":"@1roles_participants","source":"src","types":[],"where":"{"ecosystem": 1, "role-\u003eid": {"$in": []}, "member-\u003emember_id": 2665397054248150876, "deleted": 0}"}}]`},
 	{`DBFind("@1roles_participants").Where({"ecosystem": #ecosystem_id#, "role->id": {"$in": []}, "member->member_id": #key_id#, "deleted": 0}).Vars(v)`, `[{"tag":"dbfind","attr":{"columns":["id","role","member","appointed","date_created","date_deleted","deleted","ecosystem"],"data":[],"name":"@1roles_participants","types":[],"where":"{"ecosystem": 1, "role-\u003eid": {"$in": []}, "member-\u003emember_id": 2665397054248150876, "deleted": 0}"}}]`},
 	{`DBFind(@1pages).Where({{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}).Columns("id,name").Order(id)`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"],["2","developer_index"],["3","notifications"]],"name":"@1pages","order":"id","types":["text","text"],"where":"{{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}"}}]`},
@@ -139,7 +141,6 @@ var forTest = tplList{
 	{`DBFind(@1pages).Where({id:3, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["3","notifications"]],"name":"@1pages","types":["text","text"],"where":"{id:3, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}"}}]`},
 	{`DBFind(@1pages).Where({id:1}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"]],"name":"@1pages","types":["text","text"],"where":"{id:1}"}}]`},
 	{`DBFind(keys).Where("id='#key_id#'").Columns("amount").Vars(amount)`, `[{"tag":"text","text":"Where has wrong format"}]`},
-	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},
 	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"0.000000000123456789"}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
 	{`DBFind(parameters, src_par).Columns("id").Order([id]).Where({id:[{$gte:1}, {$lte:3}]}).Count(count)Span(#count#)`,
@@ -208,6 +209,7 @@ var forTest = tplList{
 		`[{"tag":"text","text":"` + time.Unix(1257894000, 0).Format("2006-01-02 15:04:05") + `"}]`},
 	{`CmpTime(1257894000, 1257895000)CmpTime(1257895000, 1257894000)CmpTime(1257894000, 1257894000)`,
 		`[{"tag":"text","text":"-110"}]`},
+	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},
 }
 
 func TestMoney(t *testing.T) {

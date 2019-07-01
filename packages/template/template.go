@@ -97,6 +97,15 @@ type parFunc struct {
 	Tails     *[]*[][]rune
 }
 
+func (p *parFunc) Param(key string) string {
+	return (*p.Pars)[key]
+}
+
+func (p *parFunc) ParamWithMacros(key string) string {
+	v := p.Param(key)
+	return macro(v, p.Workspace.Vars)
+}
+
 type nodeFunc func(par parFunc) string
 
 type tplFunc struct {
