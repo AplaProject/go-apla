@@ -314,7 +314,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ra := &model.RolesParticipants{}
-	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(wallet)
+	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(account.AccountID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
 		errorResponse(w, err)

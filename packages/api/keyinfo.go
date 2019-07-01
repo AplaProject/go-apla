@@ -89,7 +89,7 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 			Name:      names[i],
 		}
 		ra := &model.RolesParticipants{}
-		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(key.AccountKeyID())
+		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(key.AccountID)
 		if err != nil {
 			errorResponse(w, err)
 			return

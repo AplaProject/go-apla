@@ -249,11 +249,12 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"image_id"	bigint NOT NULL DEFAULT '0',
 			"member_info"   jsonb,
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
-		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY (ecosystem,id);
-		CREATE INDEX "1_members_index_ecosystem" ON "1_members" (ecosystem);
-
+		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_members_index_ecosystem" ON "1_sections" (ecosystem);
+		CREATE UNIQUE INDEX "1_members_uindex_ecosystem_account" ON "1_members" (account, ecosystem);
 
 	DROP TABLE IF EXISTS "1_roles";
 		CREATE TABLE "1_roles" (
@@ -328,10 +329,11 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"data" bytea NOT NULL DEFAULT '',
 			"hash" varchar(64) NOT NULL DEFAULT '',
 			"mime_type" varchar(255) NOT NULL DEFAULT '',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "1_binaries" ADD CONSTRAINT "1_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "1_binaries_index_app_id_member_id_name" ON "1_binaries" (ecosystem,app_id, member_id, name);
+		CREATE UNIQUE INDEX "1_binaries_uindex" ON "1_binaries" (account_id, member_id, ecosystem, app_id, name);
 				
 		DROP TABLE IF EXISTS "1_app_params";
 		CREATE TABLE "1_app_params" (
@@ -353,7 +355,8 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"key" varchar(255) NOT NULL DEFAULT '',
 			"value" jsonb,
 			"member_id" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "1_buffer_data" ADD CONSTRAINT "1_buffer_data_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_buffer_data_ecosystem" ON "1_buffer_data" (ecosystem);

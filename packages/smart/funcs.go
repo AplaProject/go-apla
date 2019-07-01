@@ -501,7 +501,7 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 
 // RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
 func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
-	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.Key.AccountKeyID())
+	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.Key.AccountID)
 	if err != nil {
 		return false, err
 	}

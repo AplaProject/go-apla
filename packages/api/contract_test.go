@@ -1830,3 +1830,24 @@ func TestApos(t *testing.T) {
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Name d'Company"}}))
 }
+
+func TestCurrentKeyFromAccount(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := randName(t.Name())
+	form := url.Values{
+		"Name": {name},
+		"Value": {`contract ` + name + ` {
+			data {
+				Account string
+			}
+			action {
+				info CurrentKeyFromAccount($Account)
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}
+	assert.NoError(t, postTx("NewContract", &form))
+	expected := fmt.Sprintf(`{"type":"info","error":"%d"}`, converter.StringToAddress(gAddress))
+	assert.Error(t, postTx(name, &url.Values{`Account`: {gAddress}}), expected)
+}

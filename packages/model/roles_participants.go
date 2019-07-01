@@ -62,10 +62,10 @@ func (r RolesParticipants) TableName() string {
 }
 
 // GetActiveMemberRoles returns active assigned roles for memberID
-func (r *RolesParticipants) GetActiveMemberRoles(memberID int64) ([]RolesParticipants, error) {
+func (r *RolesParticipants) GetActiveMemberRoles(account string) ([]RolesParticipants, error) {
 	roles := new([]RolesParticipants)
-	err := DBConn.Table(r.TableName()).Where("ecosystem=? and member->>'member_id' = ? AND deleted = ?",
-		r.ecosystem, converter.Int64ToStr(memberID), 0).Find(&roles).Error
+	err := DBConn.Table(r.TableName()).Where("ecosystem=? and member->>'account' = ? AND deleted = ?",
+		r.ecosystem, account, 0).Find(&roles).Error
 	return *roles, err
 }
 
@@ -82,10 +82,11 @@ func MemberHasRole(tx *DbTransaction, ecosys, member, role int64) (bool, error) 
 }
 
 // GetMemberRoles return map[id]name all roles assign to member in ecosystem
-func GetMemberRoles(tx *DbTransaction, ecosys, member int64) (roles []int64, err error) {
-	query := fmt.Sprintf(`SELECT role->>'id' as "id" FROM "1_roles_participants"
-		WHERE ecosystem='%d' and deleted = '0' and member->>'member_id' = '%d'`, ecosys, member)
-	list, err := GetAllTransaction(tx, query, -1)
+func GetMemberRoles(tx *DbTransaction, ecosys int64, account string) (roles []int64, err error) {
+	query := `SELECT role->>'id' as "id" 
+		FROM "1_roles_participants"
+		WHERE ecosystem = ? and deleted = '0' and member->>'account' = ?`
+	list, err := GetAllTransaction(tx, query, -1, ecosys, account)
 	if err != nil {
 		return
 	}

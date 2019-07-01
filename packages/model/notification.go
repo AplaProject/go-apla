@@ -75,7 +75,8 @@ func (n *Notification) TableName() string {
 func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
 	result := make([]map[string]string, 0, 16)
 	for _, userID := range userIDs {
-		roles, err := GetMemberRoles(nil, ecosystemID, userID)
+		// TODO: use account
+		roles, err := GetMemberRoles(nil, ecosystemID, converter.AddressToString(userID))
 		if err != nil {
 			return nil, err
 		}
