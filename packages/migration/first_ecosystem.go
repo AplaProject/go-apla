@@ -333,7 +333,7 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "1_binaries" ADD CONSTRAINT "1_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "1_binaries_uindex" ON "1_binaries" (account_id, member_id, ecosystem, app_id, name);
+		CREATE UNIQUE INDEX "1_binaries_uindex" ON "1_binaries" (account, member_id, ecosystem, app_id, name);
 				
 		DROP TABLE IF EXISTS "1_app_params";
 		CREATE TABLE "1_app_params" (

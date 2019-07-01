@@ -289,7 +289,7 @@ var schemaOBS = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "%[1]d_binaries_uindex" ON "%[1]d_binaries" (account_id, member_id, ecosystem, app_id, name);
+		CREATE UNIQUE INDEX "%[1]d_binaries_uindex" ON "%[1]d_binaries" (account, member_id, ecosystem, app_id, name);
 		
 		DROP TABLE IF EXISTS "%[1]d_buffer_data";
 		CREATE TABLE "%[1]d_buffer_data" (
