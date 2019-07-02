@@ -14,7 +14,6 @@ VALUES
 		if !$cur {
 			error Sprintf("Contract %%d does not exist", $Id)
 		}
-		
 		Eval($cur["conditions"])
 		if $key_id != Int($cur["wallet_id"]) {
 			error Sprintf("Wallet %%d cannot activate the contract", $key_id)
@@ -364,7 +363,7 @@ VALUES
     conditions {
         $ApplicationId = 0
         var app_map map
-        app_map = DBFind("@1buffer_data").Columns("value->app_name").Where({"key": "import_info", "member_id": $key_id, "ecosystem": $ecosystem_id}).Row()
+        app_map = DBFind("@1buffer_data").Columns("value->app_name").Where({"key": "import_info", "account": $account_id, "ecosystem": $ecosystem_id}).Row()
         if app_map {
             var app_id int ival string
             ival = Str(app_map["value.app_name"])
@@ -456,19 +455,19 @@ VALUES
     action {
         // init buffer_data, cleaning old buffer
         var initJson map
-        $import_id = DBFind("@1buffer_data").Where({"member_id": $key_id, "key": "import", "ecosystem": $ecosystem_id}).One("id")
+        $import_id = DBFind("@1buffer_data").Where({"account": $account_id, "key": "import", "ecosystem": $ecosystem_id}).One("id")
         if $import_id {
             $import_id = Int($import_id)
             DBUpdate("@1buffer_data", $import_id, {"value": initJson})
         } else {
-            $import_id = DBInsert("@1buffer_data", {"member_id": $key_id, "key": "import", "value": initJson, "ecosystem": $ecosystem_id})
+            $import_id = DBInsert("@1buffer_data", {"account": $account_id, "key": "import", "value": initJson, "ecosystem": $ecosystem_id})
         }
-        $info_id = DBFind("@1buffer_data").Where({"member_id": $key_id, "key": "import_info", "ecosystem": $ecosystem_id}).One("id")
+        $info_id = DBFind("@1buffer_data").Where({"account": $account_id, "key": "import_info", "ecosystem": $ecosystem_id}).One("id")
         if $info_id {
             $info_id = Int($info_id)
             DBUpdate("@1buffer_data", $info_id, {"value": initJson})
         } else {
-            $info_id = DBInsert("@1buffer_data", {"member_id": $key_id,"key": "import_info", "value": initJson, "ecosystem": $ecosystem_id})
+            $info_id = DBInsert("@1buffer_data", {"account": $account_id, "key": "import_info", "value": initJson, "ecosystem": $ecosystem_id})
         }
         var input map arrData array
         input = JSONDecode($Data)
@@ -941,12 +940,16 @@ VALUES
         Name string
         Data bytes
         DataMimeType string "optional"
+        MemberAccount string "optional"
     }
-
     conditions {
-        $Id = Int(DBFind("@1binaries").Columns("id").Where({app_id: $ApplicationId,
-            member_id: $key_id, name: $Name, ecosystem: $ecosystem_id}).One("id"))
-
+        if Size($MemberAccount) > 0 {
+            $UserID = $MemberAccount
+        } else {
+            $UserID = $account_id
+        }
+        $Id = Int(DBFind("@1binaries").Columns("id").Where({"app_id": $ApplicationId, 
+                "account": $UserID, "name": $Name, "ecosystem": $ecosystem_id}).One("id"))
         if $Id == 0 {
             if $ApplicationId == 0 {
                 warning LangRes("@1aid_cannot_zero", "en")
@@ -954,20 +957,17 @@ VALUES
         }
     }
     action {
-        var hash  string
+        var hash string
         hash = Hash($Data)
-
         if $DataMimeType == "" {
             $DataMimeType = "application/octet-stream"
         }
-
         if $Id != 0 {
-            DBUpdate("@1binaries", $Id, {"data":$Data, "hash":hash, "mime_type":$DataMimeType})
+            DBUpdate("@1binaries", $Id, {"data": $Data, "hash": hash, "mime_type": $DataMimeType})
         } else {
-            $Id = DBInsert("@1binaries", {"app_id":$ApplicationId, "member_id":$key_id,
-               "name":$Name, "data":$Data, "hash":hash, "mime_type":$DataMimeType, "ecosystem":$ecosystem_id})
+            $Id = DBInsert("@1binaries", {"app_id": $ApplicationId, "account": $account_id, 
+                "name": $Name, "data": $Data, "hash": hash, "mime_type": $DataMimeType, "ecosystem": $ecosystem_id})
         }
-
         $result = $Id
     }
 }
@@ -978,15 +978,13 @@ VALUES
         Data file
         Name string "optional"
     }
-
     conditions {
         if $Name == "" {
             $Name = $Data["Name"]
         }
         $Body = $Data["Body"]
-        $DataMimeType = $Data["MimeType"] 
+        $DataMimeType = $Data["MimeType"]
     }
-    
     action {
         $Id = @1UploadBinary("ApplicationId,Name,Data,DataMimeType", $ApplicationId, $Name, $Body, $DataMimeType)
         $result = $Id

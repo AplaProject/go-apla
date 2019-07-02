@@ -171,11 +171,10 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 			"new_column":"ContractConditions(\"MainCondition\")"}',
 		'{
 			"hash":"ContractAccess(\"@1UploadBinary\")",
-			"member_id":"false",
+			"account": "false",
 			"data":"ContractAccess(\"@1UploadBinary\")",
 			"name":"false",
-			"app_id":"false",
-			"account": "false"
+			"app_id":"false"
 		}',
 		'ContractConditions(\"MainCondition\")'),
 	('16', 'parameters',
@@ -209,7 +208,6 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 		'{
 			"key": "false",
 			"value": "true",
-			"member_id": "false",
 			"account": "false"
 		}',
 		'ContractConditions("MainCondition")');

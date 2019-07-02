@@ -280,7 +280,6 @@ var schemaOBS = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 		CREATE TABLE "%[1]d_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"app_id" bigint NOT NULL DEFAULT '1',
-			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
 			"hash" varchar(32) NOT NULL DEFAULT '',
@@ -289,14 +288,13 @@ var schemaOBS = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "%[1]d_binaries_uindex" ON "%[1]d_binaries" (account, member_id, ecosystem, app_id, name);
+		CREATE UNIQUE INDEX "%[1]d_binaries_uindex" ON "%[1]d_binaries" (account, ecosystem, app_id, name);
 		
 		DROP TABLE IF EXISTS "%[1]d_buffer_data";
 		CREATE TABLE "%[1]d_buffer_data" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"key" varchar(255) NOT NULL DEFAULT '',
 			"value" jsonb,
-			"member_id" bigint NOT NULL DEFAULT '0',
 			"ecosystem" bigint NOT NULL DEFAULT '1',
 			"account" char(24) NOT NULL
 		);
