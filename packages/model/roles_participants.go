@@ -70,11 +70,11 @@ func (r *RolesParticipants) GetActiveMemberRoles(account string) ([]RolesPartici
 }
 
 // MemberHasRole returns true if member has role
-func MemberHasRole(tx *DbTransaction, ecosys, member, role int64) (bool, error) {
+func MemberHasRole(tx *DbTransaction, role, ecosys int64, account string) (bool, error) {
 	db := GetDB(tx)
 	var count int64
-	if err := db.Table("1_roles_participants").Where(`ecosystem=? and role->>'id' = ? and member->>'member_id' = ?`,
-		ecosys, converter.Int64ToStr(role), converter.Int64ToStr(member)).Count(&count).Error; err != nil {
+	if err := db.Table("1_roles_participants").Where(`ecosystem=? and role->>'id' = ? and member->>'account' = ?`,
+		ecosys, converter.Int64ToStr(role), account).Count(&count).Error; err != nil {
 		return false, err
 	}
 
