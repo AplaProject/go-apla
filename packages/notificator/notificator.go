@@ -32,7 +32,6 @@ import (
 	"encoding/json"
 
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/publisher"
 
@@ -73,25 +72,21 @@ func getEcosystemNotificationStats(ecosystemID int64, users []string) (map[int64
 	return parseRecipientNotification(result, ecosystemID), nil
 }
 
-func parseRecipientNotification(rows []map[string]string, systemID int64) map[int64]*[]notificationRecord {
+func parseRecipientNotification(rows []model.NotificationsCount, systemID int64) map[int64]*[]notificationRecord {
 	recipientNotifications := make(map[int64]*[]notificationRecord)
 
 	for _, r := range rows {
-		recipientID := converter.StrToInt64(r["recipient_id"])
-		if recipientID == 0 {
+		if r.RecipientID == 0 {
 			continue
 		}
 
-		roleID := converter.StrToInt64(r["role_id"])
-		count := converter.StrToInt64(r["cnt"])
-
 		roleNotifications := notificationRecord{
 			EcosystemID:  systemID,
-			RoleID:       roleID,
-			RecordsCount: count,
+			RoleID:       r.RoleID,
+			RecordsCount: r.Count,
 		}
 
-		nr, ok := recipientNotifications[recipientID]
+		nr, ok := recipientNotifications[r.RecipientID]
 		if ok {
 			*nr = append(*nr, roleNotifications)
 			continue
@@ -101,7 +96,7 @@ func parseRecipientNotification(rows []map[string]string, systemID int64) map[in
 			roleNotifications,
 		}
 
-		recipientNotifications[recipientID] = &records
+		recipientNotifications[r.RecipientID] = &records
 	}
 
 	return recipientNotifications

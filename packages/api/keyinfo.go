@@ -46,10 +46,16 @@ type roleInfo struct {
 	Name string `json:"name"`
 }
 
+type notifyInfo struct {
+	RoleID string `json:"role_id"`
+	Count  int64  `json:"count"`
+}
+
 type keyInfoResult struct {
-	Ecosystem string     `json:"ecosystem"`
-	Name      string     `json:"name"`
-	Roles     []roleInfo `json:"roles,omitempty"`
+	Ecosystem     string       `json:"ecosystem"`
+	Name          string       `json:"name"`
+	Roles         []roleInfo   `json:"roles,omitempty"`
+	Notifications []notifyInfo `json:"notifications,omitempty"`
 }
 
 func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -103,6 +109,13 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 			}
 			keyRes.Roles = append(keyRes.Roles, role)
 		}
+		keyRes.Notifications, err = m.getNotifications(ecosystemID, key)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notifications")
+			errorResponse(w, err)
+			return
+		}
+
 		keysList = append(keysList, keyRes)
 	}
 
@@ -115,4 +128,24 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonResponse(w, &keysList)
+}
+
+func (m Mode) getNotifications(ecosystemID int64, key *model.Key) ([]notifyInfo, error) {
+	notif, err := model.GetNotificationsCount(ecosystemID, []string{key.AccountID})
+	if err != nil {
+		return nil, err
+	}
+
+	list := make([]notifyInfo, 0)
+	for _, n := range notif {
+		if n.RecipientID != key.ID {
+			continue
+		}
+
+		list = append(list, notifyInfo{
+			RoleID: converter.Int64ToStr(n.RoleID),
+			Count:  n.Count,
+		})
+	}
+	return list, nil
 }

@@ -70,10 +70,16 @@ func (n *Notification) TableName() string {
 	return `1_notifications`
 }
 
+type NotificationsCount struct {
+	RecipientID int64 `gorm:"recipient_id"`
+	RoleID      int64 `gorm:"role_id"`
+	Count       int64 `gorm:"count"`
+}
+
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
-func GetNotificationsCount(ecosystemID int64, accounts []string) ([]map[string]string, error) {
-	result := make([]map[string]string, 0, 16)
+func GetNotificationsCount(ecosystemID int64, accounts []string) ([]NotificationsCount, error) {
+	result := make([]NotificationsCount, 0, len(accounts))
 	for _, account := range accounts {
 		roles, err := GetMemberRoles(nil, ecosystemID, account)
 		if err != nil {
@@ -84,19 +90,19 @@ func GetNotificationsCount(ecosystemID int64, accounts []string) ([]map[string]s
 			roleList = append(roleList, converter.Int64ToStr(role))
 		}
 
-		query := `SELECT k.id as "recipient_id", recipient->>'role_id' as "role_id", count(*) cnt
+		query := `SELECT k.id as "recipient_id", recipient->>'role_id' as "role_id", count(*) as "count"
 			FROM "1_notifications" n
-			INNER JOIN "1_keys" k ON k.ecosystem = n.ecosystem AND k.account = recipient->>'account'
+			INNER JOIN "1_keys" k ON k.ecosystem = n.ecosystem AND k.account = ?
 			WHERE n.ecosystem=? AND n.closed = 0 AND ((n.notification->>'type' = '1' and n.recipient->>'account' = ? ) or
 				(n.notification->>'type' = '2' and (n.recipient->>'role_id' IN (?) and 
-				(n.date_start_processing is null or n.processing_info->>'account' = ?))))
+				(n.date_start_processing = 0 or n.processing_info->>'account' = ?))))
 			GROUP BY recipient_id, role_id`
 
-		list, err := GetAllTransaction(nil, query, -1, ecosystemID, account, roleList, account)
+		list := make([]NotificationsCount, 0)
+		err = GetDB(nil).Raw(query, account, ecosystemID, account, roleList, account).Scan(&list).Error
 		if err != nil {
 			return nil, err
 		}
-
 		result = append(result, list...)
 	}
 	return result, nil
