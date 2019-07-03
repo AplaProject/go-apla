@@ -37,10 +37,13 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/api"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -89,6 +92,7 @@ func SendToNetwork() error {
 		prevTime time.Time
 	)
 	if err = json.Unmarshal([]byte(syspar.SysString(syspar.ExternalBlockchain)), &external); err != nil {
+		log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("SendToNetwork")
 		return err
 	}
 	for key, netInfo := range external {
@@ -103,6 +107,7 @@ func SendToNetwork() error {
 		}
 		list, err := model.GetExternalList(key, countTx)
 		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("GetExternalList")
 			return err
 		}
 		if len(list) == 0 {
@@ -110,6 +115,7 @@ func SendToNetwork() error {
 		}
 		root := netInfo.URL + `/api/v2/`
 		if connect, err = loginNetwork(key, root); err != nil {
+			log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("loginNetwork")
 			return err
 		}
 		outList := make([]interface{}, 0, len(list))
@@ -128,6 +134,9 @@ func SendToNetwork() error {
 		}
 		id, _, err := connect.PostTxResult(netInfo.Contract, &url.Values{"List": {string(out)}})
 		timeNet[key] = time.Now()
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("PostTxResult")
+		}
 		if id != 0 && err == nil {
 			if err = model.DelExternalList(sentList); err != nil {
 				return err
@@ -145,6 +154,6 @@ func ExternalNetwork(ctx context.Context, d *daemon) error {
 	defer func() {
 		atomic.StoreUint32(&enOnRun, 0)
 	}()
-	d.sleepTime = 30 * time.Second
+	d.sleepTime = 10 * time.Second
 	return SendToNetwork()
 }
