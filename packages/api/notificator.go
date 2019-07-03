@@ -59,14 +59,14 @@ func updateNotificatorHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stateList := make(map[int64][]int64)
+	stateList := make(map[int64][]string)
 
 	for _, item := range list {
 		ecosystem := converter.StrToInt64(item.EcosystemID)
 		if _, ok := stateList[ecosystem]; !ok {
-			stateList[ecosystem] = make([]int64, 0)
+			stateList[ecosystem] = make([]string, 0)
 		}
-		stateList[ecosystem] = append(stateList[ecosystem], converter.StrToInt64(item.ID))
+		stateList[ecosystem] = append(stateList[ecosystem], converter.AddressToString(converter.StrToInt64(item.ID)))
 	}
 
 	go notificator.SendNotificationsByRequest(stateList)

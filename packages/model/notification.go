@@ -72,11 +72,10 @@ func (n *Notification) TableName() string {
 
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
-func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
+func GetNotificationsCount(ecosystemID int64, accounts []string) ([]map[string]string, error) {
 	result := make([]map[string]string, 0, 16)
-	for _, userID := range userIDs {
-		// TODO: use account
-		roles, err := GetMemberRoles(nil, ecosystemID, converter.AddressToString(userID))
+	for _, account := range accounts {
+		roles, err := GetMemberRoles(nil, ecosystemID, account)
 		if err != nil {
 			return nil, err
 		}
@@ -85,21 +84,17 @@ func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]str
 			roleList = append(roleList, converter.Int64ToStr(role))
 		}
 
-		query := `SELECT recipient->>'role_id' as "role_id", count(*) cnt
-			FROM "1_notifications" 
-			WHERE ecosystem=? AND closed = 0 AND ((notification->>'type' = '1' and recipient->>'member_id' = ? ) or
-				(notification->>'type' = '2' and (recipient->>'role_id' IN (?) and 
-				( date_start_processing is null or processing_info->>'member_id' = ?))))
-			GROUP BY 1`
+		query := `SELECT k.id as "recipient_id", recipient->>'role_id' as "role_id", count(*) cnt
+			FROM "1_notifications" n
+			INNER JOIN "1_keys" k ON k.ecosystem = n.ecosystem AND k.account = recipient->>'account'
+			WHERE n.ecosystem=? AND n.closed = 0 AND ((n.notification->>'type' = '1' and n.recipient->>'account' = ? ) or
+				(n.notification->>'type' = '2' and (n.recipient->>'role_id' IN (?) and 
+				(n.date_start_processing is null or n.processing_info->>'account' = ?))))
+			GROUP BY recipient_id, role_id`
 
-		list, err := GetAllTransaction(nil, query, -1, ecosystemID, userID, roleList, userID)
+		list, err := GetAllTransaction(nil, query, -1, ecosystemID, account, roleList, account)
 		if err != nil {
 			return nil, err
-		}
-
-		recipient := converter.Int64ToStr(userID)
-		for i := range list {
-			list[i]["recipient_id"] = recipient
 		}
 
 		result = append(result, list...)

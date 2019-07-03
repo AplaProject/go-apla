@@ -122,7 +122,7 @@ type FlushInfo struct {
 type NotifyInfo struct {
 	Roles       bool // if true then UpdateRolesNotifications, otherwise UpdateNotifications
 	EcosystemID int64
-	List        []int64
+	List        []string
 }
 
 // SmartContract is storing smart contract data
@@ -147,7 +147,7 @@ type SmartContract struct {
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
-	Notifications []NotifyInfo
+	Notifications types.Notifications
 	GenBlock      bool
 	TimeLimit     int64
 	Key           *model.Key
@@ -2006,14 +2006,12 @@ func StackOverflow(sc *SmartContract) {
 	StackOverflow(sc)
 }
 
-func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interface{}) {
-	userList := make([]int64, 0, len(users))
-	for i, userID := range users {
-		switch v := userID.(type) {
-		case int64:
-			userList = append(userList, v)
+func UpdateNotifications(sc *SmartContract, ecosystemID int64, accounts ...interface{}) {
+	accountList := make([]string, 0, len(accounts))
+	for i, id := range accounts {
+		switch v := id.(type) {
 		case string:
-			userList = append(userList, converter.StrToInt64(v))
+			accountList = append(accountList, v)
 		case []interface{}:
 			if i == 0 {
 				UpdateNotifications(sc, ecosystemID, v...)
@@ -2021,7 +2019,7 @@ func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interfac
 			}
 		}
 	}
-	sc.Notifications = append(sc.Notifications, NotifyInfo{false, ecosystemID, userList})
+	sc.Notifications.AddAccounts(ecosystemID, accountList...)
 }
 
 func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...interface{}) {
@@ -2039,7 +2037,7 @@ func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...int
 			}
 		}
 	}
-	sc.Notifications = append(sc.Notifications, NotifyInfo{true, ecosystemID, rolesList})
+	sc.Notifications.AddRoles(ecosystemID, rolesList...)
 }
 
 func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {

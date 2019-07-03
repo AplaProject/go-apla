@@ -44,6 +44,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/pkg/errors"
@@ -65,7 +66,7 @@ type Block struct {
 	Transactions      []*transaction.Transaction
 	SysUpdate         bool
 	GenBlock          bool // it equals true when we are generating a new block
-	Notifications     []smart.NotifyInfo
+	Notifications     []types.Notifications
 }
 
 func (b Block) String() string {
@@ -131,12 +132,9 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 	}
-	for _, item := range b.Notifications {
-		if item.Roles {
-			notificator.UpdateRolesNotifications(item.EcosystemID, item.List)
-		} else {
-			notificator.UpdateNotifications(item.EcosystemID, item.List)
-		}
+
+	for _, q := range b.Notifications {
+		q.Send()
 	}
 	return nil
 }
@@ -212,6 +210,7 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		)
 		t.DbTransaction = dbTransaction
 		t.Rand = rand.BytesSeed(t.TxHash)
+		t.Notifications = notificator.NewQueue()
 
 		model.IncrementTxAttemptCount(t.TxHash)
 		err = dbTransaction.Savepoint(curTx)
@@ -303,7 +302,11 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		if err := transaction.InsertInLogTx(t, b.Header.BlockID); err != nil {
 			return utils.ErrInfo(err)
 		}
-		b.Notifications = append(b.Notifications, t.Notifications...)
+
+		if t.Notifications.Size() > 0 {
+			b.Notifications = append(b.Notifications, t.Notifications)
+		}
+
 		proccessedTx = append(proccessedTx, t)
 	}
 
