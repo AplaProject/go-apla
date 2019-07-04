@@ -52,6 +52,7 @@ type notifyInfo struct {
 }
 
 type keyInfoResult struct {
+	Account       string       `json:"account"`
 	Ecosystem     string       `json:"ecosystem"`
 	Name          string       `json:"name"`
 	Roles         []roleInfo   `json:"roles,omitempty"`
@@ -91,6 +92,7 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		keyRes := &keyInfoResult{
+			Account:   key.AccountID,
 			Ecosystem: converter.Int64ToStr(ecosystemID),
 			Name:      names[i],
 		}
