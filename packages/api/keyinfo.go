@@ -124,6 +124,7 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	// in test mode, registration is open in the first ecosystem
 	if len(keysList) == 0 && syspar.IsTestMode() {
 		keysList = append(keysList, &keyInfoResult{
+			Account:   converter.AddressToString(keyID),
 			Ecosystem: converter.Int64ToStr(ids[0]),
 			Name:      names[0],
 		})
