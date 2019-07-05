@@ -81,25 +81,22 @@ type NotificationsCount struct {
 func GetNotificationsCount(ecosystemID int64, accounts []string) ([]NotificationsCount, error) {
 	result := make([]NotificationsCount, 0, len(accounts))
 	for _, account := range accounts {
-		roles, err := GetMemberRoles(nil, ecosystemID, account)
-		if err != nil {
-			return nil, err
-		}
-		roleList := make([]string, 0, len(roles))
-		for _, role := range roles {
-			roleList = append(roleList, converter.Int64ToStr(role))
-		}
-
-		query := `SELECT k.id as "recipient_id", recipient->>'role_id' as "role_id", count(*) as "count"
-			FROM "1_notifications" n
-			INNER JOIN "1_keys" k ON k.ecosystem = n.ecosystem AND k.account = ?
-			WHERE n.ecosystem=? AND n.closed = 0 AND ((n.notification->>'type' = '1' and n.recipient->>'account' = ? ) or
-				(n.notification->>'type' = '2' and (n.recipient->>'role_id' IN (?) and 
-				(n.date_start_processing = 0 or n.processing_info->>'account' = ?))))
+		query := `SELECT k.id as "recipient_id", '0' as "role_id", count(n.id)
+			FROM "1_keys" k
+			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '1' and n.recipient->>'account' = k.account
+			WHERE k.ecosystem = ? AND k.account = ?
+			GROUP BY recipient_id, role_id
+			UNION
+			SELECT k.id as "recipient_id", rp.role->>'id' as "role_id", count(n.id)
+			FROM "1_keys" k
+			INNER JOIN "1_roles_participants" rp ON rp.member->>'account' = k.account
+			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '2' AND n.recipient->>'role_id' = rp.role->>'id'
+													AND (n.date_start_processing = 0 OR n.processing_info->>'account' = k.account)
+			WHERE k.ecosystem=? AND k.account = ?
 			GROUP BY recipient_id, role_id`
 
 		list := make([]NotificationsCount, 0)
-		err = GetDB(nil).Raw(query, account, ecosystemID, account, roleList, account).Scan(&list).Error
+		err := GetDB(nil).Raw(query, ecosystemID, account, ecosystemID, account).Scan(&list).Error
 		if err != nil {
 			return nil, err
 		}
