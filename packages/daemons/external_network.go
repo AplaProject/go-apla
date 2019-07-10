@@ -36,6 +36,7 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
@@ -49,6 +50,8 @@ const (
 	errExternalNone    = iota // 0 - no error
 	errExternalTx             // 1 - tx error
 	errExternalAttempt        // 2 - attempt error
+	errExternalTimeout        // 3 - timeout of getting txstatus
+	errExternalOld            // 4 - tx time is old
 
 	countTx     = 100 // maximum records for sending
 	maxAttempts = 10
@@ -124,10 +127,16 @@ func SendToNetwork() error {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("GetExternalList")
 		return err
 	}
+	timeOut := time.Now().Unix() - 10*(syspar.GetGapsBetweenBlocks()+
+		syspar.GetMaxBlockGenerationTime()/1000)
 	for _, item := range list {
 		root := item.Url + apiExt
 
 		if item.Sent == 0 {
+			if timeOut > item.TxTime {
+				sendResult(item, 0, errExternalOld, ``)
+				continue
+			}
 			if connect, err = loginNetwork(root); err != nil {
 				log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("loginNetwork")
 				return err
@@ -169,6 +178,7 @@ func SendToNetwork() error {
 			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("WaitTxList")
 			continue
 		}
+		timeOut = time.Now().Unix() - 60
 		for _, item := range waitList {
 			if result, ok := results[hex.EncodeToString(item.Hash)]; ok {
 				errCode := int64(errExternalNone)
@@ -176,6 +186,8 @@ func SendToNetwork() error {
 					errCode = errExternalTx
 				}
 				sendResult(item, result.BlockID, errCode, result.Msg)
+			} else if timeOut > item.TxTime {
+				sendResult(item, 0, errExternalTimeout, ``)
 			}
 		}
 	}

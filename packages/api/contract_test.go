@@ -1796,12 +1796,33 @@ func TestExternalNetwork(t *testing.T) {
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Errors {
+		data {
+			Params map
+			UID    string "optional"
+		}
+		action { 
+			if $UID == "stop" {
+				error("Error message")
+			}
+			$result = 1/0
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
 	net := `{"mynet": {
 		"url": "http://localhost:7079", 
 		"external_contract": "@1` + name + `Hashes", 
 		"condition": "true", 
 		"result_contract": "@1` + name + `Result"
-		}
+		},
+		"myerr": {
+			"url": "http://localhost:7079", 
+			"external_contract": "@1` + name + `Errors", 
+			"condition": "true", 
+			"result_contract": "@1` + name + `Result"
+			}
 	}`
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
@@ -1819,6 +1840,8 @@ func TestExternalNetwork(t *testing.T) {
 			params["block"] = $block
 			SendToNetwork("mynet", "123456", params)
 			SendToNetwork("mynet", "654321", params)
+			SendToNetwork("myerr", "stop", params)
+			SendToNetwork("myerr", "zero", params)
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
