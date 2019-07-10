@@ -92,7 +92,6 @@ func (m Mode) SetCommonRoutes(r Router) {
 	api.HandleFunc("/content", jsonContentHandler).Methods("POST")
 	api.HandleFunc("/login", m.loginHandler).Methods("POST")
 	api.HandleFunc("/sendTx", authRequire(m.sendTxHandler)).Methods("POST")
-	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST")
 	api.HandleFunc("/node/{name}", nodeContractHandler).Methods("POST")
 	api.HandleFunc("/txstatus", authRequire(getTxStatusHandler)).Methods("POST")
 	api.HandleFunc("/metrics/blocks", blocksCountHandler).Methods("GET")

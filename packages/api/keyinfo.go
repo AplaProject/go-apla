@@ -52,7 +52,11 @@ type notifyInfo struct {
 }
 
 type keyInfoResult struct {
-	Account       string       `json:"account"`
+	Account    string              `json:"account"`
+	Ecosystems []*keyEcosystemInfo `json:"ecosystems"`
+}
+
+type keyEcosystemInfo struct {
 	Ecosystem     string       `json:"ecosystem"`
 	Name          string       `json:"name"`
 	Roles         []roleInfo   `json:"roles,omitempty"`
@@ -63,7 +67,7 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
-	keysList := make([]*keyInfoResult, 0)
+	keysList := make([]*keyEcosystemInfo, 0)
 	keyID := converter.StringToAddress(params["wallet"])
 	if keyID == 0 {
 		errorResponse(w, errInvalidWallet.Errorf(params["wallet"]))
@@ -77,7 +81,8 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		found bool
+		account string
+		found   bool
 	)
 
 	for i, ecosystemID := range ids {
@@ -91,8 +96,13 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 		if !found {
 			continue
 		}
-		keyRes := &keyInfoResult{
-			Account:   key.AccountID,
+
+		// TODO: delete after switching to another account storage scheme
+		if len(account) == 0 {
+			account = key.AccountID
+		}
+
+		keyRes := &keyEcosystemInfo{
 			Ecosystem: converter.Int64ToStr(ecosystemID),
 			Name:      names[i],
 		}
@@ -123,14 +133,17 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 
 	// in test mode, registration is open in the first ecosystem
 	if len(keysList) == 0 && syspar.IsTestMode() {
-		keysList = append(keysList, &keyInfoResult{
-			Account:   converter.AddressToString(keyID),
+		account = converter.AddressToString(keyID)
+		keysList = append(keysList, &keyEcosystemInfo{
 			Ecosystem: converter.Int64ToStr(ids[0]),
 			Name:      names[0],
 		})
 	}
 
-	jsonResponse(w, &keysList)
+	jsonResponse(w, &keyInfoResult{
+		Account:    account,
+		Ecosystems: keysList,
+	})
 }
 
 func (m Mode) getNotifications(ecosystemID int64, key *model.Key) ([]notifyInfo, error) {

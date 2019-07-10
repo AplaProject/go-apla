@@ -32,6 +32,7 @@ import (
 	"encoding/json"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/publisher"
 
@@ -39,9 +40,9 @@ import (
 )
 
 type notificationRecord struct {
-	EcosystemID  int64 `json:"ecosystem"`
-	RoleID       int64 `json:"role_id"`
-	RecordsCount int64 `json:"count"`
+	EcosystemID  string `json:"ecosystem"`
+	RoleID       string `json:"role_id"`
+	RecordsCount int64  `json:"count"`
 }
 
 // UpdateNotifications send stats about unreaded messages to centrifugo for ecosystem
@@ -81,8 +82,8 @@ func parseRecipientNotification(rows []model.NotificationsCount, systemID int64)
 		}
 
 		roleNotifications := notificationRecord{
-			EcosystemID:  systemID,
-			RoleID:       r.RoleID,
+			EcosystemID:  converter.Int64ToStr(systemID),
+			RoleID:       converter.Int64ToStr(r.RoleID),
 			RecordsCount: r.Count,
 		}
 
@@ -115,23 +116,5 @@ func sendUserStats(user int64, stats []notificationRecord) {
 
 	if !ok {
 		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
-	}
-}
-
-// SendNotificationsByRequest send stats by systemUsers one time
-func SendNotificationsByRequest(systemUsers map[int64][]string) {
-	for ecosystemID, users := range systemUsers {
-		stats, err := getEcosystemNotificationStats(ecosystemID, users)
-		if err != nil {
-			continue
-		}
-
-		for user, notifications := range stats {
-			if notifications == nil {
-				continue
-			}
-
-			sendUserStats(user, *notifications)
-		}
 	}
 }

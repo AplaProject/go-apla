@@ -88,8 +88,7 @@ type loginResult struct {
 	Token       string        `json:"token,omitempty"`
 	EcosystemID string        `json:"ecosystem_id,omitempty"`
 	KeyID       string        `json:"key_id,omitempty"`
-	AccountID   string        `json:"account_id,omitempty"`
-	Address     string        `json:"address,omitempty"`
+	Account     string        `json:"account,omitempty"`
 	NotifyKey   string        `json:"notify_key,omitempty"`
 	IsNode      bool          `json:"isnode,omitempty"`
 	IsOwner     bool          `json:"isowner,omitempty"`
@@ -261,7 +260,6 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		address = crypto.KeyToAddress(publicKey)
 		sp      model.StateParameter
 		founder int64
 	)
@@ -276,9 +274,9 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := &loginResult{
+		Account:     account.AccountID,
 		EcosystemID: converter.Int64ToStr(client.EcosystemID),
 		KeyID:       converter.Int64ToStr(wallet),
-		Address:     address,
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
 		IsOBS:       conf.Config.IsSupportingOBS(),
