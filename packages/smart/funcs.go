@@ -2326,19 +2326,23 @@ func PubToHex(in interface{}) (ret string) {
 
 // ExternalNetInfo describes external blockchains
 type ExternalNetInfo struct {
-	URL       string `json:"url"`       // Node address
-	Contract  string `json:"contract"`  // The name of the contract
-	Condition string `json:"condition"` // Access rights
-	Interval  string `json:"interval"`  // Interval of sending data
+	URL              string `json:"url"`               // Node address
+	ExternalContract string `json:"external_contract"` // The name of the contract
+	Condition        string `json:"condition"`         // Access rights
+	ResultContract   string `json:"result_contract"`   // The name of the contract
 }
 
-func SendToNetwork(sc *SmartContract, netName string, params *types.Map) (err error) {
+func SendToNetwork(sc *SmartContract, netName, uid string, params *types.Map) (err error) {
 	var (
 		out, insertQuery string
 		external         map[string]ExternalNetInfo
 		netInfo          ExternalNetInfo
 		ok               bool
 	)
+	if _, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID); err != nil {
+		return nil
+	}
+
 	out, err = JSONEncode(params)
 	if err != nil {
 		return err
@@ -2362,10 +2366,12 @@ func SendToNetwork(sc *SmartContract, netName string, params *types.Map) (err er
 	}
 	logger := sc.GetLogger()
 	sqlBuilder := &qb.SQLQueryBuilder{
-		Entry:        logger,
-		Table:        `external_blockchain`,
-		Fields:       []string{`netname`, `value`},
-		FieldValues:  []interface{}{netName, out},
+		Entry: logger,
+		Table: `external_blockchain`,
+		Fields: []string{`netname`, `value`, `uid`, `url`, `external_contract`,
+			`result_contract`, `tx_time`},
+		FieldValues: []interface{}{netName, out, uid, netInfo.URL, netInfo.ExternalContract,
+			netInfo.ResultContract, sc.TxSmart.Time},
 		KeyTableChkr: model.KeyTableChecker{},
 	}
 	insertQuery, err = sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{Tx: sc.DbTransaction})

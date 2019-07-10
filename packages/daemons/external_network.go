@@ -30,33 +30,40 @@ package daemons
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/hex"
 	"net/url"
 	"sync/atomic"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
-	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const (
-	countTx = 100 // maximum records for sending
+	errExternalNone    = iota // 0 - no error
+	errExternalTx             // 1 - tx error
+	errExternalAttempt        // 2 - attempt error
+
+	countTx     = 100 // maximum records for sending
+	maxAttempts = 10
+	apiExt      = `/api/v2/`
 )
 
 var (
 	nodePrivateKey []byte
 	nodePublicKey  string
-	timeNet        = map[string]time.Time{}
 	authNet        = map[string]string{}
 )
 
 var enOnRun uint32
 
-func loginNetwork(netName, urlPath string) (connect *api.Connect, err error) {
+func loginNetwork(urlPath string) (connect *api.Connect, err error) {
 	if len(nodePrivateKey) == 0 {
 		var pubKey []byte
 		if nodePrivateKey, err = utils.GetNodePrivateKey(); err != nil {
@@ -68,70 +75,113 @@ func loginNetwork(netName, urlPath string) (connect *api.Connect, err error) {
 		nodePublicKey = crypto.PubToHex(pubKey)
 	}
 	connect = &api.Connect{
-		Auth:       authNet[netName],
+		Auth:       authNet[urlPath],
 		PrivateKey: nodePrivateKey,
 		PublicKey:  nodePublicKey,
 		Root:       urlPath,
 	}
 	if err = connect.Login(); err != nil {
-		authNet[netName] = connect.Auth
+		authNet[urlPath] = connect.Auth
 	}
 	return
 }
 
 func SendToNetwork() error {
 	var (
-		external map[string]smart.ExternalNetInfo
-		err      error
-		ok       bool
-		connect  *api.Connect
-		duration time.Duration
-		prevTime time.Time
+		err     error
+		connect *api.Connect
+		delList []int64
+		hash    string
 	)
-	if err = json.Unmarshal([]byte(syspar.SysString(syspar.ExternalBlockchain)), &external); err != nil {
+
+	toWait := map[string][]model.ExternalBlockchain{}
+	incAttempt := func(id int64) {
+		if err = model.IncExternalAttempt(id); err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("IncAttempt")
+		}
+	}
+	sendResult := func(item model.ExternalBlockchain, block, errCode int64, resText string) {
+		defer func() {
+			delList = append(delList, item.Id)
+		}()
+		if len(item.ResultContract) == 0 {
+			return
+		}
+		if connect, err = loginNetwork(item.Url + apiExt); err != nil {
+			log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("loginNetwork")
+			return
+		}
+		_, _, err = connect.PostTxResult(item.ResultContract,
+			&url.Values{"Status": {converter.Int64ToStr(errCode)}, "Msg": {resText},
+				"Block": {converter.Int64ToStr(block)},
+				"UID":   {item.Uid}, "nowait": {"1"}})
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("ResultContract")
+		}
+	}
+	list, err := model.GetExternalList()
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("GetExternalList")
 		return err
 	}
-	for key, netInfo := range external {
-		duration, err = time.ParseDuration(netInfo.Interval)
-		if err != nil {
-			continue
-		}
-		if prevTime, ok = timeNet[key]; ok {
-			if time.Now().Before(prevTime.Add(duration)) {
-				continue
-			}
-		}
-		list, err := model.GetExternalList(key, countTx)
-		if err != nil {
-			return err
-		}
-		if len(list) == 0 {
-			continue
-		}
-		root := netInfo.URL + `/api/v2/`
-		if connect, err = loginNetwork(key, root); err != nil {
-			return err
-		}
-		outList := make([]interface{}, 0, len(list))
-		sentList := make([]int64, 0, len(list))
-		for _, item := range list {
-			var mitem interface{}
-			if err = json.Unmarshal([]byte(item.Value), &mitem); err != nil {
-				continue
-			}
-			outList = append(outList, mitem)
-			sentList = append(sentList, item.ID)
-		}
-		out, err := json.Marshal(outList)
-		if err != nil {
-			continue
-		}
-		id, _, err := connect.PostTxResult(netInfo.Contract, &url.Values{"List": {string(out)}})
-		timeNet[key] = time.Now()
-		if id != 0 && err == nil {
-			if err = model.DelExternalList(sentList); err != nil {
+	for _, item := range list {
+		root := item.Url + apiExt
+
+		if item.Sent == 0 {
+			if connect, err = loginNetwork(root); err != nil {
+				log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("loginNetwork")
 				return err
 			}
+			_, hash, err = connect.PostTxResult(item.ExternalContract,
+				&url.Values{"Params": {item.Value}, "UID": {item.Uid}, "nowait": {"1"},
+					"txtime": {converter.Int64ToStr(item.TxTime)}})
+			if err != nil {
+				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("PostContract")
+				if item.Attempts >= maxAttempts-1 {
+					sendResult(item, 0, errExternalAttempt, ``)
+				} else {
+					incAttempt(item.Id)
+				}
+			} else {
+				bHash, err := hex.DecodeString(hash)
+				if err != nil {
+					log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("DecodeHex")
+					incAttempt(item.Id)
+				} else {
+					model.HashExternalTx(item.Id, bHash)
+				}
+			}
+		} else {
+			toWait[item.Url] = append(toWait[item.Url], item)
+		}
+	}
+	for _, waitList := range toWait {
+		if connect, err = loginNetwork(waitList[0].Url + apiExt); err != nil {
+			log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("loginNetwork")
+			continue
+		}
+		var hashes []string
+		for _, item := range waitList {
+			hashes = append(hashes, hex.EncodeToString(item.Hash))
+		}
+		results, err := connect.WaitTxList(hashes)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("WaitTxList")
+			continue
+		}
+		for _, item := range waitList {
+			if result, ok := results[hex.EncodeToString(item.Hash)]; ok {
+				errCode := int64(errExternalNone)
+				if result.BlockID == 0 {
+					errCode = errExternalTx
+				}
+				sendResult(item, result.BlockID, errCode, result.Msg)
+			}
+		}
+	}
+	if len(delList) > 0 {
+		if err = model.DelExternalList(delList); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -145,6 +195,6 @@ func ExternalNetwork(ctx context.Context, d *daemon) error {
 	defer func() {
 		atomic.StoreUint32(&enOnRun, 0)
 	}()
-	d.sleepTime = 30 * time.Second
+	d.sleepTime = 2 * time.Second
 	return SendToNetwork()
 }

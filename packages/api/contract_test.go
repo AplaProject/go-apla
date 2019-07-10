@@ -1757,23 +1757,40 @@ func TestExternalNetwork(t *testing.T) {
 	var form url.Values
 	// The one time only after install
 
-	form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
-					data {
-						Value string
-					}
-				}`},
+	/*form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
+								data {
+									Value string
+								}
+							}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
-
+	*/
 	//
 	name := `cnt` + crypto.RandSeq(4)
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
 		data {
-			List array
+			Params map
+			UID    string
 		}
 		action { 
-			Println("SUCCESS", $List )
-			Println("First", $List[0] )
+			Println("SUCCESS", $UID, $Params )
+			if $UID == "123456" {
+				$result = "ok"
+			}
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Result {
+		data {
+			UID  string
+			Status int
+			Block int
+			Msg   string "optional"
+		}
+		action { 
+			Println("Result Contract", $UID, $Status, $Block, $Msg )
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
@@ -1781,9 +1798,9 @@ func TestExternalNetwork(t *testing.T) {
 
 	net := `{"mynet": {
 		"url": "http://localhost:7079", 
-		"contract": "@1` + name + `Hashes", 
+		"external_contract": "@1` + name + `Hashes", 
 		"condition": "true", 
-		"interval": "20s"
+		"result_contract": "@1` + name + `Result"
 		}
 	}`
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
@@ -1800,7 +1817,8 @@ func TestExternalNetwork(t *testing.T) {
 			var params map
 			params["hash"] = PubToHex($txhash)
 			params["block"] = $block
-			SendToNetwork("mynet", params)
+			SendToNetwork("mynet", "123456", params)
+			SendToNetwork("mynet", "654321", params)
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}

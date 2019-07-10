@@ -36,16 +36,22 @@ import (
 
 // ExternalBlockchain represents a txinfo table
 type ExternalBlockchain struct {
-	ID      int64  `gorm:"primary_key;not null"`
-	Netname string `gorm:"not null"`
-	Value   string `gorm:"not null"`
+	Id               int64  `gorm:"primary_key;not null"`
+	Netname          string `gorm:"not null"`
+	Value            string `gorm:"not null"`
+	ExternalContract string `gorm:"not null"`
+	ResultContract   string `gorm:"not null"`
+	Url              string `gorm:"not null"`
+	Uid              string `gorm:"not null"`
+	TxTime           int64  `gorm:"not null"`
+	Sent             int64  `gorm:"not null"`
+	Hash             []byte `gorm:"not null"`
+	Attempts         int64  `gorm:"not null"`
 }
 
 // GetExternalList returns the list of network tx
-func GetExternalList(name string, count int) (list []ExternalBlockchain, err error) {
+func GetExternalList() (list []ExternalBlockchain, err error) {
 	err = DBConn.Table("external_blockchain").
-		Select("id, netname, value").
-		Where("netname=?", name).Limit(count).
 		Order("id").Scan(&list).Error
 	return
 }
@@ -58,4 +64,12 @@ func DelExternalList(list []int64) error {
 	}
 	return DBConn.Exec("delete from external_blockchain where id in (" +
 		strings.Join(slist, `,`) + ")").Error
+}
+
+func HashExternalTx(id int64, hash []byte) error {
+	return DBConn.Exec("update external_blockchain set hash=?, sent = 1 where id = ?", hash, id).Error
+}
+
+func IncExternalAttempt(id int64) error {
+	return DBConn.Exec("update external_blockchain set attempts=attempts+1 where id = ?", id).Error
 }
