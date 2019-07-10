@@ -457,8 +457,10 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 		return true
 	}
 
+	contract := sc.TxContract.StackCont[len(sc.TxContract.StackCont)-1].(string)
+
 	for _, item := range names {
-		if sc.TxContract.Name == `@1`+item {
+		if contract == `@1`+item {
 			return true
 		}
 	}
@@ -727,8 +729,8 @@ func getColumns(columns string) (colsSQL string, colout []byte, err error) {
 
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) (err error) {
-	if !accessContracts(sc, `NewTable`, `NewTableJoint`, `Import`) {
-		return fmt.Errorf(`CreateTable can be only called from NewTable, NewTableJoint or Import`)
+	if err := validateAccess("CreateTable", sc, nNewTable, nNewTableJoint, nImport); err != nil {
+		return err
 	}
 
 	if len(name) == 0 {
