@@ -117,12 +117,16 @@ func SendExternalTransaction() error {
 		if len(item.ResultContract) == 0 {
 			return
 		}
-		contract := smart.GetContract(item.ResultContract, 1)
+		ecosysID, _ := converter.ParseName(item.ResultContract)
+		if ecosysID == 0 {
+			ecosysID = 1
+		}
+		contract := smart.GetContract(item.ResultContract, uint32(ecosysID))
 		sc := tx.SmartContract{
 			Header: tx.Header{
 				ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
 				Time:        time.Now().Unix(),
-				EcosystemID: 1,
+				EcosystemID: ecosysID,
 				KeyID:       nodeKeyID,
 				NetworkID:   conf.Config.NetworkID,
 			},
