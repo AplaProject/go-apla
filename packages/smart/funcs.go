@@ -1339,7 +1339,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		return err
 	}
 
-	isExist := accessContracts(sc, nEditContract)
+	isExist := accessContracts(sc, nEditColumn)
 	tEx := &model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	tEx.SetTablePrefix(prefix)
