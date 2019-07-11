@@ -29,6 +29,7 @@
 package daemons
 
 import (
+	"bytes"
 	"context"
 	"encoding/hex"
 	"net/url"
@@ -36,12 +37,17 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/utils"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -59,6 +65,7 @@ const (
 
 var (
 	nodePrivateKey []byte
+	nodeKeyID      int64
 	nodePublicKey  string
 	authNet        = map[string]string{}
 )
@@ -74,6 +81,7 @@ func loginNetwork(urlPath string) (connect *api.Connect, err error) {
 		if pubKey, err = crypto.PrivateToPublic(nodePrivateKey); err != nil {
 			return
 		}
+		nodeKeyID = crypto.Address(pubKey)
 		nodePublicKey = crypto.PubToHex(pubKey)
 	}
 	connect = &api.Connect{
@@ -109,16 +117,32 @@ func SendExternalTransaction() error {
 		if len(item.ResultContract) == 0 {
 			return
 		}
-		if connect, err = loginNetwork(item.Url + apiExt); err != nil {
-			log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("loginNetwork")
-			return
+		contract := smart.GetContract(item.ResultContract, 1)
+		sc := tx.SmartContract{
+			Header: tx.Header{
+				ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
+				Time:        time.Now().Unix(),
+				EcosystemID: 1,
+				KeyID:       nodeKeyID,
+				NetworkID:   conf.Config.NetworkID,
+			},
+			Params: map[string]interface{}{
+				"Status": errCode,
+				"Msg":    resText,
+				"Block":  block,
+				"UID":    item.Uid,
+			},
 		}
-		_, _, err = connect.PostTxResult(item.ResultContract,
-			&url.Values{"Status": {converter.Int64ToStr(errCode)}, "Msg": {resText},
-				"Block": {converter.Int64ToStr(block)},
-				"UID":   {item.Uid}, "nowait": {"1"}})
+		txData, _, err := tx.NewTransaction(sc, nodePrivateKey)
 		if err != nil {
-			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("ResultContract")
+			log.WithFields(log.Fields{"type": consts.ContractError, "err": err}).Error("Building transaction")
+		} else {
+			rtx := &transaction.RawTransaction{}
+			if err = rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
+				log.WithFields(log.Fields{"error": err}).Error("on unmarshalling to raw tx")
+			} else if err = model.SendTx(rtx, sc.KeyID); err != nil {
+				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
+			}
 		}
 	}
 	list, err := model.GetExternalList()
