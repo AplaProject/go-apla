@@ -53,7 +53,6 @@ const (
 	errExternalTimeout        // 3 - timeout of getting txstatus
 	errExternalOld            // 4 - tx time is old
 
-	countTx     = 100 // maximum records for sending
 	maxAttempts = 10
 	apiExt      = `/api/v2/`
 )
