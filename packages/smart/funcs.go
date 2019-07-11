@@ -1502,7 +1502,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		Columns string
 	}
 	temp := &cols{}
-	err := model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	err := model.GetDB(sc.DbTransaction).Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
 	if err != nil {
 		return logErrorDB(err, "querying columns by table name")
 	}
