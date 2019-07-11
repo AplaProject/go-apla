@@ -60,7 +60,9 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "deposit": "ContractAccess(\"@1TokensDecDeposit\",\"@1TokensIncDeposit\")",
             "deleted": "ContractConditions(\"@1AdminCondition\")",
             "blocked": "ContractAccess(\"@1TokensLockoutMember\")",
-            "account":"false"
+            "account": "false",
+            "ecosystem": "false",
+            "multi": "ContractConditions(\"@1AdminCondition\")"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),
