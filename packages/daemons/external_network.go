@@ -89,7 +89,7 @@ func loginNetwork(urlPath string) (connect *api.Connect, err error) {
 	return
 }
 
-func SendToNetwork() error {
+func SendExternalTransaction() error {
 	var (
 		err     error
 		connect *api.Connect
@@ -208,5 +208,5 @@ func ExternalNetwork(ctx context.Context, d *daemon) error {
 		atomic.StoreUint32(&enOnRun, 0)
 	}()
 	d.sleepTime = 2 * time.Second
-	return SendToNetwork()
+	return SendExternalTransaction()
 }

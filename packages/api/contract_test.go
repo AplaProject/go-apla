@@ -1755,17 +1755,6 @@ func TestErrors(t *testing.T) {
 func TestExternalNetwork(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	var form url.Values
-	// The one time only after install
-
-	/*form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
-								data {
-									Value string
-								}
-							}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
-	*/
-	//
 	name := `cnt` + crypto.RandSeq(4)
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
 		data {
@@ -1811,37 +1800,19 @@ func TestExternalNetwork(t *testing.T) {
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
-	net := `{"mynet": {
-		"url": "http://localhost:7079", 
-		"external_contract": "@1` + name + `Hashes", 
-		"condition": "true", 
-		"result_contract": "@1` + name + `Result"
-		},
-		"myerr": {
-			"url": "http://localhost:7079", 
-			"external_contract": "@1` + name + `Errors", 
-			"condition": "true", 
-			"result_contract": "@1` + name + `Result"
-			}
-	}`
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
-		action { 
-			UpdateSysParam("Name,Value","external_blockchain",` + "`" + net + "`" + `)
-		}
-	}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
-	assert.NoError(t, postTx(name, &url.Values{}))
-
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `2 {
 		action { 
 			var params map
 			params["hash"] = PubToHex($txhash)
 			params["block"] = $block
-			SendToNetwork("mynet", "123456", params)
-			SendToNetwork("mynet", "654321", params)
-			SendToNetwork("myerr", "stop", params)
-			SendToNetwork("myerr", "zero", params)
+			SendExternalTransaction( "123456", "http://localhost:7079", "@1` + name + `Hashes",   
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "654321", "http://localhost:7079", "@1` + name + `Hashes",  
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "stop", "http://localhost:7079", "@1` + name + `Errors", 
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "zero", "http://localhost:7079", "@1` + name + `Errors", 
+			    params, "@1` + name + `Result")
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}

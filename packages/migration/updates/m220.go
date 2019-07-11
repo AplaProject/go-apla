@@ -29,7 +29,8 @@
 package updates
 
 var M220 = `
-    ALTER TABLE "external_blockchain" 
+	ALTER TABLE "external_blockchain" 
+	DROP COLUMN "netname",
 	ADD COLUMN "url" varchar(255)  NOT NULL DEFAULT '',
 	ADD COLUMN "external_contract" varchar(255)  NOT NULL DEFAULT '',
 	ADD COLUMN "result_contract" varchar(255)  NOT NULL DEFAULT '',

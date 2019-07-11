@@ -37,7 +37,6 @@ import (
 // ExternalBlockchain represents a txinfo table
 type ExternalBlockchain struct {
 	Id               int64  `gorm:"primary_key;not null"`
-	Netname          string `gorm:"not null"`
 	Value            string `gorm:"not null"`
 	ExternalContract string `gorm:"not null"`
 	ResultContract   string `gorm:"not null"`
