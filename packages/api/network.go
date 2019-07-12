@@ -54,20 +54,16 @@ type NetworkResult struct {
 	FullNodes     []FullNodeJSON `json:"full_nodes"`
 }
 
-func FullNodeToJSON(fn *syspar.FullNode) FullNodeJSON {
-	return FullNodeJSON{
-		TCPAddress: fn.TCPAddress,
-		APIAddress: fn.APIAddress,
-		KeyID:      strconv.FormatInt(fn.KeyID, 10),
-		PublicKey:  crypto.PubToHex(fn.PublicKey),
-		UnbanTime:  strconv.FormatInt(fn.UnbanTime.Unix(), 10),
-	}
-}
-
 func GetNodesJSON() []FullNodeJSON {
 	nodes := make([]FullNodeJSON, 0)
 	for _, node := range syspar.GetNodes() {
-		nodes = append(nodes, FullNodeToJSON(&node))
+		nodes = append(nodes, FullNodeJSON{
+			TCPAddress: node.TCPAddress,
+			APIAddress: node.APIAddress,
+			KeyID:      strconv.FormatInt(node.KeyID, 10),
+			PublicKey:  crypto.PubToHex(node.PublicKey),
+			UnbanTime:  strconv.FormatInt(node.UnbanTime.Unix(), 10),
+		})
 	}
 	return nodes
 }
