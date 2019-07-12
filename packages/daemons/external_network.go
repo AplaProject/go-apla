@@ -52,7 +52,6 @@ const (
 	errExternalTx             // 1 - tx error
 	errExternalAttempt        // 2 - attempt error
 	errExternalTimeout        // 3 - timeout of getting txstatus
-	errExternalOld            // 4 - tx time is old
 
 	maxAttempts = 10
 	apiExt      = `/api/v2/`
@@ -134,7 +133,7 @@ func SendExternalTransaction() error {
 
 		if item.Sent == 0 {
 			if timeOut > item.TxTime {
-				sendResult(item, 0, errExternalOld, ``)
+				delList = append(delList, item.Id)
 				continue
 			}
 			if connect, err = loginNetwork(root); err != nil {
