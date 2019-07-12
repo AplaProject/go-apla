@@ -29,7 +29,6 @@
 package daemons
 
 import (
-	"bytes"
 	"context"
 	"encoding/hex"
 	"net/url"
@@ -37,17 +36,13 @@ import (
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/api"
-	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/script"
-	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/utils"
-	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -117,36 +112,14 @@ func SendExternalTransaction() error {
 		if len(item.ResultContract) == 0 {
 			return
 		}
-		ecosysID, _ := converter.ParseName(item.ResultContract)
-		if ecosysID == 0 {
-			ecosysID = 1
-		}
-		contract := smart.GetContract(item.ResultContract, uint32(ecosysID))
-		sc := tx.SmartContract{
-			Header: tx.Header{
-				ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
-				Time:        time.Now().Unix(),
-				EcosystemID: ecosysID,
-				KeyID:       nodeKeyID,
-				NetworkID:   conf.Config.NetworkID,
-			},
-			Params: map[string]interface{}{
+		if err := transaction.CreateContract(item.ResultContract, nodeKeyID,
+			map[string]interface{}{
 				"Status": errCode,
 				"Msg":    resText,
 				"Block":  block,
 				"UID":    item.Uid,
-			},
-		}
-		txData, _, err := tx.NewTransaction(sc, nodePrivateKey)
-		if err != nil {
-			log.WithFields(log.Fields{"type": consts.ContractError, "err": err}).Error("Building transaction")
-		} else {
-			rtx := &transaction.RawTransaction{}
-			if err = rtx.Unmarshall(bytes.NewBuffer(txData)); err != nil {
-				log.WithFields(log.Fields{"error": err}).Error("on unmarshalling to raw tx")
-			} else if err = model.SendTx(rtx, sc.KeyID); err != nil {
-				log.WithFields(log.Fields{"type": consts.ContractError}).Error("Executing contract")
-			}
+			}, nodePrivateKey); err != nil {
+			log.WithFields(log.Fields{"type": consts.ContractError, "err": err}).Error("CreateContract")
 		}
 	}
 	list, err := model.GetExternalList()
