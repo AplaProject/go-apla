@@ -61,32 +61,6 @@ func TestUpperName(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	rnd := crypto.RandSeq(4)
-	form := url.Values{"Name": {"testTable" + rnd}, "ApplicationId": {"1"}, "Columns": {`[{"name":"num","type":"text",   "conditions":"true"},
-	{"name":"text", "type":"text","conditions":"true"}]`},
-		"Permissions": {`{"insert": "true", "update" : "true", "new_column": "true"}`}}
-	err := postTx(`NewTable`, &form)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	form = url.Values{`Value`: {`contract AddRow` + rnd + ` {
-		data {
-		}
-		conditions {
-		}
-		action {
-		   DBInsert("testTable` + rnd + `", {num: "fgdgf", text: "124234"}) 
-		}
-	}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
-	if err := postTx(`NewContract`, &form); err != nil {
-		t.Error(err)
-		return
-	}
-	if err := postTx(`AddRow`+rnd, &url.Values{}); err != nil {
-		t.Error(err)
-		return
-	}
 }
 
 func TestSmartFields(t *testing.T) {

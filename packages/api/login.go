@@ -207,6 +207,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if found && ts.Block > 0 {
+				account.Get(wallet)
 				break
 			}
 			time.Sleep(time.Second)
