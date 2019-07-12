@@ -268,7 +268,8 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "data": "ContractAccess(\"@1UploadBinary\")",
             "name": "false",
             "app_id": "false",
-            "ecosystem": "false"
+            "ecosystem": "false",
+            "mime_type": "ContractAccess(\"@1UploadBinary\")"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),

@@ -176,7 +176,8 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 			"account": "false",
 			"data":"ContractAccess(\"@1UploadBinary\")",
 			"name":"false",
-			"app_id":"false"
+			"app_id":"false",
+			"mime_type": "ContractAccess(\"@1UploadBinary\")"
 		}',
 		'ContractConditions(\"MainCondition\")'),
 	('16', 'parameters',
