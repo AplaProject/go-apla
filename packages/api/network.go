@@ -29,50 +29,55 @@
 package api
 
 import (
-	"encoding/hex"
-	"encoding/json"
-	"net/url"
-	"testing"
+	"net/http"
+	"strconv"
 
+	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestGetUID(t *testing.T) {
-	var ret getUIDResult
-	err := sendGet(`getuid`, nil, &ret)
-	if err != nil {
-		var v map[string]string
-		json.Unmarshal([]byte(err.Error()[4:]), &v)
-		t.Error(err)
-		return
-	}
-	gAuth = ret.Token
-	priv, pub, err := crypto.GenHexKeys()
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	sign, err := crypto.SignString(priv, `LOGIN`+ret.NetworkID+ret.UID)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	form := url.Values{"pubkey": {pub}, "signature": {hex.EncodeToString(sign)}}
-	var lret loginResult
-	err = sendPost(`login`, &form, &lret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	gAuth = lret.Token
+type FullNodeJSON struct {
+	TCPAddress string `json:"tcp_address"`
+	APIAddress string `json:"api_address"`
+	KeyID      string `json:"key_id"`
+	PublicKey  string `json:"public_key"`
+	UnbanTime  string `json:"unban_time,er"`
+	Stopped    bool   `json:"stopped"`
 }
 
-func TestNetwork(t *testing.T) {
-	var ret NetworkResult
-	assert.NoError(t, sendGet(`network`, nil, &ret))
-	if len(ret.NetworkID) == 0 || len(ret.CentrifugoURL) == 0 || len(ret.FullNodes) == 0 {
-		t.Error(`Wrong value`, ret)
+type NetworkResult struct {
+	NetworkID     string         `json:"network_ud"`
+	CentrifugoURL string         `json:"centrifugo_url"`
+	Test          bool           `json:"test"`
+	FullNodes     []FullNodeJSON `json:"full_nodes"`
+}
+
+func FullNodeToJSON(fn *syspar.FullNode) FullNodeJSON {
+	return FullNodeJSON{
+		TCPAddress: fn.TCPAddress,
+		APIAddress: fn.APIAddress,
+		KeyID:      strconv.FormatInt(fn.KeyID, 10),
+		PublicKey:  crypto.PubToHex(fn.PublicKey),
+		UnbanTime:  strconv.FormatInt(fn.UnbanTime.Unix(), 10),
 	}
+}
+
+func GetNodesJSON() []FullNodeJSON {
+	nodes := make([]FullNodeJSON, 0)
+	for _, node := range syspar.GetNodes() {
+		nodes = append(nodes, FullNodeToJSON(&node))
+	}
+	return nodes
+}
+
+func getNetworkHandler(w http.ResponseWriter, r *http.Request) {
+	test := syspar.SysString(syspar.Test)
+	jsonResponse(w, &NetworkResult{
+		NetworkID:     converter.Int64ToStr(conf.Config.NetworkID),
+		CentrifugoURL: conf.Config.Centrifugo.URL,
+		Test:          test != `0` && test != `false`,
+		FullNodes:     GetNodesJSON(),
+	})
 }
