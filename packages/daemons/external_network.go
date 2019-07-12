@@ -53,8 +53,10 @@ const (
 	errExternalAttempt        // 2 - attempt error
 	errExternalTimeout        // 3 - timeout of getting txstatus
 
-	maxAttempts = 10
-	apiExt      = `/api/v2/`
+	maxAttempts           = 10
+	statusTimeout         = 60
+	externalDeamonTimeout = 2
+	apiExt                = `/api/v2/`
 )
 
 var (
@@ -177,7 +179,7 @@ func SendExternalTransaction() error {
 			log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("WaitTxList")
 			continue
 		}
-		timeOut = time.Now().Unix() - 60
+		timeOut = time.Now().Unix() - statusTimeout
 		for _, item := range waitList {
 			if result, ok := results[hex.EncodeToString(item.Hash)]; ok {
 				errCode := int64(errExternalNone)
@@ -206,6 +208,6 @@ func ExternalNetwork(ctx context.Context, d *daemon) error {
 	defer func() {
 		atomic.StoreUint32(&enOnRun, 0)
 	}()
-	d.sleepTime = 2 * time.Second
+	d.sleepTime = externalDeamonTimeout * time.Second
 	return SendExternalTransaction()
 }
