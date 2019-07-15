@@ -30,6 +30,7 @@ package transaction
 
 import (
 	"bytes"
+	"fmt"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -40,6 +41,10 @@ import (
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 )
 
+const (
+	errUnknownContract = `Cannot find %s contract`
+)
+
 func CreateContract(contractName string, keyID int64, params map[string]interface{},
 	privateKey []byte) error {
 	ecosysID, _ := converter.ParseName(contractName)
@@ -47,6 +52,9 @@ func CreateContract(contractName string, keyID int64, params map[string]interfac
 		ecosysID = 1
 	}
 	contract := smart.GetContract(contractName, uint32(ecosysID))
+	if contract == nil {
+		return fmt.Errorf(errUnknownContract, contractName)
+	}
 	sc := tx.SmartContract{
 		Header: tx.Header{
 			ID:          int(contract.Block.Info.(*script.ContractInfo).ID),

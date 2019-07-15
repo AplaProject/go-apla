@@ -1818,6 +1818,19 @@ func TestExternalNetwork(t *testing.T) {
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name+`2`, &url.Values{}))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `3 {
+		action { 
+			var params map
+			params["hash"] = PubToHex($txhash)
+			params["block"] = $block
+			SendExternalTransaction( "77", "http://localhost:7079", "@1` + name + `Hashes",   
+			    params, "@1None")
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name+`3`, &url.Values{}))
 }
 
 func TestApos(t *testing.T) {
