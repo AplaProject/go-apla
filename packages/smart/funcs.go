@@ -1970,7 +1970,7 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
 	}
-	if len((*txs)[len(*txs)-1].Data) > 0 {
+	if len(*txs) > 0 && len((*txs)[len(*txs)-1].Data) > 0 {
 		prev := rollbackList[len(rollbackList)-1].(*types.Map)
 		prev.Set(`block_id`, `1`)
 		prev.Set(`id`, ``)
