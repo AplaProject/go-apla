@@ -1758,11 +1758,12 @@ func TestExternalNetwork(t *testing.T) {
 	name := `cnt` + crypto.RandSeq(4)
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
 		data {
-			Params map
+			hash string
+			block int
 			UID    string
 		}
 		action { 
-			Println("SUCCESS", $UID, $Params )
+			Println("SUCCESS", $UID, $hash, $block )
 			if $UID == "123456" {
 				$result = "ok"
 			}
@@ -1787,7 +1788,8 @@ func TestExternalNetwork(t *testing.T) {
 
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Errors {
 		data {
-			Params map
+			hash string
+			block int
 			UID    string "optional"
 		}
 		action { 

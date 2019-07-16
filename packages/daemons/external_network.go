@@ -31,6 +31,8 @@ package daemons
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
+	"fmt"
 	"net/url"
 	"sync/atomic"
 	"time"
@@ -142,9 +144,20 @@ func SendExternalTransaction() error {
 				log.WithFields(log.Fields{"type": consts.AccessDenied, "error": err}).Error("loginNetwork")
 				return err
 			}
-			_, hash, err = connect.PostTxResult(item.ExternalContract,
-				&url.Values{"Params": {item.Value}, "UID": {item.Uid}, "nowait": {"1"},
-					"txtime": {converter.Int64ToStr(item.TxTime)}})
+			values := url.Values{"UID": {item.Uid}}
+
+			var params map[string]interface{}
+			if err = json.Unmarshal([]byte(item.Value), &params); err != nil {
+				log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("Unmarshal params")
+				delList = append(delList, item.Id)
+				continue
+			}
+			for key, val := range params {
+				values[key] = []string{fmt.Sprint(val)}
+			}
+			values["nowait"] = []string{"1"}
+			values["txtime"] = []string{converter.Int64ToStr(item.TxTime)}
+			_, hash, err = connect.PostTxResult(item.ExternalContract, &values)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("PostContract")
 				if item.Attempts >= maxAttempts-1 {
