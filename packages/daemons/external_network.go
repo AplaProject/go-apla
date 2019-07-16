@@ -158,6 +158,7 @@ func SendExternalTransaction() error {
 			values["nowait"] = []string{"1"}
 			values["txtime"] = []string{converter.Int64ToStr(item.TxTime)}
 			_, hash, err = connect.PostTxResult(item.ExternalContract, &values)
+			fmt.Println(`POST`, time.Now().Unix(), err, hash)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("PostContract")
 				if item.Attempts >= maxAttempts-1 {
@@ -170,8 +171,8 @@ func SendExternalTransaction() error {
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("DecodeHex")
 					incAttempt(item.Id)
-				} else {
-					model.HashExternalTx(item.Id, bHash)
+				} else if err = model.HashExternalTx(item.Id, bHash); err != nil {
+					log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("HashExternal")
 				}
 			}
 		} else {
