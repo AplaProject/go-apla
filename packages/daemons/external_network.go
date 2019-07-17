@@ -57,7 +57,7 @@ const (
 
 	maxAttempts           = 10
 	statusTimeout         = 60
-	externalDeamonTimeout = 5
+	externalDeamonTimeout = 2
 	apiExt                = `/api/v2/`
 )
 
@@ -132,12 +132,8 @@ func SendExternalTransaction() error {
 	}
 	timeOut := time.Now().Unix() - 10*(syspar.GetGapsBetweenBlocks()+
 		syspar.GetMaxBlockGenerationTime()/1000)
-	if len(list) > 0 {
-		fmt.Println(`LIST`, len(list))
-	}
 	for _, item := range list {
 		root := item.Url + apiExt
-		fmt.Println(`item`, item.Id, item.Attempts, item.Sent, item.Uid, item.Value, item.TxTime)
 		if item.Sent == 0 {
 			if timeOut > item.TxTime {
 				delList = append(delList, item.Id)
@@ -161,7 +157,6 @@ func SendExternalTransaction() error {
 			values["nowait"] = []string{"1"}
 			values["txtime"] = []string{converter.Int64ToStr(item.TxTime)}
 			_, hash, err = connect.PostTxResult(item.ExternalContract, &values)
-			fmt.Println(`POST`, time.Now().Unix(), err, hash)
 			if err != nil {
 				log.WithFields(log.Fields{"type": consts.NetworkError, "error": err}).Error("PostContract")
 				if item.Attempts >= maxAttempts-1 {
@@ -181,9 +176,6 @@ func SendExternalTransaction() error {
 		} else {
 			toWait[item.Url] = append(toWait[item.Url], item)
 		}
-	}
-	if len(toWait) > 0 {
-		fmt.Println(`WAIT`, len(toWait))
 	}
 	for _, waitList := range toWait {
 		if connect, err = loginNetwork(waitList[0].Url + apiExt); err != nil {
