@@ -1830,3 +1830,53 @@ func TestApos(t *testing.T) {
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Name d'Company"}}))
 }
+
+func TestCondition(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	var form url.Values
+
+	name := `cnt` + crypto.RandSeq(4)
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			Println("COND" )
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	form = url.Values{"Name": {name + `2`}, "Value": {`contract ` + name + `2 {
+		conditions {
+		}
+		action { 
+			Println("COND 2" )
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.NoError(t, postTx(`NewPage`, &url.Values{
+		"ApplicationId": {`1`},
+		"Name":          {name},
+		"Value":         {`Div(Body: "Condition 2 - test")`},
+		"Menu":          {`default_menu`},
+		"Conditions":    {`ContractConditions("` + name + `2")`},
+	}))
+	var ret listResult
+	err := sendGet(`list/pages`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	id := ret.Count
+
+	assert.NoError(t, postTx(`EditPage`, &url.Values{
+		"Id":         {id},
+		"Value":      {`Div(Body: "Condition 1 - test")`},
+		"Conditions": {`ContractConditions("` + name + `")`},
+	}))
+
+	assert.NoError(t, postTx(`EditPage`, &url.Values{
+		"Id":         {id},
+		"Value":      {`Div(Body: "Condition - test")`},
+		"Conditions": {`true`},
+	}))
+}
