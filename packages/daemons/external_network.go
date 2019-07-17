@@ -193,8 +193,6 @@ func SendExternalTransaction() error {
 		}
 		timeOut = time.Now().Unix() - statusTimeout
 		for _, item := range waitList {
-			fmt.Println(`wait`, item.Id, item.Attempts, item.Sent, item.Uid, item.Value, item.TxTime)
-
 			if result, ok := results[hex.EncodeToString(item.Hash)]; ok {
 				errCode := int64(errExternalNone)
 				if result.BlockID == 0 {
