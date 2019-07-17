@@ -165,6 +165,8 @@ func SendExternalTransaction() error {
 					incAttempt(item.Id)
 				}
 			} else {
+				log.WithFields(log.Fields{"hash": hash, "txtime": values["txtime"][0],
+					"nodeKey": converter.Int64ToStr(nodeKeyID)}).Info("SendExternalTransaction")
 				bHash, err := hex.DecodeString(hash)
 				if err != nil {
 					log.WithFields(log.Fields{"type": consts.ParseError, "error": err}).Error("DecodeHex")
