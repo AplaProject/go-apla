@@ -30,6 +30,7 @@ package publisher
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -64,6 +65,9 @@ var (
 	centrifugoTimeout = time.Second * 5
 	publisher         *gocent.Client
 	config            conf.CentrifugoConfig
+	mu                sync.Mutex
+
+	ErrEmptyResult = errors.New("Empty result")
 )
 
 // InitCentrifugo client
@@ -88,7 +92,28 @@ func GetHMACSign(userID int64) (string, string, error) {
 
 // Write is publishing data to server
 func Write(userID int64, data string) (bool, error) {
-	return publisher.Publish("client"+strconv.FormatInt(userID, 10), []byte(data))
+	mu.Lock()
+	defer mu.Unlock()
+
+	err := publisher.AddPublish("client"+strconv.FormatInt(userID, 10), []byte(data))
+	if err != nil {
+		return false, err
+	}
+	result, err := publisher.Send()
+	if err != nil {
+		return false, err
+	}
+
+	if len(result) == 0 {
+		return false, ErrEmptyResult
+	}
+
+	resp := result[0]
+	if resp.Error != "" {
+		return false, errors.New(resp.Error)
+	}
+
+	return gocent.DecodePublish(resp.Body)
 }
 
 // GetStats returns Stats
