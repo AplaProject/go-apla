@@ -614,6 +614,11 @@ func dbfindTag(par parFunc) string {
 				if err != nil {
 					return err.Error()
 				}
+			case *types.Map:
+				where, err = qb.GetWhere(v)
+				if err != nil {
+					return err.Error()
+				}
 			default:
 				return errWhere.Error()
 			}
