@@ -1194,7 +1194,7 @@ func dateTimeTag(par parFunc) string {
 			return err.Error()
 		}
 	}
-	format := par.Param("Format")
+	format := par.ParamWithMacros("Format")
 	if len(format) == 0 {
 		format, _ = language.LangText(`timeformat`,
 			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)), getVar(par.Workspace, `lang`))
@@ -1212,7 +1212,7 @@ func dateTimeTag(par parFunc) string {
 	format = strings.Replace(format, `MI`, `04`, -1)
 	format = strings.Replace(format, `SS`, `05`, -1)
 
-	locationName := par.Param("Location")
+	locationName := par.ParamWithMacros("Location")
 	if len(locationName) > 0 {
 		loc, err := time.LoadLocation(locationName)
 		if err != nil {
