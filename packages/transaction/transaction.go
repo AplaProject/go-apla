@@ -41,6 +41,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
@@ -134,7 +135,7 @@ type Transaction struct {
 	DbTransaction *model.DbTransaction
 	SysUpdate     bool
 	Rand          *rand.Rand
-	Notifications []smart.NotifyInfo
+	Notifications types.Notifications
 	GenBlock      bool
 	TimeLimit     int64
 
@@ -391,11 +392,11 @@ func (t *Transaction) CallContract() (resultContract string, flushRollback []sma
 		Rand:          t.Rand,
 		GenBlock:      t.GenBlock,
 		TimeLimit:     t.TimeLimit,
+		Notifications: t.Notifications,
 	}
 	resultContract, err = sc.CallContract()
 	t.TxFuel = sc.TxFuel
 	t.SysUpdate = sc.SysUpdate
-	t.Notifications = sc.Notifications
 	if sc.FlushRollback != nil {
 		flushRollback = make([]smart.FlushInfo, len(sc.FlushRollback))
 		copy(flushRollback, sc.FlushRollback)

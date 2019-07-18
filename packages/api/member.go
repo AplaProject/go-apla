@@ -44,19 +44,19 @@ func getAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
-	memberID := converter.StrToInt64(params["member"])
+	account := params["account"]
 	ecosystemID := converter.StrToInt64(params["ecosystem"])
 
 	member := &model.Member{}
 	member.SetTablePrefix(converter.Int64ToStr(ecosystemID))
 
-	found, err := member.Get(memberID)
+	found, err := member.Get(account)
 	if err != nil {
 		logger.WithFields(log.Fields{
 			"type":      consts.DBError,
 			"error":     err,
 			"ecosystem": ecosystemID,
-			"member_id": memberID,
+			"account":   account,
 		}).Error("getting member")
 		errorResponse(w, err)
 		return

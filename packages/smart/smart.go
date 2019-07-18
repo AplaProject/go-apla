@@ -524,6 +524,15 @@ func ConditionById(table string, validate bool) {
    if validate {
 	   ValidateCondition($Conditions,$ecosystem_id)
    }
+}
+
+func CurrentKeyFromAccount(account string) int {
+	var row map
+	row = DBRow("@1keys").Columns("id").Where({"account": account, "deleted": 0})
+	if row {
+		return row["id"]
+	}
+	return 0
 }`
 	return vmCompile(vm, code, &script.OwnerInfo{StateID: uint32(state)})
 }

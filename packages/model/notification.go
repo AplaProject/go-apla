@@ -70,37 +70,36 @@ func (n *Notification) TableName() string {
 	return `1_notifications`
 }
 
+type NotificationsCount struct {
+	RecipientID int64 `gorm:"recipient_id"`
+	RoleID      int64 `gorm:"role_id"`
+	Count       int64 `gorm:"count"`
+}
+
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
-func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
-	result := make([]map[string]string, 0, 16)
-	for _, userID := range userIDs {
-		roles, err := GetMemberRoles(nil, ecosystemID, userID)
+func GetNotificationsCount(ecosystemID int64, accounts []string) ([]NotificationsCount, error) {
+	result := make([]NotificationsCount, 0, len(accounts))
+	for _, account := range accounts {
+		query := `SELECT k.id as "recipient_id", '0' as "role_id", count(n.id)
+			FROM "1_keys" k
+			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '1' and n.recipient->>'account' = k.account
+			WHERE k.ecosystem = ? AND k.account = ?
+			GROUP BY recipient_id, role_id
+			UNION
+			SELECT k.id as "recipient_id", rp.role->>'id' as "role_id", count(n.id)
+			FROM "1_keys" k
+			INNER JOIN "1_roles_participants" rp ON rp.member->>'account' = k.account
+			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '2' AND n.recipient->>'role_id' = rp.role->>'id'
+													AND (n.date_start_processing = 0 OR n.processing_info->>'account' = k.account)
+			WHERE k.ecosystem=? AND k.account = ?
+			GROUP BY recipient_id, role_id`
+
+		list := make([]NotificationsCount, 0)
+		err := GetDB(nil).Raw(query, ecosystemID, account, ecosystemID, account).Scan(&list).Error
 		if err != nil {
 			return nil, err
 		}
-		roleList := make([]string, 0, len(roles))
-		for _, role := range roles {
-			roleList = append(roleList, converter.Int64ToStr(role))
-		}
-
-		query := `SELECT recipient->>'role_id' as "role_id", count(*) cnt
-			FROM "1_notifications" 
-			WHERE ecosystem=? AND closed = 0 AND ((notification->>'type' = '1' and recipient->>'member_id' = ? ) or
-				(notification->>'type' = '2' and (recipient->>'role_id' IN (?) and 
-				( date_start_processing is null or processing_info->>'member_id' = ?))))
-			GROUP BY 1`
-
-		list, err := GetAllTransaction(nil, query, -1, ecosystemID, userID, roleList, userID)
-		if err != nil {
-			return nil, err
-		}
-
-		recipient := converter.Int64ToStr(userID)
-		for i := range list {
-			list[i]["recipient_id"] = recipient
-		}
-
 		result = append(result, list...)
 	}
 	return result, nil

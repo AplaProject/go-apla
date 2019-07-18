@@ -29,9 +29,6 @@
 package model
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/AplaProject/go-apla/packages/converter"
 )
 
@@ -62,19 +59,19 @@ func (r RolesParticipants) TableName() string {
 }
 
 // GetActiveMemberRoles returns active assigned roles for memberID
-func (r *RolesParticipants) GetActiveMemberRoles(memberID int64) ([]RolesParticipants, error) {
+func (r *RolesParticipants) GetActiveMemberRoles(account string) ([]RolesParticipants, error) {
 	roles := new([]RolesParticipants)
-	err := DBConn.Table(r.TableName()).Where("ecosystem=? and member->>'member_id' = ? AND deleted = ?",
-		r.ecosystem, converter.Int64ToStr(memberID), 0).Find(&roles).Error
+	err := DBConn.Table(r.TableName()).Where("ecosystem=? and member->>'account' = ? AND deleted = ?",
+		r.ecosystem, account, 0).Find(&roles).Error
 	return *roles, err
 }
 
 // MemberHasRole returns true if member has role
-func MemberHasRole(tx *DbTransaction, ecosys, member, role int64) (bool, error) {
+func MemberHasRole(tx *DbTransaction, role, ecosys int64, account string) (bool, error) {
 	db := GetDB(tx)
 	var count int64
-	if err := db.Table("1_roles_participants").Where(`ecosystem=? and role->>'id' = ? and member->>'member_id' = ?`,
-		ecosys, converter.Int64ToStr(role), converter.Int64ToStr(member)).Count(&count).Error; err != nil {
+	if err := db.Table("1_roles_participants").Where(`ecosystem=? and role->>'id' = ? and member->>'account' = ?`,
+		ecosys, converter.Int64ToStr(role), account).Count(&count).Error; err != nil {
 		return false, err
 	}
 
@@ -82,10 +79,11 @@ func MemberHasRole(tx *DbTransaction, ecosys, member, role int64) (bool, error) 
 }
 
 // GetMemberRoles return map[id]name all roles assign to member in ecosystem
-func GetMemberRoles(tx *DbTransaction, ecosys, member int64) (roles []int64, err error) {
-	query := fmt.Sprintf(`SELECT role->>'id' as "id" FROM "1_roles_participants"
-		WHERE ecosystem='%d' and deleted = '0' and member->>'member_id' = '%d'`, ecosys, member)
-	list, err := GetAllTransaction(tx, query, -1)
+func GetMemberRoles(tx *DbTransaction, ecosys int64, account string) (roles []int64, err error) {
+	query := `SELECT role->>'id' as "id" 
+		FROM "1_roles_participants"
+		WHERE ecosystem = ? and deleted = '0' and member->>'account' = ?`
+	list, err := GetAllTransaction(tx, query, -1, ecosys, account)
 	if err != nil {
 		return
 	}
@@ -96,20 +94,20 @@ func GetMemberRoles(tx *DbTransaction, ecosys, member int64) (roles []int64, err
 }
 
 // GetRoleMembers return []id all members assign to roles in ecosystem
-func GetRoleMembers(tx *DbTransaction, ecosys int64, roles []int64) (members []int64, err error) {
+func GetRoleMembers(tx *DbTransaction, ecosys int64, roles []int64) (members []string, err error) {
 	rolesList := make([]string, 0, len(roles))
 	for _, role := range roles {
 		rolesList = append(rolesList, converter.Int64ToStr(role))
 	}
-	query := fmt.Sprintf(`SELECT member->>'member_id' as "id" FROM "%d_%s" 
-	WHERE role->>'id' in ('%s') group by 1`, ecosys, `roles_participants`,
-		strings.Join(rolesList, `','`))
-	list, err := GetAllTransaction(tx, query, -1)
+	query := `SELECT member->>'account' as "id" 
+		FROM "1_roles_participants" 
+		WHERE role->>'id' in (?) group by 1`
+	list, err := GetAllTransaction(tx, query, -1, rolesList)
 	if err != nil {
 		return
 	}
 	for _, member := range list {
-		members = append(members, converter.StrToInt64(member[`id`]))
+		members = append(members, member[`id`])
 	}
 	return
 }
