@@ -26,60 +26,17 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package main
+package updates
 
-import (
-	"fmt"
-	"html/template"
-	"io/ioutil"
-	"path/filepath"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-)
-
-func TestEscape(t *testing.T) {
-	var cases = []struct {
-		Source   string
-		Expected template.HTML
-	}{
-		{`'test'`, `''test''`},
-		{"`test`", "` + \"`\" + `test` + \"`\" + `"},
-		{`100%`, `100%%`},
-	}
-
-	for _, v := range cases {
-		assert.Equal(t, v.Expected, escape(v.Source))
-	}
-}
-
-func tempContract(appID int, conditions, value string) (string, error) {
-	file, err := ioutil.TempFile("", "contract")
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-
-	file.Write([]byte(fmt.Sprintf(`// +prop AppID = %d
-// +prop Conditions = '%s'
-%s`, appID, conditions, value)))
-
-	return file.Name(), nil
-}
-
-func TestLoadSource(t *testing.T) {
-	value := "contract Test {}"
-
-	path, err := tempContract(5, "true", value)
-	assert.NoError(t, err)
-
-	source, err := loadSource(path)
-	assert.NoError(t, err)
-
-	assert.Equal(t, &contract{
-		Name:       filepath.Base(path),
-		Source:     template.HTML(value + "\n"),
-		Conditions: template.HTML("true"),
-		AppID:      5,
-	}, source)
-}
+var M220 = `
+	ALTER TABLE "external_blockchain" 
+	DROP COLUMN "netname",
+	ADD COLUMN "url" varchar(255)  NOT NULL DEFAULT '',
+	ADD COLUMN "external_contract" varchar(255)  NOT NULL DEFAULT '',
+	ADD COLUMN "result_contract" varchar(255)  NOT NULL DEFAULT '',
+	ADD COLUMN "uid" varchar(255) NOT NULL DEFAULT '',
+	ADD COLUMN "tx_time" int  NOT NULL DEFAULT '0',
+	ADD COLUMN "sent" int  NOT NULL DEFAULT '0',
+	ADD COLUMN "hash" bytea NOT NULL DEFAULT '',
+	ADD COLUMN "attempts" int  NOT NULL DEFAULT '0';
+`

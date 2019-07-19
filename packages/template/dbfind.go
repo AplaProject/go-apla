@@ -34,6 +34,8 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/types"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -102,16 +104,16 @@ func parseObject(in []rune) (interface{}, int) {
 	if in[0] == '[' {
 		ret = make([]interface{}, 0)
 	} else if in[0] == '{' {
-		ret = make(map[string]interface{})
+		ret = types.NewMap()
 		mapMode = true
 	} else {
 		return nil, 0
 	}
 	addEmptyKey := func() {
 		if mapMode {
-			ret.(map[string]interface{})[key] = ``
+			ret.(*types.Map).Set(key, "")
 		} else if len(key) > 0 {
-			ret = append(ret.([]interface{}), map[string]interface{}{key: ``})
+			ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: ``}))
 		}
 		key = ``
 	}
@@ -139,16 +141,16 @@ main:
 					switch v := par.(type) {
 					case map[string]interface{}:
 						for ikey, ival := range v {
-							ret.(map[string]interface{})[ikey] = ival
+							ret.(*types.Map).Set(ikey, ival)
 						}
 					}
 				} else {
-					ret.(map[string]interface{})[key] = par
+					ret.(*types.Map).Set(key, par)
 					key = ``
 				}
 			} else {
 				if len(key) > 0 {
-					par = map[string]interface{}{key: par}
+					par = types.LoadMap(map[string]interface{}{key: par})
 					key = ``
 				}
 				ret = append(ret.([]interface{}), par)
@@ -169,11 +171,11 @@ main:
 			}
 			if len(val) > 0 {
 				if mapMode {
-					ret.(map[string]interface{})[key] = val
+					ret.(*types.Map).Set(key, val)
 					key = ``
 				} else {
 					if len(key) > 0 {
-						ret = append(ret.([]interface{}), map[string]interface{}{key: val})
+						ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: val}))
 						key = ``
 					} else {
 						ret = append(ret.([]interface{}), val)
@@ -186,10 +188,10 @@ main:
 	if start < i {
 		if last := trimString(in[start:i]); len(last) > 0 {
 			if mapMode {
-				ret.(map[string]interface{})[key] = last
+				ret.(*types.Map).Set(key, last)
 			} else {
 				if len(key) > 0 {
-					ret = append(ret.([]interface{}), map[string]interface{}{key: last})
+					ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: last}))
 					key = ``
 				} else {
 					ret = append(ret.([]interface{}), last)
@@ -200,6 +202,10 @@ main:
 		}
 	}
 	switch v := ret.(type) {
+	case *types.Map:
+		if v.Size() == 0 {
+			ret = ``
+		}
 	case map[string]interface{}:
 		if len(v) == 0 {
 			ret = ``

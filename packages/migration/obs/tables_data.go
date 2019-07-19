@@ -38,11 +38,14 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 	(next_id('1_tables'), 'keys', 
 	'{"insert": "true", "update": "true", 
 	  "new_column": "ContractConditions(\"MainCondition\")"}',
-	'{"pub": "ContractConditions(\"MainCondition\")",
-	  "amount": "ContractConditions(\"MainCondition\")",
-	  "deleted": "ContractConditions(\"MainCondition\")",
-	  "blocked": "ContractConditions(\"MainCondition\")",
-	  "multi": "ContractConditions(\"MainCondition\")"}', 
+	'{
+		"pub": "ContractConditions(\"MainCondition\")",
+		"amount": "ContractConditions(\"MainCondition\")",
+		"deleted": "ContractConditions(\"MainCondition\")",
+		"blocked": "ContractConditions(\"MainCondition\")",
+		"multi": "ContractConditions(\"MainCondition\")",
+		"account": "false"
+	}', 
 	'ContractAccess("@1EditTable")'),
 	(next_id('1_tables'), 'history', 
 	'{"insert": "ContractConditions(\"NodeOwnerCondition\")", "update": "ContractConditions(\"MainCondition\")", 
@@ -96,7 +99,12 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 	}', 'ContractAccess("@1EditTable")'),
 	('9', 'members', 
 		'{"insert":"ContractAccess(\"Profile_Edit\")","update":"ContractConditions(\"MainCondition\")","new_column":"ContractConditions(\"MainCondition\")"}',
-		'{"image_id":"ContractAccess(\"Profile_Edit\")","member_info":"ContractAccess(\"Profile_Edit\")","member_name":"false"}', 
+		'{
+			"image_id":"ContractAccess(\"Profile_Edit\")",
+			"member_info":"ContractAccess(\"Profile_Edit\")",
+			"member_name":"false",
+			"account":"false"
+		}', 
 		'ContractConditions("MainCondition")'),
 	('10', 'roles',
 		'{"insert":"ContractAccess(\"Roles_Create\")",
@@ -161,11 +169,13 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 		'{"insert":"ContractAccess(\"@1UploadBinary\")",
 			"update":"ContractAccess(\"@1UploadBinary\")",
 			"new_column":"ContractConditions(\"MainCondition\")"}',
-		'{"hash":"ContractAccess(\"@1UploadBinary\")",
-			"member_id":"false",
+		'{
+			"hash":"ContractAccess(\"@1UploadBinary\")",
+			"account": "false",
 			"data":"ContractAccess(\"@1UploadBinary\")",
 			"name":"false",
-			"app_id":"false"}',
+			"app_id":"false"
+		}',
 		'ContractConditions(\"MainCondition\")'),
 	('16', 'parameters',
 		'{"insert": "ContractConditions(\"MainCondition\")", "update": "ContractConditions(\"MainCondition\")",
@@ -195,8 +205,10 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 	('19', 'buffer_data',
 		'{"insert":"true","update":"ContractConditions(\"MainCondition\")",
 			"new_column":"ContractConditions(\"MainCondition\")"}',
-		'{"key": "false",
+		'{
+			"key": "false",
 			"value": "true",
-			"member_id": "false"}',
+			"account": "false"
+		}',
 		'ContractConditions("MainCondition")');
 `

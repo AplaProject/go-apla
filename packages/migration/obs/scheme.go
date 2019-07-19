@@ -258,9 +258,12 @@ var schemaOBS = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"image_id"	bigint NOT NULL DEFAULT '0',
 			"member_info"   jsonb,
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "%[1]d_members" ADD CONSTRAINT "%[1]d_members_pkey" PRIMARY KEY ("id");
+		CREATE INDEX "%[1]d_members_index_ecosystem" ON "1_sections" (ecosystem);
+		CREATE UNIQUE INDEX "%[1]d_members_uindex_ecosystem_account" ON "1_members" (account, ecosystem);
 
 		DROP TABLE IF EXISTS "%[1]d_applications";
 		CREATE TABLE "%[1]d_applications" (
@@ -277,23 +280,23 @@ var schemaOBS = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 		CREATE TABLE "%[1]d_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"app_id" bigint NOT NULL DEFAULT '1',
-			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
 			"hash" varchar(32) NOT NULL DEFAULT '',
 			"mime_type" varchar(255) NOT NULL DEFAULT '',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "%[1]d_binaries" ADD CONSTRAINT "%[1]d_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "%[1]d_binaries_index_app_id_member_id_name" ON "%[1]d_binaries" (ecosystem,app_id, member_id, name);
+		CREATE UNIQUE INDEX "%[1]d_binaries_uindex" ON "%[1]d_binaries" (account, ecosystem, app_id, name);
 		
 		DROP TABLE IF EXISTS "%[1]d_buffer_data";
 		CREATE TABLE "%[1]d_buffer_data" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"key" varchar(255) NOT NULL DEFAULT '',
 			"value" jsonb,
-			"member_id" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "%[1]d_buffer_data" ADD CONSTRAINT "%[1]d_buffer_data_pkey" PRIMARY KEY ("id");
 

@@ -121,7 +121,7 @@ func confirmationsBlocks(ctx context.Context, d *daemon, lastBlockID, startBlock
 		for i := 0; i < len(hosts); i++ {
 			host, err := tcpclient.NormalizeHostAddress(hosts[i], consts.DEFAULT_TCP_PORT)
 			if err != nil {
-				d.logger.WithFields(log.Fields{"host": host[i], "type": consts.ParseError, "error": err}).Error("wrong host address")
+				d.logger.WithFields(log.Fields{"host": hosts[i], "type": consts.ParseError, "error": err}).Error("wrong host address")
 				continue
 			}
 
