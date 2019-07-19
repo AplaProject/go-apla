@@ -36,7 +36,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -344,13 +343,11 @@ func TestBinary(t *testing.T) {
 
 	params := contractParams{
 		"ApplicationId": "1",
-		"AppID":         "1",
-		"MemberID":      "1",
 		"Name":          "file",
 		"Data":          file,
 	}
 
-	_, id, err := postTxResult("UploadBinary", &params)
+	_, id, err := postTxResult("UploadFile", &params)
 	assert.NoError(t, err)
 
 	hash, err := crypto.Hash(data)
@@ -363,7 +360,7 @@ func TestBinary(t *testing.T) {
 		result string
 	}{
 		{
-			`Image(Src: Binary(Name: file, AppID: 1, MemberID: #key_id#))`,
+			`Image(Src: Binary(Name: file, AppID: 1, Account: #account_id#))`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
@@ -383,12 +380,12 @@ func TestBinary(t *testing.T) {
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, member_id: #key_id#, name: "file"}).Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, account: #account_id#, name: "file"}).Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","account","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, member_id: #key_id#, name: "file"}).Vars(prefix)Image(Src: "#prefix_data#")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, account: #account_id#, name: "file"}).Vars(prefix)Image(Src: "#prefix_data#")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","account","name","data","hash","mime_type"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}"}}\]`,
 		},
 	}
 
@@ -418,7 +415,7 @@ func TestStringToBinary(t *testing.T) {
 				conditions {}
 				action {
 					UploadBinary("Name,ApplicationId,Data,DataMimeType", "` + filename + `", 1, StringToBytes($Content), "text/plain")
-					$result = $key_id
+					$result = $account_id
 				}
 			}
 		`}, "ApplicationId": {`1`}, "Conditions": {"true"},
@@ -426,11 +423,11 @@ func TestStringToBinary(t *testing.T) {
 	assert.NoError(t, postTx("NewContract", &form))
 
 	form = url.Values{"Content": {content}}
-	_, msg, err := postTxResult(contract, &form)
+	_, account, err := postTxResult(contract, &form)
 	assert.NoError(t, err)
 
 	form = url.Values{
-		"template": {`SetVar(link, Binary(Name: ` + filename + `, AppID: 1, MemberID: ` + msg + `))#link#`},
+		"template": {`SetVar(link, Binary(Name: ` + filename + `, AppID: 1, Account: "` + account + `"))#link#`},
 	}
 
 	var ret struct {
@@ -440,7 +437,7 @@ func TestStringToBinary(t *testing.T) {
 	}
 	assert.NoError(t, sendPost(`content`, &form, &ret))
 
-	resp, err := http.Get(apiAddress + consts.ApiPath + strings.TrimSpace(ret.Tree[0].Link))
+	resp, err := http.Get(apiAddress + consts.ApiPath + ret.Tree[0].Link)
 	if err != nil {
 		t.Error(err)
 		return

@@ -172,7 +172,7 @@ func keyLogin(state int64) (err error) {
 	if err != nil {
 		return
 	}
-	gAddress = logret.Address
+	gAddress = logret.Account
 	gPrivate = string(key)
 	gPublic, err = PrivateToPublicHex(gPrivate)
 	gAuth = logret.Token

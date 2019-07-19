@@ -212,7 +212,7 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 			return err
 		}
 	}
-	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder, appID)
+	q := fmt.Sprintf(migration.GetEcosystemScript(), id, wallet, name, founder, appID, converter.AddressToString(wallet))
 	if err := GetDB(db).Exec(q).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing ecosystem schema")
 		return err
@@ -236,7 +236,7 @@ func ExecOBSSchema(id int, wallet int64) error {
 		return nil
 	}
 
-	query := fmt.Sprintf(obs.GetOBSScript(), id, wallet)
+	query := fmt.Sprintf(obs.GetOBSScript(), id, wallet, converter.AddressToString(wallet))
 	if err := DBConn.Exec(query).Error; err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("on executing obs script")
 		return err

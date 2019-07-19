@@ -26,50 +26,51 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package api
+package transaction
 
 import (
-	"encoding/json"
-	"net/http"
+	"bytes"
+	"fmt"
+	"time"
 
-	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/converter"
-	"github.com/AplaProject/go-apla/packages/notificator"
-
-	log "github.com/sirupsen/logrus"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 )
 
-type idItem struct {
-	ID          string `json:"id"`
-	EcosystemID string `json:"ecosystem"`
-}
+const (
+	errUnknownContract = `Cannot find %s contract`
+)
 
-type updateNotificatorResult struct {
-	Result bool `json:"result"`
-}
-
-func updateNotificatorHandler(w http.ResponseWriter, r *http.Request) {
-	logger := getLogger(r)
-
-	var list []idItem
-	err := json.Unmarshal([]byte(r.FormValue("ids")), &list)
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling ids")
-		errorResponse(w, err)
-		return
+func CreateContract(contractName string, keyID int64, params map[string]interface{},
+	privateKey []byte) error {
+	ecosysID, _ := converter.ParseName(contractName)
+	if ecosysID == 0 {
+		ecosysID = 1
 	}
-
-	stateList := make(map[int64][]int64)
-
-	for _, item := range list {
-		ecosystem := converter.StrToInt64(item.EcosystemID)
-		if _, ok := stateList[ecosystem]; !ok {
-			stateList[ecosystem] = make([]int64, 0)
+	contract := smart.GetContract(contractName, uint32(ecosysID))
+	if contract == nil {
+		return fmt.Errorf(errUnknownContract, contractName)
+	}
+	sc := tx.SmartContract{
+		Header: tx.Header{
+			ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
+			Time:        time.Now().Unix(),
+			EcosystemID: ecosysID,
+			KeyID:       keyID,
+			NetworkID:   conf.Config.NetworkID,
+		},
+		Params: params,
+	}
+	txData, _, err := tx.NewTransaction(sc, privateKey)
+	if err == nil {
+		rtx := &RawTransaction{}
+		if err = rtx.Unmarshall(bytes.NewBuffer(txData)); err == nil {
+			err = model.SendTx(rtx, sc.KeyID)
 		}
-		stateList[ecosystem] = append(stateList[ecosystem], converter.StrToInt64(item.ID))
 	}
-
-	go notificator.SendNotificationsByRequest(stateList)
-
-	jsonResponse(w, &updateNotificatorResult{Result: true})
+	return err
 }
