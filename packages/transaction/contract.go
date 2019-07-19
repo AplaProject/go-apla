@@ -26,49 +26,51 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package model
+package transaction
 
 import (
-	"strings"
+	"bytes"
+	"fmt"
+	"time"
 
+	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/converter"
+	"github.com/AplaProject/go-apla/packages/model"
+	"github.com/AplaProject/go-apla/packages/script"
+	"github.com/AplaProject/go-apla/packages/smart"
+	"github.com/AplaProject/go-apla/packages/utils/tx"
 )
 
-// ExternalBlockchain represents a txinfo table
-type ExternalBlockchain struct {
-	Id               int64  `gorm:"primary_key;not null"`
-	Value            string `gorm:"not null"`
-	ExternalContract string `gorm:"not null"`
-	ResultContract   string `gorm:"not null"`
-	Url              string `gorm:"not null"`
-	Uid              string `gorm:"not null"`
-	TxTime           int64  `gorm:"not null"`
-	Sent             int64  `gorm:"not null"`
-	Hash             []byte `gorm:"not null"`
-	Attempts         int64  `gorm:"not null"`
-}
+const (
+	errUnknownContract = `Cannot find %s contract`
+)
 
-// GetExternalList returns the list of network tx
-func GetExternalList() (list []ExternalBlockchain, err error) {
-	err = DBConn.Table("external_blockchain").
-		Order("id").Scan(&list).Error
-	return
-}
-
-// DelExternalList deletes sent tx
-func DelExternalList(list []int64) error {
-	slist := make([]string, len(list))
-	for i, v := range list {
-		slist[i] = converter.Int64ToStr(v)
+func CreateContract(contractName string, keyID int64, params map[string]interface{},
+	privateKey []byte) error {
+	ecosysID, _ := converter.ParseName(contractName)
+	if ecosysID == 0 {
+		ecosysID = 1
 	}
-	return DBConn.Exec("delete from external_blockchain where id in (" +
-		strings.Join(slist, `,`) + ")").Error
-}
-
-func HashExternalTx(id int64, hash []byte) error {
-	return DBConn.Exec("update external_blockchain set hash=?, sent = 1 where id = ?", hash, id).Error
-}
-
-func IncExternalAttempt(id int64) error {
-	return DBConn.Exec("update external_blockchain set attempts=attempts+1 where id = ?", id).Error
+	contract := smart.GetContract(contractName, uint32(ecosysID))
+	if contract == nil {
+		return fmt.Errorf(errUnknownContract, contractName)
+	}
+	sc := tx.SmartContract{
+		Header: tx.Header{
+			ID:          int(contract.Block.Info.(*script.ContractInfo).ID),
+			Time:        time.Now().Unix(),
+			EcosystemID: ecosysID,
+			KeyID:       keyID,
+			NetworkID:   conf.Config.NetworkID,
+		},
+		Params: params,
+	}
+	txData, _, err := tx.NewTransaction(sc, privateKey)
+	if err == nil {
+		rtx := &RawTransaction{}
+		if err = rtx.Unmarshall(bytes.NewBuffer(txData)); err == nil {
+			err = model.SendTx(rtx, sc.KeyID)
+		}
+	}
+	return err
 }

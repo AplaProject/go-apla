@@ -62,8 +62,8 @@ func (m Mode) SetCommonRoutes(r Router) {
 
 	api.Use(nodeStateMiddleware, tokenMiddleware, m.clientMiddleware)
 
-	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", getDataHandler).Methods("GET")
 	api.HandleFunc("/data/{prefix}_binaries/{id}/data/{hash}", getBinaryHandler).Methods("GET")
+	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", getDataHandler).Methods("GET")
 	api.HandleFunc("/avatar/{ecosystem}/{account}", getAvatarHandler).Methods("GET")
 	api.HandleFunc("/auth/status", getAuthStatus).Methods("GET")
 

@@ -56,6 +56,11 @@ type Connect struct {
 	PublicKey  string
 }
 
+type WaitResult struct {
+	BlockID int64
+	Msg     string
+}
+
 func SendRawRequest(rtype, url, auth string, form *url.Values) ([]byte, error) {
 	client := &http.Client{}
 	var ioform io.Reader
@@ -188,6 +193,45 @@ func (connect *Connect) WaitTx(hash string) (int64, error) {
 	return 0, fmt.Errorf(`TxStatus timeout`)
 }
 
+func (connect *Connect) WaitTxList(hashes []string) (map[string]WaitResult, error) {
+	data, err := json.Marshal(&txstatusRequest{
+		Hashes: hashes,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var multiRet multiTxStatusResult
+	err = connect.SendPost(`txstatus`, &url.Values{
+		"data": {string(data)},
+	}, &multiRet)
+	if err != nil {
+		return nil, err
+	}
+	waitResults := map[string]WaitResult{}
+	for key, ret := range multiRet.Results {
+		if len(ret.BlockID) > 0 {
+			waitResults[key] = WaitResult{
+				BlockID: converter.StrToInt64(ret.BlockID),
+				Msg:     ret.Result,
+			}
+			continue
+		}
+		if ret.Message != nil {
+			var msg string
+			errtext, err := json.Marshal(ret.Message)
+			if err != nil {
+				msg = err.Error()
+			} else {
+				msg = string(errtext)
+			}
+			waitResults[key] = WaitResult{
+				Msg: msg,
+			}
+		}
+	}
+	return waitResults, nil
+}
+
 func (connect *Connect) PostTxResult(name string, form *url.Values) (id int64, msg string, err error) {
 	var contract getContractResult
 	if err = connect.SendGet("contract/"+name, nil, &contract); err != nil {
@@ -231,11 +275,16 @@ func (connect *Connect) PostTxResult(name string, form *url.Values) (id int64, m
 	if publicKey, err = crypto.PrivateToPublic(connect.PrivateKey); err != nil {
 		return
 	}
+	txTime := time.Now().Unix()
+
+	if newTime := form.Get("txtime"); len(newTime) > 0 {
+		txTime = converter.StrToInt64(newTime)
+	}
 
 	data, _, err := tx.NewTransaction(tx.SmartContract{
 		Header: tx.Header{
 			ID:          int(contract.ID),
-			Time:        time.Now().Unix(),
+			Time:        txTime,
 			EcosystemID: 1,
 			KeyID:       crypto.Address(publicKey),
 			NetworkID:   conf.Config.NetworkID,
@@ -254,6 +303,7 @@ func (connect *Connect) PostTxResult(name string, form *url.Values) (id int64, m
 		return
 	}
 	if len(form.Get("nowait")) > 0 {
+		msg = ret.Hashes["data"]
 		return
 	}
 	id, err = connect.WaitTx(ret.Hashes["data"])
