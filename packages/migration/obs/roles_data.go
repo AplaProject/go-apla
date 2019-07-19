@@ -44,7 +44,9 @@ INSERT INTO "1_roles" ("id", "default_page", "role_name", "deleted", "role_type"
 	VALUES (next_id('1_roles_participants'), '{"id": "1", "type": "3", "name": "Admin", "image_id":"0"}', '{"member_id": "%[2]d", "member_name": "founder", "image_id": "0"}', NOW(), '%[1]d'),
 	(next_id('1_roles_participants'), '{"id": "2", "type": "3", "name": "Developer", "image_id":"0"}', '{"member_id": "%[2]d", "member_name": "founder", "image_id": "0"}', NOW(), '%[1]d');
 
-	INSERT INTO "1_members" ("id", "member_name", "ecosystem") VALUES('%[2]d', 'founder', '%[1]d'),
-	('` + consts.GuestKey + `', 'guest', '%[1]d');
+	INSERT INTO "1_members" ("id", "account", "member_name", "ecosystem") 
+	VALUES
+		(next_id('1_members'), '%[3]s', 'founder', '%[1]d'),
+		(next_id('1_members'), '` + consts.GuestAddress + `', 'guest', '%[1]d');
 
 `

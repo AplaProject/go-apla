@@ -1755,57 +1755,84 @@ func TestErrors(t *testing.T) {
 func TestExternalNetwork(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 	var form url.Values
-	// The one time only after install
-
-	form = url.Values{"Name": {"external_blockchain"}, "Value": {`contract external_blockchain {
-					data {
-						Value string
-					}
-				}`},
-		"ApplicationId": {`1`}, "Conditions": {`true`}}
-	assert.NoError(t, postTx(`NewContract`, &form))
-
-	//
 	name := `cnt` + crypto.RandSeq(4)
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
 		data {
-			List array
+			hash string
+			block int
+			UID    string
 		}
 		action { 
-			Println("SUCCESS", $List )
-			Println("First", $List[0] )
+			Println("SUCCESS", $UID, $hash, $block )
+			if $UID == "123456" {
+				$result = "ok"
+			}
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 
-	net := `{"mynet": {
-		"url": "http://localhost:7079", 
-		"contract": "@1` + name + `Hashes", 
-		"condition": "true", 
-		"interval": "20s"
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Result {
+		data {
+			UID  string
+			Status int
+			Block int
+			Msg   string "optional"
 		}
-	}`
-	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
 		action { 
-			UpdateSysParam("Name,Value","external_blockchain",` + "`" + net + "`" + `)
+			Println("Result Contract", $UID, $Status, $Block, $Msg )
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
-	assert.NoError(t, postTx(name, &url.Values{}))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Errors {
+		data {
+			hash string
+			block int
+			UID    string "optional"
+		}
+		action { 
+			if $UID == "stop" {
+				error("Error message")
+			}
+			$result = 1/0
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
 
 	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `2 {
 		action { 
 			var params map
 			params["hash"] = PubToHex($txhash)
 			params["block"] = $block
-			SendToNetwork("mynet", params)
+			SendExternalTransaction( "123456", "http://localhost:7079", "@1` + name + `Hashes",   
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "654321", "http://localhost:7079", "@1` + name + `Hashes",  
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "stop", "http://localhost:7079", "@1` + name + `Errors", 
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "zero", "http://localhost:7079", "@1` + name + `Errors", 
+			    params, "@1` + name + `Result")
 		}
 	}`},
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name+`2`, &url.Values{}))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `3 {
+		action { 
+			var params map
+			params["hash"] = PubToHex($txhash)
+			params["block"] = $block
+			SendExternalTransaction( "77", "http://localhost:7079", "@1` + name + `Hashes",   
+			    params, "@1None")
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name+`3`, &url.Values{}))
 }
 
 func TestApos(t *testing.T) {
@@ -1829,4 +1856,25 @@ func TestApos(t *testing.T) {
 		"ApplicationId": {`1`}, "Conditions": {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Name d'Company"}}))
+}
+
+func TestCurrentKeyFromAccount(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := randName(t.Name())
+	form := url.Values{
+		"Name": {name},
+		"Value": {`contract ` + name + ` {
+			data {
+				Account string
+			}
+			action {
+				info CurrentKeyFromAccount($Account)
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}
+	assert.NoError(t, postTx("NewContract", &form))
+	expected := fmt.Sprintf(`{"type":"info","error":"%d"}`, converter.StringToAddress(gAddress))
+	assert.Error(t, postTx(name, &url.Values{`Account`: {gAddress}}), expected)
 }

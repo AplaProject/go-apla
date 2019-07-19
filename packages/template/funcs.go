@@ -122,7 +122,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
-	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,Account"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 	funcs[`TransactionInfo`] = tplFunc{txinfoTag, defaultTag, `txinfo`, `Hash`}
 	funcs[`VarAsIs`] = tplFunc{varasisTag, defaultTag, `varasis`, `Name,Value`}
@@ -611,6 +611,11 @@ func dbfindTag(par parFunc) string {
 				}
 			case map[string]interface{}:
 				where, err = qb.GetWhere(types.LoadMap(v))
+				if err != nil {
+					return err.Error()
+				}
+			case *types.Map:
+				where, err = qb.GetWhere(v)
 				if err != nil {
 					return err.Error()
 				}
@@ -1189,7 +1194,7 @@ func dateTimeTag(par parFunc) string {
 			return err.Error()
 		}
 	}
-	format := par.Param("Format")
+	format := par.ParamWithMacros("Format")
 	if len(format) == 0 {
 		format, _ = language.LangText(`timeformat`,
 			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)), getVar(par.Workspace, `lang`))
@@ -1207,7 +1212,7 @@ func dateTimeTag(par parFunc) string {
 	format = strings.Replace(format, `MI`, `04`, -1)
 	format = strings.Replace(format, `SS`, `05`, -1)
 
-	locationName := par.Param("Location")
+	locationName := par.ParamWithMacros("Location")
 	if len(locationName) > 0 {
 		loc, err := time.LoadLocation(locationName)
 		if err != nil {
@@ -1389,9 +1394,9 @@ func binaryTag(par parFunc) string {
 		ok, err = binary.GetByID(converter.StrToInt64(macro(par.Node.Attr["id"].(string), par.Workspace.Vars)))
 	} else {
 		ok, err = binary.Get(
-			converter.StrToInt64(macro((*par.Pars)["AppID"], par.Workspace.Vars)),
-			converter.StrToInt64(macro((*par.Pars)["MemberID"], par.Workspace.Vars)),
-			macro((*par.Pars)["Name"], par.Workspace.Vars),
+			converter.StrToInt64(par.ParamWithMacros("AppID")),
+			par.ParamWithMacros("Account"),
+			par.ParamWithMacros("Name"),
 		)
 	}
 

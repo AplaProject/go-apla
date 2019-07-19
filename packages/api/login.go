@@ -88,8 +88,7 @@ type loginResult struct {
 	Token       string        `json:"token,omitempty"`
 	EcosystemID string        `json:"ecosystem_id,omitempty"`
 	KeyID       string        `json:"key_id,omitempty"`
-	AccountID   string        `json:"account_id,omitempty"`
-	Address     string        `json:"address,omitempty"`
+	Account     string        `json:"account,omitempty"`
 	NotifyKey   string        `json:"notify_key,omitempty"`
 	IsNode      bool          `json:"isnode,omitempty"`
 	IsOwner     bool          `json:"isowner,omitempty"`
@@ -208,6 +207,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if found && ts.Block > 0 {
+				account.Get(wallet)
 				break
 			}
 			time.Sleep(time.Second)
@@ -233,7 +233,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if form.RoleID != 0 && client.RoleID == 0 {
-		checkedRole, err := checkRoleFromParam(form.RoleID, client.EcosystemID, wallet)
+		checkedRole, err := checkRoleFromParam(form.RoleID, client.EcosystemID, account.AccountID)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -261,7 +261,6 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		address = crypto.KeyToAddress(publicKey)
 		sp      model.StateParameter
 		founder int64
 	)
@@ -276,9 +275,9 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := &loginResult{
+		Account:     account.AccountID,
 		EcosystemID: converter.Int64ToStr(client.EcosystemID),
 		KeyID:       converter.Int64ToStr(wallet),
-		Address:     address,
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
 		IsOBS:       conf.Config.IsSupportingOBS(),
@@ -314,7 +313,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ra := &model.RolesParticipants{}
-	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(wallet)
+	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(account.AccountID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
 		errorResponse(w, err)
@@ -355,13 +354,13 @@ func getUID(r *http.Request) (string, error) {
 	return uid, nil
 }
 
-func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
+func checkRoleFromParam(role, ecosystemID int64, account string) (int64, error) {
 	if role > 0 {
-		ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
+		ok, err := model.MemberHasRole(nil, role, ecosystemID, account)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"type":      consts.DBError,
-				"member":    wallet,
+				"account":   account,
 				"role":      role,
 				"ecosystem": ecosystemID}).Error("check role")
 
@@ -371,7 +370,7 @@ func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
 		if !ok {
 			log.WithFields(log.Fields{
 				"type":      consts.NotFound,
-				"member":    wallet,
+				"account":   account,
 				"role":      role,
 				"ecosystem": ecosystemID,
 			}).Error("member hasn't role")

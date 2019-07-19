@@ -123,5 +123,18 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
             "reason": "ContractAccess(\"@1CheckNodesBan\")"
         }',
         'ContractConditions("@1AdminCondition")'
+    ),
+    (next_id('1_tables'), 'time_zones',
+        '{
+            "insert": "false",
+            "update": "false",
+            "new_column": "false"
+        }',
+        '{
+            "id": "false",
+            "name": "false",
+            "offset": "false"
+        }',
+        'ContractConditions("@1AdminCondition")'
     );
 `
