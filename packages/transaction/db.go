@@ -177,28 +177,27 @@ func ProcessQueueTransaction(dbTransaction *model.DbTransaction, hash, binaryTx 
 		MarkTransactionBad(dbTransaction, hash, errStr)
 		return errors.New(errStr)
 	}
+	var found bool
 
 	tx := &model.Transaction{}
-	_, err = tx.Get(hash)
+	found, err = tx.Get(hash)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting transaction by hash")
 		return utils.ErrInfo(err)
 	}
-	counter := tx.Counter
-	counter++
-	_, err = model.DeleteTransactionByHash(hash)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction by hash")
-		return utils.ErrInfo(err)
+	if found {
+		_, err = model.DeleteTransactionByHash(hash)
+		if err != nil {
+			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("deleting transaction by hash")
+			return utils.ErrInfo(err)
+		}
 	}
-
 	// put with verified=1
 	newTx := &model.Transaction{
 		Hash:     hash,
 		Data:     binaryTx,
 		Type:     int8(t.TxType),
 		KeyID:    t.TxKeyID,
-		Counter:  counter,
 		Verified: 1,
 		HighRate: tx.HighRate,
 	}
