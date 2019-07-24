@@ -99,7 +99,6 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "id": "ContractAccess(\"@1CheckNodesBan\")",
             "block_id": "ContractAccess(\"@1CheckNodesBan\")",
             "producer_node_id": "ContractAccess(\"@1CheckNodesBan\")",
             "consumer_node_id": "ContractAccess(\"@1CheckNodesBan\")",
@@ -116,7 +115,6 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
-            "id": "ContractAccess(\"@1CheckNodesBan\")",
             "node_id": "ContractAccess(\"@1CheckNodesBan\")",
             "banned_at": "ContractAccess(\"@1CheckNodesBan\")",
             "ban_time": "ContractAccess(\"@1CheckNodesBan\")",
@@ -131,7 +129,6 @@ INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VAL
             "new_column": "false"
         }',
         '{
-            "id": "false",
             "name": "false",
             "offset": "false"
         }',
