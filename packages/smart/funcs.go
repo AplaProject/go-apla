@@ -540,7 +540,7 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
-				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
+				return true, nil
 			}
 			vars := sc.getExtend()
 			if err := sc.AppendStack(name); err != nil {
