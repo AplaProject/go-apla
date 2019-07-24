@@ -76,7 +76,6 @@ const (
 
 var (
 	ErrNotImplementedOnOBS = errors.New("Contract not implemented on OBS")
-	ErrExtBlockchain       = errors.New("System param external_blockchain is empty")
 )
 
 type ThrowError struct {
@@ -122,7 +121,7 @@ type FlushInfo struct {
 type NotifyInfo struct {
 	Roles       bool // if true then UpdateRolesNotifications, otherwise UpdateNotifications
 	EcosystemID int64
-	List        []int64
+	List        []string
 }
 
 // SmartContract is storing smart contract data
@@ -147,7 +146,7 @@ type SmartContract struct {
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
-	Notifications []NotifyInfo
+	Notifications types.Notifications
 	GenBlock      bool
 	TimeLimit     int64
 	Key           *model.Key
@@ -249,7 +248,7 @@ var (
 		"Round":                        15,
 		"Floor":                        15,
 		"CheckCondition":               10,
-		"SendToNetwork":                100,
+		"SendExternalTransaction":      100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -386,7 +385,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Round":                        Round,
 		"Floor":                        Floor,
 		"CheckCondition":               CheckCondition,
-		"SendToNetwork":                SendToNetwork,
+		"SendExternalTransaction":      SendExternalTransaction,
 	}
 
 	switch vt {
@@ -457,8 +456,10 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 		return true
 	}
 
+	contract := sc.TxContract.StackCont[len(sc.TxContract.StackCont)-1].(string)
+
 	for _, item := range names {
-		if sc.TxContract.Name == `@1`+item {
+		if contract == `@1`+item {
 			return true
 		}
 	}
@@ -503,7 +504,7 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 
 // RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
 func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
-	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.Key.AccountKeyID())
+	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.Key.AccountID)
 	if err != nil {
 		return false, err
 	}
@@ -727,8 +728,8 @@ func getColumns(columns string) (colsSQL string, colout []byte, err error) {
 
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) (err error) {
-	if !accessContracts(sc, `NewTable`, `NewTableJoint`, `Import`) {
-		return fmt.Errorf(`CreateTable can be only called from NewTable, NewTableJoint or Import`)
+	if err := validateAccess("CreateTable", sc, nNewTable, nNewTableJoint, nImport); err != nil {
+		return err
 	}
 
 	if len(name) == 0 {
@@ -1337,7 +1338,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		return err
 	}
 
-	isExist := strings.HasSuffix(sc.TxContract.Name, nEditColumn)
+	isExist := accessContracts(sc, nEditColumn)
 	tEx := &model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	tEx.SetTablePrefix(prefix)
@@ -1500,7 +1501,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		Columns string
 	}
 	temp := &cols{}
-	err := model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	err := model.GetDB(sc.DbTransaction).Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
 	if err != nil {
 		return logErrorDB(err, "querying columns by table name")
 	}
@@ -2006,14 +2007,12 @@ func StackOverflow(sc *SmartContract) {
 	StackOverflow(sc)
 }
 
-func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interface{}) {
-	userList := make([]int64, 0, len(users))
-	for i, userID := range users {
-		switch v := userID.(type) {
-		case int64:
-			userList = append(userList, v)
+func UpdateNotifications(sc *SmartContract, ecosystemID int64, accounts ...interface{}) {
+	accountList := make([]string, 0, len(accounts))
+	for i, id := range accounts {
+		switch v := id.(type) {
 		case string:
-			userList = append(userList, converter.StrToInt64(v))
+			accountList = append(accountList, v)
 		case []interface{}:
 			if i == 0 {
 				UpdateNotifications(sc, ecosystemID, v...)
@@ -2021,7 +2020,7 @@ func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interfac
 			}
 		}
 	}
-	sc.Notifications = append(sc.Notifications, NotifyInfo{false, ecosystemID, userList})
+	sc.Notifications.AddAccounts(ecosystemID, accountList...)
 }
 
 func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...interface{}) {
@@ -2039,7 +2038,7 @@ func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...int
 			}
 		}
 	}
-	sc.Notifications = append(sc.Notifications, NotifyInfo{true, ecosystemID, rolesList})
+	sc.Notifications.AddRoles(ecosystemID, rolesList...)
 }
 
 func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
@@ -2324,48 +2323,27 @@ func PubToHex(in interface{}) (ret string) {
 	return
 }
 
-// ExternalNetInfo describes external blockchains
-type ExternalNetInfo struct {
-	URL       string `json:"url"`       // Node address
-	Contract  string `json:"contract"`  // The name of the contract
-	Condition string `json:"condition"` // Access rights
-	Interval  string `json:"interval"`  // Interval of sending data
-}
-
-func SendToNetwork(sc *SmartContract, netName string, params *types.Map) (err error) {
+func SendExternalTransaction(sc *SmartContract, uid, url, externalContract string,
+	params *types.Map, resultContract string) (err error) {
 	var (
 		out, insertQuery string
-		external         map[string]ExternalNetInfo
-		netInfo          ExternalNetInfo
-		ok               bool
 	)
+	if _, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID); err != nil {
+		return nil
+	}
+
 	out, err = JSONEncode(params)
 	if err != nil {
 		return err
 	}
-	extBlockchain := syspar.SysString(syspar.ExternalBlockchain)
-	if len(extBlockchain) == 0 {
-		return ErrExtBlockchain
-	}
-	if err = unmarshalJSON([]byte(extBlockchain), &external,
-		`parsing external_blockchain`); err != nil {
-		return
-	}
-	if netInfo, ok = external[netName]; !ok {
-		return fmt.Errorf(eExternalNet, netName)
-	}
-	if ok, err = CheckCondition(sc, netInfo.Condition); !ok {
-		if err == nil {
-			err = errAccessDenied
-		}
-		return
-	}
 	logger := sc.GetLogger()
 	sqlBuilder := &qb.SQLQueryBuilder{
-		Entry:        logger,
-		Table:        `external_blockchain`,
-		Fields:       []string{`netname`, `value`},
-		FieldValues:  []interface{}{netName, out},
+		Entry: logger,
+		Table: `external_blockchain`,
+		Fields: []string{`value`, `uid`, `url`, `external_contract`,
+			`result_contract`, `tx_time`},
+		FieldValues: []interface{}{out, uid, url, externalContract,
+			resultContract, sc.TxSmart.Time},
 		KeyTableChkr: model.KeyTableChecker{},
 	}
 	insertQuery, err = sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{Tx: sc.DbTransaction})

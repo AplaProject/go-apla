@@ -30,6 +30,7 @@ package model
 
 import (
 	"fmt"
+
 	"github.com/AplaProject/go-apla/packages/converter"
 )
 
@@ -65,9 +66,9 @@ func (b *Binary) TableName() string {
 }
 
 // Get is retrieving model from database
-func (b *Binary) Get(appID, memberID int64, name string) (bool, error) {
-	return isFound(DBConn.Where("ecosystem=? and app_id = ? AND member_id = ? AND name = ?",
-		b.ecosystem, appID, memberID, name).Select("id,name,hash").First(b))
+func (b *Binary) Get(appID int64, account, name string) (bool, error) {
+	return isFound(DBConn.Where("ecosystem=? and app_id = ? AND account = ? AND name = ?",
+		b.ecosystem, appID, account, name).Select("id,name,hash").First(b))
 }
 
 // Link returns link to binary data

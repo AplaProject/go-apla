@@ -96,8 +96,6 @@ const (
 	Test = `test`
 	// PrivateBlockchain is value defining blockchain mode
 	PrivateBlockchain = `private_blockchain`
-	// ExternalBlockchain is value defining external blockchain
-	ExternalBlockchain = `external_blockchain`
 
 	// CostDefault is the default maximum cost of F
 	CostDefault = int64(20000000)

@@ -59,7 +59,10 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "maxpay": "ContractConditions(\"@1AdminCondition\")",
             "deposit": "ContractAccess(\"@1TokensDecDeposit\",\"@1TokensIncDeposit\")",
             "deleted": "ContractConditions(\"@1AdminCondition\")",
-            "blocked": "ContractAccess(\"@1TokensLockoutMember\")"
+            "blocked": "ContractAccess(\"@1TokensLockoutMember\")",
+            "account": "false",
+            "ecosystem": "false",
+            "multi": "ContractConditions(\"@1AdminCondition\")"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),
@@ -158,6 +161,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
             "image_id": "ContractAccess(\"@1ProfileEdit\")",
             "member_info": "ContractAccess(\"@1ProfileEdit\")",
             "member_name": "false",
+            "account":"false",
             "ecosystem": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
@@ -260,11 +264,12 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
         }',
         '{
             "hash": "ContractAccess(\"@1UploadBinary\")",
-            "member_id": "false",
+            "account": "false",
             "data": "ContractAccess(\"@1UploadBinary\")",
             "name": "false",
             "app_id": "false",
-            "ecosystem": "false"
+            "ecosystem": "false",
+            "mime_type": "ContractAccess(\"@1UploadBinary\")"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
     ),
@@ -308,7 +313,7 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
         '{
             "key": "false",
             "value": "true",
-            "member_id": "false",
+            "account": "false",
             "ecosystem": "false"
         }',
         'ContractConditions("@1AdminCondition")', '%[1]d'
