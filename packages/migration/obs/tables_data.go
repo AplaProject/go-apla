@@ -44,7 +44,9 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 		"deleted": "ContractConditions(\"MainCondition\")",
 		"blocked": "ContractConditions(\"MainCondition\")",
 		"multi": "ContractConditions(\"MainCondition\")",
-		"account": "false"
+		"account": "false",
+		"ecosystem": "false",
+		"multi": "ContractConditions(\"@1AdminCondition\")"
 	}', 
 	'ContractAccess("@1EditTable")'),
 	(next_id('1_tables'), 'history', 
@@ -174,7 +176,8 @@ var tablesDataSQL = `INSERT INTO "1_tables" ("id", "name", "permissions","column
 			"account": "false",
 			"data":"ContractAccess(\"@1UploadBinary\")",
 			"name":"false",
-			"app_id":"false"
+			"app_id":"false",
+			"mime_type": "ContractAccess(\"@1UploadBinary\")"
 		}',
 		'ContractConditions(\"MainCondition\")'),
 	('16', 'parameters',
