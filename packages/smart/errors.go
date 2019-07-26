@@ -30,22 +30,18 @@ package smart
 
 import (
 	"errors"
-	"fmt"
 )
 
 const (
 	eContractLoop        = `There is loop in %s contract`
 	eContractExist       = `Contract %s already exists`
-	eContractNotFound    = `Contract %s has not been found`
 	eLatin               = `Name %s must only contain latin, digit and '_', '-' characters`
 	eAccessContract      = `%s can be only called from %s`
 	eColumnExist         = `column %s exists`
 	eColumnNotExist      = `column %s doesn't exist`
 	eColumnType          = `Type '%s' of columns is not supported`
-	eContractCondition   = `There is not conditions in contract %s`
 	eNotCustomTable      = `%s is not a custom table`
 	eEmptyCond           = `%v condition is empty`
-	eIncorrectEcosys     = `Incorrect ecosystem id %s != %d`
 	eIncorrectSignature  = `incorrect signature %s`
 	eItemNotFound        = `Item %d has not been found`
 	eManyColumns         = `Too many columns. Limit is %d`
@@ -88,27 +84,19 @@ var (
 	errIncorrectType      = errors.New(`incorrect type`)
 	errInvalidValue       = errors.New(`Invalid value`)
 	errNameChange         = errors.New(`Contracts or functions names cannot be changed`)
-	errNegPrice           = errors.New(`Price value is negative`)
 	errOneContract        = errors.New(`Оnly one contract must be in the record`)
 	errPermEmpty          = errors.New(`Permissions are empty`)
 	errRecursion          = errors.New("Recursion detected")
 	errSameColumns        = errors.New(`There are the same columns`)
 	errTableName          = errors.New(`The name of the table cannot begin with @`)
 	errTableEmptyName     = errors.New(`The table name cannot be empty`)
-	errUndefBlock         = errors.New(`It is impossible to write to DB when Block is undefined`)
 	errUndefColumns       = errors.New(`Columns are undefined`)
-	errUnknownNodeID      = errors.New(`Unknown node id`)
 	errUpdNotExistRecord  = errors.New(`Update for not existing record`)
-	errValues             = errors.New(`Values are undefined`)
-	errWrongPriceFunc     = errors.New(`Wrong type of price function`)
 	errWrongSignature     = errors.New(`wrong signature`)
 	errIncorrectParameter = errors.New(`Incorrect parameter of the condition function`)
 	errParseTransaction   = errors.New(`parse transaction`)
-	errInputSlice         = errors.New(`input slice is short`)
 	errWhereUpdate        = errors.New(`There is not Where in Update request`)
 	errNotValidUTF        = errors.New(`Result is not valid utf-8 string`)
 	errFloat              = errors.New(`incorrect float value`)
 	errFloatResult        = errors.New(`incorrect float result`)
-
-	errMaxPrice = fmt.Errorf(`Price value is more than %d`, MaxPrice)
 )
