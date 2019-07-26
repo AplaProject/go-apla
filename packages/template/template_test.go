@@ -33,8 +33,6 @@ import (
 	"sort"
 	"strings"
 	"testing"
-
-	"github.com/AplaProject/go-apla/packages/types"
 )
 
 type tplItem struct {
@@ -44,21 +42,19 @@ type tplItem struct {
 
 type tplList []tplItem
 
-func outMap(v *types.Map) string {
-	keys := v.Keys()
+func outMap(v map[string]interface{}) string {
+	keys := make([]string, 0)
+	for key := range v {
+		keys = append(keys, key)
+	}
 	sort.Strings(keys)
 	values := make([]string, 0, len(keys))
 	for _, key := range keys {
-		val, ok := v.Get(key)
-		if !ok {
-			continue
-		}
-
-		switch v := val.(type) {
-		case *types.Map:
-			values = append(values, fmt.Sprintf(`%q:%q`, key, outMap(v)))
+		switch val := v[key].(type) {
+		case map[string]interface{}:
+			values = append(values, fmt.Sprintf(`%q:%q`, key, outMap(val)))
 		default:
-			values = append(values, fmt.Sprintf(`%q:%q`, key, v))
+			values = append(values, fmt.Sprintf(`%q:%q`, key, val))
 		}
 	}
 	return `{` + strings.Join(values, ` `) + `}`
@@ -82,7 +78,7 @@ func TestObj(t *testing.T) {
 		case []interface{}:
 			result = fmt.Sprintf("%v", v)
 		default:
-			result = outMap(val.(*types.Map))
+			result = outMap(val.(map[string]interface{}))
 		}
 		if result != item.want {
 			t.Errorf("%s != %s", result, item.want)
