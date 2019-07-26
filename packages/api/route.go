@@ -30,6 +30,7 @@ package api
 
 import (
 	"net/http"
+	"net/http/pprof"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -72,6 +73,7 @@ func (m Mode) SetCommonRoutes(r Router) {
 	api.HandleFunc("/getuid", getUIDHandler).Methods("GET")
 	api.HandleFunc("/keyinfo/{wallet}", m.getKeyInfoHandler).Methods("GET")
 	api.HandleFunc("/list/{name}", authRequire(getListHandler)).Methods("GET")
+	api.HandleFunc("/network", getNetworkHandler).Methods("GET")
 	api.HandleFunc("/sections", authRequire(getSectionsHandler)).Methods("GET")
 	api.HandleFunc("/row/{name}/{id}", authRequire(getRowHandler)).Methods("GET")
 	api.HandleFunc("/row/{name}/{column}/{id}", authRequire(getRowHandler)).Methods("GET")
@@ -127,6 +129,14 @@ func NewRouter(m Mode) Router {
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 	r.Use(loggerMiddleware, recoverMiddleware, statsdMiddleware)
+
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	r.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
 
 	api := Router{
 		main:        r,
