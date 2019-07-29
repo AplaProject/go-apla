@@ -356,6 +356,9 @@ func getBlocks(ctx context.Context, host string, blockID, minCount int64) ([]*bl
 	blocks := make([]*block.Block, 0)
 	nextBlockID := blockID
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	// load the block bodies from the host
 	blocksCh, err := tcpclient.GetBlocksBodies(ctx, host, blockID, true)
 	if err != nil {
