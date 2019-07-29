@@ -45,6 +45,8 @@ const (
 	columnTypeBlob     = "blob"
 
 	substringLength = 32
+
+	errComma = `unexpected comma`
 )
 
 func dbfindExpressionBlob(column string) string {
@@ -93,7 +95,7 @@ func trimString(in []rune) string {
 	return out
 }
 
-func parseObject(in []rune) (interface{}, int) {
+func parseObject(in []rune) (interface{}, int, error) {
 	var (
 		ret            interface{}
 		key            string
@@ -106,8 +108,6 @@ func parseObject(in []rune) (interface{}, int) {
 	} else if in[0] == '{' {
 		ret = types.NewMap()
 		mapMode = true
-	} else {
-		return nil, 0
 	}
 	addEmptyKey := func() {
 		if mapMode {
@@ -119,6 +119,7 @@ func parseObject(in []rune) (interface{}, int) {
 	}
 	start := 1
 	i := 1
+	prev := ' '
 main:
 	for ; i < length; i++ {
 		ch := in[i]
@@ -135,7 +136,10 @@ main:
 				break main
 			}
 		case '{', '[':
-			par, off := parseObject(in[i:])
+			par, off, err := parseObject(in[i:])
+			if err != nil {
+				return nil, i, err
+			}
 			if mapMode {
 				if len(key) == 0 {
 					switch v := par.(type) {
@@ -166,6 +170,9 @@ main:
 			}
 		case ',':
 			val := trimString(in[start:i])
+			if prev == ch {
+				return nil, i, fmt.Errorf(errComma)
+			}
 			if len(val) == 0 && len(key) > 0 {
 				addEmptyKey()
 			}
@@ -184,6 +191,12 @@ main:
 			}
 			start = i + 1
 		}
+		if ch != ' ' {
+			prev = ch
+		}
+	}
+	if prev == ',' {
+		return nil, i, fmt.Errorf(errComma)
 	}
 	if start < i {
 		if last := trimString(in[start:i]); len(last) > 0 {
@@ -215,5 +228,5 @@ main:
 			ret = ``
 		}
 	}
-	return ret, i
+	return ret, i, nil
 }

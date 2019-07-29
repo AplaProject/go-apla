@@ -1034,6 +1034,9 @@ main:
 			state = mustComma
 		}
 	}
+	if state == mustKey {
+		return nil, errUnexpKey
+	}
 	if i == len(*lexems) {
 		return nil, errUnclosedMap
 	}
@@ -1076,6 +1079,9 @@ main:
 			}
 			state = mustComma
 		}
+	}
+	if state == mustValue {
+		return nil, errUnexpValue
 	}
 	if i == len(*lexems) {
 		return nil, errUnclosedArray
