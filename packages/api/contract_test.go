@@ -411,6 +411,18 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Empty`, `contract Empty {
+		action {
+			var a1 array
+			var a2 map
+			$a1 = []
+			$a2 = {}
+			Test("result", "ok")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `ok`}},
+	}},
+
 	{`FmtMoney`, `contract FmtMoney {
 		action {
 			Test("result", FormatMoney("123456789", 0))

@@ -1034,7 +1034,7 @@ main:
 			state = mustComma
 		}
 	}
-	if state == mustKey {
+	if ret.IsEmpty() && state == mustKey {
 		return nil, errUnexpKey
 	}
 	if i == len(*lexems) {
@@ -1080,7 +1080,7 @@ main:
 			state = mustComma
 		}
 	}
-	if state == mustValue {
+	if len(ret) > 0 && state == mustValue {
 		return nil, errUnexpValue
 	}
 	if i == len(*lexems) {
