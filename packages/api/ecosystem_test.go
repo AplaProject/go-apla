@@ -230,6 +230,7 @@ func TestAppParams(t *testing.T) {
 	assert.NoError(t, sendGet(`appparams/1`, nil, &ret))
 	if len(ret.List) < 2 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
+		return
 	}
 
 	assert.NoError(t, sendGet(fmt.Sprintf(`appparams/1?names=%s1,%[1]s2&ecosystem=1`, rnd), nil, &ret))
@@ -246,7 +247,7 @@ func TestAppParams(t *testing.T) {
 
 	form = url.Values{"Value": {`contract ` + rnd + `Par { data {} conditions {} action
 	{ var row map
-		row=JSONDecode(AppParam(1, "` + rnd + `2"))
+		row=JSONDecode(AppParam(1, "` + rnd + `2", 1))
 	    $result = row["par1"] }
 	}`}, "Conditions": {"true"}, `ApplicationId`: {`1`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
@@ -265,6 +266,6 @@ func TestAppParams(t *testing.T) {
 		assert.Equal(t, item.want, RawToString(ret.Tree))
 	}
 
-	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `400 {"error": "E_PARAMNOTFOUND", "msg": "Parameter myval has not been found" , "params": ["myval"]}`)
+	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `404 {"error":"E_PARAMNOTFOUND","msg":"Parameter myval has not been found"}`)
 	assert.Len(t, ret2.Value, 0)
 }
