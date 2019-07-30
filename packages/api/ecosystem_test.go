@@ -33,7 +33,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,29 +40,17 @@ import (
 
 func TestNewEcosystem(t *testing.T) {
 	var (
-		err    error
-		result string
+		err error
 	)
 	if err = keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
 	form := url.Values{`Name`: {`test`}}
-	if _, result, err = postTxResult(`NewEcosystem`, &form); err != nil {
+	if _, _, err = postTxResult(`NewEcosystem`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	var ret ecosystemsResult
-	err = sendGet(`ecosystems`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if int64(ret.Number) != converter.StrToInt64(result) {
-		t.Error(fmt.Errorf(`Ecosystems %d != %s`, ret.Number, result))
-		return
-	}
-
 	form = url.Values{`Name`: {crypto.RandSeq(13)}}
 	if err := postTx(`NewEcosystem`, &form); err != nil {
 		t.Error(err)

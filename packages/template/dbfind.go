@@ -197,7 +197,7 @@ main:
 					ret = append(ret.([]interface{}), last)
 				}
 			}
-		} else if mapMode || len(key) > 0 {
+		} else if len(key) > 0 {
 			addEmptyKey()
 		}
 	}
