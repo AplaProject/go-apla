@@ -30,6 +30,7 @@ package api
 
 import (
 	"net/http"
+	"net/http/pprof"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -119,7 +120,6 @@ func (m Mode) SetBlockchainRoutes(r Router) {
 	api.HandleFunc("/detailed_blocks", getBlocksDetailedInfoHandler).Methods("GET")
 	api.HandleFunc("/ecosystemparams", authRequire(m.getEcosystemParamsHandler)).Methods("GET")
 	api.HandleFunc("/systemparams", authRequire(getSystemParamsHandler)).Methods("GET")
-	api.HandleFunc("/ecosystems", authRequire(getEcosystemsHandler)).Methods("GET")
 	api.HandleFunc("/ecosystemparam/{name}", authRequire(m.getEcosystemParamHandler)).Methods("GET")
 	api.HandleFunc("/ecosystemname", getEcosystemNameHandler).Methods("GET")
 }
@@ -128,6 +128,14 @@ func NewRouter(m Mode) Router {
 	r := mux.NewRouter()
 	r.StrictSlash(true)
 	r.Use(loggerMiddleware, recoverMiddleware, statsdMiddleware)
+
+	r.HandleFunc("/debug/pprof/", pprof.Index)
+	r.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	r.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	r.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	r.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	r.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	r.Handle("/debug/pprof/allocs", pprof.Handler("allocs"))
 
 	api := Router{
 		main:        r,
