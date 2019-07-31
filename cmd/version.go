@@ -18,6 +18,7 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
 
@@ -29,6 +30,8 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Show version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(consts.VERSION + ` ` + consts.BuildInfo)
+		fmt.Println(strings.TrimSpace(strings.Join([]string{
+			consts.VERSION, consts.BuildInfo}, " ",
+		)))
 	},
 }
