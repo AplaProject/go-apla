@@ -24,7 +24,7 @@ import (
 )
 
 func getVersionHandler(w http.ResponseWriter, r *http.Request) {
-	jsonResponse(w, strings.Join([]string{
+	jsonResponse(w, strings.TrimSpace(strings.Join([]string{
 		consts.VERSION, consts.BuildInfo}, " ",
-	))
+	)))
 }
