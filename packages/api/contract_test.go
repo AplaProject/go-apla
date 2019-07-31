@@ -272,12 +272,14 @@ func TestHardContract(t *testing.T) {
 			}
 			action { 
 				var i int
-				while i < 200 {
-				 DBFind("pages").Where("id=5")
-				 DBUpdate("pages", 5, "value", "P(text)")
-				 DBInsert("pages", "name,value,conditions", Sprintf("` + rnd + `%d", i), "P(text)","true")
-				 DBFind("pages").Where("id=6")
-				 DBUpdate("pages", 6, "value", "P(text)")
+				while i < 500 {
+				 DBFind("pages").Where({id:5})
+				 DBUpdate("pages", 5, {"value":"P(text)"})
+				 DBInsert("pages", {"name": Sprintf("` + rnd + `%d", i),
+				      "value":"P(text)", "conditions": "true"})
+				 DBFind("pages").Where({id:6})
+				 DBFind("pages").Where({id:7})
+				 DBUpdate("pages", 6, {"value": "P(text)"})
 				 i = i + 1
 			   }
 			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}

@@ -48,6 +48,7 @@ var migrations = []*migration{
 
 	// Initial schema
 	&migration{"0.1.6", migrationInitialSchema},
+	&migration{"0.1.7", updates.M017},
 }
 
 var updateMigrations = []*migration{

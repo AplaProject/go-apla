@@ -26,40 +26,16 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package daemons
+package updates
 
-import (
-	"context"
-
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/transaction"
-
-	log "github.com/sirupsen/logrus"
-)
-
-// QueueParserTx parses transaction from the queue
-func QueueParserTx(ctx context.Context, d *daemon) error {
-	DBLock()
-	defer DBUnlock()
-
-	infoBlock := &model.InfoBlock{}
-	_, err := infoBlock.Get()
-	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
-		return err
-	}
-	if infoBlock.BlockID == 0 {
-		d.logger.Debug("no blocks for parsing")
-		return nil
-	}
-
-	p := new(transaction.Transaction)
-	err = transaction.ProcessTransactionsQueue(p.DbTransaction)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transactions")
-		return err
-	}
-
-	return nil
-}
+var M017 = `
+	ALTER TABLE "transactions"
+	DROP COLUMN "attempt",
+	DROP COLUMN "counter";
+	
+    DROP TABLE IF EXISTS "transactions_attempts"; CREATE TABLE "transactions_attempts" (
+	"hash" bytea  NOT NULL DEFAULT '',
+	"attempt" smallint NOT NULL DEFAULT '0'
+	);
+	ALTER TABLE ONLY "transactions_attempts" ADD CONSTRAINT transactions_attempts_pkey PRIMARY KEY (hash);
+`
