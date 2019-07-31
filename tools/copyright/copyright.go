@@ -12,7 +12,7 @@ import (
 // The program inserts copyright notice at the beginning of .go files.
 
 const (
-	root = `https://github.com/AplaProject/go-apla/blob/master`
+	codeGen = `// Code generated`
 )
 
 var (
@@ -41,6 +41,10 @@ func ProcessDir(dir string, recurse bool) {
 				os.Exit(1)
 			} else {
 				var prefix string
+				if strings.HasPrefix(string(fdata[:len(codeGen)]), codeGen) {
+					fmt.Println(`...Code generated`)
+					continue
+				}
 				if bytes.Equal(fdata[:4], []byte(`// +`)) {
 					lines := strings.Split(string(fdata[:256]), "\n")
 					for _, line := range lines {
@@ -60,8 +64,7 @@ func ProcessDir(dir string, recurse bool) {
 					if off == -1 {
 						fmt.Println(`...package has not been found`)
 					} else {
-						out := append([]byte(fmt.Sprintf("%s// %s%s/%s\r\n", prefix, root, path,
-							fname)), copyright...)
+						out := append([]byte(prefix), copyright...)
 						out = append(out, fdata[off:]...)
 						if err := ioutil.WriteFile(fullName, out, 0644); err == nil {
 							fmt.Println(`...Overwrited`)
