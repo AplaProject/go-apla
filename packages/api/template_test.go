@@ -130,6 +130,10 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind(contracts, src).Columns("id").Where({"app_id": 1, ,"id": {"$gt": 2}})`,
+		`[{"tag":"text","text":"unexpected comma"}]`},
+	{`DBFind(contracts, src).Columns("id").Where({"app_id": 1, "id": {"$gt": 2},})`,
+		`[{"tag":"text","text":"unexpected comma"}]`},
 	{`SetVar(w_filter, ` + "`" + `"id": {"$lt": "2"}` + "`" + `)SetVar(w, {#w_filter# #w_search#})
 		  DBFind("contracts", src).Columns("id,name").Where(#w#)Table(src)`,
 		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","AdminCondition"]],"name":"contracts","source":"src","types":["text","text"],"where":"{"id": {"$lt": "2"} }"}},{"tag":"table","attr":{"source":"src"}}]`},
