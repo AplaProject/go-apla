@@ -40,14 +40,25 @@ func ProcessDir(dir string, recurse bool) {
 				fmt.Println(err)
 				os.Exit(1)
 			} else {
+				var prefix string
+				if bytes.Equal(fdata[:4], []byte(`// +`)) {
+					lines := strings.Split(string(fdata[:256]), "\n")
+					for _, line := range lines {
+						if strings.HasPrefix(line, `// +`) {
+							prefix += line + "\r\n"
+						} else {
+							break
+						}
+					}
+				}
 				off := bytes.IndexByte(fdata, 0xa)
-				if len(fdata) <= len(copyright) || bytes.Compare(fdata[off+1:off+1+len(copyright)], copyright) != 0 {
+				if len(fdata) <= len(copyright) || !bytes.Equal(fdata[off+1:off+1+len(copyright)], copyright) {
 					off := bytes.Index(fdata, []byte(`package`))
 					if off == -1 {
 						fmt.Println(`...package has not been found`)
 					} else {
-						out := append([]byte(fmt.Sprintf("// %s%s/%s\r\n", root, path, fname)),
-							copyright...)
+						out := append([]byte(fmt.Sprintf("%s// %s%s/%s\r\n", prefix, root, path,
+							fname)), copyright...)
 						out = append(out, fdata[off:]...)
 						if err := ioutil.WriteFile(fullName, out, 0644); err == nil {
 							fmt.Println(`...Overwrited`)
