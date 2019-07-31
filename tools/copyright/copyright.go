@@ -73,9 +73,9 @@ func main() {
 			copyright = append(copyright, 0xa)
 		}
 		ProcessDir("../..", false)
-		//		ProcessDir("../../cmd", true)
-		//		ProcessDir("../../packages", true)
-		//		ProcessDir("../../tools", true)
+		ProcessDir("../../cmd", true)
+		ProcessDir("../../packages", true)
+		ProcessDir("../../tools", true)
 	} else {
 		fmt.Println(err)
 	}
