@@ -31,6 +31,7 @@ package block
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -54,6 +55,8 @@ import (
 var (
 	ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
 	ErrEmptyBlock            = errors.New("Block doesn't contain transactions")
+
+	errTxAttempts = "The limit of attempts has been reached"
 )
 
 // Block is storing block data
@@ -212,7 +215,18 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.Rand = rand.BytesSeed(t.TxHash)
 		t.Notifications = notificator.NewQueue()
 
-		model.IncrementTxAttemptCount(t.TxHash)
+		var attempts int64
+		if b.GenBlock {
+			attempts, err = model.IncrementTxAttemptCount(t.TxHash)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("increment attempts")
+				return err
+			}
+			if attempts >= consts.MaxTXAttempt {
+				transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, errTxAttempts)
+				continue
+			}
+		}
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
@@ -222,9 +236,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.GenBlock = b.GenBlock
 		t.TimeLimit = timeLimit
 		msg, flush, err = t.Play()
-		if err == script.ErrVMTimeLimit {
-			err = ErrLimitStop
-		}
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}
@@ -255,11 +266,16 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
 				return errRoll
 			}
-			if b.GenBlock && err == ErrLimitStop {
-				if curTx == 0 {
-					return err
+			if b.GenBlock && err != nil {
+				if err == ErrLimitStop {
+					if curTx == 0 {
+						return err
+					}
+					break
 				}
-				break
+				if strings.Contains(err.Error(), script.ErrVMTimeLimit.Error()) { // very heavy tx
+					err = ErrLimitTime
+				}
 			}
 			// skip this transaction
 			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
@@ -280,9 +296,11 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
-
-		model.DecrementTxAttemptCount(t.TxHash)
-
+		if b.GenBlock {
+			if err = model.DecrementTxAttemptCount(t.TxHash); err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("decrement attempts")
+			}
+		}
 		if t.SysUpdate {
 			b.SysUpdate = true
 			t.SysUpdate = false

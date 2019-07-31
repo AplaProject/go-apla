@@ -48,9 +48,7 @@ type Transaction struct {
 	HighRate transactionRate `gorm:"not null"`
 	Type     int8            `gorm:"not null"`
 	KeyID    int64           `gorm:"not null"`
-	Counter  int8            `gorm:"not null"`
 	Sent     int8            `gorm:"not null"`
-	Attempt  int8            `gorm:"not null"`
 	Verified int8            `gorm:"not null;default:1"`
 }
 
@@ -103,12 +101,6 @@ func GetTransactionsCount(hash []byte) (int64, error) {
 		return -1, err
 	}
 	return rowsCount, nil
-}
-
-// DeleteLoopedTransactions deleting lopped transactions
-func DeleteLoopedTransactions() (int64, error) {
-	query := DBConn.Exec("DELETE FROM transactions WHERE used = 0 AND counter > 10")
-	return query.RowsAffected, query.Error
 }
 
 // DeleteTransactionByHash deleting transaction by hash
@@ -175,35 +167,6 @@ func (t *Transaction) Create() error {
 	}
 
 	return DBConn.Create(t).Error
-}
-
-// IncrementTxAttemptCount increases attempt column
-func IncrementTxAttemptCount(transactionHash []byte) error {
-	transaction, err := StartTransaction()
-	if err != nil {
-		return err
-	}
-	query := GetDB(transaction).Exec("update transactions set attempt=attempt+1, used = case when attempt >= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
-	if query.Error != nil {
-		transaction.Rollback()
-	} else {
-		transaction.Commit()
-	}
-	return query.Error
-}
-
-func DecrementTxAttemptCount(transactionHash []byte) error {
-	transaction, err := StartTransaction()
-	if err != nil {
-		return err
-	}
-	query := GetDB(transaction).Exec("update transactions set attempt=attempt-1, used = case when attempt <= ? then 1 else 0 end where hash = ?", consts.MaxTXAttempt-1, transactionHash)
-	if query.Error != nil {
-		transaction.Rollback()
-	} else {
-		transaction.Commit()
-	}
-	return query.Error
 }
 
 func getTxRateByTxType(txType int8) transactionRate {

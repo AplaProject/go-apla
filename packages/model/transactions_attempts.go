@@ -26,40 +26,47 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
 // THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
 
-package daemons
+package model
 
-import (
-	"context"
+// TransactionsAttempts is model
+type TransactionsAttempts struct {
+	Hash    []byte `gorm:"primary_key;not null"`
+	Attempt int8   `gorm:"not null"`
+}
 
-	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/model"
-	"github.com/AplaProject/go-apla/packages/transaction"
+// GetByHash returns TransactionsAttempts existence by hash
+func (ta *TransactionsAttempts) GetByHash() (bool, error) {
+	return isFound(DBConn.Where("hash = ?", ta.Hash).First(ta))
+}
 
-	log "github.com/sirupsen/logrus"
-)
+// IncrementTxAttemptCount increases attempt column
+func IncrementTxAttemptCount(transactionHash []byte) (int64, error) {
+	ta := &TransactionsAttempts{
+		Hash: transactionHash,
+	}
 
-// QueueParserTx parses transaction from the queue
-func QueueParserTx(ctx context.Context, d *daemon) error {
-	DBLock()
-	defer DBUnlock()
-
-	infoBlock := &model.InfoBlock{}
-	_, err := infoBlock.Get()
+	found, err := ta.GetByHash()
 	if err != nil {
-		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting info block")
-		return err
+		return 0, err
 	}
-	if infoBlock.BlockID == 0 {
-		d.logger.Debug("no blocks for parsing")
-		return nil
+	if found {
+		err = DBConn.Exec("update transactions_attempts set attempt=attempt+1 where hash = ?",
+			transactionHash).Error
+		if err != nil {
+			return 0, err
+		}
+		ta.Attempt++
+	} else {
+		ta.Hash = transactionHash
+		ta.Attempt = 1
+		if err = DBConn.Create(ta).Error; err != nil {
+			return 0, err
+		}
 	}
+	return int64(ta.Attempt), nil
+}
 
-	p := new(transaction.Transaction)
-	err = transaction.ProcessTransactionsQueue(p.DbTransaction)
-	if err != nil {
-		d.logger.WithFields(log.Fields{"error": err}).Error("parsing transactions")
-		return err
-	}
-
-	return nil
+func DecrementTxAttemptCount(transactionHash []byte) error {
+	return DBConn.Exec("update transactions_attempts set attempt=attempt-1 where hash = ?",
+		transactionHash).Error
 }
