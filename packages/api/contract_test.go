@@ -128,23 +128,54 @@ func TestDBFindContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	rnd := `db` + crypto.RandSeq(4)
-	form := url.Values{`Value`: {`contract ` + rnd + ` {
-		    data {
+	form := url.Values{`Value`: {`contract ` + rnd + `1 {
+		data {
+		}
+		action { 
+			var fm array
+			fm = DBFind("@1contracts").Where({"ecosystem": $ecosystem_id, 
+			   "app_id": 1, ,"id": {"$gt": 2}})
+			$result = Len(fm)
+		}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form),
+		`{"type":"panic","error":"unexpected lexem; expecting string key [CreateContract @1NewContract:32]"}`)
+	form = url.Values{`Value`: {`contract ` + rnd + `2 {
+				data {
+				}
+				action {
+					var fm array
+					fm = DBFind("@1contracts").Where({"ecosystem": $ecosystem_id,
+					   "app_id": 1,"id": {"$gt": 2},})
+				}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form),
+		`{"type":"panic","error":"unexpected lexem; expecting string key [CreateContract @1NewContract:32]"}`)
+	form = url.Values{`Value`: {`contract ` + rnd + `3 {
+			data {
 			}
 			action { 
-				var ret i j k m array
-				var inr inc map
-				var rids array
-                rids = JSONDecode("[]")//role["roles_access"])
-				inr = DBFind("@1roles_participants").Where({"ecosystem": $ecosystem_id, "role->id": {"$in": rids}, "member->member_id": $key_id, "deleted": 0}).Row()
-				inc = DBFind("contracts").Where({"ecosystem": $ecosystem_id, "id": {"$in": rids}}).Row()
-				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}}).Limit(100)
-				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}}).Limit(100)
-				j = DBFind("contracts").Where({id: {$lt: 10}})
-				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, id: {$neq: 26} ]})
-				m = DBFind("contracts").Where({id: 10, name: "EditColumn", $or: [id: 10, id: {$neq: 20}]})
-				$result = Sprintf("%d %d %d %d %d", Len(ret), Len(i), Len(j), Len(k), Len(m))
+				var fm array
+				fm = [1, 2, 3,]
 			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form),
+		`{"type":"panic","error":"unexpected lexem; expecting string, int value or variable [CreateContract @1NewContract:32]"}`)
+
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
+	   		    data {
+	   			}
+	   			action {
+	   				var ret i j k m array
+	   				var inr inc map
+	   				var rids array
+	                   rids = JSONDecode("[]")//role["roles_access"])
+	   				inr = DBFind("@1roles_participants").Where({"ecosystem": $ecosystem_id, "role->id": {"$in": rids}, "member->member_id": $key_id, "deleted": 0}).Row()
+	   				inc = DBFind("contracts").Where({"ecosystem": $ecosystem_id, "id": {"$in": rids}}).Row()
+	   				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}}).Limit(100)
+	   				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}}).Limit(100)
+	   				j = DBFind("contracts").Where({id: {$lt: 10}})
+	   				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, id: {$neq: 26} ]})
+	   				m = DBFind("contracts").Where({id: 10, name: "EditColumn", $or: [id: 10, id: {$neq: 20}]})
+	   				$result = Sprintf("%d %d %d %d %d", Len(ret), Len(i), Len(j), Len(k), Len(m))
+	   			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	_, msg, err := postTxResult(rnd, &url.Values{})
 	assert.NoError(t, err)
@@ -382,6 +413,18 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Empty`, `contract Empty {
+		action {
+			var a1 array
+			var a2 map
+			$a1 = []
+			$a2 = {}
+			Test("result", "ok")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `ok`}},
+	}},
+
 	{`FmtMoney`, `contract FmtMoney {
 		action {
 			Test("result", FormatMoney("123456789", 0))

@@ -589,7 +589,10 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`columns`] != nil {
 		fields := par.Node.Attr[`columns`].(string)
 		if strings.HasPrefix(fields, `[`) {
-			inColumns, _ = parseObject([]rune(fields))
+			inColumns, _, err = parseObject([]rune(fields))
+			if err != nil {
+				return err.Error()
+			}
 		} else {
 			inColumns = fields
 		}
@@ -601,7 +604,10 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`where`] != nil {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
-			inWhere, _ := parseObject([]rune(where))
+			inWhere, _, err := parseObject([]rune(where))
+			if err != nil {
+				return err.Error()
+			}
 			switch v := inWhere.(type) {
 			case string:
 				if len(v) == 0 {
@@ -658,7 +664,10 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`order`] != nil {
 		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
-			inColumns, _ = parseObject([]rune(order))
+			inColumns, _, err = parseObject([]rune(order))
+			if err != nil {
+				return err.Error()
+			}
 		} else {
 			inColumns = order
 		}
