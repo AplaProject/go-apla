@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package script
 
@@ -397,12 +385,12 @@ func fFuncResult(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fReturn(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdReturn, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdReturn, lexem.Line, 0})
 	return nil
 }
 
 func fCmdError(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdError, lexem.Value})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdError, lexem.Line, lexem.Value})
 	return nil
 }
 
@@ -526,23 +514,27 @@ func fFNameParam(buf *[]*Block, state int, lexem *Lexem) error {
 }
 
 func fIf(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdIf, (*buf)[len(*buf)-1]})
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdIf,
+		lexem.Line, (*buf)[len(*buf)-1]})
 	return nil
 }
 
 func fWhile(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdWhile, (*buf)[len(*buf)-1]})
-	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdContinue, 0})
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdWhile,
+		lexem.Line, (*buf)[len(*buf)-1]})
+	(*(*buf)[len(*buf)-2]).Code = append((*(*buf)[len(*buf)-2]).Code, &ByteCode{cmdContinue,
+		lexem.Line, 0})
 	return nil
 }
 
 func fContinue(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdContinue, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdContinue,
+		lexem.Line, 0})
 	return nil
 }
 
 func fBreak(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdBreak, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdBreak, lexem.Line, 0})
 	return nil
 }
 
@@ -574,15 +566,15 @@ func fAssignVar(buf *[]*Block, state int, lexem *Lexem) error {
 	}
 	prev = append(prev, &ivar)
 	if len(prev) == 1 {
-		(*(*buf)[len(*buf)-1]).Code = append((*block).Code, &ByteCode{cmdAssignVar, prev})
+		(*(*buf)[len(*buf)-1]).Code = append((*block).Code, &ByteCode{cmdAssignVar, lexem.Line, prev})
 	} else {
-		(*(*buf)[len(*buf)-1]).Code[len(block.Code)-1] = &ByteCode{cmdAssignVar, prev}
+		(*(*buf)[len(*buf)-1]).Code[len(block.Code)-1] = &ByteCode{cmdAssignVar, lexem.Line, prev}
 	}
 	return nil
 }
 
 func fAssign(buf *[]*Block, state int, lexem *Lexem) error {
-	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdAssign, 0})
+	(*(*buf)[len(*buf)-1]).Code = append((*(*buf)[len(*buf)-1]).Code, &ByteCode{cmdAssign, lexem.Line, 0})
 	return nil
 }
 
@@ -701,7 +693,7 @@ func fElse(buf *[]*Block, state int, lexem *Lexem) error {
 		logger.WithFields(log.Fields{"type": consts.ParseError}).Error("there is not if before")
 		return fmt.Errorf(`there is not if before %v [Ln:%d Col:%d]`, lexem.Type, lexem.Line, lexem.Column)
 	}
-	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{cmdElse, (*buf)[len(*buf)-1]})
+	(*(*buf)[len(*buf)-2]).Code = append(code, &ByteCode{cmdElse, lexem.Line, (*buf)[len(*buf)-1]})
 	return nil
 }
 
@@ -778,7 +770,7 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 		}
 		if nextState == stateEval {
 			if newState.NewState&stateLabel > 0 {
-				(*blockstack[len(blockstack)-1]).Code = append((*blockstack[len(blockstack)-1]).Code, &ByteCode{cmdLabel, 0})
+				(*blockstack[len(blockstack)-1]).Code = append((*blockstack[len(blockstack)-1]).Code, &ByteCode{cmdLabel, lexem.Line, 0})
 			}
 			curlen := len((*blockstack[len(blockstack)-1]).Code)
 			if err := vm.compileEval(&lexems, &i, &blockstack); err != nil {
@@ -812,7 +804,7 @@ func (vm *VM) CompileBlock(input []rune, owner *OwnerInfo) (*Block, error) {
 				if len(prev.Code) > 0 && (*prev).Code[len((*prev).Code)-1].Cmd == cmdContinue {
 					(*prev).Code = (*prev).Code[:len((*prev).Code)-1]
 					prev = blockstack[len(blockstack)-1]
-					(*prev).Code = append((*prev).Code, &ByteCode{cmdContinue, 0})
+					(*prev).Code = append((*prev).Code, &ByteCode{cmdContinue, lexem.Line, 0})
 				}
 			}
 			blockstack = blockstack[:len(blockstack)-1]
@@ -1030,6 +1022,9 @@ main:
 			state = mustComma
 		}
 	}
+	if ret.IsEmpty() && state == mustKey {
+		return nil, errUnexpKey
+	}
 	if i == len(*lexems) {
 		return nil, errUnclosedMap
 	}
@@ -1072,6 +1067,9 @@ main:
 			}
 			state = mustComma
 		}
+	}
+	if len(ret) > 0 && state == mustValue {
+		return nil, errUnexpValue
 	}
 	if i == len(*lexems) {
 		return nil, errUnclosedArray
@@ -1117,7 +1115,7 @@ main:
 				if err != nil {
 					return err
 				}
-				bytecode = append(bytecode, &ByteCode{cmdMapInit, pMap})
+				bytecode = append(bytecode, &ByteCode{cmdMapInit, lexem.Line, pMap})
 				continue
 			}
 			if lexem.Type == isLBrack {
@@ -1125,7 +1123,7 @@ main:
 				if err != nil {
 					return err
 				}
-				bytecode = append(bytecode, &ByteCode{cmdArrayInit, pArray})
+				bytecode = append(bytecode, &ByteCode{cmdArrayInit, lexem.Line, pArray})
 				continue
 			}
 		}
@@ -1149,9 +1147,9 @@ main:
 			}
 			break main
 		case isLPar:
-			buffer = append(buffer, &ByteCode{cmdSys, uint16(0xff)})
+			buffer = append(buffer, &ByteCode{cmdSys, lexem.Line, uint16(0xff)})
 		case isLBrack:
-			buffer = append(buffer, &ByteCode{cmdSys, uint16(0xff)})
+			buffer = append(buffer, &ByteCode{cmdSys, lexem.Line, uint16(0xff)})
 		case isComma:
 			if len(parcount) > 0 {
 				parcount[len(parcount)-1]++
@@ -1197,7 +1195,7 @@ main:
 					}
 					if objInfo.Type == ObjFunc && objInfo.Value.(*Block).Info.(*FuncInfo).Names != nil {
 						if len(bytecode) == 0 || bytecode[len(bytecode)-1].Cmd != cmdFuncName {
-							bytecode = append(bytecode, &ByteCode{cmdPush, nil})
+							bytecode = append(bytecode, &ByteCode{cmdPush, lexem.Line, nil})
 						}
 						if i < len(*lexems)-4 && (*lexems)[i+1].Type == isDot {
 							if (*lexems)[i+2].Type != lexIdent {
@@ -1210,7 +1208,7 @@ main:
 								if i < len(*lexems)-5 && (*lexems)[i+3].Type == isLPar {
 									objInfo, _ := vm.findObj((*lexems)[i+2].Value.(string), block)
 									if objInfo != nil && objInfo.Type == ObjFunc || objInfo.Type == ObjExtFunc {
-										tail = &ByteCode{uint16(cmdCall), objInfo}
+										tail = &ByteCode{uint16(cmdCall), lexem.Line, objInfo}
 									}
 								}
 								if tail == nil {
@@ -1219,7 +1217,8 @@ main:
 								}
 							}
 							if tail == nil {
-								buffer = append(buffer, &ByteCode{cmdFuncName, FuncNameCmd{Name: (*lexems)[i+2].Value.(string)}})
+								buffer = append(buffer, &ByteCode{cmdFuncName, lexem.Line,
+									FuncNameCmd{Name: (*lexems)[i+2].Value.(string)}})
 								count := 0
 								if (*lexems)[i+3].Type != isRPar {
 									count++
@@ -1248,7 +1247,7 @@ main:
 						}
 					}
 					if prev.Cmd == cmdCallVari {
-						bytecode = append(bytecode, &ByteCode{cmdPush, count})
+						bytecode = append(bytecode, &ByteCode{cmdPush, lexem.Line, count})
 					}
 					buffer = buffer[:len(buffer)-1]
 					bytecode = append(bytecode, prev)
@@ -1304,7 +1303,7 @@ main:
 				} else if prevLex == lexOper && oper.Priority != cmdUnary {
 					return errOper
 				}
-				byteOper := &ByteCode{oper.Cmd, oper.Priority}
+				byteOper := &ByteCode{oper.Cmd, lexem.Line, oper.Priority}
 				for {
 					if len(buffer) == 0 {
 						buffer = append(buffer, byteOper)
@@ -1334,7 +1333,7 @@ main:
 			}
 		case lexNumber, lexString:
 			noMap = true
-			cmd = &ByteCode{cmdPush, lexem.Value}
+			cmd = &ByteCode{cmdPush, lexem.Line, lexem.Value}
 		case lexExtend:
 			noMap = true
 			if i < len(*lexems)-2 {
@@ -1344,14 +1343,15 @@ main:
 						count++
 					}
 					parcount = append(parcount, count)
-					buffer = append(buffer, &ByteCode{cmdCallExtend, lexem.Value.(string)})
+					buffer = append(buffer, &ByteCode{cmdCallExtend, lexem.Line, lexem.Value.(string)})
 					call = true
 				}
 			}
 			if !call {
-				cmd = &ByteCode{cmdExtend, lexem.Value.(string)}
+				cmd = &ByteCode{cmdExtend, lexem.Line, lexem.Value.(string)}
 				if i < len(*lexems)-1 && (*lexems)[i+1].Type == isLBrack {
-					buffer = append(buffer, &ByteCode{cmdIndex, &IndexInfo{Extend: lexem.Value.(string)}})
+					buffer = append(buffer, &ByteCode{cmdIndex, lexem.Line,
+						&IndexInfo{Extend: lexem.Value.(string)}})
 				}
 			}
 		case lexIdent:
@@ -1391,7 +1391,7 @@ main:
 					if (*lexems)[i+2].Type != isRPar {
 						count++
 					}
-					buffer = append(buffer, &ByteCode{cmdCall, objInfo})
+					buffer = append(buffer, &ByteCode{cmdCall, lexem.Line, objInfo})
 					if isContract {
 						name := StateName((*block)[0].Info.(uint32), lexem.Value.(string))
 						for j := len(*block) - 1; j >= 0; j-- {
@@ -1409,17 +1409,18 @@ main:
 						if objContract != nil && objContract.Info.(*ContractInfo).CanWrite {
 							setWritable(block)
 						}
-						bytecode = append(bytecode, &ByteCode{cmdPush, name})
+						bytecode = append(bytecode, &ByteCode{cmdPush, lexem.Line, name})
 						if count == 0 {
 							count = 2
-							bytecode = append(bytecode, &ByteCode{cmdPush, ""})
-							bytecode = append(bytecode, &ByteCode{cmdPush, ""})
+							bytecode = append(bytecode, &ByteCode{cmdPush, lexem.Line, ""})
+							bytecode = append(bytecode, &ByteCode{cmdPush, lexem.Line, ""})
 						}
 						count++
 					}
 					if lexem.Value.(string) == `CallContract` {
 						count++
-						bytecode = append(bytecode, &ByteCode{cmdPush, (*block)[0].Info.(uint32)})
+						bytecode = append(bytecode, &ByteCode{cmdPush, lexem.Line,
+							(*block)[0].Info.(uint32)})
 					}
 					parcount = append(parcount, count)
 					call = true
@@ -1429,14 +1430,15 @@ main:
 						logger.WithFields(log.Fields{"lex_value": lexem.Value.(string), "type": consts.ParseError}).Error("unknown variable")
 						return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 					}
-					buffer = append(buffer, &ByteCode{cmdIndex, &IndexInfo{objInfo.Value.(int), tobj, ``}})
+					buffer = append(buffer, &ByteCode{cmdIndex, lexem.Line,
+						&IndexInfo{objInfo.Value.(int), tobj, ``}})
 				}
 			}
 			if !call {
 				if objInfo.Type != ObjVar {
 					return fmt.Errorf(`unknown variable %s`, lexem.Value.(string))
 				}
-				cmd = &ByteCode{cmdVar, &VarInfo{objInfo, tobj}}
+				cmd = &ByteCode{cmdVar, lexem.Line, &VarInfo{objInfo, tobj}}
 			}
 		}
 		if lexem.Type != lexNewLine {
@@ -1444,7 +1446,7 @@ main:
 		}
 		if lexem.Type&0xff == lexKeyword {
 			if lexem.Value.(uint32) == keyTail {
-				cmd = &ByteCode{cmdUnwrapArr, 0}
+				cmd = &ByteCode{cmdUnwrapArr, lexem.Line, 0}
 			}
 		}
 		if cmd != nil {
@@ -1463,7 +1465,7 @@ main:
 		bytecode = append(bytecode, buffer[i])
 	}
 	if setIndex {
-		bytecode = append(bytecode, &ByteCode{cmdSetIndex, indexInfo})
+		bytecode = append(bytecode, &ByteCode{cmdSetIndex, 0, indexInfo})
 	}
 	curBlock.Code = append(curBlock.Code, bytecode...)
 	return nil

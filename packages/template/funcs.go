@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package template
 
@@ -79,7 +67,7 @@ func init() {
 	funcs[`CmpTime`] = tplFunc{cmpTimeTag, defaultTag, `cmptime`, `Time1,Time2`}
 	funcs[`Code`] = tplFunc{defaultTag, defaultTag, `code`, `Text`}
 	funcs[`CodeAsIs`] = tplFunc{defaultTag, defaultTag, `code`, `#Text`}
-	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format`}
+	funcs[`DateTime`] = tplFunc{dateTimeTag, defaultTag, `datetime`, `DateTime,Format,Location`}
 	funcs[`EcosysParam`] = tplFunc{ecosysparTag, defaultTag, `ecosyspar`, `Name,Index,Source,Ecosystem`}
 	funcs[`Em`] = tplFunc{defaultTag, defaultTag, `em`, `Body,Class`}
 	funcs[`GetVar`] = tplFunc{getvarTag, defaultTag, `getvar`, `Name`}
@@ -122,7 +110,7 @@ func init() {
 	funcs[`Chart`] = tplFunc{chartTag, defaultTailTag, `chart`, `Type,Source,FieldLabel,FieldValue,Colors`}
 	funcs[`InputMap`] = tplFunc{defaultTailTag, defaultTailTag, "inputMap", "Name,@Value,Type,MapType"}
 	funcs[`Map`] = tplFunc{defaultTag, defaultTag, "map", "@Value,MapType,Hmap"}
-	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,MemberID"}
+	funcs[`Binary`] = tplFunc{binaryTag, defaultTag, "binary", "AppID,Name,Account"}
 	funcs[`GetColumnType`] = tplFunc{columntypeTag, defaultTag, `columntype`, `Table,Column`}
 	funcs[`TransactionInfo`] = tplFunc{txinfoTag, defaultTag, `txinfo`, `Hash`}
 	funcs[`VarAsIs`] = tplFunc{varasisTag, defaultTag, `varasis`, `Name,Value`}
@@ -589,7 +577,10 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`columns`] != nil {
 		fields := par.Node.Attr[`columns`].(string)
 		if strings.HasPrefix(fields, `[`) {
-			inColumns, _ = parseObject([]rune(fields))
+			inColumns, _, err = parseObject([]rune(fields))
+			if err != nil {
+				return err.Error()
+			}
 		} else {
 			inColumns = fields
 		}
@@ -601,7 +592,10 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`where`] != nil {
 		where = macro(par.Node.Attr[`where`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(where, `{`) {
-			inWhere, _ := parseObject([]rune(where))
+			inWhere, _, err := parseObject([]rune(where))
+			if err != nil {
+				return err.Error()
+			}
 			switch v := inWhere.(type) {
 			case string:
 				if len(v) == 0 {
@@ -611,6 +605,11 @@ func dbfindTag(par parFunc) string {
 				}
 			case map[string]interface{}:
 				where, err = qb.GetWhere(types.LoadMap(v))
+				if err != nil {
+					return err.Error()
+				}
+			case *types.Map:
+				where, err = qb.GetWhere(v)
 				if err != nil {
 					return err.Error()
 				}
@@ -653,7 +652,10 @@ func dbfindTag(par parFunc) string {
 	if par.Node.Attr[`order`] != nil {
 		order = macro(par.Node.Attr[`order`].(string), par.Workspace.Vars)
 		if strings.HasPrefix(order, `[`) || strings.HasPrefix(order, `{`) {
-			inColumns, _ = parseObject([]rune(order))
+			inColumns, _, err = parseObject([]rune(order))
+			if err != nil {
+				return err.Error()
+			}
 		} else {
 			inColumns = order
 		}
@@ -1170,7 +1172,7 @@ func elseFull(par parFunc) string {
 }
 
 func dateTimeTag(par parFunc) string {
-	datetime := macro((*par.Pars)[`DateTime`], par.Workspace.Vars)
+	datetime := par.ParamWithMacros("DateTime")
 	if len(datetime) == 0 || datetime[0] < '0' || datetime[0] > '9' {
 		return ``
 	}
@@ -1189,7 +1191,7 @@ func dateTimeTag(par parFunc) string {
 			return err.Error()
 		}
 	}
-	format := (*par.Pars)[`Format`]
+	format := par.ParamWithMacros("Format")
 	if len(format) == 0 {
 		format, _ = language.LangText(`timeformat`,
 			converter.StrToInt(getVar(par.Workspace, `ecosystem_id`)), getVar(par.Workspace, `lang`))
@@ -1206,6 +1208,15 @@ func dateTimeTag(par parFunc) string {
 	format = strings.Replace(format, `HH`, `15`, -1)
 	format = strings.Replace(format, `MI`, `04`, -1)
 	format = strings.Replace(format, `SS`, `05`, -1)
+
+	locationName := par.ParamWithMacros("Location")
+	if len(locationName) > 0 {
+		loc, err := time.LoadLocation(locationName)
+		if err != nil {
+			return err.Error()
+		}
+		itime = itime.In(loc)
+	}
 
 	return itime.Format(format)
 }
@@ -1253,9 +1264,7 @@ func jsontosourceTag(par parFunc) string {
 	var out map[string]interface{}
 	dataVal := macro((*par.Pars)[`Data`], par.Workspace.Vars)
 	if len(dataVal) > 0 {
-		if err := json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out); err != nil {
-			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling JSON to source")
-		}
+		json.Unmarshal([]byte(macro((*par.Pars)[`Data`], par.Workspace.Vars)), &out)
 	}
 	for key, item := range out {
 		if item == nil {
@@ -1382,9 +1391,9 @@ func binaryTag(par parFunc) string {
 		ok, err = binary.GetByID(converter.StrToInt64(macro(par.Node.Attr["id"].(string), par.Workspace.Vars)))
 	} else {
 		ok, err = binary.Get(
-			converter.StrToInt64(macro((*par.Pars)["AppID"], par.Workspace.Vars)),
-			converter.StrToInt64(macro((*par.Pars)["MemberID"], par.Workspace.Vars)),
-			macro((*par.Pars)["Name"], par.Workspace.Vars),
+			converter.StrToInt64(par.ParamWithMacros("AppID")),
+			par.ParamWithMacros("Account"),
+			par.ParamWithMacros("Name"),
 		)
 	}
 

@@ -1,39 +1,34 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package model
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/AplaProject/go-apla/packages/converter"
+)
 
 // Key is model
 type Key struct {
-	ecosystem int64
+	ecosystem    int64
+	accountKeyID int64 `gorm:"-"`
+
 	ID        int64  `gorm:"primary_key;not null"`
+	AccountID string `gorm:"column:account;not null"`
 	PublicKey []byte `gorm:"column:pub;not null"`
 	Amount    string `gorm:"not null"`
 	Maxpay    string `gorm:"not null"`
@@ -58,6 +53,13 @@ func (m Key) TableName() string {
 // Get is retrieving model from database
 func (m *Key) Get(wallet int64) (bool, error) {
 	return isFound(DBConn.Where("id = ? and ecosystem = ?", wallet, m.ecosystem).First(m))
+}
+
+func (m *Key) AccountKeyID() int64 {
+	if m.accountKeyID == 0 {
+		m.accountKeyID = converter.StringToAddress(m.AccountID)
+	}
+	return m.accountKeyID
 }
 
 // KeyTableName returns name of key table

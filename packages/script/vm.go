@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package script
 
@@ -75,6 +63,7 @@ var sysVars = map[string]struct{}{
 	`data`:              {},
 	`ecosystem_id`:      {},
 	`key_id`:            {},
+	`account_id`:        {},
 	`node_position`:     {},
 	`parent`:            {},
 	`original_contract`: {},
@@ -106,6 +95,12 @@ type blockStack struct {
 	Offset int
 }
 
+// ErrInfo stores info about current contract or function
+type ErrInfo struct {
+	Name string
+	Line uint16
+}
+
 // RunTime is needed for the execution of the byte-code
 type RunTime struct {
 	stack     []interface{}
@@ -120,6 +115,7 @@ type RunTime struct {
 	callDepth uint16
 	mem       int64
 	memVars   map[interface{}]int64
+	errInfo   ErrInfo
 }
 
 func isSysVar(name string) bool {
@@ -133,7 +129,6 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 	var (
 		count, in int
 	)
-
 	if rt.callDepth >= maxCallDepth {
 		return fmt.Errorf("max call depth")
 	}
@@ -276,6 +271,7 @@ func (rt *RunTime) callFunc(cmd uint16, obj *ObjInfo) (err error) {
 			}
 			if finfo.Results[i].String() == `error` {
 				if iret.Interface() != nil {
+					rt.errInfo = ErrInfo{finfo.Name, 0}
 					return iret.Interface().(error)
 				}
 			} else {
@@ -617,29 +613,35 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		assign []*VarInfo
 		tmpInt int64
 		tmpDec decimal.Decimal
+		cmd    *ByteCode
 	)
 	labels := make([]int, 0)
+main:
 	for ci := 0; ci < len(block.Code); ci++ {
 		rt.cost--
 		if rt.cost <= 0 {
 			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn("paid CPU resource is over")
-			return 0, fmt.Errorf(`paid CPU resource is over`)
+			err = fmt.Errorf(`paid CPU resource is over`)
+			break
 		}
 		if rt.timeLimit {
-			return 0, ErrVMTimeLimit
+			err = ErrVMTimeLimit
+			break
 		}
 
 		if rt.mem > memoryLimit {
 			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warn(ErrMemoryLimit)
-			return 0, ErrMemoryLimit
+			err = ErrMemoryLimit
+			break
 		}
 
-		cmd := block.Code[ci]
+		cmd = block.Code[ci]
 		var bin interface{}
 		size := len(rt.stack)
 		if size < int(cmd.Cmd>>8) {
 			rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Error("stack is empty")
-			return 0, fmt.Errorf(`stack is empty`)
+			err = fmt.Errorf(`stack is empty`)
+			break
 		}
 		for i := 1; i <= int(cmd.Cmd>>8); i++ {
 			top[i-1] = rt.stack[size-i]
@@ -688,9 +690,9 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				if item.Owner == nil {
 					if (*item).Obj.Type == ObjExtend {
 						if isSysVar((*item).Obj.Value.(string)) {
-							err := fmt.Errorf(eSysVar, (*item).Obj.Value.(string))
+							err = fmt.Errorf(eSysVar, (*item).Obj.Value.(string))
 							rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("modifying system variable")
-							return 0, err
+							break main
 						}
 						rt.setExtendVar((*item).Obj.Value.(string), rt.stack[len(rt.stack)-count+ivar])
 					}
@@ -701,9 +703,10 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 							k := rt.blocks[i].Offset + item.Obj.Value.(int)
 							switch rt.blocks[i].Block.Vars[item.Obj.Value.(int)].String() {
 							case Decimal:
-								v, err := ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
+								var v decimal.Decimal
+								v, err = ValueToDecimal(rt.stack[len(rt.stack)-count+ivar])
 								if err != nil {
-									return 0, err
+									break main
 								}
 								rt.setVar(k, v)
 							default:
@@ -752,7 +755,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					if cost > rt.cost {
 						rt.cost = 0
 						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError}).Warning("paid CPU resource is over")
-						return 0, fmt.Errorf(`paid CPU resource is over`)
+						err = fmt.Errorf(`paid CPU resource is over`)
+						break main
 					} else if cost == -1 {
 						rt.cost -= CostCall
 					} else {
@@ -775,7 +779,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 			}
 			if i < 0 {
 				rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "var": ivar.Obj.Value}).Error("wrong var")
-				return 0, fmt.Errorf(`wrong var %v`, ivar.Obj.Value)
+				err = fmt.Errorf(`wrong var %v`, ivar.Obj.Value)
+				break main
 			}
 		case cmdExtend, cmdCallExtend:
 			if val, ok := (*rt.extend)[cmd.Value.(string)]; ok {
@@ -784,7 +789,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					err = rt.extendFunc(cmd.Value.(string))
 					if err != nil {
 						rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err, "cmd": cmd.Value.(string)}).Error("executing extended function")
-						return 0, fmt.Errorf(`extend function %s %s`, cmd.Value.(string), err.Error())
+						err = fmt.Errorf(`extend function %s %s`, cmd.Value.(string), err.Error())
+						break main
 					}
 				} else {
 					switch varVal := val.(type) {
@@ -844,7 +850,8 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				}
 			}
 			if isSelfAssignment(rt.stack[size-3], rt.stack[size-1]) {
-				return 0, errSelfAssignment
+				err = errSelfAssignment
+				break main
 			}
 
 			switch {
@@ -925,14 +932,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case float64:
 				switch top[0].(type) {
 				case string, int64, float64:
 					bin = top[1].(float64) + ValueToFloat(top[0])
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case int64:
 				switch top[0].(type) {
@@ -943,14 +952,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) + top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			default:
 				if reflect.TypeOf(top[1]).String() == Decimal &&
 					reflect.TypeOf(top[0]).String() == Decimal {
 					bin = top[1].(decimal.Decimal).Add(top[0].(decimal.Decimal))
 				} else {
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			}
 		case cmdSub:
@@ -964,14 +975,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case float64:
 				switch top[0].(type) {
 				case string, int64, float64:
 					bin = top[1].(float64) - ValueToFloat(top[0])
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case int64:
 				switch top[0].(type) {
@@ -982,14 +995,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) - top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			default:
 				if reflect.TypeOf(top[1]).String() == Decimal &&
 					reflect.TypeOf(top[0]).String() == Decimal {
 					bin = top[1].(decimal.Decimal).Sub(top[0].(decimal.Decimal))
 				} else {
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			}
 		case cmdMul:
@@ -1003,14 +1018,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) * top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case float64:
 				switch top[0].(type) {
 				case string, int64, float64:
 					bin = top[1].(float64) * ValueToFloat(top[0])
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case int64:
 				switch top[0].(type) {
@@ -1021,14 +1038,16 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) * top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			default:
 				if reflect.TypeOf(top[1]).String() == Decimal &&
 					reflect.TypeOf(top[0]).String() == Decimal {
 					bin = top[1].(decimal.Decimal).Mul(top[0].(decimal.Decimal))
 				} else {
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			}
 		case cmdDiv:
@@ -1037,56 +1056,66 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				switch v := top[0].(type) {
 				case int64:
 					if v == 0 {
-						return 0, errDivZero
+						err = errDivZero
+						break main
 					}
 					if tmpInt, err = converter.ValueToInt(top[1]); err == nil {
 						bin = tmpInt / v
 					}
 				case float64:
 					if v == 0 {
-						return 0, errDivZero
+						err = errDivZero
+						break main
 					}
 					bin = ValueToFloat(top[1]) / v
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case float64:
 				switch top[0].(type) {
 				case string, int64, float64:
 					vFloat := ValueToFloat(top[0])
 					if vFloat == 0 {
-						return 0, errDivZero
+						err = errDivZero
+						break main
 					}
 					bin = top[1].(float64) / vFloat
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			case int64:
 				switch top[0].(type) {
 				case int64, string:
 					if tmpInt, err = converter.ValueToInt(top[0]); err == nil {
 						if tmpInt == 0 {
-							return 0, errDivZero
+							err = errDivZero
+							break main
 						}
 						bin = top[1].(int64) / tmpInt
 					}
 				case float64:
 					if top[0].(float64) == 0 {
-						return 0, errDivZero
+						err = errDivZero
+						break main
 					}
 					bin = ValueToFloat(top[1]) / top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			default:
 				if reflect.TypeOf(top[1]).String() == Decimal &&
 					reflect.TypeOf(top[0]).String() == Decimal {
 					if top[0].(decimal.Decimal).Cmp(decimal.New(0, 0)) == 0 {
-						return 0, errDivZero
+						err = errDivZero
+						break main
 					}
 					bin = top[1].(decimal.Decimal).Div(top[0].(decimal.Decimal)).Floor()
 				} else {
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			}
 		case cmdAnd:
@@ -1109,7 +1138,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					default:
 						if reflect.TypeOf(top[0]).String() == Decimal {
 							if tmpDec, err = ValueToDecimal(top[1]); err != nil {
-								return 0, err
+								break main
 							}
 							bin = tmpDec.Cmp(top[0].(decimal.Decimal)) == 0
 						} else {
@@ -1125,18 +1154,20 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 					case float64:
 						bin = ValueToFloat(top[1]) == top[0].(float64)
 					default:
-						return 0, errUnsupportedType
+						err = errUnsupportedType
+						break main
 					}
 				case bool:
 					switch top[0].(type) {
 					case bool:
 						bin = top[1].(bool) == top[0].(bool)
 					default:
-						return 0, errUnsupportedType
+						err = errUnsupportedType
+						break main
 					}
 				default:
 					if tmpDec, err = ValueToDecimal(top[0]); err != nil {
-						return 0, err
+						break main
 					}
 					bin = top[1].(decimal.Decimal).Cmp(tmpDec) == 0
 				}
@@ -1157,7 +1188,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				default:
 					if reflect.TypeOf(top[0]).String() == Decimal {
 						if tmpDec, err = ValueToDecimal(top[1]); err != nil {
-							return 0, err
+							break main
 						}
 						bin = tmpDec.Cmp(top[0].(decimal.Decimal)) < 0
 					} else {
@@ -1173,11 +1204,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) < top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			default:
 				if tmpDec, err = ValueToDecimal(top[0]); err != nil {
-					return 0, err
+					break main
 				}
 				bin = top[1].(decimal.Decimal).Cmp(tmpDec) < 0
 			}
@@ -1197,7 +1229,7 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				default:
 					if reflect.TypeOf(top[0]).String() == Decimal {
 						if tmpDec, err = ValueToDecimal(top[1]); err != nil {
-							return 0, err
+							break main
 						}
 						bin = tmpDec.Cmp(top[0].(decimal.Decimal)) > 0
 					} else {
@@ -1213,11 +1245,12 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 				case float64:
 					bin = ValueToFloat(top[1]) > top[0].(float64)
 				default:
-					return 0, errUnsupportedType
+					err = errUnsupportedType
+					break main
 				}
 			default:
 				if tmpDec, err = ValueToDecimal(top[0]); err != nil {
-					return 0, err
+					break main
 				}
 				bin = top[1].(decimal.Decimal).Cmp(tmpDec) > 0
 			}
@@ -1227,13 +1260,14 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		case cmdArrayInit:
 			initArray, err := rt.getResultArray(cmd.Value.([]mapItem))
 			if err != nil {
-				return 0, err
+				break main
 			}
 			rt.stack = append(rt.stack, initArray)
 		case cmdMapInit:
-			initMap, err := rt.getResultMap(cmd.Value.(*types.Map))
+			var initMap *types.Map
+			initMap, err = rt.getResultMap(cmd.Value.(*types.Map))
 			if err != nil {
-				return 0, err
+				break main
 			}
 			rt.stack = append(rt.stack, initMap)
 		default:
@@ -1266,7 +1300,26 @@ func (rt *RunTime) RunCode(block *Block) (status int, err error) {
 		}
 	}
 	rt.stack = rt.stack[:start]
-	if err != nil {
+	if err != nil && !strings.HasPrefix(err.Error(), `{`) {
+		stack := (*rt.extend)["stack"].([]interface{})
+		curContract := stack[len(stack)-1].(string)
+		if len(rt.errInfo.Name) > 0 && rt.errInfo.Name != `ExecContract` {
+			err = fmt.Errorf("%s [%s %s:%d]", err, rt.errInfo.Name, curContract, cmd.Line)
+			rt.errInfo.Name = ``
+		} else {
+			out := err.Error()
+			if strings.HasSuffix(out, `]`) {
+				prev := strings.LastIndexByte(out, ' ')
+				if strings.HasPrefix(out[prev+1:], curContract+`:`) {
+					out = out[:prev+1]
+				} else {
+					out = out[:len(out)-1] + ` `
+				}
+			} else {
+				out += ` [`
+			}
+			err = fmt.Errorf(`%s%s:%d]`, out, curContract, cmd.Line)
+		}
 		rt.vm.logger.WithFields(log.Fields{"type": consts.VMError, "error": err}).Error("error in vm")
 	}
 	return

@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package api
 
@@ -62,17 +50,20 @@ func (m Mode) SetCommonRoutes(r Router) {
 
 	api.Use(nodeStateMiddleware, tokenMiddleware, m.clientMiddleware)
 
-	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", getDataHandler).Methods("GET")
 	api.HandleFunc("/data/{prefix}_binaries/{id}/data/{hash}", getBinaryHandler).Methods("GET")
-	api.HandleFunc("/avatar/{ecosystem}/{member}", getAvatarHandler).Methods("GET")
+	api.HandleFunc("/data/{table}/{id}/{column}/{hash}", getDataHandler).Methods("GET")
+	api.HandleFunc("/avatar/{ecosystem}/{account}", getAvatarHandler).Methods("GET")
+	api.HandleFunc("/auth/status", getAuthStatus).Methods("GET")
 
 	api.HandleFunc("/contract/{name}", authRequire(getContractInfoHandler)).Methods("GET")
 	api.HandleFunc("/contracts", authRequire(getContractsHandler)).Methods("GET")
 	api.HandleFunc("/getuid", getUIDHandler).Methods("GET")
 	api.HandleFunc("/keyinfo/{wallet}", m.getKeyInfoHandler).Methods("GET")
 	api.HandleFunc("/list/{name}", authRequire(getListHandler)).Methods("GET")
+	api.HandleFunc("/network", getNetworkHandler).Methods("GET")
 	api.HandleFunc("/sections", authRequire(getSectionsHandler)).Methods("GET")
 	api.HandleFunc("/row/{name}/{id}", authRequire(getRowHandler)).Methods("GET")
+	api.HandleFunc("/row/{name}/{column}/{id}", authRequire(getRowHandler)).Methods("GET")
 	api.HandleFunc("/interface/page/{name}", authRequire(getPageRowHandler)).Methods("GET")
 	api.HandleFunc("/interface/menu/{name}", authRequire(getMenuRowHandler)).Methods("GET")
 	api.HandleFunc("/interface/block/{name}", authRequire(getBlockInterfaceRowHandler)).Methods("GET")
@@ -90,7 +81,6 @@ func (m Mode) SetCommonRoutes(r Router) {
 	api.HandleFunc("/content", jsonContentHandler).Methods("POST")
 	api.HandleFunc("/login", m.loginHandler).Methods("POST")
 	api.HandleFunc("/sendTx", authRequire(m.sendTxHandler)).Methods("POST")
-	api.HandleFunc("/updnotificator", updateNotificatorHandler).Methods("POST")
 	api.HandleFunc("/node/{name}", nodeContractHandler).Methods("POST")
 	api.HandleFunc("/txstatus", authRequire(getTxStatusHandler)).Methods("POST")
 	api.HandleFunc("/metrics/blocks", blocksCountHandler).Methods("GET")
@@ -117,7 +107,6 @@ func (m Mode) SetBlockchainRoutes(r Router) {
 	api.HandleFunc("/detailed_blocks", getBlocksDetailedInfoHandler).Methods("GET")
 	api.HandleFunc("/ecosystemparams", authRequire(m.getEcosystemParamsHandler)).Methods("GET")
 	api.HandleFunc("/systemparams", authRequire(getSystemParamsHandler)).Methods("GET")
-	api.HandleFunc("/ecosystems", authRequire(getEcosystemsHandler)).Methods("GET")
 	api.HandleFunc("/ecosystemparam/{name}", authRequire(m.getEcosystemParamHandler)).Methods("GET")
 	api.HandleFunc("/ecosystemname", getEcosystemNameHandler).Methods("GET")
 }

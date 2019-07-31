@@ -1,36 +1,25 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package block
 
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -44,6 +33,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/transaction"
 	"github.com/AplaProject/go-apla/packages/transaction/custom"
+	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 
 	"github.com/pkg/errors"
@@ -53,6 +43,8 @@ import (
 var (
 	ErrIncorrectRollbackHash = errors.New("Rollback hash doesn't match")
 	ErrEmptyBlock            = errors.New("Block doesn't contain transactions")
+
+	errTxAttempts = "The limit of attempts has been reached"
 )
 
 // Block is storing block data
@@ -65,7 +57,7 @@ type Block struct {
 	Transactions      []*transaction.Transaction
 	SysUpdate         bool
 	GenBlock          bool // it equals true when we are generating a new block
-	Notifications     []smart.NotifyInfo
+	Notifications     []types.Notifications
 }
 
 func (b Block) String() string {
@@ -131,12 +123,9 @@ func (b *Block) PlaySafe() error {
 			return err
 		}
 	}
-	for _, item := range b.Notifications {
-		if item.Roles {
-			notificator.UpdateRolesNotifications(item.EcosystemID, item.List)
-		} else {
-			notificator.UpdateNotifications(item.EcosystemID, item.List)
-		}
+
+	for _, q := range b.Notifications {
+		q.Send()
 	}
 	return nil
 }
@@ -212,8 +201,20 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		)
 		t.DbTransaction = dbTransaction
 		t.Rand = rand.BytesSeed(t.TxHash)
+		t.Notifications = notificator.NewQueue()
 
-		model.IncrementTxAttemptCount(nil, t.TxHash)
+		var attempts int64
+		if b.GenBlock {
+			attempts, err = model.IncrementTxAttemptCount(t.TxHash)
+			if err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("increment attempts")
+				return err
+			}
+			if attempts >= consts.MaxTXAttempt {
+				transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, errTxAttempts)
+				continue
+			}
+		}
 		err = dbTransaction.Savepoint(curTx)
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("using savepoint")
@@ -223,9 +224,6 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		t.GenBlock = b.GenBlock
 		t.TimeLimit = timeLimit
 		msg, flush, err = t.Play()
-		if err == script.ErrVMTimeLimit {
-			err = ErrLimitStop
-		}
 		if err == nil && t.TxSmart != nil {
 			err = limits.CheckLimit(t)
 		}
@@ -256,11 +254,16 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("rolling back to previous savepoint")
 				return errRoll
 			}
-			if b.GenBlock && err == ErrLimitStop {
-				if curTx == 0 {
-					return err
+			if b.GenBlock && err != nil {
+				if err == ErrLimitStop {
+					if curTx == 0 {
+						return err
+					}
+					break
 				}
-				break
+				if strings.Contains(err.Error(), script.ErrVMTimeLimit.Error()) { // very heavy tx
+					err = ErrLimitTime
+				}
 			}
 			// skip this transaction
 			transaction.MarkTransactionBad(t.DbTransaction, t.TxHash, err.Error())
@@ -281,9 +284,11 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		if err != nil {
 			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("releasing savepoint")
 		}
-
-		model.DecrementTxAttemptCount(nil, t.TxHash)
-
+		if b.GenBlock {
+			if err = model.DecrementTxAttemptCount(t.TxHash); err != nil {
+				logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "tx_hash": t.TxHash}).Error("decrement attempts")
+			}
+		}
 		if t.SysUpdate {
 			b.SysUpdate = true
 			t.SysUpdate = false
@@ -303,7 +308,11 @@ func (b *Block) Play(dbTransaction *model.DbTransaction) error {
 		if err := transaction.InsertInLogTx(t, b.Header.BlockID); err != nil {
 			return utils.ErrInfo(err)
 		}
-		b.Notifications = append(b.Notifications, t.Notifications...)
+
+		if t.Notifications.Size() > 0 {
+			b.Notifications = append(b.Notifications, t.Notifications)
+		}
+
 		proccessedTx = append(proccessedTx, t)
 	}
 

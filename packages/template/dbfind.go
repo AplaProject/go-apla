@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package template
 
@@ -34,6 +22,8 @@ import (
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/types"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -43,6 +33,8 @@ const (
 	columnTypeBlob     = "blob"
 
 	substringLength = 32
+
+	errComma = `unexpected comma`
 )
 
 func dbfindExpressionBlob(column string) string {
@@ -91,7 +83,7 @@ func trimString(in []rune) string {
 	return out
 }
 
-func parseObject(in []rune) (interface{}, int) {
+func parseObject(in []rune) (interface{}, int, error) {
 	var (
 		ret            interface{}
 		key            string
@@ -102,13 +94,20 @@ func parseObject(in []rune) (interface{}, int) {
 	if in[0] == '[' {
 		ret = make([]interface{}, 0)
 	} else if in[0] == '{' {
-		ret = make(map[string]interface{})
+		ret = types.NewMap()
 		mapMode = true
-	} else {
-		return nil, 0
+	}
+	addEmptyKey := func() {
+		if mapMode {
+			ret.(*types.Map).Set(key, "")
+		} else if len(key) > 0 {
+			ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: ``}))
+		}
+		key = ``
 	}
 	start := 1
 	i := 1
+	prev := ' '
 main:
 	for ; i < length; i++ {
 		ch := in[i]
@@ -125,22 +124,25 @@ main:
 				break main
 			}
 		case '{', '[':
-			par, off := parseObject(in[i:])
+			par, off, err := parseObject(in[i:])
+			if err != nil {
+				return nil, i, err
+			}
 			if mapMode {
 				if len(key) == 0 {
 					switch v := par.(type) {
 					case map[string]interface{}:
 						for ikey, ival := range v {
-							ret.(map[string]interface{})[ikey] = ival
+							ret.(*types.Map).Set(ikey, ival)
 						}
 					}
 				} else {
-					ret.(map[string]interface{})[key] = par
+					ret.(*types.Map).Set(key, par)
 					key = ``
 				}
 			} else {
 				if len(key) > 0 {
-					par = map[string]interface{}{key: par}
+					par = types.LoadMap(map[string]interface{}{key: par})
 					key = ``
 				}
 				ret = append(ret.([]interface{}), par)
@@ -156,16 +158,19 @@ main:
 			}
 		case ',':
 			val := trimString(in[start:i])
-			if len(val) == 0 && (len(key) > 0 || mapMode) {
-				key = ``
+			if prev == ch {
+				return nil, i, fmt.Errorf(errComma)
+			}
+			if len(val) == 0 && len(key) > 0 {
+				addEmptyKey()
 			}
 			if len(val) > 0 {
 				if mapMode {
-					ret.(map[string]interface{})[key] = val
+					ret.(*types.Map).Set(key, val)
 					key = ``
 				} else {
 					if len(key) > 0 {
-						ret = append(ret.([]interface{}), map[string]interface{}{key: val})
+						ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: val}))
 						key = ``
 					} else {
 						ret = append(ret.([]interface{}), val)
@@ -174,24 +179,34 @@ main:
 			}
 			start = i + 1
 		}
+		if ch != ' ' {
+			prev = ch
+		}
+	}
+	if prev == ',' {
+		return nil, i, fmt.Errorf(errComma)
 	}
 	if start < i {
 		if last := trimString(in[start:i]); len(last) > 0 {
 			if mapMode {
-				ret.(map[string]interface{})[key] = last
+				ret.(*types.Map).Set(key, last)
 			} else {
 				if len(key) > 0 {
-					ret = append(ret.([]interface{}), map[string]interface{}{key: last})
+					ret = append(ret.([]interface{}), types.LoadMap(map[string]interface{}{key: last}))
 					key = ``
 				} else {
 					ret = append(ret.([]interface{}), last)
 				}
 			}
-		} else if len(key) > 0 || mapMode {
-			ret.(map[string]interface{})[key] = ``
+		} else if len(key) > 0 {
+			addEmptyKey()
 		}
 	}
 	switch v := ret.(type) {
+	case *types.Map:
+		if v.Size() == 0 {
+			ret = ``
+		}
 	case map[string]interface{}:
 		if len(v) == 0 {
 			ret = ``
@@ -201,5 +216,5 @@ main:
 			ret = ``
 		}
 	}
-	return ret, i
+	return ret, i, nil
 }

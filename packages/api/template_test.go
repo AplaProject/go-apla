@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package api
 
@@ -36,7 +24,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"strings"
 	"testing"
 	"time"
 
@@ -131,13 +118,25 @@ func TestAPI(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`DBFind(contracts, src).Columns("id").Where({"app_id": 1, ,"id": {"$gt": 2}})`,
+		`[{"tag":"text","text":"unexpected comma"}]`},
+	{`DBFind(contracts, src).Columns("id").Where({"app_id": 1, "id": {"$gt": 2},})`,
+		`[{"tag":"text","text":"unexpected comma"}]`},
+	{`SetVar(w_filter, ` + "`" + `"id": {"$lt": "2"}` + "`" + `)SetVar(w, {#w_filter# #w_search#})
+		  DBFind("contracts", src).Columns("id,name").Where(#w#)Table(src)`,
+		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","AdminCondition"]],"name":"contracts","source":"src","types":["text","text"],"where":"{"id": {"$lt": "2"} }"}},{"tag":"table","attr":{"source":"src"}}]`},
+	{`DBFind("contracts", src).Columns("id,name").Where({"id": {"$lt": "2"} })`,
+		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","AdminCondition"]],"name":"contracts","source":"src","types":["text","text"],"where":"{"id": {"$lt": "2"} }"}}]`},
+	{`SetVar(where, {"$or": ["name": #poa#,"valueN": #poa#]})
+		DBFind(contracts, src).Columns("id").Where(#where#)`, `[{"tag":"text","text":"pq: column "valuen" does not exist in query select "id" from "1_contracts" where ("name" = '' or "valuen" = '') order by id [[]]"}]`},
+	{`DBFind("@1roles_participants", src).Where({"ecosystem": #ecosystem_id#, "role->id": {"$in": []}, "member->member_id": #key_id#, "deleted": 0})`, `[{"tag":"dbfind","attr":{"columns":["id","role","member","appointed","date_created","date_deleted","deleted","ecosystem"],"data":[],"name":"@1roles_participants","source":"src","types":[],"where":"{"ecosystem": 1, "role-\u003eid": {"$in": []}, "member-\u003emember_id": 2665397054248150876, "deleted": 0}"}}]`},
+	{`DBFind("@1roles_participants").Where({"ecosystem": #ecosystem_id#, "role->id": {"$in": []}, "member->member_id": #key_id#, "deleted": 0}).Vars(v)`, `[{"tag":"dbfind","attr":{"columns":["id","role","member","appointed","date_created","date_deleted","deleted","ecosystem"],"data":[],"name":"@1roles_participants","types":[],"where":"{"ecosystem": 1, "role-\u003eid": {"$in": []}, "member-\u003emember_id": 2665397054248150876, "deleted": 0}"}}]`},
 	{`DBFind(@1pages).Where({{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}).Columns("id,name").Order(id)`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"],["2","developer_index"],["3","notifications"]],"name":"@1pages","order":"id","types":["text","text"],"where":"{{id:{$neq:5}}, {id:2}, id:{$neq:6}, $or:[id:6, {id:1}, {id:2}, id:3]}"}}]`},
-	{`DBFind(@1pages).Where({{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}).Columns("id,name")`,
-		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["2","developer_index"]],"name":"@1pages","types":["text","text"],"where":"{{id:[{$neq:5},{$neq:4}, 2]}, name:{$neq: Edit}}"}}]`},
+	{`DBFind(@1pages).Where({id:[{$neq:5},{$neq:4}, 2], name:{$neq: Edit}}).Columns("id,name")`,
+		`[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["2","developer_index"]],"name":"@1pages","types":["text","text"],"where":"{id:[{$neq:5},{$neq:4}, 2], name:{$neq: Edit}}"}}]`},
 	{`DBFind(@1pages).Where({id:3, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["3","notifications"]],"name":"@1pages","types":["text","text"],"where":"{id:3, name: {$neq:EditPage}, $or:[id:1, {id:5}, id:{$neq:2}, id:4]}"}}]`},
 	{`DBFind(@1pages).Where({id:1}).Columns("id,name")`, `[{"tag":"dbfind","attr":{"columns":["id","name"],"data":[["1","admin_index"]],"name":"@1pages","types":["text","text"],"where":"{id:1}"}}]`},
 	{`DBFind(keys).Where("id='#key_id#'").Columns("amount").Vars(amount)`, `[{"tag":"text","text":"Where has wrong format"}]`},
-	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},
 	{`SetVar(val, 123456789)Money(#val#)`, `[{"tag":"text","text":"0.000000000123456789"}]`},
 	{`SetVar(coltype, GetColumnType(members, member_name))Div(){#coltype#GetColumnType(none,none)GetColumnType()}`, `[{"tag":"div","children":[{"tag":"text","text":"varchar"}]}]`},
 	{`DBFind(parameters, src_par).Columns("id").Order([id]).Where({id:[{$gte:1}, {$lte:3}]}).Count(count)Span(#count#)`,
@@ -177,7 +176,7 @@ var forTest = tplList{
 		SetVar(Name: vStartDate, Value: DateTime(DateTime: #vDateNow#, Format: "YYYY-MM-DD HH:MI"))
 		SetVar(Name: vCmpStartDate, Value: CmpTime(#vStartDate#,#vDateNow#))
 		Span(#vCmpStartDate# #simple#)`,
-		`[{"tag":"span","children":[{"tag":"text","text":"0 TestFunc(my value)"}]}]`},
+		`[{"tag":"span","children":[{"tag":"text","text":"-1 TestFunc(my value)"}]}]`},
 	{`Input(Type: text, Value: Now(MMYY))`,
 		`[{"tag":"input","attr":{"type":"text","value":"Now(MMYY)"}}]`},
 	{`Button(Body: LangRes(savex), Class: btn btn-primary, Contract: EditProfile, 
@@ -206,6 +205,7 @@ var forTest = tplList{
 		`[{"tag":"text","text":"` + time.Unix(1257894000, 0).Format("2006-01-02 15:04:05") + `"}]`},
 	{`CmpTime(1257894000, 1257895000)CmpTime(1257895000, 1257894000)CmpTime(1257894000, 1257894000)`,
 		`[{"tag":"text","text":"-110"}]`},
+	{`P(Guest = #guest_key#)`, `[{"tag":"p","children":[{"tag":"text","text":"Guest = 4544233900443112470"}]}]`},
 }
 
 func TestMoney(t *testing.T) {
@@ -340,13 +340,11 @@ func TestBinary(t *testing.T) {
 
 	params := contractParams{
 		"ApplicationId": "1",
-		"AppID":         "1",
-		"MemberID":      "1",
 		"Name":          "file",
 		"Data":          file,
 	}
 
-	_, id, err := postTxResult("UploadBinary", &params)
+	_, id, err := postTxResult("UploadFile", &params)
 	assert.NoError(t, err)
 
 	hash, err := crypto.Hash(data)
@@ -359,7 +357,7 @@ func TestBinary(t *testing.T) {
 		result string
 	}{
 		{
-			`Image(Src: Binary(Name: file, AppID: 1, MemberID: #key_id#))`,
+			`Image(Src: Binary(Name: file, AppID: 1, Account: #account_id#))`,
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
@@ -379,12 +377,12 @@ func TestBinary(t *testing.T) {
 			`\[{"tag":"image","attr":{"src":"/data/1_binaries/\d+/data/` + hashImage + `"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, member_id: #key_id#, name: "file"}).Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, account: #account_id#, name: "file"}).Custom(img){Image(Src: #data#)}Table(mysrc, "Image=img")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","account","name","data","hash","mime_type","img"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream","\[{\\"tag\\":\\"image\\",\\"attr\\":{\\"src\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\"}}\]"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text","tags"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"table","attr":{"columns":\[{"Name":"img","Title":"Image"}\],"source":"mysrc"}}\]`,
 		},
 		{
-			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, member_id: #key_id#, name: "file"}).Vars(prefix)Image(Src: "#prefix_data#")`,
-			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","member_id","name","data","hash","mime_type"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}"}}\]`,
+			`DBFind(Name: binaries, Src: mysrc).Where({app_id: 1, account: #account_id#, name: "file"}).Vars(prefix)Image(Src: "#prefix_data#")`,
+			`\[{"tag":"dbfind","attr":{"columns":\["id","app_id","account","name","data","hash","mime_type"\],"data":\[\["\d+","1","\d+","file","{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}","` + hashFindedImage + `","application/octet-stream"\]\],"name":"binaries","source":"Src: mysrc","types":\["text","text","text","text","blob","text","text"\],"where":"app_id=1 AND member_id = \d+ AND name = 'file'"}},{"tag":"image","attr":{"src":"{\\"link\\":\\"/data/1_binaries/\d+/data/` + hashFindedImage + `\\",\\"title\\":\\"` + hashFindedImage + `\\"}"}}\]`,
 		},
 	}
 
@@ -414,7 +412,7 @@ func TestStringToBinary(t *testing.T) {
 				conditions {}
 				action {
 					UploadBinary("Name,ApplicationId,Data,DataMimeType", "` + filename + `", 1, StringToBytes($Content), "text/plain")
-					$result = $key_id
+					$result = $account_id
 				}
 			}
 		`}, "ApplicationId": {`1`}, "Conditions": {"true"},
@@ -422,11 +420,11 @@ func TestStringToBinary(t *testing.T) {
 	assert.NoError(t, postTx("NewContract", &form))
 
 	form = url.Values{"Content": {content}}
-	_, msg, err := postTxResult(contract, &form)
+	_, account, err := postTxResult(contract, &form)
 	assert.NoError(t, err)
 
 	form = url.Values{
-		"template": {`SetVar(link, Binary(Name: ` + filename + `, AppID: 1, MemberID: ` + msg + `))#link#`},
+		"template": {`SetVar(link, Binary(Name: ` + filename + `, AppID: 1, Account: "` + account + `"))#link#`},
 	}
 
 	var ret struct {
@@ -436,7 +434,7 @@ func TestStringToBinary(t *testing.T) {
 	}
 	assert.NoError(t, sendPost(`content`, &form, &ret))
 
-	resp, err := http.Get(apiAddress + consts.ApiPath + strings.TrimSpace(ret.Tree[0].Link))
+	resp, err := http.Get(apiAddress + consts.ApiPath + ret.Tree[0].Link)
 	if err != nil {
 		t.Error(err)
 		return

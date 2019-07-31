@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package model
 
@@ -70,37 +58,36 @@ func (n *Notification) TableName() string {
 	return `1_notifications`
 }
 
+type NotificationsCount struct {
+	RecipientID int64 `gorm:"recipient_id"`
+	RoleID      int64 `gorm:"role_id"`
+	Count       int64 `gorm:"count"`
+}
+
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
 // if userIDs is nil or empty then filter will be skipped
-func GetNotificationsCount(ecosystemID int64, userIDs []int64) ([]map[string]string, error) {
-	result := make([]map[string]string, 0, 16)
-	for _, userID := range userIDs {
-		roles, err := GetMemberRoles(nil, ecosystemID, userID)
+func GetNotificationsCount(ecosystemID int64, accounts []string) ([]NotificationsCount, error) {
+	result := make([]NotificationsCount, 0, len(accounts))
+	for _, account := range accounts {
+		query := `SELECT k.id as "recipient_id", '0' as "role_id", count(n.id)
+			FROM "1_keys" k
+			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '1' and n.recipient->>'account' = k.account
+			WHERE k.ecosystem = ? AND k.account = ?
+			GROUP BY recipient_id, role_id
+			UNION
+			SELECT k.id as "recipient_id", rp.role->>'id' as "role_id", count(n.id)
+			FROM "1_keys" k
+			INNER JOIN "1_roles_participants" rp ON rp.member->>'account' = k.account
+			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '2' AND n.recipient->>'role_id' = rp.role->>'id'
+													AND (n.date_start_processing = 0 OR n.processing_info->>'account' = k.account)
+			WHERE k.ecosystem=? AND k.account = ?
+			GROUP BY recipient_id, role_id`
+
+		list := make([]NotificationsCount, 0)
+		err := GetDB(nil).Raw(query, ecosystemID, account, ecosystemID, account).Scan(&list).Error
 		if err != nil {
 			return nil, err
 		}
-		roleList := make([]string, 0, len(roles))
-		for _, role := range roles {
-			roleList = append(roleList, converter.Int64ToStr(role))
-		}
-
-		query := `SELECT recipient->>'role_id' as "role_id", count(*) cnt
-			FROM "1_notifications" 
-			WHERE ecosystem=? AND closed = 0 AND ((notification->>'type' = '1' and recipient->>'member_id' = ? ) or
-				(notification->>'type' = '2' and (recipient->>'role_id' IN (?) and 
-				( date_start_processing is null or processing_info->>'member_id' = ?))))
-			GROUP BY 1`
-
-		list, err := GetAllTransaction(nil, query, -1, ecosystemID, userID, roleList, userID)
-		if err != nil {
-			return nil, err
-		}
-
-		recipient := converter.Int64ToStr(userID)
-		for i := range list {
-			list[i]["recipient_id"] = recipient
-		}
-
 		result = append(result, list...)
 	}
 	return result, nil

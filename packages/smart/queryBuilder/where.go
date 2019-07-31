@@ -1,40 +1,33 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package queryBuilder
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/types"
+)
+
+var (
+	errWhereFalse = errors.New(`false result`)
 )
 
 func PrepareWhere(where string) string {
@@ -95,6 +88,11 @@ func GetWhere(inWhere *types.Map) (string, error) {
 	}
 	in := func(action string, v interface{}) (ret string, err error) {
 		switch value := v.(type) {
+		case string:
+			if len(value) == 0 {
+				return `false`, errWhereFalse
+			}
+			ret = fmt.Sprintf(`%s ('%s')`, action, value)
 		case []interface{}:
 			var list []string
 			for _, ival := range value {
@@ -102,6 +100,8 @@ func GetWhere(inWhere *types.Map) (string, error) {
 			}
 			if len(list) > 0 {
 				ret = fmt.Sprintf(`%s ('%s')`, action, strings.Join(list, `', '`))
+			} else {
+				return `false`, errWhereFalse
 			}
 		}
 		return
@@ -183,10 +183,14 @@ func GetWhere(inWhere *types.Map) (string, error) {
 					switch avalue := iarr.(type) {
 					case *types.Map:
 						ret, err := GetWhere(avalue)
-						if err != nil {
-							return ``, err
+						if err == errWhereFalse {
+							acond = append(acond, ret)
+						} else {
+							if err != nil {
+								return ``, err
+							}
+							acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
 						}
-						acond = append(acond, fmt.Sprintf(`(%s %s)`, key, ret))
 					default:
 						acond = append(acond, fmt.Sprintf(`%s = '%s'`, key, escape(avalue)))
 					}
@@ -196,10 +200,14 @@ func GetWhere(inWhere *types.Map) (string, error) {
 				}
 			case *types.Map:
 				ret, err := GetWhere(value)
-				if err != nil {
-					return ``, err
+				if err == errWhereFalse {
+					cond = append(cond, ret)
+				} else {
+					if err != nil {
+						return ``, err
+					}
+					cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
 				}
-				cond = append(cond, fmt.Sprintf(`(%s %s)`, key, ret))
 			default:
 				ival := escape(value)
 				if ival == `$isnull` {

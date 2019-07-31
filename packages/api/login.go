@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package api
 
@@ -88,7 +76,7 @@ type loginResult struct {
 	Token       string        `json:"token,omitempty"`
 	EcosystemID string        `json:"ecosystem_id,omitempty"`
 	KeyID       string        `json:"key_id,omitempty"`
-	Address     string        `json:"address,omitempty"`
+	Account     string        `json:"account,omitempty"`
 	NotifyKey   string        `json:"notify_key,omitempty"`
 	IsNode      bool          `json:"isnode,omitempty"`
 	IsOwner     bool          `json:"isowner,omitempty"`
@@ -98,7 +86,7 @@ type loginResult struct {
 }
 
 type rolesResult struct {
-	RoleId   int64  `json:"role_id"`
+	RoleID   int64  `json:"role_id"`
 	RoleName string `json:"role_name"`
 }
 
@@ -207,6 +195,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if found && ts.Block > 0 {
+				account.Get(wallet)
 				break
 			}
 			time.Sleep(time.Second)
@@ -232,7 +221,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if form.RoleID != 0 && client.RoleID == 0 {
-		checkedRole, err := checkRoleFromParam(form.RoleID, client.EcosystemID, wallet)
+		checkedRole, err := checkRoleFromParam(form.RoleID, client.EcosystemID, account.AccountID)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -260,7 +249,6 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		address = crypto.KeyToAddress(publicKey)
 		sp      model.StateParameter
 		founder int64
 	)
@@ -275,9 +263,9 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result := &loginResult{
+		Account:     account.AccountID,
 		EcosystemID: converter.Int64ToStr(client.EcosystemID),
 		KeyID:       converter.Int64ToStr(wallet),
-		Address:     address,
 		IsOwner:     founder == wallet,
 		IsNode:      conf.Config.KeyID == wallet,
 		IsOBS:       conf.Config.IsSupportingOBS(),
@@ -285,6 +273,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 
 	claims := JWTClaims{
 		KeyID:       result.KeyID,
+		AccountID:   account.AccountID,
 		EcosystemID: result.EcosystemID,
 		IsMobile:    form.IsMobile,
 		RoleID:      converter.Int64ToStr(form.RoleID),
@@ -312,7 +301,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ra := &model.RolesParticipants{}
-	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(wallet)
+	roles, err := ra.SetTablePrefix(client.EcosystemID).GetActiveMemberRoles(account.AccountID)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting roles")
 		errorResponse(w, err)
@@ -325,9 +314,12 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 			log.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
 			errorResponse(w, err)
 			return
-		} else {
-			result.Roles = append(result.Roles, rolesResult{RoleId: converter.StrToInt64(res["id"]), RoleName: res["name"]})
 		}
+
+		result.Roles = append(result.Roles, rolesResult{
+			RoleID:   converter.StrToInt64(res["id"]),
+			RoleName: res["name"],
+		})
 	}
 
 	jsonResponse(w, result)
@@ -350,13 +342,13 @@ func getUID(r *http.Request) (string, error) {
 	return uid, nil
 }
 
-func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
+func checkRoleFromParam(role, ecosystemID int64, account string) (int64, error) {
 	if role > 0 {
-		ok, err := model.MemberHasRole(nil, ecosystemID, wallet, role)
+		ok, err := model.MemberHasRole(nil, role, ecosystemID, account)
 		if err != nil {
 			log.WithFields(log.Fields{
 				"type":      consts.DBError,
-				"member":    wallet,
+				"account":   account,
 				"role":      role,
 				"ecosystem": ecosystemID}).Error("check role")
 
@@ -366,7 +358,7 @@ func checkRoleFromParam(role, ecosystemID, wallet int64) (int64, error) {
 		if !ok {
 			log.WithFields(log.Fields{
 				"type":      consts.NotFound,
-				"member":    wallet,
+				"account":   account,
 				"role":      role,
 				"ecosystem": ecosystemID,
 			}).Error("member hasn't role")

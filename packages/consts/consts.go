@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package consts
 
@@ -33,7 +21,7 @@ import (
 )
 
 // VERSION is current version
-const VERSION = "2.0.4"
+const VERSION = "3.0.0"
 
 const BV_ROLLBACK_HASH = 2
 const BV_INCLUDE_ROLLBACK_HASH = 3
@@ -127,79 +115,79 @@ var ApiPath = `/api/v2/`
 // BuildInfo should be defined through -ldflags
 var BuildInfo string
 
-// DefaultConfigFile name of config file (toml format)
-const DefaultConfigFile = "config.toml"
+const (
+	// DefaultConfigFile name of config file (toml format)
+	DefaultConfigFile = "config.toml"
 
-// DefaultWorkdirName name of working directory
-const DefaultWorkdirName = "apla-data"
+	// DefaultWorkdirName name of working directory
+	DefaultWorkdirName = "apla-data"
 
-// DefaultPidFilename is default filename of pid file
-const DefaultPidFilename = "go-apla.pid"
+	// DefaultPidFilename is default filename of pid file
+	DefaultPidFilename = "go-apla.pid"
 
-// DefaultLockFilename is default filename of lock file
-const DefaultLockFilename = "go-apla.lock"
+	// DefaultLockFilename is default filename of lock file
+	DefaultLockFilename = "go-apla.lock"
 
-// FirstBlockFilename name of first block binary file
-const FirstBlockFilename = "1block"
+	// FirstBlockFilename name of first block binary file
+	FirstBlockFilename = "1block"
 
-// PrivateKeyFilename name of wallet private key file
-const PrivateKeyFilename = "PrivateKey"
+	// PrivateKeyFilename name of wallet private key file
+	PrivateKeyFilename = "PrivateKey"
 
-// PublicKeyFilename name of wallet public key file
-const PublicKeyFilename = "PublicKey"
+	// PublicKeyFilename name of wallet public key file
+	PublicKeyFilename = "PublicKey"
 
-// NodePrivateKeyFilename name of node private key file
-const NodePrivateKeyFilename = "NodePrivateKey"
+	// NodePrivateKeyFilename name of node private key file
+	NodePrivateKeyFilename = "NodePrivateKey"
 
-// NodePublicKeyFilename name of node public key file
-const NodePublicKeyFilename = "NodePublicKey"
+	// NodePublicKeyFilename name of node public key file
+	NodePublicKeyFilename = "NodePublicKey"
 
-// KeyIDFilename generated KeyID
-const KeyIDFilename = "KeyID"
+	// KeyIDFilename generated KeyID
+	KeyIDFilename = "KeyID"
 
-// RollbackResultFilename rollback result file
-const RollbackResultFilename = "rollback_result"
+	// RollbackResultFilename rollback result file
+	RollbackResultFilename = "rollback_result"
 
-// FromToPerDayLimit day limit token transfer between accounts
-const FromToPerDayLimit = 10000
+	// FromToPerDayLimit day limit token transfer between accounts
+	FromToPerDayLimit = 10000
 
-// TokenMovementQtyPerBlockLimit block limit token transfer
-const TokenMovementQtyPerBlockLimit = 100
+	// TokenMovementQtyPerBlockLimit block limit token transfer
+	TokenMovementQtyPerBlockLimit = 100
 
-// TCPConnTimeout timeout of tcp connection
-const TCPConnTimeout = 5 * time.Second
+	// TCPConnTimeout timeout of tcp connection
+	TCPConnTimeout = 5 * time.Second
 
-// TxRequestExpire is expiration time for request of transaction
-const TxRequestExpire = 1 * time.Minute
+	// TxRequestExpire is expiration time for request of transaction
+	TxRequestExpire = 1 * time.Minute
 
-// DefaultTempDirName is default name of temporary directory
-const DefaultTempDirName = "apla-temp"
+	// DefaultTempDirName is default name of temporary directory
+	DefaultTempDirName = "apla-temp"
 
-// DefaultOBS allways is 1
-const DefaultOBS = 1
+	// DefaultOBS allways is 1
+	DefaultOBS = 1
 
-// MoneyLength is the maximum number of digits in money value
-const MoneyLength = 30
+	// MoneyLength is the maximum number of digits in money value
+	MoneyLength = 30
 
-const TokenEcosystem = 1
+	TokenEcosystem = 1
 
-const HTTPServerMaxBodySize = 1 << 20
+	HTTPServerMaxBodySize = 1 << 20
 
-// ShiftContractID is the offset of tx identifiers
-const ShiftContractID = 5000
+	// ShiftContractID is the offset of tx identifiers
+	ShiftContractID = 5000
 
-// ContractList is the number of contracts per page on loading
-const ContractList = 200
+	// ContractList is the number of contracts per page on loading
+	ContractList = 200
 
-// GuestKey is the guest id
-const GuestKey = `4544233900443112470`
+	// Guest key
+	GuestPublic  = "489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86"
+	GuestKey     = "4544233900443112470"
+	GuestAddress = "0454-4233-9004-4311-2470"
 
-// GuestPublic is the public guest key
-const GuestPublic = `489347a1205c818d9a02f285faaedd0122a56138e3d985f5e1b4f6a9470f90f692a00a3453771dd7feea388ceb7aefeaf183e299c70ad1aecb7f870bfada3b86`
+	// StatusMainPage is a status for Main Page
+	StatusMainPage = `2`
 
-// StatusMainPage is a status for Main Page
-const StatusMainPage = `2`
-
-const NoneVDE = "none"
-
-const DBFindLimit = 10000
+	NoneVDE     = "none"
+	DBFindLimit = 10000
+)

@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package migration
 
@@ -110,7 +98,8 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 	"multi" bigint NOT NULL DEFAULT '0',
 	"deleted" bigint NOT NULL DEFAULT '0',
 	"blocked" bigint NOT NULL DEFAULT '0',
-	"ecosystem" bigint NOT NULL DEFAULT '1'
+	"ecosystem" bigint NOT NULL DEFAULT '1',
+	"account" char(24) NOT NULL
 	);
 	ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "1_keys_pkey" PRIMARY KEY (ecosystem,id);
 
@@ -248,11 +237,12 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"member_name"	varchar(255) NOT NULL DEFAULT '',
 			"image_id"	bigint NOT NULL DEFAULT '0',
 			"member_info"   jsonb,
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
-		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY (ecosystem,id);
-		CREATE INDEX "1_members_index_ecosystem" ON "1_members" (ecosystem);
-
+		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY (id);
+		CREATE INDEX "1_members_index_ecosystem" ON "1_sections" (ecosystem);
+		CREATE UNIQUE INDEX "1_members_uindex_ecosystem_account" ON "1_members" (account, ecosystem);
 
 	DROP TABLE IF EXISTS "1_roles";
 		CREATE TABLE "1_roles" (
@@ -322,15 +312,15 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 		CREATE TABLE "1_binaries" (
 			"id" bigint NOT NULL DEFAULT '0',
 			"app_id" bigint NOT NULL DEFAULT '1',
-			"member_id" bigint NOT NULL DEFAULT '0',
 			"name" varchar(255) NOT NULL DEFAULT '',
 			"data" bytea NOT NULL DEFAULT '',
 			"hash" varchar(64) NOT NULL DEFAULT '',
 			"mime_type" varchar(255) NOT NULL DEFAULT '',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "1_binaries" ADD CONSTRAINT "1_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "1_binaries_index_app_id_member_id_name" ON "1_binaries" (ecosystem,app_id, member_id, name);
+		CREATE UNIQUE INDEX "1_binaries_uindex" ON "1_binaries" (account, ecosystem, app_id, name);
 				
 		DROP TABLE IF EXISTS "1_app_params";
 		CREATE TABLE "1_app_params" (
@@ -351,8 +341,8 @@ var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys"
 			"id" bigint NOT NULL DEFAULT '0',
 			"key" varchar(255) NOT NULL DEFAULT '',
 			"value" jsonb,
-			"member_id" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
+			"ecosystem" bigint NOT NULL DEFAULT '1',
+			"account" char(24) NOT NULL
 		);
 		ALTER TABLE ONLY "1_buffer_data" ADD CONSTRAINT "1_buffer_data_pkey" PRIMARY KEY ("id");
 		CREATE INDEX "1_buffer_data_ecosystem" ON "1_buffer_data" (ecosystem);

@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package smart
 
@@ -524,6 +512,15 @@ func ConditionById(table string, validate bool) {
    if validate {
 	   ValidateCondition($Conditions,$ecosystem_id)
    }
+}
+
+func CurrentKeyFromAccount(account string) int {
+	var row map
+	row = DBRow("@1keys").Columns("id").Where({"account": account, "deleted": 0})
+	if row {
+		return row["id"]
+	}
+	return 0
 }`
 	return vmCompile(vm, code, &script.OwnerInfo{StateID: uint32(state)})
 }
@@ -562,6 +559,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`node_position`:     blockNodePosition,
 		`block`:             block,
 		`key_id`:            keyID,
+		`account_id`:        sc.Key.AccountID,
 		`block_key_id`:      blockKeyID,
 		`parent`:            ``,
 		`txcost`:            sc.GetContractLimit(),
@@ -573,6 +571,7 @@ func (sc *SmartContract) getExtend() *map[string]interface{} {
 		`original_contract`: ``,
 		`this_contract`:     ``,
 		`guest_key`:         consts.GuestKey,
+		`guest_account`:     consts.GuestAddress,
 	}
 
 	for key, val := range sc.TxData {
@@ -977,7 +976,8 @@ func (sc *SmartContract) CallContract() (string, error) {
 	)
 	logger := sc.GetLogger()
 	payWallet := &model.Key{}
-	sc.TxContract.Extend = sc.getExtend()
+
+	sc.Key = &model.Key{}
 	sc.TxSmart.TokenEcosystem = consts.TokenEcosystem
 
 	retError := func(err error) (string, error) {
@@ -996,10 +996,6 @@ func (sc *SmartContract) CallContract() (string, error) {
 		return ``, err
 	}
 
-	methods := []string{`conditions`, `action`}
-	sc.AppendStack(sc.TxContract.Name)
-	sc.VM = GetVM()
-
 	if !sc.OBS {
 		toID = sc.BlockData.KeyID
 		fromID = sc.TxSmart.KeyID
@@ -1007,30 +1003,22 @@ func (sc *SmartContract) CallContract() (string, error) {
 	if len(sc.TxSmart.PublicKey) > 0 && string(sc.TxSmart.PublicKey) != `null` {
 		public = sc.TxSmart.PublicKey
 	}
-	wallet := &model.Key{}
-	wallet.SetTablePrefix(sc.TxSmart.EcosystemID)
+
+	sc.Key.SetTablePrefix(sc.TxSmart.EcosystemID)
 	signedBy, err := sc.GetSignedBy(public)
 	if err != nil {
 		return retError(err)
 	}
-	_, err = wallet.Get(signedBy)
+	_, err = sc.Key.Get(signedBy)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
 		return retError(err)
 	}
-	if wallet.Deleted == 1 {
+	if sc.Key.Deleted == 1 {
 		return retError(errDeletedKey)
 	}
-	if len(wallet.PublicKey) > 0 {
-		public = wallet.PublicKey
-	}
-	if sc.TxSmart.ID == 258 { // UpdFullNodes
-		node := syspar.GetNode(sc.TxSmart.KeyID)
-		if node == nil {
-			logger.WithFields(log.Fields{"user_id": sc.TxSmart.KeyID, "type": consts.NotFound}).Error("unknown node id")
-			return retError(errUnknownNodeID)
-		}
-		public = node.PublicKey
+	if len(sc.Key.PublicKey) > 0 {
+		public = sc.Key.PublicKey
 	}
 	if len(public) == 0 {
 		logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("empty public key")
@@ -1048,6 +1036,11 @@ func (sc *SmartContract) CallContract() (string, error) {
 		logger.WithFields(log.Fields{"type": consts.InvalidObject}).Error("incorrect sign")
 		return retError(errIncorrectSign)
 	}
+
+	methods := []string{`conditions`, `action`}
+	sc.TxContract.Extend = sc.getExtend()
+	sc.AppendStack(sc.TxContract.Name)
+	sc.VM = GetVM()
 
 	needPayment := sc.TxSmart.EcosystemID > 0 && !sc.OBS && !syspar.IsPrivateBlockchain()
 	if needPayment {
@@ -1104,7 +1097,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		}
 
 		if cntrctOwnerInfo.WalletID == 0 && !isEcosysWallet &&
-			!bytes.Equal(wallet.PublicKey, payWallet.PublicKey) &&
+			!bytes.Equal(sc.Key.PublicKey, payWallet.PublicKey) &&
 			!bytes.Equal(sc.TxSmart.PublicKey, payWallet.PublicKey) &&
 			sc.TxSmart.SignedBy == 0 {
 			return retError(errDiffKeys)
@@ -1188,7 +1181,9 @@ func (sc *SmartContract) CallContract() (string, error) {
 
 	if needPayment {
 		if ierr := sc.payContract(fuelRate, payWallet, fromID, toID); ierr != nil {
-			err = ierr
+			if err == nil {
+				err = ierr
+			}
 		}
 	}
 

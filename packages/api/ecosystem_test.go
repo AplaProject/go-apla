@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package api
 
@@ -33,7 +21,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,29 +28,17 @@ import (
 
 func TestNewEcosystem(t *testing.T) {
 	var (
-		err    error
-		result string
+		err error
 	)
 	if err = keyLogin(1); err != nil {
 		t.Error(err)
 		return
 	}
 	form := url.Values{`Name`: {`test`}}
-	if _, result, err = postTxResult(`NewEcosystem`, &form); err != nil {
+	if _, _, err = postTxResult(`NewEcosystem`, &form); err != nil {
 		t.Error(err)
 		return
 	}
-	var ret ecosystemsResult
-	err = sendGet(`ecosystems`, nil, &ret)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if int64(ret.Number) != converter.StrToInt64(result) {
-		t.Error(fmt.Errorf(`Ecosystems %d != %s`, ret.Number, result))
-		return
-	}
-
 	form = url.Values{`Name`: {crypto.RandSeq(13)}}
 	if err := postTx(`NewEcosystem`, &form); err != nil {
 		t.Error(err)
@@ -230,6 +205,7 @@ func TestAppParams(t *testing.T) {
 	assert.NoError(t, sendGet(`appparams/1`, nil, &ret))
 	if len(ret.List) < 2 {
 		t.Error(fmt.Errorf(`wrong count of parameters %d`, len(ret.List)))
+		return
 	}
 
 	assert.NoError(t, sendGet(fmt.Sprintf(`appparams/1?names=%s1,%[1]s2&ecosystem=1`, rnd), nil, &ret))
@@ -246,7 +222,7 @@ func TestAppParams(t *testing.T) {
 
 	form = url.Values{"Value": {`contract ` + rnd + `Par { data {} conditions {} action
 	{ var row map
-		row=JSONDecode(AppParam(1, "` + rnd + `2"))
+		row=JSONDecode(AppParam(1, "` + rnd + `2", 1))
 	    $result = row["par1"] }
 	}`}, "Conditions": {"true"}, `ApplicationId`: {`1`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
@@ -265,6 +241,6 @@ func TestAppParams(t *testing.T) {
 		assert.Equal(t, item.want, RawToString(ret.Tree))
 	}
 
-	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `400 {"error": "E_PARAMNOTFOUND", "msg": "Parameter myval has not been found" , "params": ["myval"]}`)
+	assert.EqualError(t, sendGet(`appparam/1/myval`, nil, &ret2), `404 {"error":"E_PARAMNOTFOUND","msg":"Parameter myval has not been found"}`)
 	assert.Len(t, ret2.Value, 0)
 }

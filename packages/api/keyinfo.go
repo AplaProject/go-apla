@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package api
 
@@ -46,17 +34,28 @@ type roleInfo struct {
 	Name string `json:"name"`
 }
 
+type notifyInfo struct {
+	RoleID string `json:"role_id"`
+	Count  int64  `json:"count"`
+}
+
 type keyInfoResult struct {
-	Ecosystem string     `json:"ecosystem"`
-	Name      string     `json:"name"`
-	Roles     []roleInfo `json:"roles,omitempty"`
+	Account    string              `json:"account"`
+	Ecosystems []*keyEcosystemInfo `json:"ecosystems"`
+}
+
+type keyEcosystemInfo struct {
+	Ecosystem     string       `json:"ecosystem"`
+	Name          string       `json:"name"`
+	Roles         []roleInfo   `json:"roles,omitempty"`
+	Notifications []notifyInfo `json:"notifications,omitempty"`
 }
 
 func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	logger := getLogger(r)
 
-	keysList := make([]keyInfoResult, 0)
+	keysList := make([]*keyEcosystemInfo, 0)
 	keyID := converter.StringToAddress(params["wallet"])
 	if keyID == 0 {
 		errorResponse(w, errInvalidWallet.Errorf(params["wallet"]))
@@ -70,11 +69,14 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var (
-		found bool
+		account string
+		found   bool
 	)
 
 	for i, ecosystemID := range ids {
-		found, err = getEcosystemKey(keyID, ecosystemID)
+		key := &model.Key{}
+		key.SetTablePrefix(ecosystemID)
+		found, err = key.Get(keyID)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -82,12 +84,18 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 		if !found {
 			continue
 		}
-		keyRes := keyInfoResult{
+
+		// TODO: delete after switching to another account storage scheme
+		if len(account) == 0 {
+			account = key.AccountID
+		}
+
+		keyRes := &keyEcosystemInfo{
 			Ecosystem: converter.Int64ToStr(ecosystemID),
 			Name:      names[i],
 		}
 		ra := &model.RolesParticipants{}
-		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(keyID)
+		roles, err := ra.SetTablePrefix(ecosystemID).GetActiveMemberRoles(key.AccountID)
 		if err != nil {
 			errorResponse(w, err)
 			return
@@ -98,30 +106,50 @@ func (m Mode) getKeyInfoHandler(w http.ResponseWriter, r *http.Request) {
 				logger.WithFields(log.Fields{"type": consts.JSONUnmarshallError, "error": err}).Error("unmarshalling role")
 				errorResponse(w, err)
 				return
-			} else {
-				keyRes.Roles = append(keyRes.Roles, role)
 			}
+			keyRes.Roles = append(keyRes.Roles, role)
 		}
+		keyRes.Notifications, err = m.getNotifications(ecosystemID, key)
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notifications")
+			errorResponse(w, err)
+			return
+		}
+
 		keysList = append(keysList, keyRes)
 	}
 
+	// in test mode, registration is open in the first ecosystem
 	if len(keysList) == 0 && syspar.IsTestMode() {
-		keysList = append(keysList, keyInfoResult{
+		account = converter.AddressToString(keyID)
+		keysList = append(keysList, &keyEcosystemInfo{
 			Ecosystem: converter.Int64ToStr(ids[0]),
 			Name:      names[0],
 		})
 	}
 
-	jsonResponse(w, &keysList)
+	jsonResponse(w, &keyInfoResult{
+		Account:    account,
+		Ecosystems: keysList,
+	})
 }
 
-func getEcosystemKey(keyID, ecosystemID int64) (bool, error) {
-	// registration for the first ecosystem is open in test mode
-	if ecosystemID == 1 && syspar.IsTestMode() {
-		return true, nil
+func (m Mode) getNotifications(ecosystemID int64, key *model.Key) ([]notifyInfo, error) {
+	notif, err := model.GetNotificationsCount(ecosystemID, []string{key.AccountID})
+	if err != nil {
+		return nil, err
 	}
 
-	key := &model.Key{}
-	key.SetTablePrefix(ecosystemID)
-	return key.Get(keyID)
+	list := make([]notifyInfo, 0)
+	for _, n := range notif {
+		if n.RecipientID != key.ID {
+			continue
+		}
+
+		list = append(list, notifyInfo{
+			RoleID: converter.Int64ToStr(n.RoleID),
+			Count:  n.Count,
+		})
+	}
+	return list, nil
 }

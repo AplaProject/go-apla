@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package template
 
@@ -33,6 +21,8 @@ import (
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/AplaProject/go-apla/packages/types"
 )
 
 type tplItem struct {
@@ -42,19 +32,21 @@ type tplItem struct {
 
 type tplList []tplItem
 
-func outMap(v map[string]interface{}) string {
-	keys := make([]string, 0)
-	for key := range v {
-		keys = append(keys, key)
-	}
+func outMap(v *types.Map) string {
+	keys := v.Keys()
 	sort.Strings(keys)
 	values := make([]string, 0, len(keys))
 	for _, key := range keys {
-		switch val := v[key].(type) {
-		case map[string]interface{}:
-			values = append(values, fmt.Sprintf(`%q:%q`, key, outMap(val)))
+		val, ok := v.Get(key)
+		if !ok {
+			continue
+		}
+
+		switch v := val.(type) {
+		case *types.Map:
+			values = append(values, fmt.Sprintf(`%q:%q`, key, outMap(v)))
 		default:
-			values = append(values, fmt.Sprintf(`%q:%q`, key, val))
+			values = append(values, fmt.Sprintf(`%q:%q`, key, v))
 		}
 	}
 	return `{` + strings.Join(values, ` `) + `}`
@@ -78,7 +70,7 @@ func TestObj(t *testing.T) {
 		case []interface{}:
 			result = fmt.Sprintf("%v", v)
 		default:
-			result = outMap(val.(map[string]interface{}))
+			result = outMap(val.(*types.Map))
 		}
 		if result != item.want {
 			t.Errorf("%s != %s", result, item.want)
@@ -391,6 +383,12 @@ var forTest = tplList{
 		`[{"tag":"inputMap","attr":{"@value":"{\"zoom\":\"12\", \"address\": \"some address\", \"area\":\"some area\", \"coords\": \"some cords\"}","maptype":"satelite","name":"mapName","type":"PolyType","validate":{"ping":"pong"}}}]`},
 	{`Map(Input data, satelite, 300)`,
 		`[{"tag":"map","attr":{"@value":"Input data","hmap":"300","maptype":"satelite"}}]`},
+	{`DateTime(DateTime: 1560938400, Location: "Location/Bad")`,
+		`[{"tag":"text","text":"unknown time zone Location/Bad"}]`},
+	{`DateTime(DateTime: 1560938400, Location: "Europe/Luxembourg")`,
+		`[{"tag":"text","text":"2019-06-19 12:00:00"}]`},
+	{`DateTime(DateTime: 1560938400, Location: "Europe/Moscow")`,
+		`[{"tag":"text","text":"2019-06-19 13:00:00"}]`},
 }
 
 func TestFullJSON(t *testing.T) {

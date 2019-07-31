@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package smart
 
@@ -34,7 +22,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -62,6 +49,8 @@ import (
 	"github.com/AplaProject/go-apla/packages/types"
 	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
+
+	"github.com/pkg/errors"
 	"github.com/shopspring/decimal"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/vmihailenco/msgpack.v2"
@@ -70,7 +59,6 @@ import (
 const (
 	nodeBanNotificationHeader = "Your node was banned"
 	historyLimit              = 250
-	dateTimeFormat            = "2006-01-02 15:04:05"
 	contractTxType            = 128
 )
 
@@ -121,7 +109,7 @@ type FlushInfo struct {
 type NotifyInfo struct {
 	Roles       bool // if true then UpdateRolesNotifications, otherwise UpdateNotifications
 	EcosystemID int64
-	List        []int64
+	List        []string
 }
 
 // SmartContract is storing smart contract data
@@ -146,9 +134,10 @@ type SmartContract struct {
 	DbTransaction *model.DbTransaction
 	Rand          *rand.Rand
 	FlushRollback []FlushInfo
-	Notifications []NotifyInfo
+	Notifications types.Notifications
 	GenBlock      bool
 	TimeLimit     int64
+	Key           *model.Key
 }
 
 var (
@@ -247,6 +236,7 @@ var (
 		"Round":                        15,
 		"Floor":                        15,
 		"CheckCondition":               10,
+		"SendExternalTransaction":      100,
 	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
@@ -352,8 +342,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"AllowChangeCondition":         AllowChangeCondition,
 		"StringToBytes":                StringToBytes,
 		"BytesToString":                BytesToString,
-		"SetPubKey":                    SetPubKey,
-		"NewMoney":                     NewMoney,
 		"GetMapKeys":                   GetMapKeys,
 		"SortedKeys":                   SortedKeys,
 		"Append":                       Append,
@@ -365,6 +353,8 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"IsObject":                     IsObject,
 		"DateTime":                     DateTime,
 		"UnixDateTime":                 UnixDateTime,
+		"DateTimeLocation":             DateTimeLocation,
+		"UnixDateTimeLocation":         UnixDateTimeLocation,
 		"UpdateNotifications":          UpdateNotifications,
 		"UpdateRolesNotifications":     UpdateRolesNotifications,
 		"TransactionInfo":              TransactionInfo,
@@ -383,6 +373,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Round":                        Round,
 		"Floor":                        Floor,
 		"CheckCondition":               CheckCondition,
+		"SendExternalTransaction":      SendExternalTransaction,
 	}
 
 	switch vt {
@@ -434,8 +425,6 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 			"BindWallet":       {},
 			"UnbindWallet":     {},
 			"EditEcosysName":   {},
-			"SetPubKey":        {},
-			"NewMoney":         {},
 			"UpdateNodesBan":   {},
 			"UpdateCron":       {},
 			"CreateOBS":        {},
@@ -455,8 +444,10 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 		return true
 	}
 
+	contract := sc.TxContract.StackCont[len(sc.TxContract.StackCont)-1].(string)
+
 	for _, item := range names {
-		if sc.TxContract.Name == `@1`+item {
+		if contract == `@1`+item {
 			return true
 		}
 	}
@@ -501,7 +492,7 @@ func ContractAccess(sc *SmartContract, names ...interface{}) bool {
 
 // RoleAccess checks whether the name of the role matches one of the names listed in the parameters.
 func RoleAccess(sc *SmartContract, ids ...interface{}) (bool, error) {
-	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.TxSmart.KeyID)
+	rolesList, err := model.GetMemberRoles(sc.DbTransaction, sc.TxSmart.EcosystemID, sc.Key.AccountID)
 	if err != nil {
 		return false, err
 	}
@@ -537,20 +528,13 @@ func ContractConditions(sc *SmartContract, names ...interface{}) (bool, error) {
 			}
 			block := contract.GetFunc(`conditions`)
 			if block == nil {
-				return false, logErrorfShort(eContractCondition, name, consts.EmptyObject)
+				return true, nil
 			}
-			vars := map[string]interface{}{
-				`ecosystem_id`:      int64(sc.TxSmart.EcosystemID),
-				`key_id`:            sc.TxSmart.KeyID,
-				`sc`:                sc,
-				`original_contract`: ``,
-				`this_contract`:     ``,
-				`guest_key`:         consts.GuestKey,
-			}
+			vars := sc.getExtend()
 			if err := sc.AppendStack(name); err != nil {
 				return false, err
 			}
-			_, err := VMRun(sc.VM, block, []interface{}{}, &vars)
+			_, err := VMRun(sc.VM, block, []interface{}{}, vars)
 			if err != nil {
 				return false, err
 			}
@@ -732,8 +716,8 @@ func getColumns(columns string) (colsSQL string, colout []byte, err error) {
 
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) (err error) {
-	if !accessContracts(sc, `NewTable`, `NewTableJoint`, `Import`) {
-		return fmt.Errorf(`CreateTable can be only called from NewTable, NewTableJoint or Import`)
+	if err := validateAccess("CreateTable", sc, nNewTable, nNewTableJoint, nImport); err != nil {
+		return err
 	}
 
 	if len(name) == 0 {
@@ -1030,12 +1014,10 @@ func DBSelect(sc *SmartContract, tblname string, inColumns interface{}, id int64
 		result = append(result, reflect.ValueOf(row).Interface())
 	}
 	if perm != nil && len(perm[`filter`]) > 0 {
-		fltResult, err := VMEvalIf(sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
-			&map[string]interface{}{
-				`data`: result, `original_contract`: ``, `this_contract`: ``,
-				`ecosystem_id`: sc.TxSmart.EcosystemID,
-				`key_id`:       sc.TxSmart.KeyID, `sc`: sc,
-				`block_time`: 0, `time`: sc.TxSmart.Time})
+		fltResult, err := VMEvalIf(
+			sc.VM, perm[`filter`], uint32(sc.TxSmart.EcosystemID),
+			sc.getExtend(),
+		)
 		if err != nil {
 			return 0, nil, err
 		}
@@ -1344,7 +1326,7 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		return err
 	}
 
-	isExist := strings.HasSuffix(sc.TxContract.Name, nEditColumn)
+	isExist := accessContracts(sc, nEditColumn)
 	tEx := &model.Table{}
 	prefix := converter.Int64ToStr(sc.TxSmart.EcosystemID)
 	tEx.SetTablePrefix(prefix)
@@ -1495,30 +1477,6 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 	return
 }
 
-// SetPubKey updates the publis key
-func SetPubKey(sc *SmartContract, id int64, pubKey []byte) (qcost int64, err error) {
-	if err = validateAccess(`SetPubKey`, sc, nNewUser); err != nil {
-		return
-	}
-	if len(pubKey) >= consts.PubkeySizeLength*2 {
-		pubKey, err = crypto.HexToPub(string(pubKey))
-		if err != nil {
-			return 0, logError(err, consts.ConversionError, "decoding public key from hex")
-		}
-	}
-	qcost, _, err = sc.update([]string{`pub`}, []interface{}{pubKey}, `1_keys`, `id`, id)
-	return
-}
-
-func NewMoney(sc *SmartContract, id int64, amount, comment string) (err error) {
-	if err = validateAccess(`NewMoney`, sc, nNewUser); err != nil {
-		return err
-	}
-	_, _, err = sc.insert([]string{`id`, `amount`, `ecosystem`}, []interface{}{id, amount,
-		sc.TxSmart.EcosystemID}, `1_keys`)
-	return err
-}
-
 // PermColumn is contract func
 func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 	if err := validateAccess(`PermColumn`, sc, nEditColumn); err != nil {
@@ -1531,7 +1489,7 @@ func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
 		Columns string
 	}
 	temp := &cols{}
-	err := model.DBConn.Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
+	err := model.GetDB(sc.DbTransaction).Table(tables).Where("name = ?", tableName).Select("columns").Find(temp).Error
 	if err != nil {
 		return logErrorDB(err, "querying columns by table name")
 	}
@@ -1613,12 +1571,6 @@ func SortedKeys(m *types.Map) []interface{} {
 		ret[k] = v
 	}
 	return ret
-}
-
-// Date formats timestamp to specified date format
-func Date(timeFormat string, timestamp int64) string {
-	t := time.Unix(timestamp, 0)
-	return t.Format(timeFormat)
 }
 
 func httpRequest(req *http.Request, headers map[string]interface{}) (string, error) {
@@ -2007,7 +1959,7 @@ func GetHistoryRaw(transaction *model.DbTransaction, ecosystem int64, tableName 
 		rollbackList = append(rollbackList, rollback)
 		curVal = rollback
 	}
-	if len((*txs)[len(*txs)-1].Data) > 0 {
+	if len(*txs) > 0 && len((*txs)[len(*txs)-1].Data) > 0 {
 		prev := rollbackList[len(rollbackList)-1].(*types.Map)
 		prev.Set(`block_id`, `1`)
 		prev.Set(`id`, ``)
@@ -2043,37 +1995,12 @@ func StackOverflow(sc *SmartContract) {
 	StackOverflow(sc)
 }
 
-func BlockTime(sc *SmartContract) string {
-	var blockTime int64
-	if sc.BlockData != nil {
-		blockTime = sc.BlockData.Time
-	}
-	if sc.OBS {
-		blockTime = time.Now().Unix()
-	}
-	return Date(dateTimeFormat, blockTime)
-}
-
-func DateTime(unix int64) string {
-	return Date(dateTimeFormat, unix)
-}
-
-func UnixDateTime(value string) int64 {
-	t, err := time.Parse(dateTimeFormat, value)
-	if err != nil {
-		return 0
-	}
-	return t.Unix()
-}
-
-func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interface{}) {
-	userList := make([]int64, 0, len(users))
-	for i, userID := range users {
-		switch v := userID.(type) {
-		case int64:
-			userList = append(userList, v)
+func UpdateNotifications(sc *SmartContract, ecosystemID int64, accounts ...interface{}) {
+	accountList := make([]string, 0, len(accounts))
+	for i, id := range accounts {
+		switch v := id.(type) {
 		case string:
-			userList = append(userList, converter.StrToInt64(v))
+			accountList = append(accountList, v)
 		case []interface{}:
 			if i == 0 {
 				UpdateNotifications(sc, ecosystemID, v...)
@@ -2081,7 +2008,7 @@ func UpdateNotifications(sc *SmartContract, ecosystemID int64, users ...interfac
 			}
 		}
 	}
-	sc.Notifications = append(sc.Notifications, NotifyInfo{false, ecosystemID, userList})
+	sc.Notifications.AddAccounts(ecosystemID, accountList...)
 }
 
 func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...interface{}) {
@@ -2099,7 +2026,7 @@ func UpdateRolesNotifications(sc *SmartContract, ecosystemID int64, roles ...int
 			}
 		}
 	}
-	sc.Notifications = append(sc.Notifications, NotifyInfo{true, ecosystemID, rolesList})
+	sc.Notifications.AddRoles(ecosystemID, rolesList...)
 }
 
 func TransactionData(blockId int64, hash []byte) (data *TxInfo, err error) {
@@ -2382,4 +2309,34 @@ func PubToHex(in interface{}) (ret string) {
 		ret = crypto.PubToHex(v)
 	}
 	return
+}
+
+func SendExternalTransaction(sc *SmartContract, uid, url, externalContract string,
+	params *types.Map, resultContract string) (err error) {
+	var (
+		out, insertQuery string
+	)
+	if _, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID); err != nil {
+		return nil
+	}
+
+	out, err = JSONEncode(params)
+	if err != nil {
+		return err
+	}
+	logger := sc.GetLogger()
+	sqlBuilder := &qb.SQLQueryBuilder{
+		Entry: logger,
+		Table: `external_blockchain`,
+		Fields: []string{`value`, `uid`, `url`, `external_contract`,
+			`result_contract`, `tx_time`},
+		FieldValues: []interface{}{out, uid, url, externalContract,
+			resultContract, sc.TxSmart.Time},
+		KeyTableChkr: model.KeyTableChecker{},
+	}
+	insertQuery, err = sqlBuilder.GetSQLInsertQuery(model.NextIDGetter{Tx: sc.DbTransaction})
+	if err != nil {
+		return
+	}
+	return model.GetDB(sc.DbTransaction).Exec(insertQuery).Error
 }

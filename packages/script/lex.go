@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package script
 
@@ -177,7 +165,7 @@ type Lexem struct {
 	Type   uint32 // Type of the lexem
 	Ext    uint32
 	Value  interface{} // Value of lexem
-	Line   uint32      // Line of the lexem
+	Line   uint16      // Line of the lexem
 	Column uint32      // Position inside the line
 }
 
@@ -262,7 +250,7 @@ func lexParser(input []rune) (Lexems, error) {
 				if name != `else` && name != `elif` {
 					for i := 0; i < ifbuf[len(ifbuf)-1].count; i++ {
 						lexems = append(lexems, &Lexem{lexSys | (uint32('}') << 8), 0,
-							uint32('}'), line, lexOff - offline + 1})
+							uint32('}'), uint16(line), lexOff - offline + 1})
 					}
 					ifbuf = ifbuf[:len(ifbuf)-1]
 				} else {
@@ -337,8 +325,8 @@ func lexParser(input []rune) (Lexems, error) {
 					case keyElif:
 						if len(ifbuf) > 0 {
 							lexems = append(lexems, &Lexem{lexKeyword | (keyElse << 8), 0,
-								uint32(keyElse), line, lexOff - offline + 1},
-								&Lexem{lexSys | ('{' << 8), 0, uint32('{'), line, lexOff - offline + 1})
+								uint32(keyElse), uint16(line), lexOff - offline + 1},
+								&Lexem{lexSys | ('{' << 8), 0, uint32('{'), uint16(line), lexOff - offline + 1})
 							lexID = lexKeyword | (keyIf << 8)
 							value = uint32(keyIf)
 							ifbuf[len(ifbuf)-1].count++
@@ -348,7 +336,7 @@ func lexParser(input []rune) (Lexems, error) {
 							lexf := *lexems[len(lexems)-1]
 							if lexf.Type&0xff != lexKeyword || lexf.Value.(uint32) != keyFunc {
 								lexems = append(lexems, &Lexem{lexKeyword | (keyFunc << 8), 0,
-									keyFunc, line, lexOff - offline + 1})
+									keyFunc, uint16(line), lexOff - offline + 1})
 							}
 						}
 						value = name
@@ -374,7 +362,7 @@ func lexParser(input []rune) (Lexems, error) {
 				}
 			}
 			if lexID != lexComment {
-				lexems = append(lexems, &Lexem{lexID, ext, value, line, lexOff - offline + 1})
+				lexems = append(lexems, &Lexem{lexID, ext, value, uint16(line), lexOff - offline + 1})
 			}
 		}
 		if (flags & lexfPush) != 0 {

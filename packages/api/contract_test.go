@@ -1,30 +1,18 @@
-// Apla Software includes an integrated development
-// environment with a multi-level system for the management
-// of access rights to data, interfaces, and Smart contracts. The
-// technical characteristics of the Apla Software are indicated in
-// Apla Technical Paper.
-
-// Apla Users are granted a permission to deal in the Apla
-// Software without restrictions, including without limitation the
-// rights to use, copy, modify, merge, publish, distribute, sublicense,
-// and/or sell copies of Apla Software, and to permit persons
-// to whom Apla Software is furnished to do so, subject to the
-// following conditions:
-// * the copyright notice of GenesisKernel and EGAAS S.A.
-// and this permission notice shall be included in all copies or
-// substantial portions of the software;
-// * a result of the dealing in Apla Software cannot be
-// implemented outside of the Apla Platform environment.
-
-// THE APLA SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY
-// OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
-// TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
-// PARTICULAR PURPOSE, ERROR FREE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-// IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR
-// THE USE OR OTHER DEALINGS IN THE APLA SOFTWARE.
+// Copyright (C) 2017, 2018, 2019 EGAAS S.A.
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 2 of the License, or (at
+// your option) any later version.
+//
+// This program is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 
 package api
 
@@ -128,18 +116,54 @@ func TestDBFindContract(t *testing.T) {
 	assert.NoError(t, keyLogin(1))
 
 	rnd := `db` + crypto.RandSeq(4)
-	form := url.Values{`Value`: {`contract ` + rnd + ` {
-		    data {
+	form := url.Values{`Value`: {`contract ` + rnd + `1 {
+		data {
+		}
+		action { 
+			var fm array
+			fm = DBFind("@1contracts").Where({"ecosystem": $ecosystem_id, 
+			   "app_id": 1, ,"id": {"$gt": 2}})
+			$result = Len(fm)
+		}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form),
+		`{"type":"panic","error":"unexpected lexem; expecting string key [CreateContract @1NewContract:32]"}`)
+	form = url.Values{`Value`: {`contract ` + rnd + `2 {
+				data {
+				}
+				action {
+					var fm array
+					fm = DBFind("@1contracts").Where({"ecosystem": $ecosystem_id,
+					   "app_id": 1,"id": {"$gt": 2},})
+				}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form),
+		`{"type":"panic","error":"unexpected lexem; expecting string key [CreateContract @1NewContract:32]"}`)
+	form = url.Values{`Value`: {`contract ` + rnd + `3 {
+			data {
 			}
 			action { 
-				var ret i j k m array
-				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}}).Limit(100)
-				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}}).Limit(100)
-				j = DBFind("contracts").Where({id: {$lt: 10}})
-				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, id: {$neq: 26} ]})
-				m = DBFind("contracts").Where({id: 10, name: "EditColumn", $or: [id: 10, id: {$neq: 20}]})
-				$result = Sprintf("%d %d %d %d %d", Len(ret), Len(i), Len(j), Len(k), Len(m))
+				var fm array
+				fm = [1, 2, 3,]
 			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
+	assert.EqualError(t, postTx(`NewContract`, &form),
+		`{"type":"panic","error":"unexpected lexem; expecting string, int value or variable [CreateContract @1NewContract:32]"}`)
+
+	form = url.Values{`Value`: {`contract ` + rnd + ` {
+	   		    data {
+	   			}
+	   			action {
+	   				var ret i j k m array
+	   				var inr inc map
+	   				var rids array
+	                   rids = JSONDecode("[]")//role["roles_access"])
+	   				inr = DBFind("@1roles_participants").Where({"ecosystem": $ecosystem_id, "role->id": {"$in": rids}, "member->member_id": $key_id, "deleted": 0}).Row()
+	   				inc = DBFind("contracts").Where({"ecosystem": $ecosystem_id, "id": {"$in": rids}}).Row()
+	   				ret = DBFind("contracts").Where({value: {"$ibegin": "CONTRACT"}}).Limit(100)
+	   				i = DBFind("contracts").Where({value: {$ilike: "rEmove"}}).Limit(100)
+	   				j = DBFind("contracts").Where({id: {$lt: 10}})
+	   				k = DBFind("contracts").Where({id: {$lt: 11}, $or: [{id: 5}, {id: 7}], $and: [{id: {$neq: 25}}, id: {$neq: 26} ]})
+	   				m = DBFind("contracts").Where({id: 10, name: "EditColumn", $or: [id: 10, id: {$neq: 20}]})
+	   				$result = Sprintf("%d %d %d %d %d", Len(ret), Len(i), Len(j), Len(k), Len(m))
+	   			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
 	assert.NoError(t, postTx(`NewContract`, &form))
 	_, msg, err := postTxResult(rnd, &url.Values{})
 	assert.NoError(t, err)
@@ -236,12 +260,14 @@ func TestHardContract(t *testing.T) {
 			}
 			action { 
 				var i int
-				while i < 200 {
-				 DBFind("pages").Where("id=5")
-				 DBUpdate("pages", 5, "value", "P(text)")
-				 DBInsert("pages", "name,value,conditions", Sprintf("` + rnd + `%d", i), "P(text)","true")
-				 DBFind("pages").Where("id=6")
-				 DBUpdate("pages", 6, "value", "P(text)")
+				while i < 500 {
+				 DBFind("pages").Where({id:5})
+				 DBUpdate("pages", 5, {"value":"P(text)"})
+				 DBInsert("pages", {"name": Sprintf("` + rnd + `%d", i),
+				      "value":"P(text)", "conditions": "true"})
+				 DBFind("pages").Where({id:6})
+				 DBFind("pages").Where({id:7})
+				 DBUpdate("pages", 6, {"value": "P(text)"})
 				 i = i + 1
 			   }
 			}}`}, "ApplicationId": {"1"}, `Conditions`: {`true`}}
@@ -375,6 +401,18 @@ func TestNewContracts(t *testing.T) {
 }
 
 var contracts = []smartContract{
+	{`Empty`, `contract Empty {
+		action {
+			var a1 array
+			var a2 map
+			$a1 = []
+			$a2 = {}
+			Test("result", "ok")
+		}
+	}`, []smartParams{
+		{nil, map[string]string{`result`: `ok`}},
+	}},
+
 	{`FmtMoney`, `contract FmtMoney {
 		action {
 			Test("result", FormatMoney("123456789", 0))
@@ -1664,7 +1702,7 @@ func TestInsert(t *testing.T) {
 		conditions {
 		}
 		action {
-			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2", 
+			NewTable("Name,Columns,ApplicationId,Permissions", "` + name + `2",
 				"[{\"name\":\"MyName\",\"type\":\"varchar\", \"index\": \"0\", \"conditions\":{\"update\":\"true\", \"read\":\"true\"}}]", 100,
 				 "{\"insert\": \"true\", \"update\" : \"true\", \"new_column\": \"true\"}")
 		}
@@ -1681,4 +1719,245 @@ func TestInsert(t *testing.T) {
 	require.NoError(t, postTx(name+`1`, &url.Values{}))
 	require.NoError(t, postTx(name+`2`, &url.Values{}))
 	t.Error(`OK`)
+}
+
+func TestErrors(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+
+	name := randName(`cnt`)
+
+	form := url.Values{`Value`: {`contract ` + name + `1 {
+		action {
+			// comment
+			 DBFind("qq")
+		}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.EqualError(t, postTx(name+`1`, &url.Values{}),
+		`{"type":"panic","error":"pq: relation \"1_qq\" does not exist [DBSelect @1`+name+`1:4]"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `2 {
+				action {
+					// comment
+					var i int
+					i = 1/0
+				}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`2`, &url.Values{}),
+		`{"type":"panic","error":"divided by zero [@1`+name+`2:5]"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `5 {
+			action {
+				// comment
+				Throw("Problem", "throw message")
+			}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`5`, &url.Values{}),
+		`{"type":"panic","error":"throw message [Throw @1`+name+`5:4]"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `4 {
+			action {
+				// comment
+				error("error message")
+			}}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`4`, &url.Values{}),
+		`{"type":"error","error":"error message"}`)
+
+	form = url.Values{`Value`: {`contract ` + name + `3 {
+		        data {
+					Par int
+				}
+				action {
+					if $Par == 1 {
+					   ` + name + `1()
+					}
+					if $Par == 2 {
+						` + name + `2()
+					 }
+				 }}`}, `Conditions`: {`true`}, `ApplicationId`: {`1`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.EqualError(t, postTx(name+`3`, &url.Values{`Par`: {`1`}}),
+		`{"type":"panic","error":"pq: relation \"1_qq\" does not exist [DBSelect @1`+name+`1:4 @1`+name+`3:6]"}`)
+	assert.EqualError(t, postTx(name+`3`, &url.Values{`Par`: {`2`}}),
+		`{"type":"panic","error":"divided by zero [@1`+name+`2:5 @1`+name+`3:9]"}`)
+
+	t.Error(`OK`)
+}
+
+func TestExternalNetwork(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	var form url.Values
+	name := `cnt` + crypto.RandSeq(4)
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Hashes {
+		data {
+			hash string
+			block int
+			UID    string
+		}
+		action { 
+			Println("SUCCESS", $UID, $hash, $block )
+			if $UID == "123456" {
+				$result = "ok"
+			}
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Result {
+		data {
+			UID  string
+			Status int
+			Block int
+			Msg   string "optional"
+		}
+		action { 
+			Println("Result Contract", $UID, $Status, $Block, $Msg )
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `Errors {
+		data {
+			hash string
+			block int
+			UID    string "optional"
+		}
+		action { 
+			if $UID == "stop" {
+				error("Error message")
+			}
+			$result = 1/0
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `2 {
+		action { 
+			var params map
+			params["hash"] = PubToHex($txhash)
+			params["block"] = $block
+			SendExternalTransaction( "123456", "http://localhost:7079", "@1` + name + `Hashes",   
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "654321", "http://localhost:7079", "@1` + name + `Hashes",  
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "stop", "http://localhost:7079", "@1` + name + `Errors", 
+			    params, "@1` + name + `Result")
+			SendExternalTransaction( "zero", "http://localhost:7079", "@1` + name + `Errors", 
+			    params, "@1` + name + `Result")
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name+`2`, &url.Values{}))
+
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + `3 {
+		action { 
+			var params map
+			params["hash"] = PubToHex($txhash)
+			params["block"] = $block
+			SendExternalTransaction( "77", "http://localhost:7079", "@1` + name + `Hashes",   
+			    params, "@1None")
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name+`3`, &url.Values{}))
+}
+
+func TestApos(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := randName(`cnt`)
+	form := url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		data {
+			Address string
+		}
+		action {
+			var m map
+			var id int
+			m["member_name"] = "test"
+			m["member_info->country"] = $Address 
+			m["member_info->ooops"] = "seses' seseses "
+			id = DBInsert("members", m)
+			m["member_info->new"] = "ok'; ok"
+			m["memb'er_info->ne'wq"] = "stop'"
+			DBUpdate("members", id, m)
+		}}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	assert.NoError(t, postTx(name, &url.Values{`Address`: {"Name d'Company"}}))
+}
+
+func TestCondition(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	var form url.Values
+
+	name := `cnt` + crypto.RandSeq(4)
+	form = url.Values{"Name": {name}, "Value": {`contract ` + name + ` {
+		action { 
+			Println("COND" )
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+	form = url.Values{"Name": {name + `2`}, "Value": {`contract ` + name + `2 {
+		conditions {
+		}
+		action { 
+			Println("COND 2" )
+		}
+	}`},
+		"ApplicationId": {`1`}, "Conditions": {`true`}}
+	assert.NoError(t, postTx(`NewContract`, &form))
+
+	assert.NoError(t, postTx(`NewPage`, &url.Values{
+		"ApplicationId": {`1`},
+		"Name":          {name},
+		"Value":         {`Div(Body: "Condition 2 - test")`},
+		"Menu":          {`default_menu`},
+		"Conditions":    {`ContractConditions("` + name + `2")`},
+	}))
+	var ret listResult
+	err := sendGet(`list/pages`, nil, &ret)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	id := ret.Count
+
+	assert.NoError(t, postTx(`EditPage`, &url.Values{
+		"Id":         {id},
+		"Value":      {`Div(Body: "Condition 1 - test")`},
+		"Conditions": {`ContractConditions("` + name + `")`},
+	}))
+
+	assert.NoError(t, postTx(`EditPage`, &url.Values{
+		"Id":         {id},
+		"Value":      {`Div(Body: "Condition - test")`},
+		"Conditions": {`true`},
+	}))
+}
+
+func TestCurrentKeyFromAccount(t *testing.T) {
+	assert.NoError(t, keyLogin(1))
+	name := randName(t.Name())
+	form := url.Values{
+		"Name": {name},
+		"Value": {`contract ` + name + ` {
+			data {
+				Account string
+			}
+			action {
+				info CurrentKeyFromAccount($Account)
+			}
+		}`},
+		"ApplicationId": {"1"},
+		"Conditions":    {"true"},
+	}
+	assert.NoError(t, postTx("NewContract", &form))
+	expected := fmt.Sprintf(`{"type":"info","error":"%d"}`, converter.StringToAddress(gAddress))
+	assert.Error(t, postTx(name, &url.Values{`Account`: {gAddress}}), expected)
 }
