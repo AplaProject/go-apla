@@ -51,6 +51,9 @@ func ProcessDir(dir string, recurse bool) {
 						}
 					}
 				}
+				if len(prefix) > 0 {
+					prefix += "\r\n"
+				}
 				off := bytes.IndexByte(fdata, 0xa)
 				if len(fdata) <= len(copyright) || !bytes.Equal(fdata[off+1:off+1+len(copyright)], copyright) {
 					off := bytes.Index(fdata, []byte(`package`))
