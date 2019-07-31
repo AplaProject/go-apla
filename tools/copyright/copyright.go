@@ -11,6 +11,10 @@ import (
 
 // The program inserts copyright notice at the beginning of .go files.
 
+const (
+	root = `https://github.com/AplaProject/go-apla/blob/master`
+)
+
 var (
 	copyright []byte
 )
@@ -21,7 +25,12 @@ func ProcessDir(dir string, recurse bool) {
 	if err != nil {
 		fmt.Println(err)
 	}
-
+	path, err := filepath.Abs(dir)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	path = path[strings.Index(path, `go-apla`)+7:]
 	for _, file := range files {
 		fname := file.Name()
 		fullName := filepath.Join(dir, fname)
@@ -31,12 +40,14 @@ func ProcessDir(dir string, recurse bool) {
 				fmt.Println(err)
 				os.Exit(1)
 			} else {
-				if len(fdata) <= len(copyright) || bytes.Compare(fdata[:len(copyright)], copyright) != 0 {
+				off := bytes.IndexByte(fdata, 0xa)
+				if len(fdata) <= len(copyright) || bytes.Compare(fdata[off+1:off+1+len(copyright)], copyright) != 0 {
 					off := bytes.Index(fdata, []byte(`package`))
 					if off == -1 {
 						fmt.Println(`...package has not been found`)
 					} else {
-						out := copyright
+						out := append([]byte(fmt.Sprintf("// %s%s/%s\r\n", root, path, fname)),
+							copyright...)
 						out = append(out, fdata[off:]...)
 						if err := ioutil.WriteFile(fullName, out, 0644); err == nil {
 							fmt.Println(`...Overwrited`)
@@ -62,7 +73,9 @@ func main() {
 			copyright = append(copyright, 0xa)
 		}
 		ProcessDir("../..", false)
-		ProcessDir("../../packages", true)
+		//		ProcessDir("../../cmd", true)
+		//		ProcessDir("../../packages", true)
+		//		ProcessDir("../../tools", true)
 	} else {
 		fmt.Println(err)
 	}
