@@ -97,12 +97,8 @@ func sendUserStats(user int64, stats []notificationRecord) {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("notification statistic")
 	}
 
-	ok, err := publisher.Write(user, string(rawStats))
+	err = publisher.Write(user, string(rawStats))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
-	}
-
-	if !ok {
-		log.WithFields(log.Fields{"type": consts.CentrifugoError, "error": err}).Error("writing to centrifugo")
 	}
 }

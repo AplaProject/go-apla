@@ -17,6 +17,7 @@
 package publisher
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"strconv"
@@ -57,7 +58,10 @@ var (
 // InitCentrifugo client
 func InitCentrifugo(cfg conf.CentrifugoConfig) {
 	config = cfg
-	publisher = gocent.NewClient(cfg.URL, cfg.Secret, centrifugoTimeout)
+	publisher = gocent.New(gocent.Config{
+		Addr: cfg.URL,
+		Key:  cfg.Key,
+	})
 }
 
 func GetHMACSign(userID int64) (string, string, error) {
@@ -75,15 +79,18 @@ func GetHMACSign(userID int64) (string, string, error) {
 }
 
 // Write is publishing data to server
-func Write(userID int64, data string) (bool, error) {
-	return publisher.Publish("client"+strconv.FormatInt(userID, 10), []byte(data))
+func Write(userID int64, data string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), centrifugoTimeout)
+	defer cancel()
+	return publisher.Publish(ctx, "client"+strconv.FormatInt(userID, 10), []byte(data))
 }
 
 // GetStats returns Stats
-func GetStats() (gocent.Stats, error) {
+func GetStats() (gocent.InfoResult, error) {
 	if publisher == nil {
-		return gocent.Stats{}, fmt.Errorf("publisher not initialized")
+		return gocent.InfoResult{}, fmt.Errorf("publisher not initialized")
 	}
-
-	return publisher.Stats()
+	ctx, cancel := context.WithTimeout(context.Background(), centrifugoTimeout)
+	defer cancel()
+	return publisher.Info(ctx)
 }
