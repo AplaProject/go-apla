@@ -59,9 +59,10 @@ func (n *Notification) TableName() string {
 }
 
 type NotificationsCount struct {
-	RecipientID int64 `gorm:"recipient_id"`
-	RoleID      int64 `gorm:"role_id"`
-	Count       int64 `gorm:"count"`
+	RecipientID int64  `gorm:"recipient_id"`
+	Account     string `gorm:"account"`
+	RoleID      int64  `gorm:"role_id"`
+	Count       int64  `gorm:"count"`
 }
 
 // GetNotificationsCount returns all unclosed notifications by users and ecosystem through role_id
@@ -69,13 +70,13 @@ type NotificationsCount struct {
 func GetNotificationsCount(ecosystemID int64, accounts []string) ([]NotificationsCount, error) {
 	result := make([]NotificationsCount, 0, len(accounts))
 	for _, account := range accounts {
-		query := `SELECT k.id as "recipient_id", '0' as "role_id", count(n.id)
+		query := `SELECT k.id as "recipient_id", '0' as "role_id", count(n.id), account
 			FROM "1_keys" k
 			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '1' and n.recipient->>'account' = k.account
 			WHERE k.ecosystem = ? AND k.account = ?
 			GROUP BY recipient_id, role_id
 			UNION
-			SELECT k.id as "recipient_id", rp.role->>'id' as "role_id", count(n.id)
+			SELECT k.id as "recipient_id", rp.role->>'id' as "role_id", count(n.id), account
 			FROM "1_keys" k
 			INNER JOIN "1_roles_participants" rp ON rp.member->>'account' = k.account
 			LEFT JOIN "1_notifications" n ON n.ecosystem = k.ecosystem AND n.closed = 0 AND n.notification->>'type' = '2' AND n.recipient->>'role_id' = rp.role->>'id'

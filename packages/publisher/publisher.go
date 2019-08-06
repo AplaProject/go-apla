@@ -79,10 +79,10 @@ func GetHMACSign(userID int64) (string, string, error) {
 }
 
 // Write is publishing data to server
-func Write(userID int64, data string) error {
+func Write(account string, data string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), centrifugoTimeout)
 	defer cancel()
-	return publisher.Publish(ctx, "client"+strconv.FormatInt(userID, 10), []byte(data))
+	return publisher.Publish(ctx, "client"+account, []byte(data))
 }
 
 // GetStats returns Stats

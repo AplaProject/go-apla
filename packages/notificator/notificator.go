@@ -40,8 +40,8 @@ func UpdateNotifications(ecosystemID int64, accounts []string) {
 		return
 	}
 
-	for user, n := range notificationsStats {
-		sendUserStats(user, *n)
+	for account, n := range notificationsStats {
+		sendUserStats(account, *n)
 	}
 }
 
@@ -51,7 +51,7 @@ func UpdateRolesNotifications(ecosystemID int64, roles []int64) {
 	UpdateNotifications(ecosystemID, members)
 }
 
-func getEcosystemNotificationStats(ecosystemID int64, users []string) (map[int64]*[]notificationRecord, error) {
+func getEcosystemNotificationStats(ecosystemID int64, users []string) (map[string]*[]notificationRecord, error) {
 	result, err := model.GetNotificationsCount(ecosystemID, users)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting notification count")
@@ -61,8 +61,8 @@ func getEcosystemNotificationStats(ecosystemID int64, users []string) (map[int64
 	return parseRecipientNotification(result, ecosystemID), nil
 }
 
-func parseRecipientNotification(rows []model.NotificationsCount, systemID int64) map[int64]*[]notificationRecord {
-	recipientNotifications := make(map[int64]*[]notificationRecord)
+func parseRecipientNotification(rows []model.NotificationsCount, systemID int64) map[string]*[]notificationRecord {
+	recipientNotifications := make(map[string]*[]notificationRecord)
 
 	for _, r := range rows {
 		if r.RecipientID == 0 {
@@ -75,7 +75,7 @@ func parseRecipientNotification(rows []model.NotificationsCount, systemID int64)
 			RecordsCount: r.Count,
 		}
 
-		nr, ok := recipientNotifications[r.RecipientID]
+		nr, ok := recipientNotifications[r.Account]
 		if ok {
 			*nr = append(*nr, roleNotifications)
 			continue
@@ -85,19 +85,19 @@ func parseRecipientNotification(rows []model.NotificationsCount, systemID int64)
 			roleNotifications,
 		}
 
-		recipientNotifications[r.RecipientID] = &records
+		recipientNotifications[r.Account] = &records
 	}
 
 	return recipientNotifications
 }
 
-func sendUserStats(user int64, stats []notificationRecord) {
+func sendUserStats(account string, stats []notificationRecord) {
 	rawStats, err := json.Marshal(stats)
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.JSONMarshallError, "error": err}).Error("notification statistic")
 	}
 
-	err = publisher.Write(user, string(rawStats))
+	err = publisher.Write(account, string(rawStats))
 	if err != nil {
 		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("writing to centrifugo")
 	}
