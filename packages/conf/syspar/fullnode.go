@@ -40,7 +40,6 @@ var (
 type fullNodeJSON struct {
 	TCPAddress string `json:"tcp_address"`
 	APIAddress string `json:"api_address"`
-	//	KeyID      json.Number `json:"key_id"`
 	PublicKey string      `json:"public_key"`
 	UnbanTime json.Number `json:"unban_time,er"`
 	Stopped   bool        `json:"stopped"`
