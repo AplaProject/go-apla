@@ -29,6 +29,7 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/api"
 	conf "github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/daemons"
@@ -244,6 +245,10 @@ func Start() {
 	defer delPidFile()
 
 	smart.InitVM()
+	if err := syspar.ReadNodeKeys(); err != nil {
+		log.Errorf("can't read node keys: %s", err)
+		Exit(1)
+	}
 	if model.DBConn != nil {
 		if err := model.UpdateSchema(); err != nil {
 			log.WithFields(log.Fields{"error": err}).Error("on running update migrations")

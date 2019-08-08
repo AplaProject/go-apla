@@ -72,12 +72,10 @@ func NodeContract(Name string) (result contractResult, err error) {
 		err = fmt.Errorf(`getuid has returned empty uid`)
 		return
 	}
-	NodePrivateKey, NodePublicKey, err = utils.GetNodeKeys()
-	if err != nil || len(NodePrivateKey) == 0 {
-		if err == nil {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-			err = errors.New(`empty node private key`)
-		}
+	NodePrivateKey, NodePublicKey = utils.GetNodeKeys()
+	if len(NodePrivateKey) == 0 {
+		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+		err = errors.New(`empty node private key`)
 		return
 	}
 	sign, err = crypto.SignString(NodePrivateKey, ret.UID)

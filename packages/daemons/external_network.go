@@ -32,7 +32,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/transaction"
-	"github.com/AplaProject/go-apla/packages/utils"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -61,9 +60,7 @@ var enOnRun uint32
 func loginNetwork(urlPath string) (connect *api.Connect, err error) {
 	if len(nodePrivateKey) == 0 {
 		var pubKey []byte
-		if nodePrivateKey, err = utils.GetNodePrivateKey(); err != nil {
-			return
-		}
+		nodePrivateKey = syspar.GetNodePrivKey()
 		if pubKey, err = crypto.PrivateToPublic(nodePrivateKey); err != nil {
 			return
 		}

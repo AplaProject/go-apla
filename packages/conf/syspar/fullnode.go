@@ -38,19 +38,18 @@ var (
 
 //because of PublicKey is byte
 type fullNodeJSON struct {
-	TCPAddress string      `json:"tcp_address"`
-	APIAddress string      `json:"api_address"`
-	KeyID      json.Number `json:"key_id"`
-	PublicKey  string      `json:"public_key"`
-	UnbanTime  json.Number `json:"unban_time,er"`
-	Stopped    bool        `json:"stopped"`
+	TCPAddress string `json:"tcp_address"`
+	APIAddress string `json:"api_address"`
+	//	KeyID      json.Number `json:"key_id"`
+	PublicKey string      `json:"public_key"`
+	UnbanTime json.Number `json:"unban_time,er"`
+	Stopped   bool        `json:"stopped"`
 }
 
 // FullNode is storing full node data
 type FullNode struct {
 	TCPAddress string
 	APIAddress string
-	KeyID      int64
 	PublicKey  []byte
 	UnbanTime  time.Time
 	Stopped    bool
@@ -66,7 +65,6 @@ func (fn *FullNode) UnmarshalJSON(b []byte) (err error) {
 
 	fn.TCPAddress = data.TCPAddress
 	fn.APIAddress = data.APIAddress
-	fn.KeyID = converter.StrToInt64(data.KeyID.String())
 	fn.Stopped = data.Stopped
 	if fn.PublicKey, err = crypto.HexToPub(data.PublicKey); err != nil {
 		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err, "value": data.PublicKey}).Error("converting full nodes public key from hex")
@@ -85,7 +83,6 @@ func (fn *FullNode) MarshalJSON() ([]byte, error) {
 	jfn := fullNodeJSON{
 		TCPAddress: fn.TCPAddress,
 		APIAddress: fn.APIAddress,
-		KeyID:      json.Number(strconv.FormatInt(fn.KeyID, 10)),
 		PublicKey:  crypto.PubToHex(fn.PublicKey),
 		UnbanTime:  json.Number(strconv.FormatInt(fn.UnbanTime.Unix(), 10)),
 	}
@@ -119,7 +116,7 @@ func validateURL(rawurl string) error {
 
 // Validate checks values
 func (fn *FullNode) Validate() error {
-	if fn.KeyID == 0 || len(fn.PublicKey) != publicKeyLength || len(fn.TCPAddress) == 0 {
+	if len(fn.PublicKey) != publicKeyLength || len(fn.TCPAddress) == 0 {
 		return errFullNodeInvalidValues
 	}
 
