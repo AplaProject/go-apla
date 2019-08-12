@@ -125,11 +125,8 @@ type TxSignJSON struct {
 	Params  []SignRes `json:"params"`
 }
 
-func getCostP(name string) int64 {
-	if key, ok := extendCostSysParams[name]; ok && syspar.HasSys(key) {
-		return syspar.SysInt64(key)
-	}
-	return -1
+func getCost(name string) int64 {
+	return syspar.GetPriceExec(utils.ToSnakeCase(name))
 }
 
 // UpdateSysParam updates the system parameter
@@ -329,7 +326,7 @@ func LangRes(sc *SmartContract, idRes, lang string) string {
 
 // NewLang creates new language
 func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error) {
-	if err := validateAccess(`CreateLanguage`, sc, nNewLang, nNewLangJoint, nImport); err != nil {
+	if err := validateAccess(sc, "CreateLanguage"); err != nil {
 		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -344,7 +341,7 @@ func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error)
 
 // EditLanguage edits language
 func EditLanguage(sc *SmartContract, id int64, name, trans string) error {
-	if err := validateAccess(`EditLanguage`, sc, nEditLang, nEditLangJoint, nImport); err != nil {
+	if err := validateAccess(sc, "EditLanguage"); err != nil {
 		return err
 	}
 	if _, err := DBUpdate(sc, `@1languages`, id,
@@ -410,7 +407,7 @@ func Replace(s, old, new string) string {
 
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error) {
-	if err := validateAccess(`CreateEcosystem`, sc, nNewEcosystem); err != nil {
+	if err := validateAccess(sc, "CreateEcosystem"); err != nil {
 		return 0, err
 	}
 
@@ -505,7 +502,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 // EditEcosysName set newName for ecosystem
 func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
-	if err := validateAccess(`EditEcosysName`, sc, nEditEcosystemName); err != nil {
+	if err := validateAccess(sc, "EditEcosysName"); err != nil {
 		return err
 	}
 
@@ -533,7 +530,7 @@ func Substr(s string, off int64, slen int64) string {
 
 // BndWallet sets wallet_id to current wallet and updates value in vm
 func BndWallet(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`BindWallet`, sc, nBindWallet); err != nil {
+	if err := validateAccess(sc, "BindWallet"); err != nil {
 		log.Error("BindWallet access denied")
 		return err
 	}
@@ -548,7 +545,7 @@ func BndWallet(sc *SmartContract, tblid int64, state int64) error {
 
 // UnbndWallet sets Active status of the contract in smartVM
 func UnbndWallet(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`UnbindWallet`, sc, nUnbindWallet); err != nil {
+	if err := validateAccess(sc, "UnbindWallet"); err != nil {
 		return err
 	}
 

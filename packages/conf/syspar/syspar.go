@@ -87,6 +87,9 @@ const (
 
 	// CostDefault is the default maximum cost of F
 	CostDefault = int64(20000000)
+
+	PriceExec  = "price_exec_"
+	AccessExec = "access_exec_"
 )
 
 var (
@@ -489,4 +492,12 @@ func GetMaxCost() int64 {
 		cost = CostDefault
 	}
 	return cost
+}
+
+func GetAccessExec(s string) string {
+	return SysString(AccessExec + s)
+}
+
+func GetPriceExec(s string) int64 {
+	return SysInt64(PriceExec + s)
 }

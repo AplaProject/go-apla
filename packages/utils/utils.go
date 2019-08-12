@@ -523,3 +523,23 @@ func StringInSlice(slice []string, v string) bool {
 	}
 	return false
 }
+
+func ToSnakeCase(s string) string {
+	var (
+		result      string
+		lastIsUpper bool
+	)
+	for i, c := range s {
+		if c >= 'A' && c <= 'Z' {
+			if i > 0 && !lastIsUpper {
+				result += "_"
+			}
+			result += string(c + 'a' - 'A')
+			lastIsUpper = true
+			continue
+		}
+		result += string(c)
+		lastIsUpper = false
+	}
+	return result
+}

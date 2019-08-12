@@ -24,7 +24,7 @@ const (
 	eContractLoop        = `There is loop in %s contract`
 	eContractExist       = `Contract %s already exists`
 	eLatin               = `Name %s must only contain latin, digit and '_', '-' characters`
-	eAccessContract      = `%s can be only called from %s`
+	eAccessContract      = `%s can only be called with condition: %s`
 	eColumnExist         = `column %s exists`
 	eColumnNotExist      = `column %s doesn't exist`
 	eColumnType          = `Type '%s' of columns is not supported`
