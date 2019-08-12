@@ -97,7 +97,7 @@ var forTest = tplList{
 	{`SetVar(val,"ok")Button(Body: OK).Action(Run, Params: "param1=#val#")`,
 		`[{"tag":"button","attr":{"action":[{"name":"Run","params":"param1=ok"}]},"children":[{"tag":"text","text":"OK"}]}]`},
 	{`Button(Body: addpage).Action(Name: Open, Params: "param1=2&param2=33").Action(Editor)`,
-		`[{"tag":"button","attr":{"action":[{"name":"Open","params":"param1=2\u0026param2=33"},{"name":"Editor","params":""}]},"children":[{"tag":"text","text":"addpage"}]}]`},
+		`[{"tag":"button","attr":{"action":[{"name":"Open","params":"param1=2\u0026param2=33"},{"name":"Editor"}]},"children":[{"tag":"text","text":"addpage"}]}]`},
 	{`SetVar(group_access, "[zz]")If(#group_access# != "[]"){test}.Else{ok}
 	If(Or(#group_access# != "[]", false)){testOr}.Else{okOr}
 	If(And(#group_access# != "[]", true)){testAnd}.Else{okAnd}`, `[{"tag":"text","text":"test"},{"tag":"text","text":"testOr"},{"tag":"text","text":"testAnd"}]`},

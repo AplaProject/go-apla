@@ -48,8 +48,8 @@ type Composite struct {
 
 // Action describes a button action
 type Action struct {
-	Name   string      `json:"name"`
-	Params interface{} `json:"params,omitempty"`
+	Name   string `json:"name"`
+	Params string `json:"params,omitempty"`
 }
 
 var (
