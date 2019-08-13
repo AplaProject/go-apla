@@ -31,7 +31,7 @@ type FullNodeJSON struct {
 	APIAddress string `json:"api_address"`
 	KeyID      string `json:"key_id"`
 	PublicKey  string `json:"public_key"`
-	UnbanTime  string `json:"unban_time,er"`
+	UnbanTime  string `json:"unban_time"`
 	Stopped    bool   `json:"stopped"`
 }
 
