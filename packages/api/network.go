@@ -31,14 +31,15 @@ type FullNodeJSON struct {
 	APIAddress string `json:"api_address"`
 	KeyID      string `json:"key_id"`
 	PublicKey  string `json:"public_key"`
-	UnbanTime  string `json:"unban_time,er"`
+	UnbanTime  string `json:"unban_time"`
 	Stopped    bool   `json:"stopped"`
 }
 
 type NetworkResult struct {
-	NetworkID     string         `json:"network_ud"`
+	NetworkID     string         `json:"network_id"`
 	CentrifugoURL string         `json:"centrifugo_url"`
 	Test          bool           `json:"test"`
+	Private       bool           `json:"private"`
 	FullNodes     []FullNodeJSON `json:"full_nodes"`
 }
 
@@ -57,11 +58,11 @@ func GetNodesJSON() []FullNodeJSON {
 }
 
 func getNetworkHandler(w http.ResponseWriter, r *http.Request) {
-	test := syspar.SysString(syspar.Test)
 	jsonResponse(w, &NetworkResult{
 		NetworkID:     converter.Int64ToStr(conf.Config.NetworkID),
 		CentrifugoURL: conf.Config.Centrifugo.URL,
-		Test:          test != `0` && test != `false`,
+		Test:          syspar.IsTestMode(),
+		Private:       syspar.IsPrivateBlockchain(),
 		FullNodes:     GetNodesJSON(),
 	})
 }
