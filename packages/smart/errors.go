@@ -47,6 +47,7 @@ const (
 	eColumnNotDeleted    = `Column %s cannot be deleted`
 	eRollbackContract    = `Wrong rollback of the latest contract %d != %d`
 	eExternalNet         = `External network %s is not defined`
+	eKeyNotFound         = `Sender %s has not been found`
 )
 
 var (
