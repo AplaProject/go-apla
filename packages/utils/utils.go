@@ -32,6 +32,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -526,20 +527,17 @@ func StringInSlice(slice []string, v string) bool {
 
 func ToSnakeCase(s string) string {
 	var (
-		result      string
-		lastIsUpper bool
+		in  = []rune(s)
+		out = make([]rune, 0, len(in))
 	)
-	for i, c := range s {
-		if c >= 'A' && c <= 'Z' {
-			if i > 0 && !lastIsUpper {
-				result += "_"
+	for i, c := range in {
+		if unicode.IsUpper(c) {
+			if i > 0 && ((i+1 < len(in) && unicode.IsLower(in[i+1])) || unicode.IsLower(in[i-1])) {
+				out = append(out, '_')
 			}
-			result += string(c + 'a' - 'A')
-			lastIsUpper = true
-			continue
+			c = unicode.ToLower(c)
 		}
-		result += string(c)
-		lastIsUpper = false
+		out = append(out, c)
 	}
-	return result
+	return string(out)
 }

@@ -126,7 +126,10 @@ type TxSignJSON struct {
 }
 
 func getCost(name string) int64 {
-	return syspar.GetPriceExec(utils.ToSnakeCase(name))
+	if price, ok := syspar.GetPriceExec(utils.ToSnakeCase(name)); ok {
+		return price
+	}
+	return -1
 }
 
 // UpdateSysParam updates the system parameter

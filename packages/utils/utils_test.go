@@ -28,8 +28,10 @@ func TestToSnakeCase(t *testing.T) {
 	}{
 		{"Contains", "contains"},
 		{"AddressToId", "address_to_id"},
-		{"HMac", "hmac"},
+		{"HMac", "h_mac"},
+		{"JSONEncode", "json_encode"},
 		{"SHA256", "sha256"},
+		{"PubToID", "pub_to_id"},
 	}
 	for _, tt := range cases {
 		assert.Equal(t, tt.expected, ToSnakeCase(tt.arg))

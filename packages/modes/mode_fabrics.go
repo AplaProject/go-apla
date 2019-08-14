@@ -132,8 +132,9 @@ type BCDaemonLoader struct {
 
 // Load loads blockchain daemons
 func (l BCDaemonLoader) Load(ctx context.Context) error {
-
-	daemons.InitialLoad(l.logger)
+	if err := daemons.InitialLoad(l.logger); err != nil {
+		return err
+	}
 
 	if err := syspar.SysUpdate(nil); err != nil {
 		log.Errorf("can't read system parameters: %s", utils.ErrInfo(err))
