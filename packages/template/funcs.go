@@ -48,8 +48,8 @@ type Composite struct {
 
 // Action describes a button action
 type Action struct {
-	Name   string `json:"name"`
-	Params string `json:"params,omitempty"`
+	Name   string            `json:"name"`
+	Params map[string]string `json:"params,omitempty"`
 }
 
 var (
@@ -470,10 +470,21 @@ func actionTag(par parFunc) string {
 	if par.Owner.Attr[`action`] == nil {
 		par.Owner.Attr[`action`] = make([]Action, 0)
 	}
+	var params map[string]string
+	if v, ok := par.Node.Attr["params"]; ok {
+		params = make(map[string]string)
+		for key, val := range v.(map[string]interface{}) {
+			if imap, ok := val.(map[string]interface{}); ok {
+				params[key] = macro(fmt.Sprint(imap["text"]), par.Workspace.Vars)
+			} else {
+				params[key] = macro(fmt.Sprint(val), par.Workspace.Vars)
+			}
+		}
+	}
 	par.Owner.Attr[`action`] = append(par.Owner.Attr[`action`].([]Action),
 		Action{
 			Name:   macro((*par.Pars)[`Name`], par.Workspace.Vars),
-			Params: macro((*par.Pars)[`Params`], par.Workspace.Vars),
+			Params: params,
 		})
 	return ``
 }
