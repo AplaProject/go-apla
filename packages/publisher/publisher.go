@@ -55,7 +55,7 @@ var (
 )
 
 type CentJWT struct {
-	KeyID string
+	Sub string
 	jwt.StandardClaims
 }
 
@@ -72,7 +72,7 @@ func GetJWTCent(userID, expire int64) (string, string, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
 
 	centJWT := CentJWT{
-		KeyID: strconv.FormatInt(userID, 10),
+		Sub: strconv.FormatInt(userID, 10),
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
 		},
