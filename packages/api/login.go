@@ -294,7 +294,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, err)
 		return
 	}
-	result.NotifyKey, result.Timestamp, err = publisher.GetHMACSign(wallet)
+	result.NotifyKey, result.Timestamp, err = publisher.GetJWTCent(wallet, form.Expire)
 	if err != nil {
 		errorResponse(w, err)
 		return

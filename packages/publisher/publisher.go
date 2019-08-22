@@ -18,7 +18,6 @@ package publisher
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"strconv"
 	"sync"
@@ -26,8 +25,8 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/centrifugal/gocent"
+	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -55,6 +54,11 @@ var (
 	config            conf.CentrifugoConfig
 )
 
+type CentJWT struct {
+	KeyID string
+	jwt.StandardClaims
+}
+
 // InitCentrifugo client
 func InitCentrifugo(cfg conf.CentrifugoConfig) {
 	config = cfg
@@ -64,16 +68,21 @@ func InitCentrifugo(cfg conf.CentrifugoConfig) {
 	})
 }
 
-func GetHMACSign(userID int64) (string, string, error) {
+func GetJWTCent(userID, expire int64) (string, string, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	secret, err := crypto.GetHMACWithTimestamp(config.Secret, strconv.FormatInt(userID, 10), timestamp)
 
+	centJWT := CentJWT{
+		KeyID: strconv.FormatInt(userID, 10),
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, centJWT)
+	result, err := token.SignedString([]byte(config.Secret))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("HMAC getting error")
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("JWT centrifugo error")
 		return "", "", err
 	}
-
-	result := hex.EncodeToString(secret)
 	clientsChannels.Set(userID, result)
 	return result, timestamp, nil
 }
