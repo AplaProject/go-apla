@@ -106,8 +106,10 @@ func init() {
 	// Centrifugo
 	configCmd.Flags().StringVar(&conf.Config.Centrifugo.Secret, "centSecret", "127.0.0.1", "Centrifugo secret")
 	configCmd.Flags().StringVar(&conf.Config.Centrifugo.URL, "centUrl", "127.0.0.1", "Centrifugo URL")
+	configCmd.Flags().StringVar(&conf.Config.Centrifugo.Key, "centKey", "127.0.0.1", "Centrifugo API key")
 	viper.BindPFlag("Centrifugo.Secret", configCmd.Flags().Lookup("centSecret"))
 	viper.BindPFlag("Centrifugo.URL", configCmd.Flags().Lookup("centUrl"))
+	viper.BindPFlag("Centrifugo.Key", configCmd.Flags().Lookup("centKey"))
 
 	// Log
 	configCmd.Flags().StringVar(&conf.Config.Log.LogTo, "logTo", "stdout", "Send logs to stdout|(filename)|syslog")
