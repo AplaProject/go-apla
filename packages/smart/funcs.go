@@ -1627,14 +1627,15 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 			fullNode.UnbanTime = time.Unix(0, 0)
 			updFullNodes = true
 		}
+		nodeKeyID := crypto.Address(fullNode.PublicKey)
 
 		// Setting ban time if we have ban requests for the current node from 51% of all nodes.
 		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
 		for _, banReq := range banRequests {
-			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(fullNodes)/2)+1) {
+			if banReq.ProducerNodeId == nodeKeyID && banReq.Count >= int64((len(fullNodes)/2)+1) {
 				fullNode.UnbanTime = now.Add(syspar.GetNodeBanTime())
 
-				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
+				blocks, err := badBlocks.GetNodeBlocks(nodeKeyID, now)
 				if err != nil {
 					return logErrorDB(err, "getting node bad blocks for removing")
 				}
@@ -1658,7 +1659,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 					smartContract,
 					"@1node_ban_logs",
 					types.LoadMap(map[string]interface{}{
-						"node_id":   fullNode.KeyID,
+						"node_id":   nodeKeyID,
 						"banned_at": now.Format(time.RFC3339),
 						"ban_time":  int64(syspar.GetNodeBanTime() / time.Millisecond), // in ms
 						"reason":    banMessage,
@@ -1673,7 +1674,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 					smartContract,
 					"@1notifications",
 					types.LoadMap(map[string]interface{}{
-						"recipient->member_id": fullNode.KeyID,
+						"recipient->member_id": nodeKeyID,
 						"notification->type":   model.NotificationTypeSingle,
 						"notification->header": nodeBanNotificationHeader,
 						"notification->body":   banMessage,
@@ -2251,7 +2252,7 @@ func SendExternalTransaction(sc *SmartContract, uid, url, externalContract strin
 	var (
 		out, insertQuery string
 	)
-	if _, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID); err != nil {
+	if _, err := syspar.GetThisNodePosition(); err != nil {
 		return nil
 	}
 

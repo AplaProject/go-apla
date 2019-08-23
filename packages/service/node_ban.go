@@ -17,15 +17,15 @@
 package service
 
 import (
+	"bytes"
 	"sync"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
-	"github.com/AplaProject/go-apla/packages/consts"
+	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -84,11 +84,12 @@ func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
 	nbs.m.Lock()
 	defer nbs.m.Unlock()
 
+	nodeKeyID := crypto.Address(node.PublicKey)
 	// Searching for local ban
 	now := time.Now()
-	if fn, ok := nbs.localBannedNodes[node.KeyID]; ok {
+	if fn, ok := nbs.localBannedNodes[nodeKeyID]; ok {
 		if now.Equal(fn.LocalUnBanTime) || now.After(fn.LocalUnBanTime) {
-			delete(nbs.localBannedNodes, node.KeyID)
+			delete(nbs.localBannedNodes, nodeKeyID)
 			return false
 		}
 
@@ -99,7 +100,7 @@ func (nbs *NodesBanService) IsBanned(node syspar.FullNode) bool {
 	// Here we don't estimating global ban expiration. If ban time doesn't equal zero - we assuming
 	// that node is still banned (even if `unban` time has already passed)
 	for _, fn := range nbs.fullNodes {
-		if fn.KeyID == node.KeyID {
+		if bytes.Equal(fn.PublicKey, node.PublicKey) {
 			if !fn.UnbanTime.Equal(time.Unix(0, 0)) {
 				return true
 			} else {
@@ -121,32 +122,26 @@ func (nbs *NodesBanService) localBan(node syspar.FullNode) {
 	nbs.m.Lock()
 	defer nbs.m.Unlock()
 
-	nbs.localBannedNodes[node.KeyID] = localBannedNode{
+	nbs.localBannedNodes[crypto.Address(node.PublicKey)] = localBannedNode{
 		FullNode:       &node,
 		LocalUnBanTime: time.Now().Add(syspar.GetLocalNodeBanTime()),
 	}
 }
 
 func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, blockTime int64, reason string) error {
-	nodePrivateKey, err := utils.GetNodePrivateKey()
-	if err != nil || len(nodePrivateKey) < 1 {
-		if err == nil {
-			log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-		}
-		return err
-	}
+	nodePrivateKey := syspar.GetNodePrivKey()
 
 	var currentNode syspar.FullNode
 	nbs.m.Lock()
 	for _, fn := range nbs.fullNodes {
-		if fn.KeyID == conf.Config.KeyID {
+		if bytes.Equal(fn.PublicKey, syspar.GetNodePubKey()) {
 			currentNode = fn
 			break
 		}
 	}
 	nbs.m.Unlock()
 
-	if currentNode.KeyID == 0 {
+	if len(currentNode.PublicKey) == 0 {
 		return errors.New("cant find current node in full nodes list")
 	}
 
@@ -162,8 +157,8 @@ func (nbs *NodesBanService) newBadBlock(producer syspar.FullNode, blockId, block
 			KeyID:       conf.Config.KeyID,
 		},
 		Params: map[string]interface{}{
-			"ProducerNodeID": producer.KeyID,
-			"ConsumerNodeID": currentNode.KeyID,
+			"ProducerNodeID": crypto.Address(producer.PublicKey),
+			"ConsumerNodeID": crypto.Address(currentNode.PublicKey),
 			"BlockID":        blockId,
 			"Timestamp":      blockTime,
 			"Reason":         reason,

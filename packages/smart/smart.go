@@ -950,11 +950,7 @@ func (sc *SmartContract) GetSignedBy(public []byte) (int64, error) {
 				}
 			}
 		} else {
-			_, NodePublicKey, err := utils.GetNodeKeys()
-			if err != nil {
-				return 0, err
-			}
-			isNode = PubToID(NodePublicKey) == signedBy
+			isNode = crypto.Address(syspar.GetNodePubKey()) == signedBy
 		}
 		if !isNode {
 			return 0, errDelayedContract

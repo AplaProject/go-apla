@@ -29,7 +29,6 @@ import (
 type FullNodeJSON struct {
 	TCPAddress string `json:"tcp_address"`
 	APIAddress string `json:"api_address"`
-	KeyID      string `json:"key_id"`
 	PublicKey  string `json:"public_key"`
 	UnbanTime  string `json:"unban_time"`
 	Stopped    bool   `json:"stopped"`
@@ -49,7 +48,6 @@ func GetNodesJSON() []FullNodeJSON {
 		nodes = append(nodes, FullNodeJSON{
 			TCPAddress: node.TCPAddress,
 			APIAddress: node.APIAddress,
-			KeyID:      strconv.FormatInt(node.KeyID, 10),
 			PublicKey:  crypto.PubToHex(node.PublicKey),
 			UnbanTime:  strconv.FormatInt(node.UnbanTime.Unix(), 10),
 		})

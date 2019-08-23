@@ -111,10 +111,7 @@ func DecryptData(binaryTx *[]byte) ([]byte, []byte, []byte, error) {
 		return nil, nil, nil, utils.ErrInfo("len(*binaryTx) == 0")
 	}
 
-	nodeKeyPrivate, _, err := utils.GetNodeKeys()
-	if err != nil {
-		return nil, nil, nil, utils.ErrInfo(err)
-	}
+	nodeKeyPrivate, _ := utils.GetNodeKeys()
 	if len(nodeKeyPrivate) == 0 {
 		log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
 		return nil, nil, nil, utils.ErrInfo("len(nodePrivateKey) == 0")

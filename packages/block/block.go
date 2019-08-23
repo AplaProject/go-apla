@@ -135,8 +135,9 @@ func (b *Block) repeatMarshallBlock() error {
 	for _, tr := range b.Transactions {
 		trData = append(trData, tr.TxFullData)
 	}
-	NodePrivateKey, _, err := utils.GetNodeKeys()
-	if err != nil || len(NodePrivateKey) < 1 {
+	NodePrivateKey, _ := utils.GetNodeKeys()
+	if len(NodePrivateKey) < 1 {
+		err := errors.New(`empty private node key`)
 		log.WithFields(log.Fields{"type": consts.NodePrivateKeyFilename, "error": err}).Error("reading node private key")
 		return err
 	}
