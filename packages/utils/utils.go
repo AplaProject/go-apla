@@ -32,6 +32,7 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
@@ -522,4 +523,21 @@ func StringInSlice(slice []string, v string) bool {
 		}
 	}
 	return false
+}
+
+func ToSnakeCase(s string) string {
+	var (
+		in  = []rune(s)
+		out = make([]rune, 0, len(in))
+	)
+	for i, c := range in {
+		if unicode.IsUpper(c) {
+			if i > 0 && ((i+1 < len(in) && unicode.IsLower(in[i+1])) || unicode.IsLower(in[i-1])) {
+				out = append(out, '_')
+			}
+			c = unicode.ToLower(c)
+		}
+		out = append(out, c)
+	}
+	return string(out)
 }

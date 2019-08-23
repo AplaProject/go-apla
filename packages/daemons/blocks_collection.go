@@ -70,7 +70,9 @@ func InitialLoad(logger *log.Entry) error {
 			return err
 		}
 
-		model.UpdateSchema()
+		if err := model.UpdateSchema(); err != nil {
+			return err
+		}
 	}
 
 	return nil

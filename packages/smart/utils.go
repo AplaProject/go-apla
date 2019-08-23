@@ -19,12 +19,12 @@ package smart
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
-	"github.com/AplaProject/go-apla/packages/conf"
+	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/types"
+	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/shopspring/decimal"
 
 	log "github.com/sirupsen/logrus"
@@ -73,15 +73,14 @@ func marshalJSON(v interface{}, comment string) (out []byte, err error) {
 	return
 }
 
-func validateAccess(funcName string, sc *SmartContract, contracts ...string) error {
-	if conf.Config.FuncBench {
-		return nil
-	}
+func validateAccess(sc *SmartContract, funcName string) error {
+	condition := syspar.GetAccessExec(utils.ToSnakeCase(funcName))
 
-	if !accessContracts(sc, contracts...) {
-		err := fmt.Errorf(eAccessContract, funcName, strings.Join(contracts, ` or `))
+	if err := Eval(sc, condition); err != nil {
+		err = fmt.Errorf(eAccessContract, funcName, condition)
 		return logError(err, consts.IncorrectCallingContract, err.Error())
 	}
+
 	return nil
 }
 

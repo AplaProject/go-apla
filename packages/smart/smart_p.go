@@ -41,55 +41,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	funcCallsDBP = map[string]struct{}{
-		"DBInsert":         {},
-		"DBUpdate":         {},
-		"DBUpdateSysParam": {},
-		"DBUpdateExt":      {},
-		"DBSelect":         {},
-	}
-
-	extendCostSysParams = map[string]string{
-		"AddressToId":        "price_exec_address_to_id",
-		"IdToAddress":        "price_exec_id_to_address",
-		"Sha256":             "price_exec_sha256",
-		"PubToID":            "price_exec_pub_to_id",
-		"EcosysParam":        "price_exec_ecosys_param",
-		"SysParamString":     "price_exec_sys_param_string",
-		"SysParamInt":        "price_exec_sys_param_int",
-		"SysFuel":            "price_exec_sys_fuel",
-		"ValidateCondition":  "price_exec_validate_condition",
-		"EvalCondition":      "price_exec_eval_condition",
-		"HasPrefix":          "price_exec_has_prefix",
-		"Contains":           "price_exec_contains",
-		"Replace":            "price_exec_replace",
-		"Join":               "price_exec_join",
-		"Size":               "price_exec_size",
-		"Substr":             "price_exec_substr",
-		"ContractsList":      "price_exec_contracts_list",
-		"IsObject":           "price_exec_is_object",
-		"CompileContract":    "price_exec_compile_contract",
-		"FlushContract":      "price_exec_flush_contract",
-		"Eval":               "price_exec_eval",
-		"Len":                "price_exec_len",
-		"BindWallet":         "price_exec_bind_wallet",
-		"UnbindWallet":       "price_exec_unbind_wallet",
-		"CreateEcosystem":    "price_exec_create_ecosystem",
-		"TableConditions":    "price_exec_table_conditions",
-		"CreateTable":        "price_exec_create_table",
-		"PermTable":          "price_exec_perm_table",
-		"ColumnCondition":    "price_exec_column_condition",
-		"CreateColumn":       "price_exec_create_column",
-		"PermColumn":         "price_exec_perm_column",
-		"JSONToMap":          "price_exec_json_to_map",
-		"GetContractByName":  "price_exec_contract_by_name",
-		"GetContractById":    "price_exec_contract_by_id",
-		"TxData":             "price_tx_data",
-		"ExecContractByName": "price_exec_contract_by_name",
-		"ExecContractById":   "price_exec_contract_by_id",
-	}
-)
+var funcCallsDBP = map[string]struct{}{
+	"DBInsert":         {},
+	"DBUpdate":         {},
+	"DBUpdateSysParam": {},
+	"DBUpdateExt":      {},
+	"DBSelect":         {},
+}
 
 const (
 	nBindWallet        = "BindWallet"
@@ -125,9 +83,9 @@ type TxSignJSON struct {
 	Params  []SignRes `json:"params"`
 }
 
-func getCostP(name string) int64 {
-	if key, ok := extendCostSysParams[name]; ok && syspar.HasSys(key) {
-		return syspar.SysInt64(key)
+func getCost(name string) int64 {
+	if price, ok := syspar.GetPriceExec(utils.ToSnakeCase(name)); ok {
+		return price
 	}
 	return -1
 }
@@ -329,7 +287,7 @@ func LangRes(sc *SmartContract, idRes, lang string) string {
 
 // NewLang creates new language
 func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error) {
-	if err := validateAccess(`CreateLanguage`, sc, nNewLang, nNewLangJoint, nImport); err != nil {
+	if err := validateAccess(sc, "CreateLanguage"); err != nil {
 		return 0, err
 	}
 	idStr := converter.Int64ToStr(sc.TxSmart.EcosystemID)
@@ -344,7 +302,7 @@ func CreateLanguage(sc *SmartContract, name, trans string) (id int64, err error)
 
 // EditLanguage edits language
 func EditLanguage(sc *SmartContract, id int64, name, trans string) error {
-	if err := validateAccess(`EditLanguage`, sc, nEditLang, nEditLangJoint, nImport); err != nil {
+	if err := validateAccess(sc, "EditLanguage"); err != nil {
 		return err
 	}
 	if _, err := DBUpdate(sc, `@1languages`, id,
@@ -410,7 +368,7 @@ func Replace(s, old, new string) string {
 
 // CreateEcosystem creates a new ecosystem
 func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error) {
-	if err := validateAccess(`CreateEcosystem`, sc, nNewEcosystem); err != nil {
+	if err := validateAccess(sc, "CreateEcosystem"); err != nil {
 		return 0, err
 	}
 
@@ -505,7 +463,7 @@ func CreateEcosystem(sc *SmartContract, wallet int64, name string) (int64, error
 
 // EditEcosysName set newName for ecosystem
 func EditEcosysName(sc *SmartContract, sysID int64, newName string) error {
-	if err := validateAccess(`EditEcosysName`, sc, nEditEcosystemName); err != nil {
+	if err := validateAccess(sc, "EditEcosysName"); err != nil {
 		return err
 	}
 
@@ -533,7 +491,7 @@ func Substr(s string, off int64, slen int64) string {
 
 // BndWallet sets wallet_id to current wallet and updates value in vm
 func BndWallet(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`BindWallet`, sc, nBindWallet); err != nil {
+	if err := validateAccess(sc, "BindWallet"); err != nil {
 		log.Error("BindWallet access denied")
 		return err
 	}
@@ -548,7 +506,7 @@ func BndWallet(sc *SmartContract, tblid int64, state int64) error {
 
 // UnbndWallet sets Active status of the contract in smartVM
 func UnbndWallet(sc *SmartContract, tblid int64, state int64) error {
-	if err := validateAccess(`UnbindWallet`, sc, nUnbindWallet); err != nil {
+	if err := validateAccess(sc, "UnbindWallet"); err != nil {
 		return err
 	}
 
