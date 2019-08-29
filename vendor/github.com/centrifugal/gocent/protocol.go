@@ -2,42 +2,47 @@ package gocent
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // Command represents API command to send.
 type Command struct {
-	UID    string                 `json:"uid"`
 	Method string                 `json:"method"`
 	Params map[string]interface{} `json:"params"`
 }
 
-// Response is a response of server on command sent.
-type Response struct {
-	Method string          `json:"method"`
-	Error  string          `json:"error"`
-	Body   json.RawMessage `json:"body"`
+// Error represents API request error.
+type Error struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
 }
 
-// Result is a slice of responses.
-type Result []Response
+func (e Error) Error() string {
+	return fmt.Sprintf("%s: %d", e.Message, e.Code)
+}
+
+// Reply is a server response to command.
+type Reply struct {
+	Error  *Error          `json:"error"`
+	Result json.RawMessage `json:"result"`
+}
 
 // ClientInfo represents information about one client connection to Centrifugo.
 // This struct used in messages published by clients, join/leave events, presence data.
 type ClientInfo struct {
-	User        string           `json:"user"`
-	Client      string           `json:"client"`
-	DefaultInfo *json.RawMessage `json:"default_info,omitempty"`
-	ChannelInfo *json.RawMessage `json:"channel_info,omitempty"`
+	User     string          `json:"user"`
+	Client   string          `json:"client"`
+	ConnInfo json.RawMessage `json:"conn_info,omitempty"`
+	ChanInfo json.RawMessage `json:"chan_info,omitempty"`
 }
 
-// Message represents message published into channel.
-type Message struct {
-	UID       string           `json:"uid"`
-	Timestamp string           `json:"timestamp"`
-	Info      *ClientInfo      `json:"info,omitempty"`
-	Channel   string           `json:"channel"`
-	Data      *json.RawMessage `json:"data"`
-	Client    string           `json:"client,omitempty"`
+// Publication represents message published into channel.
+type Publication struct {
+	UID     string          `json:"uid"`
+	Info    *ClientInfo     `json:"info"`
+	Channel string          `json:"channel"`
+	Data    json.RawMessage `json:"data"`
+	Client  string          `json:"client"`
 }
 
 // NodeInfo contains information and statistics about Centrifugo node.
@@ -46,36 +51,40 @@ type NodeInfo struct {
 	UID string `json:"uid"`
 	// Name is a name of node (config defined or generated automatically).
 	Name string `json:"name"`
-	// Started is node start timestamp.
-	Started int64 `json:"started_at"`
-	// Metrics contains Centrifugo metrics.
-	Metrics map[string]int64 `json:"metrics"`
+	// Version of Centrifugo node.
+	Version string `json:"version"`
+	// NumClients is a number of clients connected to node.
+	NumClients int `json:"num_clients"`
+	// NumUsers is a number of unique users connected to node.
+	NumUsers int `json:"num_users"`
+	// NumChannels is a number of channels on node.
+	NumChannels int `json:"num_channels"`
+	// Uptime of node in seconds.
+	Uptime int `json:"uptime"`
 }
 
-// Stats contains state and metrics information from all running Centrifugo nodes.
-type Stats struct {
-	Nodes           []NodeInfo `json:"nodes"`
-	MetricsInterval int64      `json:"metrics_interval"`
+// InfoResult is a result of info command.
+type InfoResult struct {
+	Nodes []NodeInfo `json:"nodes"`
 }
 
-// presenceBody represents body of response in case of successful presence command.
-type presenceBody struct {
-	Channel string                `json:"channel"`
-	Data    map[string]ClientInfo `json:"data"`
+// PresenceResult is a result of presence command.
+type PresenceResult struct {
+	Presence map[string]ClientInfo `json:"presence"`
 }
 
-// historyBody represents body of response in case of successful history command.
-type historyBody struct {
-	Channel string    `json:"channel"`
-	Data    []Message `json:"data"`
+// PresenceStatsResult is a result of info command.
+type PresenceStatsResult struct {
+	NumUsers   int32 `json:"num_users"`
+	NumClients int32 `json:"num_clients"`
 }
 
-// channelsBody represents body of response in case of successful channels command.
-type channelsBody struct {
-	Data []string `json:"data"`
+// HistoryResult is a result of history command.
+type HistoryResult struct {
+	Publications []Publication `json:"publications"`
 }
 
-// statsBody represents body of response in case of successful stats command.
-type statsBody struct {
-	Data Stats `json:"data"`
+// ChannelsResult is a result of channels command.
+type ChannelsResult struct {
+	Channels []string `json:"channels"`
 }

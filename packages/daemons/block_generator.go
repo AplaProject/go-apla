@@ -19,6 +19,7 @@ package daemons
 import (
 	"bytes"
 	"context"
+	"errors"
 	"time"
 
 	"github.com/AplaProject/go-apla/packages/block"
@@ -42,7 +43,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return nil
 	}
 
-	nodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+	nodePosition, err := syspar.GetThisNodePosition()
 	if err != nil {
 		// we are not full node and can't generate new blocks
 		d.sleepTime = 10 * time.Second
@@ -54,7 +55,7 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 	defer DBUnlock()
 
 	// wee need fresh myNodePosition after locking
-	nodePosition, err = syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+	nodePosition, err = syspar.GetThisNodePosition()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting node position by key id")
 		return err
@@ -91,12 +92,10 @@ func BlockGenerator(ctx context.Context, d *daemon) error {
 		return err
 	}
 
-	NodePrivateKey, NodePublicKey, err := utils.GetNodeKeys()
-	if err != nil || len(NodePrivateKey) < 1 {
-		if err == nil {
-			d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-		}
-		return err
+	NodePrivateKey, NodePublicKey := utils.GetNodeKeys()
+	if len(NodePrivateKey) < 1 {
+		d.logger.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
+		return errors.New(`node private key is empty`)
 	}
 
 	dtx := DelayedTx{

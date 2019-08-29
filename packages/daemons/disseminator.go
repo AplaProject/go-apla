@@ -21,7 +21,6 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/network/tcpclient"
 
-	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
@@ -38,7 +37,7 @@ func Disseminator(ctx context.Context, d *daemon) error {
 	defer DBUnlock()
 
 	isFullNode := true
-	myNodePosition, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID)
+	myNodePosition, err := syspar.GetThisNodePosition()
 	if err != nil {
 		d.logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Debug("finding node")
 		isFullNode = false

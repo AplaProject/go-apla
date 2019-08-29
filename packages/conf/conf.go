@@ -64,6 +64,7 @@ type StatsDConfig struct {
 type CentrifugoConfig struct {
 	Secret string
 	URL    string
+	Key    string
 }
 
 // Syslog represents parameters of syslog

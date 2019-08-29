@@ -32,7 +32,6 @@ import (
 	"github.com/AplaProject/go-apla/packages/publisher"
 	"github.com/AplaProject/go-apla/packages/script"
 	"github.com/AplaProject/go-apla/packages/smart"
-	"github.com/AplaProject/go-apla/packages/utils"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -153,15 +152,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		nodePrivateKey, err := utils.GetNodePrivateKey()
-		if err != nil || len(nodePrivateKey) < 1 {
-			if err == nil {
-				log.WithFields(log.Fields{"type": consts.EmptyObject}).Error("node private key is empty")
-			}
-
-			errorResponse(w, err)
-			return
-		}
+		nodePrivateKey := syspar.GetNodePrivKey()
 
 		contract := smart.GetContract("NewUser", 1)
 		sc := tx.SmartContract{
@@ -294,7 +285,7 @@ func (m Mode) loginHandler(w http.ResponseWriter, r *http.Request) {
 		errorResponse(w, err)
 		return
 	}
-	result.NotifyKey, result.Timestamp, err = publisher.GetHMACSign(wallet)
+	result.NotifyKey, result.Timestamp, err = publisher.GetJWTCent(wallet, form.Expire)
 	if err != nil {
 		errorResponse(w, err)
 		return

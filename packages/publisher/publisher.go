@@ -17,7 +17,7 @@
 package publisher
 
 import (
-	"encoding/hex"
+	"context"
 	"fmt"
 	"strconv"
 	"sync"
@@ -25,8 +25,8 @@ import (
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
-	"github.com/AplaProject/go-apla/packages/crypto"
 	"github.com/centrifugal/gocent"
+	jwt "github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -54,36 +54,52 @@ var (
 	config            conf.CentrifugoConfig
 )
 
+type CentJWT struct {
+	Sub string
+	jwt.StandardClaims
+}
+
 // InitCentrifugo client
 func InitCentrifugo(cfg conf.CentrifugoConfig) {
 	config = cfg
-	publisher = gocent.NewClient(cfg.URL, cfg.Secret, centrifugoTimeout)
+	publisher = gocent.New(gocent.Config{
+		Addr: cfg.URL,
+		Key:  cfg.Key,
+	})
 }
 
-func GetHMACSign(userID int64) (string, string, error) {
+func GetJWTCent(userID, expire int64) (string, string, error) {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
-	secret, err := crypto.GetHMACWithTimestamp(config.Secret, strconv.FormatInt(userID, 10), timestamp)
 
+	centJWT := CentJWT{
+		Sub: strconv.FormatInt(userID, 10),
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Second * time.Duration(expire)).Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, centJWT)
+	result, err := token.SignedString([]byte(config.Secret))
 	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("HMAC getting error")
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("JWT centrifugo error")
 		return "", "", err
 	}
-
-	result := hex.EncodeToString(secret)
 	clientsChannels.Set(userID, result)
 	return result, timestamp, nil
 }
 
 // Write is publishing data to server
-func Write(userID int64, data string) (bool, error) {
-	return publisher.Publish("client"+strconv.FormatInt(userID, 10), []byte(data))
+func Write(account string, data string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), centrifugoTimeout)
+	defer cancel()
+	return publisher.Publish(ctx, "client"+account, []byte(data))
 }
 
 // GetStats returns Stats
-func GetStats() (gocent.Stats, error) {
+func GetStats() (gocent.InfoResult, error) {
 	if publisher == nil {
-		return gocent.Stats{}, fmt.Errorf("publisher not initialized")
+		return gocent.InfoResult{}, fmt.Errorf("publisher not initialized")
 	}
-
-	return publisher.Stats()
+	ctx, cancel := context.WithTimeout(context.Background(), centrifugoTimeout)
+	defer cancel()
+	return publisher.Info(ctx)
 }

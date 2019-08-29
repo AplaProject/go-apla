@@ -32,8 +32,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+	"unicode"
 
-	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/conf/syspar"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
@@ -404,37 +404,9 @@ func GetParent() string {
 }
 
 // GetNodeKeys returns node private key and public key
-func GetNodeKeys() (string, string, error) {
-	nprivkey, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
-		return "", "", err
-	}
-	key, err := hex.DecodeString(string(nprivkey))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-		return "", "", err
-	}
-	npubkey, err := crypto.PrivateToPublic(key)
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting node private key to public")
-		return "", "", err
-	}
-	return string(nprivkey), crypto.PubToHex(npubkey), nil
-}
-
-func GetNodePrivateKey() ([]byte, error) {
-	data, err := ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
-		return nil, err
-	}
-	privateKey, err := hex.DecodeString(string(data))
-	if err != nil {
-		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
-		return nil, err
-	}
-	return privateKey, nil
+func GetNodeKeys() (string, string) {
+	return hex.EncodeToString(syspar.GetNodePrivKey()), 
+	        hex.EncodeToString(syspar.GetNodePubKey())
 }
 
 func GetHostPort(h string) string {
@@ -522,4 +494,21 @@ func StringInSlice(slice []string, v string) bool {
 		}
 	}
 	return false
+}
+
+func ToSnakeCase(s string) string {
+	var (
+		in  = []rune(s)
+		out = make([]rune, 0, len(in))
+	)
+	for i, c := range in {
+		if unicode.IsUpper(c) {
+			if i > 0 && ((i+1 < len(in) && unicode.IsLower(in[i+1])) || unicode.IsLower(in[i-1])) {
+				out = append(out, '_')
+			}
+			c = unicode.ToLower(c)
+		}
+		out = append(out, c)
+	}
+	return string(out)
 }

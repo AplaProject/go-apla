@@ -17,9 +17,13 @@
 package syspar
 
 import (
+	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 	"sync"
 
 	"github.com/AplaProject/go-apla/packages/conf"
@@ -87,13 +91,16 @@ const (
 
 	// CostDefault is the default maximum cost of F
 	CostDefault = int64(20000000)
+
+	PriceExec  = "price_exec_"
+	AccessExec = "access_exec_"
 )
 
 var (
 	cache = map[string]string{
 		BlockchainURL: "https://raw.githubusercontent.com/egaas-blockchain/egaas-blockchain.github.io/master/testnet_blockchain",
 	}
-	nodes             = make(map[int64]*FullNode)
+	nodes             = make(map[string]*FullNode)
 	nodesByPosition   = make([]*FullNode, 0)
 	fuels             = make(map[int64]string)
 	wallets           = make(map[int64]string)
@@ -101,7 +108,39 @@ var (
 	firstBlockData    *consts.FirstBlock
 	errFirstBlockData = errors.New("Failed to get data of the first block")
 	errNodeDisabled   = errors.New("node is disabled")
+	nodePubKey        []byte
+	nodePrivKey       []byte
 )
+
+func ReadNodeKeys() (err error) {
+	var (
+		nprivkey []byte
+	)
+	nprivkey, err = ioutil.ReadFile(filepath.Join(conf.Config.KeysDir, consts.NodePrivateKeyFilename))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.IOError, "error": err}).Error("reading node private key from file")
+		return 
+	}
+	nodePrivKey, err = hex.DecodeString(string(nprivkey))
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.ConversionError, "error": err}).Error("decoding private key from hex")
+		return 
+	}
+	nodePubKey, err = crypto.PrivateToPublic(nodePrivKey)
+	if err != nil {
+		log.WithFields(log.Fields{"type": consts.CryptoError, "error": err}).Error("converting node private key to public")
+		return 
+	}
+	return 
+}
+
+func GetNodePubKey() []byte {
+	return nodePubKey
+}
+
+func GetNodePrivKey() []byte {
+	return nodePrivKey
+}
 
 // SysUpdate reloads/updates values of system parameters
 func SysUpdate(dbTransaction *model.DbTransaction) error {
@@ -146,7 +185,7 @@ func SysUpdate(dbTransaction *model.DbTransaction) error {
 }
 
 func updateNodes() (err error) {
-	nodes = make(map[int64]*FullNode)
+	nodes = make(map[string]*FullNode)
 	nodesByPosition = make([]*FullNode, 0)
 
 	items := make([]*FullNode, 0)
@@ -161,7 +200,7 @@ func updateNodes() (err error) {
 
 	nodesByPosition = []*FullNode{}
 	for i := 0; i < len(items); i++ {
-		nodes[items[i].KeyID] = items[i]
+		nodes[hex.EncodeToString(items[i].PublicKey)] = items[i]
 
 		if !items[i].Stopped {
 			nodesByPosition = append(nodesByPosition, items[i])
@@ -172,21 +211,10 @@ func updateNodes() (err error) {
 }
 
 // addFullNodeKeys adds node by keys to list of nodes
-func addFullNodeKeys(keyID int64, publicKey []byte) {
+func addFullNodeKeys(publicKey []byte) {
 	nodesByPosition = append(nodesByPosition, &FullNode{
-		KeyID:     keyID,
 		PublicKey: publicKey,
 	})
-}
-
-// GetNode is retrieving node by wallet
-func GetNode(wallet int64) *FullNode {
-	mutex.RLock()
-	defer mutex.RUnlock()
-	if ret, ok := nodes[wallet]; ok {
-		return ret
-	}
-	return nil
 }
 
 func GetNodes() []FullNode {
@@ -201,28 +229,29 @@ func GetNodes() []FullNode {
 	return result
 }
 
+func GetThisNodePosition() (int64, error) {
+	return GetNodePositionByPublicKey(GetNodePubKey())
+}
+
 // GetNodePositionByKeyID is returning node position by key id
-func GetNodePositionByKeyID(keyID int64) (int64, error) {
+func GetNodePositionByPublicKey(publicKey []byte) (int64, error) {
 	mutex.RLock()
 	defer mutex.RUnlock()
 
-	var counter int64
-	for _, item := range nodesByPosition {
+	for i, item := range nodesByPosition {
 		if item.Stopped {
-			if item.KeyID == keyID {
+			if bytes.Equal(item.PublicKey, publicKey) {
 				return 0, errNodeDisabled
 			}
 			continue
 		}
 
-		if item.KeyID == keyID {
-			return counter, nil
+		if bytes.Equal(item.PublicKey, publicKey) {
+			return int64(i), nil
 		}
-
-		counter++
 	}
 
-	return 0, fmt.Errorf("Incorrect keyID")
+	return 0, fmt.Errorf("Incorrect public key")
 }
 
 // GetCountOfActiveNodes is count of nodes with stopped = false
@@ -416,8 +445,9 @@ func GetRemoteHosts() []string {
 	mutex.RLock()
 	defer mutex.RUnlock()
 
-	for keyID, item := range nodes {
-		if keyID != conf.Config.KeyID && !item.Stopped {
+	nodeKey := hex.EncodeToString(GetNodePubKey())
+	for pubKey, item := range nodes {
+		if pubKey != nodeKey && !item.Stopped {
 			ret = append(ret, item.TCPAddress)
 		}
 	}
@@ -454,11 +484,9 @@ func SetFirstBlockData(data *consts.FirstBlock) {
 
 	// If list of nodes is empty, then used node from the first block
 	if len(nodesByPosition) == 0 {
-		keyID := crypto.Address(firstBlockData.PublicKey)
-		addFullNodeKeys(keyID, firstBlockData.NodePublicKey)
+		addFullNodeKeys(firstBlockData.NodePublicKey)
 
 		nodesByPosition = []*FullNode{&FullNode{
-			KeyID:     keyID,
 			PublicKey: firstBlockData.NodePublicKey,
 			Stopped:   false,
 		}}
@@ -489,4 +517,16 @@ func GetMaxCost() int64 {
 		cost = CostDefault
 	}
 	return cost
+}
+
+func GetAccessExec(s string) string {
+	return SysString(AccessExec + s)
+}
+
+func GetPriceExec(s string) (price int64, ok bool) {
+	if ok = HasSys(PriceExec + s); !ok {
+		return
+	}
+	price = SysInt64(PriceExec + s)
+	return
 }

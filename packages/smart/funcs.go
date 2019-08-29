@@ -186,58 +186,6 @@ var (
 		"DBUpdateExt": {},
 		"SetPubKey":   {},
 	}
-	extendCost = map[string]int64{
-		"AddressToId":                  10,
-		"ColumnCondition":              50,
-		"Contains":                     10,
-		"ContractAccess":               50,
-		"RoleAccess":                   50,
-		"ContractConditions":           50,
-		"ContractName":                 10,
-		"CreateColumn":                 50,
-		"CreateTable":                  100,
-		"CreateLanguage":               50,
-		"EditLanguage":                 50,
-		"CreateContract":               60,
-		"UpdateContract":               60,
-		"EcosysParam":                  10,
-		"AppParam":                     10,
-		"Eval":                         10,
-		"EvalCondition":                20,
-		"GetContractByName":            20,
-		"GetContractById":              20,
-		"HMac":                         50,
-		"Join":                         10,
-		"JSONToMap":                    50,
-		"Sha256":                       50,
-		"IdToAddress":                  10,
-		"Len":                          5,
-		"Replace":                      10,
-		"PermColumn":                   50,
-		"Split":                        50,
-		"PermTable":                    100,
-		"Substr":                       10,
-		"Size":                         10,
-		"ToLower":                      10,
-		"ToUpper":                      10,
-		"TrimSpace":                    10,
-		"TableConditions":              100,
-		"ValidateCondition":            30,
-		"ValidateEditContractNewValue": 10,
-		"TransactionInfo":              100,
-		"DelTable":                     100,
-		"DelColumn":                    100,
-		"HexToPub":                     20,
-		"PubToHex":                     20,
-		"Log":                          15,
-		"Log10":                        15,
-		"Pow":                          15,
-		"Sqrt":                         15,
-		"Round":                        15,
-		"Floor":                        15,
-		"CheckCondition":               10,
-		"SendExternalTransaction":      100,
-	}
 	// map for table name to parameter with conditions
 	tableParamConditions = map[string]string{
 		"pages":      "changing_page",
@@ -259,13 +207,6 @@ var (
 		`text`:      `text`,
 	}
 )
-
-func getCost(name string) int64 {
-	if val, ok := extendCost[name]; ok {
-		return val
-	}
-	return -1
-}
 
 // EmbedFuncs is extending vm with embedded functions
 func EmbedFuncs(vm *script.VM, vt script.VMType) {
@@ -404,12 +345,14 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		vmFuncCallsDB(vm, funcCallsDB)
 	case script.VMTypeSmart:
 		f["GetBlock"] = GetBlock
-		ExtendCost(getCostP)
+		ExtendCost(getCost)
 		FuncCallsDB(funcCallsDBP)
 	}
 
-	vmExtend(vm, &script.ExtendData{Objects: f, AutoPars: map[string]string{
-		`*smart.SmartContract`: `sc`},
+	vmExtend(vm, &script.ExtendData{
+		Objects: f, AutoPars: map[string]string{
+			`*smart.SmartContract`: `sc`,
+		},
 		WriteFuncs: map[string]struct{}{
 			"CreateColumn":     {},
 			"CreateTable":      {},
@@ -440,10 +383,6 @@ func GetTableName(sc *SmartContract, tblname string) string {
 }
 
 func accessContracts(sc *SmartContract, names ...string) bool {
-	if conf.Config.FuncBench {
-		return true
-	}
-
 	contract := sc.TxContract.StackCont[len(sc.TxContract.StackCont)-1].(string)
 
 	for _, item := range names {
@@ -456,7 +395,7 @@ func accessContracts(sc *SmartContract, names ...string) bool {
 
 // CompileContract is compiling contract
 func CompileContract(sc *SmartContract, code string, state, id, token int64) (interface{}, error) {
-	if err := validateAccess(`CompileContract`, sc, nNewContract, nEditContract, nImport); err != nil {
+	if err := validateAccess(sc, "CompileContract"); err != nil {
 		return nil, err
 	}
 	return VMCompileBlock(sc.VM, code, &script.OwnerInfo{StateID: uint32(state), WalletID: id, TokenID: token})
@@ -584,7 +523,7 @@ func ValidateEditContractNewValue(sc *SmartContract, newValue, oldValue string) 
 }
 
 func UpdateContract(sc *SmartContract, id int64, value, conditions string, recipient int64, tokenID string) error {
-	if err := validateAccess(`UpdateContract`, sc, nEditContract, nImport); err != nil {
+	if err := validateAccess(sc, "UpdateContract"); err != nil {
 		return err
 	}
 	pars := make(map[string]interface{})
@@ -621,7 +560,7 @@ func UpdateContract(sc *SmartContract, id int64, value, conditions string, recip
 }
 
 func CreateContract(sc *SmartContract, name, value, conditions string, tokenEcosystem, appID int64) (int64, error) {
-	if err := validateAccess(`CreateContract`, sc, nNewContract, nImport); err != nil {
+	if err := validateAccess(sc, "CreateContract"); err != nil {
 		return 0, err
 	}
 	var id int64
@@ -716,7 +655,7 @@ func getColumns(columns string) (colsSQL string, colout []byte, err error) {
 
 // CreateTable is creating smart contract table
 func CreateTable(sc *SmartContract, name, columns, permissions string, applicationID int64) (err error) {
-	if err := validateAccess("CreateTable", sc, nNewTable, nNewTableJoint, nImport); err != nil {
+	if err := validateAccess(sc, "CreateTable"); err != nil {
 		return err
 	}
 
@@ -1106,7 +1045,7 @@ func CheckCondition(sc *SmartContract, condition string) (bool, error) {
 
 // FlushContract is flushing contract
 func FlushContract(sc *SmartContract, iroot interface{}, id int64) error {
-	if err := validateAccess(`FlushContract`, sc, nNewContract, nEditContract, nImport); err != nil {
+	if err := validateAccess(sc, "FlushContract"); err != nil {
 		return err
 	}
 	root := iroot.(*script.Block)
@@ -1164,7 +1103,7 @@ func Len(in []interface{}) int64 {
 
 // PermTable is changing permission of table
 func PermTable(sc *SmartContract, name, permissions string) error {
-	if err := validateAccess(`PermTable`, sc, nEditTable); err != nil {
+	if err := validateAccess(sc, "PermTable"); err != nil {
 		return err
 	}
 	var perm permTable
@@ -1252,11 +1191,7 @@ func columnConditions(sc *SmartContract, columns string) (err error) {
 func TableConditions(sc *SmartContract, name, columns, permissions string) (err error) {
 	isEdit := len(columns) == 0
 	name = strings.ToLower(name)
-	if isEdit {
-		if err := validateAccess(`TableConditions`, sc, nEditTable); err != nil {
-			return err
-		}
-	} else if err := validateAccess(`TableConditions`, sc, nNewTable, nImport, nNewTableJoint); err != nil {
+	if err := validateAccess(sc, "TableConditions"); err != nil {
 		return err
 	}
 
@@ -1322,7 +1257,7 @@ func ValidateCondition(sc *SmartContract, condition string, state int64) error {
 func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions string) error {
 	name = converter.EscapeSQL(strings.ToLower(name))
 	tableName = converter.EscapeSQL(strings.ToLower(tableName))
-	if err := validateAccess(`ColumnCondition`, sc, nNewColumn, nEditColumn); err != nil {
+	if err := validateAccess(sc, "ColumnCondition"); err != nil {
 		return err
 	}
 
@@ -1428,7 +1363,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 		sqlColType string
 		permout    []byte
 	)
-	if err = validateAccess(`CreateColumn`, sc, nNewColumn); err != nil {
+	if err = validateAccess(sc, "CreateColumn"); err != nil {
 		return
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
@@ -1479,7 +1414,7 @@ func CreateColumn(sc *SmartContract, tableName, name, colType, permissions strin
 
 // PermColumn is contract func
 func PermColumn(sc *SmartContract, tableName, name, permissions string) error {
-	if err := validateAccess(`PermColumn`, sc, nEditColumn); err != nil {
+	if err := validateAccess(sc, "PermColumn"); err != nil {
 		return err
 	}
 	name = converter.EscapeSQL(strings.ToLower(name))
@@ -1692,14 +1627,15 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 			fullNode.UnbanTime = time.Unix(0, 0)
 			updFullNodes = true
 		}
+		nodeKeyID := crypto.Address(fullNode.PublicKey)
 
 		// Setting ban time if we have ban requests for the current node from 51% of all nodes.
 		// Ban request is mean that node have added more or equal N(system parameter) of bad blocks
 		for _, banReq := range banRequests {
-			if banReq.ProducerNodeId == fullNode.KeyID && banReq.Count >= int64((len(fullNodes)/2)+1) {
+			if banReq.ProducerNodeId == nodeKeyID && banReq.Count >= int64((len(fullNodes)/2)+1) {
 				fullNode.UnbanTime = now.Add(syspar.GetNodeBanTime())
 
-				blocks, err := badBlocks.GetNodeBlocks(fullNode.KeyID, now)
+				blocks, err := badBlocks.GetNodeBlocks(nodeKeyID, now)
 				if err != nil {
 					return logErrorDB(err, "getting node bad blocks for removing")
 				}
@@ -1723,7 +1659,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 					smartContract,
 					"@1node_ban_logs",
 					types.LoadMap(map[string]interface{}{
-						"node_id":   fullNode.KeyID,
+						"node_id":   nodeKeyID,
 						"banned_at": now.Format(time.RFC3339),
 						"ban_time":  int64(syspar.GetNodeBanTime() / time.Millisecond), // in ms
 						"reason":    banMessage,
@@ -1738,7 +1674,7 @@ func UpdateNodesBan(smartContract *SmartContract, timestamp int64) error {
 					smartContract,
 					"@1notifications",
 					types.LoadMap(map[string]interface{}{
-						"recipient->member_id": fullNode.KeyID,
+						"recipient->member_id": nodeKeyID,
 						"notification->type":   model.NotificationTypeSingle,
 						"notification->header": nodeBanNotificationHeader,
 						"notification->body":   banMessage,
@@ -2316,7 +2252,7 @@ func SendExternalTransaction(sc *SmartContract, uid, url, externalContract strin
 	var (
 		out, insertQuery string
 	)
-	if _, err := syspar.GetNodePositionByKeyID(conf.Config.KeyID); err != nil {
+	if _, err := syspar.GetThisNodePosition(); err != nil {
 		return nil
 	}
 

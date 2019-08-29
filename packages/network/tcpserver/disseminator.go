@@ -62,8 +62,12 @@ func Type1(rw io.ReadWriter) error {
 	// full_node_id of the sender to know where to take a data when it will be downloaded by another daemon
 	fullNodeID := converter.BinToDec(buf.Next(8))
 	log.Debug("fullNodeID", fullNodeID)
+	n, err := syspar.GetNodeByPosition(fullNodeID)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Error("on getting node by position")
+		return err
+	}
 
-	n := syspar.GetNode(fullNodeID)
 	banned := n != nil && service.GetNodesBanService().IsBanned(*n)
 
 	// get data type (0 - block and transactions, 1 - only transactions)

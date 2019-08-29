@@ -18,6 +18,7 @@ package daemons
 
 import (
 	"context"
+	"encoding/hex"
 	"io/ioutil"
 	"sync/atomic"
 	"time"
@@ -70,7 +71,9 @@ func InitialLoad(logger *log.Entry) error {
 			return err
 		}
 
-		model.UpdateSchema()
+		if err := model.UpdateSchema(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -275,7 +278,8 @@ func banNode(host string, blockID, blockTime int64, err error) {
 
 	err = service.GetNodesBanService().RegisterBadBlock(n, blockID, blockTime, reason)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err, "node": n.KeyID, "block": blockID}).Error("registering bad block from node")
+		log.WithFields(log.Fields{"error": err, "node": hex.EncodeToString(n.PublicKey),
+		    "block": blockID}).Error("registering bad block from node")
 	}
 }
 
