@@ -315,6 +315,7 @@ func EmbedFuncs(vm *script.VM, vt script.VMType) {
 		"Floor":                        Floor,
 		"CheckCondition":               CheckCondition,
 		"SendExternalTransaction":      SendExternalTransaction,
+		"IsFullNodeKey":                IsFullNodeKey,
 	}
 
 	switch vt {
@@ -2275,4 +2276,13 @@ func SendExternalTransaction(sc *SmartContract, uid, url, externalContract strin
 		return
 	}
 	return model.GetDB(sc.DbTransaction).Exec(insertQuery).Error
+}
+
+func IsFullNodeKey(id int64) bool {
+	for _, item := range syspar.GetNodes() {
+		if crypto.Address(item.PublicKey) == id {
+			return true
+		}
+	}
+	return false
 }
