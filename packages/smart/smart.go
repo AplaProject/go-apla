@@ -543,22 +543,20 @@ func LoadContract(transaction *model.DbTransaction, ecosystem int64) (err error)
 
 func (sc *SmartContract) getExtend() *map[string]interface{} {
 	var block, blockTime, blockKeyID, blockNodePosition int64
-
-	head := sc.TxSmart
-	keyID := int64(head.KeyID)
 	if sc.BlockData != nil {
 		block = sc.BlockData.BlockID
 		blockKeyID = sc.BlockData.KeyID
 		blockTime = sc.BlockData.Time
 		blockNodePosition = sc.BlockData.NodePosition
 	}
+	head := sc.TxSmart
 	extend := map[string]interface{}{
 		`type`:              head.ID,
 		`time`:              head.Time,
 		`ecosystem_id`:      head.EcosystemID,
 		`node_position`:     blockNodePosition,
 		`block`:             block,
-		`key_id`:            keyID,
+		`key_id`:            sc.Key.ID,
 		`account_id`:        sc.Key.AccountID,
 		`block_key_id`:      blockKeyID,
 		`parent`:            ``,
@@ -834,14 +832,7 @@ func (sc *SmartContract) AccessRights(condition string, iscondition bool) error 
 
 // EvalIf counts and returns the logical value of the specified expression
 func (sc *SmartContract) EvalIf(conditions string) (bool, error) {
-	time := sc.TxSmart.Time
-	blockTime := int64(0)
-	if sc.BlockData != nil {
-		blockTime = sc.BlockData.Time
-	}
-	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), &map[string]interface{}{`ecosystem_id`: sc.TxSmart.EcosystemID,
-		`key_id`: sc.TxSmart.KeyID, `sc`: sc, `original_contract`: ``, `this_contract`: ``,
-		`block_time`: blockTime, `time`: time})
+	return VMEvalIf(sc.VM, conditions, uint32(sc.TxSmart.EcosystemID), sc.getExtend())
 }
 
 // GetContractLimit returns the default maximal cost of contract
