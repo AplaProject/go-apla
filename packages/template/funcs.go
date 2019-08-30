@@ -46,6 +46,12 @@ type Composite struct {
 	Data interface{} `json:"data,omitempty"`
 }
 
+// Action describes a button action
+type Action struct {
+	Name   string            `json:"name"`
+	Params map[string]string `json:"params,omitempty"`
+}
+
 var (
 	funcs = make(map[string]tplFunc)
 	tails = make(map[string]forTails)
@@ -119,6 +125,7 @@ func init() {
 		`Popup`: {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 	}}
 	tails[`button`] = forTails{map[string]tailInfo{
+		`Action`:            {tplFunc{actionTag, defaultTailFull, `action`, `Name,Params`}, false},
 		`Alert`:             {tplFunc{alertTag, defaultTailFull, `alert`, `Text,ConfirmButton,CancelButton,Icon`}, true},
 		`Popup`:             {tplFunc{popupTag, defaultTailFull, `popup`, `Width,Header`}, true},
 		`Style`:             {tplFunc{tailTag, defaultTailFull, `style`, `Style`}, false},
@@ -452,6 +459,33 @@ func orTag(par parFunc) string {
 func alertTag(par parFunc) string {
 	setAllAttr(par)
 	par.Owner.Attr[`alert`] = par.Node.Attr
+	return ``
+}
+
+func actionTag(par parFunc) string {
+	setAllAttr(par)
+	if len((*par.Pars)[`Name`]) == 0 {
+		return ``
+	}
+	if par.Owner.Attr[`action`] == nil {
+		par.Owner.Attr[`action`] = make([]Action, 0)
+	}
+	var params map[string]string
+	if v, ok := par.Node.Attr["params"]; ok {
+		params = make(map[string]string)
+		for key, val := range v.(map[string]interface{}) {
+			if imap, ok := val.(map[string]interface{}); ok {
+				params[key] = macro(fmt.Sprint(imap["text"]), par.Workspace.Vars)
+			} else {
+				params[key] = macro(fmt.Sprint(val), par.Workspace.Vars)
+			}
+		}
+	}
+	par.Owner.Attr[`action`] = append(par.Owner.Attr[`action`].([]Action),
+		Action{
+			Name:   macro((*par.Pars)[`Name`], par.Workspace.Vars),
+			Params: params,
+		})
 	return ``
 }
 
