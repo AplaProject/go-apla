@@ -20,8 +20,8 @@ var firstTablesDataSQL = `
 INSERT INTO "1_tables" ("id", "name", "permissions","columns", "conditions") VALUES
     (next_id('1_tables'), 'delayed_contracts',
         '{
-            "insert": "ContractConditions(\"@1AdminCondition\")",
-            "update": "ContractConditions(\"@1AdminCondition\")",
+            "insert": "ContractConditions(\"@1FullNodeCondition\")",
+            "update": "ContractConditions(\"@1FullNodeCondition\")",
             "new_column": "ContractConditions(\"@1AdminCondition\")"
         }',
         '{
