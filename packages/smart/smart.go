@@ -959,6 +959,7 @@ func (sc *SmartContract) CallContract() (string, error) {
 		err                           error
 		public                        []byte
 		sizeFuel, toID, fromID, price int64
+		isFound                       bool
 		fuelRate                      decimal.Decimal
 	)
 	logger := sc.GetLogger()
@@ -996,9 +997,14 @@ func (sc *SmartContract) CallContract() (string, error) {
 	if err != nil {
 		return retError(err)
 	}
-	_, err = sc.Key.Get(signedBy)
+	isFound, err = sc.Key.Get(signedBy)
 	if err != nil {
 		logger.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("getting wallet")
+		return retError(err)
+	}
+	if !isFound {
+		err = fmt.Errorf(eKeyNotFound, converter.AddressToString(signedBy))
+		logger.WithFields(log.Fields{"type": consts.ContractError, "error": err}).Error("looking for keyid")
 		return retError(err)
 	}
 	if sc.Key.Deleted == 1 {

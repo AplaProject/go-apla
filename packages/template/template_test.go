@@ -65,7 +65,7 @@ func TestObj(t *testing.T) {
 	}
 	for _, item := range list {
 		var result string
-		val, _ := parseObject([]rune(item.input))
+		val, _, _ := parseObject([]rune(item.input))
 		switch v := val.(type) {
 		case []interface{}:
 			result = fmt.Sprintf("%v", v)
@@ -94,6 +94,12 @@ func TestJSON(t *testing.T) {
 }
 
 var forTest = tplList{
+	{`SetVar("test", "123")Button(Body: "Test").Action("Test", "test=hello,test2=#test#")`,
+		`[{"tag":"button","attr":{"action":[{"name":"Test","params":{"test":"hello","test2":"123"}}]},"children":[{"tag":"text","text":"Test"}]}]`},
+	{`SetVar(val,"ok")Button(Body: OK).Action(Run, Params: "param1=#val#")`,
+		`[{"tag":"button","attr":{"action":[{"name":"Run","params":{"param1":"ok"}}]},"children":[{"tag":"text","text":"OK"}]}]`},
+	{`SetVar(my, "value,par2")Button(Body: addpage).Action(Name: Open, Params: "param1=2,param2=#my#").Action(Editor)`,
+		`[{"tag":"button","attr":{"action":[{"name":"Open","params":{"param1":"2","param2":"value,par2"}},{"name":"Editor"}]},"children":[{"tag":"text","text":"addpage"}]}]`},
 	{`SetVar(group_access, "[zz]")If(#group_access# != "[]"){test}.Else{ok}
 	If(Or(#group_access# != "[]", false)){testOr}.Else{okOr}
 	If(And(#group_access# != "[]", true)){testAnd}.Else{okAnd}`, `[{"tag":"text","text":"test"},{"tag":"text","text":"testOr"},{"tag":"text","text":"testAnd"}]`},
