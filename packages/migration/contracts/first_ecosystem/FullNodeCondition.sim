@@ -1,0 +1,12 @@
+// +prop AppID = '1'
+// +prop Conditions = 'ContractConditions("MainCondition")'
+contract FullNodeCondition {
+	conditions {
+		var account_key int
+		account_key = AddressToId($account_id)
+		if IsFullNodeKey(account_key) {
+			return
+		}
+		warning "FullNodeCondition: Sorry, you do not have access to this action"
+	}
+}

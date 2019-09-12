@@ -28,29 +28,29 @@ VALUES
 	data {
 		Id int
 	}
+
 	conditions {
+		FullNodeCondition()
+
 		var rows array
-		rows = DBFind("delayed_contracts").Where({id: $Id, deleted: 0} )
+		rows = DBFind("@1delayed_contracts").Where({"id": $Id, "deleted": 0})
 
 		if !Len(rows) {
-			error Sprintf("Delayed contract %%d does not exist", $Id)
+			warning Sprintf(LangRes("@1template_delayed_contract_not_exist", "en"), $Id)
 		}
 		$cur = rows[0]
 		$limit = Int($cur["limit"])
 		$counter = Int($cur["counter"])
 
-		if $key_id != Int($cur["key_id"]) {
-			error "Access denied"
-		}
-
 		if $block < Int($cur["block_id"]) {
-			error Sprintf("Delayed contract %%d must run on block %%s, current block %%d", $Id, $cur["block_id"], $block)
+			warning Sprintf(LangRes("@1template_delayed_contract_error", "en"), $Id, $cur["block_id"], $block)
 		}
 
 		if $limit > 0 && $counter >= $limit {
-			error Sprintf("Delayed contract %%d is limited by number of launches", $Id)
+			warning Sprintf(LangRes("@1template_delayed_contract_limited", "en"), $Id)
 		}
 	}
+
 	action {
 		$counter = $counter + 1
 
@@ -60,7 +60,7 @@ VALUES
 			block_id = block_id + Int($cur["every_block"])
 		}
 
-		DBUpdate("delayed_contracts", $Id, {"counter": $counter, "block_id": block_id})
+		DBUpdate("@1delayed_contracts", $Id, {"counter": $counter, "block_id": block_id})
 
 		var params map
 		CallContract($cur["contract"], params)
@@ -380,6 +380,17 @@ VALUES
     action {
         PermTable($Name, JSONEncode($Permissions))
     }
+}
+', 'ContractConditions("MainCondition")', '1', '%[1]d'),
+	(next_id('1_contracts'), 'FullNodeCondition', 'contract FullNodeCondition {
+	conditions {
+		var account_key int
+		account_key = AddressToId($account_id)
+		if IsFullNodeKey(account_key) {
+			return
+		}
+		warning "FullNodeCondition: Sorry, you do not have access to this action"
+	}
 }
 ', 'ContractConditions("MainCondition")', '1', '%[1]d'),
 	(next_id('1_contracts'), 'Import', 'contract Import {

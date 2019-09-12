@@ -27,6 +27,7 @@ import (
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/AplaProject/go-apla/packages/language"
+	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
 
@@ -725,15 +726,21 @@ func parseArg(arg string, workspace *Workspace) (val string) {
 func Template2JSON(input string, timeout *bool, vars *map[string]string) []byte {
 	root := node{}
 	isobs := (*vars)[`obs`] == `true` || (*vars)[`obs`] == `1`
+	keyID := converter.StrToInt64((*vars)["key_id"])
+	accountID := (*vars)["account_id"]
 	sc := smart.SmartContract{
 		OBS: isobs,
 		VM:  smart.GetVM(),
 		TxSmart: tx.SmartContract{
 			Header: tx.Header{
 				EcosystemID: converter.StrToInt64((*vars)[`ecosystem_id`]),
-				KeyID:       converter.StrToInt64((*vars)[`key_id`]),
+				KeyID:       keyID,
 				NetworkID:   conf.Config.NetworkID,
 			},
+		},
+		Key: &model.Key{
+			ID:        keyID,
+			AccountID: accountID,
 		},
 	}
 	toVars := mapToVar(*vars)
