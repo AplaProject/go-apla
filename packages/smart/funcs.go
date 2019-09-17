@@ -1291,9 +1291,9 @@ func ColumnCondition(sc *SmartContract, tableName, name, coltype, permissions st
 		}
 	}
 	tblName := GetTableName(sc, tableName)
-	if isExist {
-		return sc.AccessTable(tblName, `update`)
-	}
+	// if isExist {
+	// 	return sc.AccessTable(tblName, `update`)
+	// }
 	count, err := model.GetColumnCount(tblName)
 	if err != nil {
 		return logErrorDB(err, "counting table columns")
