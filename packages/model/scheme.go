@@ -26,18 +26,35 @@ import (
 var _ fizz.Translator = (*translators.Postgres)(nil)
 var pgt = translators.NewPostgres()
 
-func test() {
-	res, _ := fizz.AString(`
+/*
+DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
+	"id" bigint  NOT NULL DEFAULT '0',
+	"pub" bytea  NOT NULL DEFAULT '',
+	"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
+	"maxpay" decimal(30) NOT NULL DEFAULT '0' CHECK (maxpay >= 0),
+	"deposit" decimal(30) NOT NULL DEFAULT '0' CHECK (deposit >= 0),
+	"multi" bigint NOT NULL DEFAULT '0',
+	"deleted" bigint NOT NULL DEFAULT '0',
+	"blocked" bigint NOT NULL DEFAULT '0',
+	"ecosystem" bigint NOT NULL DEFAULT '1',
+	"account" char(24) NOT NULL
+	);
+	ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "1_keys_pkey" PRIMARY KEY (ecosystem,id);
+*/
+func testFizz() {
+	res, err := fizz.AString(`drop_table("1_keys", {"if_exists": true})`, pgt)
+	res, err = fizz.AString(`sql("DROP TABLE IF EXISTS \"1_keys\";")
 	create_table("users") {
-		t.Column("id", "integer", {"primary": true})
-		t.Column("first_name", "string", {})
-		t.Column("last_name", "string", {})
-		t.Column("email", "string", {"size":20})
-		t.Column("permissions", "jsonb", {"null": true})
-		t.Column("age", "integer", {"null": true, "default": 40})
-		t.Column("raw", "blob", {})
+		t.Column("id", "bigint", {primary: true})
+		t.Column("email", "bigint", {"default": "0"})
+		t.Column("twitter_handle", "string", {"size": 50})
+		t.Column("age", "bigint", {"default_raw": "'0' CHECK (amount > 0)"})
+		t.Column("admin", "bytea", {})
 		t.Column("company_id", "uuid", {"default_raw": "uuid_generate_v1()"})
-	}
-	`, pgt)
-	fmt.Println(`POSTGRES`, res)
+		t.Column("bio", "text", {"null": true})
+		t.Column("joined_at", "timestamp", {})
+		t.Index("email", {"unique": true})
+	  }
+	  add_index("table_name", "column_name", {"unique": true})`, pgt)
+	fmt.Println(`POSTGRES`, err, res)
 }

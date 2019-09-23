@@ -89,20 +89,25 @@ DROP TABLE IF EXISTS "1_system_parameters";
 	);
 	ALTER TABLE ONLY "1_node_ban_logs" ADD CONSTRAINT "1_node_ban_logs_pkey" PRIMARY KEY ("id");
 `
-var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
-	"id" bigint  NOT NULL DEFAULT '0',
-	"pub" bytea  NOT NULL DEFAULT '',
-	"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
-	"maxpay" decimal(30) NOT NULL DEFAULT '0' CHECK (maxpay >= 0),
-	"deposit" decimal(30) NOT NULL DEFAULT '0' CHECK (deposit >= 0),
-	"multi" bigint NOT NULL DEFAULT '0',
-	"deleted" bigint NOT NULL DEFAULT '0',
-	"blocked" bigint NOT NULL DEFAULT '0',
-	"ecosystem" bigint NOT NULL DEFAULT '1',
-	"account" char(24) NOT NULL
-	);
-	ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "1_keys_pkey" PRIMARY KEY (ecosystem,id);
+var sqlFirstEcosystemCommon = `
+	sql("DROP TABLE IF EXISTS \"1_keys\";")
+	create_table("1_keys") {
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("pub", "bytea", {"default": ""})
+		t.Column("amount", "decimal(30)", {"default_raw": "'0' CHECK (amount >= 0)"})
+		t.Column("maxpay", "decimal(30)", {"default_raw": "'0' CHECK (maxpay >= 0)"})
+		t.Column("deposit", "decimal(30)", {"default_raw": "'0' CHECK (deposit >= 0)"})
+		t.Column("multi", "bigint", {"default": "0"})
+		t.Column("deleted", "integer", {"default": "0"})
+		t.Column("blocked", "integer", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+		t.Column("account", "char(24)", {})
+		t.DisableTimestamps()
+		t.PrimaryKey("ecosystem", "id")
+	  }
+`
 
+var firstEcosystemCommon = `
 	DROP TABLE IF EXISTS "1_menu";
 	CREATE TABLE "1_menu" (
 		"id" bigint  NOT NULL DEFAULT '0',

@@ -18,7 +18,25 @@ package migration
 
 import (
 	"strings"
+
+	"github.com/gobuffalo/fizz"
+	"github.com/gobuffalo/fizz/translators"
 )
+
+var _ fizz.Translator = (*translators.Postgres)(nil)
+var pgt = translators.NewPostgres()
+
+func sqlConvert(in []string) (ret string, err error) {
+	var item string
+	for _, sql := range in {
+		item, err = fizz.AString(sql, pgt)
+		if err != nil {
+			return
+		}
+		ret += item + "\r\n"
+	}
+	return
+}
 
 // GetEcosystemScript returns script to create ecosystem
 func GetEcosystemScript() string {
@@ -60,10 +78,17 @@ func GetFirstTableScript() string {
 }
 
 // GetCommonEcosystemScript returns script with common tables
-func GetCommonEcosystemScript() string {
+func GetCommonEcosystemScript() (string, error) {
+	sql, err := sqlConvert([]string{
+		sqlFirstEcosystemCommon,
+	})
+	if err != nil {
+		return ``, err
+	}
 	scripts := []string{
+		sql,
 		firstEcosystemCommon,
 		timeZonesSQL,
 	}
-	return strings.Join(scripts, "\r\n")
+	return strings.Join(scripts, "\r\n"), nil
 }
