@@ -17,7 +17,12 @@
 package migration
 
 import (
+	"bytes"
+	"fmt"
+	"io"
+	"log"
 	"strings"
+	"text/template"
 
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
@@ -25,11 +30,80 @@ import (
 
 var _ fizz.Translator = (*translators.Postgres)(nil)
 var pgt = translators.NewPostgres()
+var tblName string
+
+const (
+	sqlPrimary = "primary"
+	sqlUnique  = "unique"
+	sqlIndex   = "index"
+)
+
+func sqlHead(name string) string {
+	tblName = name
+	return fmt.Sprintf(`sql("DROP TABLE IF EXISTS \"%[1]s\";")
+	create_table("%[1]s") {`, name)
+}
+
+func sqlEnd(options ...string) (ret string) {
+	ret = `t.DisableTimestamps()
+	}`
+	for _, opt := range options {
+		var cname string
+		if strings.HasPrefix(opt, sqlPrimary) {
+			opt = strings.ReplaceAll(opt, sqlPrimary, `PRIMARY KEY (id)`)
+			cname = "pkey"
+		}
+		if strings.HasPrefix(opt, sqlUnique) {
+			pars := strings.Split(strings.Trim(opt[len(sqlUnique):], `() `), `,`)
+			opt = strings.ReplaceAll(opt, sqlUnique, `UNIQUE `)
+			for i, val := range pars {
+				pars[i] = strings.TrimSpace(val)
+			}
+			cname = strings.Join(pars, `_`)
+		}
+		if strings.HasPrefix(opt, sqlIndex) {
+			pars := strings.Split(strings.Trim(opt[len(sqlIndex):], `() `), `,`)
+			for i, val := range pars {
+				pars[i] = strings.TrimSpace(val)
+			}
+			if len(pars) == 1 {
+				ret += fmt.Sprintf(`
+		add_index("%s", "%s", {})`, tblName, pars[0])
+			} else {
+				ret += fmt.Sprintf(`
+		add_index("%s", ["%s"], {})`, tblName, strings.Join(pars, `", "`))
+			}
+			continue
+		}
+		ret += fmt.Sprintf(`
+	sql("ALTER TABLE ONLY \"%[1]s\" ADD CONSTRAINT \"%[1]s_%[3]s\" %[2]s;")`, tblName, opt, cname)
+	}
+	return
+}
 
 func sqlConvert(in []string) (ret string, err error) {
-	var item string
+	var (
+		item string
+		out  bytes.Buffer
+	)
+	funcs := template.FuncMap{
+		"head":   sqlHead,
+		"footer": sqlEnd,
+	}
+	sqlTmpl := template.New("sql").Funcs(funcs)
+	if err != nil {
+		log.Fatal(err)
+	}
 	for _, sql := range in {
-		item, err = fizz.AString(sql, pgt)
+		var tmpl *template.Template
+		if tmpl, err = sqlTmpl.Parse(sql); err != nil {
+			return
+		}
+		if err = tmpl.Execute(io.Writer(&out), nil); err != nil {
+			return
+		}
+		fmt.Println(`OUT`, out.String())
+		item, err = fizz.AString(out.String(), pgt)
 		if err != nil {
 			return
 		}
@@ -87,7 +161,6 @@ func GetCommonEcosystemScript() (string, error) {
 	}
 	scripts := []string{
 		sql,
-		firstEcosystemCommon,
 		timeZonesSQL,
 	}
 	return strings.Join(scripts, "\r\n"), nil

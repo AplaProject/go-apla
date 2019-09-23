@@ -44,17 +44,16 @@ DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
 func testFizz() {
 	res, err := fizz.AString(`drop_table("1_keys", {"if_exists": true})`, pgt)
 	res, err = fizz.AString(`sql("DROP TABLE IF EXISTS \"1_keys\";")
-	create_table("users") {
-		t.Column("id", "bigint", {primary: true})
-		t.Column("email", "bigint", {"default": "0"})
-		t.Column("twitter_handle", "string", {"size": 50})
-		t.Column("age", "bigint", {"default_raw": "'0' CHECK (amount > 0)"})
-		t.Column("admin", "bytea", {})
-		t.Column("company_id", "uuid", {"default_raw": "uuid_generate_v1()"})
-		t.Column("bio", "text", {"null": true})
-		t.Column("joined_at", "timestamp", {})
-		t.Index("email", {"unique": true})
-	  }
-	  add_index("table_name", "column_name", {"unique": true})`, pgt)
+	create_table("1_menu") {
+		t.Column("id", "bigint", {"default": "0", "primary": true})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("title", "string", {"default": "", "size":255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+		t.DisableTimestamps()
+	}
+	 add_index("table_name", "column_name", {"unique": true})`, pgt)
 	fmt.Println(`POSTGRES`, err, res)
 }
