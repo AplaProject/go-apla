@@ -16,16 +16,15 @@
 
 package migration
 
-var timeZonesSQL = `
-DROP TABLE IF EXISTS "1_time_zones";
-CREATE TABLE "1_time_zones" (
-	"id" bigint NOT NULL  DEFAULT '0',
-	"name" varchar(255) NOT NULL,
-	"offset" varchar(6) NOT NULL,
-	CONSTRAINT "1_time_zones_name_uniq" UNIQUE (name)
-);
-ALTER TABLE ONLY "1_time_zones" ADD CONSTRAINT "1_time_zones_pkey" PRIMARY KEY ("id");
+var sqlTimeZonesSQL = `
+	{{head "1_time_zones"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("offset", "string", {"default": "", "size":6})
+	{{footer "primary" "unique(name)"}}
+`
 
+var timeZonesSQL = `
 INSERT INTO "1_time_zones" VALUES 
 (next_id('1_time_zones'), 'Africa/Abidjan', 'UTC'),
 (next_id('1_time_zones'), 'Africa/Accra', 'UTC'),
@@ -451,5 +450,5 @@ INSERT INTO "1_time_zones" VALUES
 (next_id('1_time_zones'), 'Pacific/Tarawa', '+12:00'),
 (next_id('1_time_zones'), 'Pacific/Tongatapu', '+13:00'),
 (next_id('1_time_zones'), 'Pacific/Wake', '+12:00'),
-(next_id('1_time_zones'), 'Pacific/Wallis', '+12:00')
+(next_id('1_time_zones'), 'Pacific/Wallis', '+12:00');
 `

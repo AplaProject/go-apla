@@ -155,13 +155,10 @@ func GetFirstTableScript() string {
 func GetCommonEcosystemScript() (string, error) {
 	sql, err := sqlConvert([]string{
 		sqlFirstEcosystemCommon,
+		sqlTimeZonesSQL,
 	})
 	if err != nil {
 		return ``, err
 	}
-	scripts := []string{
-		sql,
-		timeZonesSQL,
-	}
-	return strings.Join(scripts, "\r\n"), nil
+	return sql + "\r\n" + timeZonesSQL, nil
 }
