@@ -20,13 +20,22 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 	"text/template"
 
+	"github.com/AplaProject/go-apla/packages/converter"
 	"github.com/gobuffalo/fizz"
 	"github.com/gobuffalo/fizz/translators"
 )
+
+type SqlData struct {
+	Ecosystem int
+	Wallet    int64
+	Name      string
+	Founder   int64
+	AppID     int64
+	Account   string
+}
 
 var _ fizz.Translator = (*translators.Postgres)(nil)
 var pgt = translators.NewPostgres()
@@ -82,27 +91,24 @@ func sqlEnd(options ...string) (ret string) {
 }
 
 func sqlConvert(in []string) (ret string, err error) {
-	var (
-		item string
-		out  bytes.Buffer
-	)
+	var item string
 	funcs := template.FuncMap{
 		"head":   sqlHead,
 		"footer": sqlEnd,
 	}
 	sqlTmpl := template.New("sql").Funcs(funcs)
-	if err != nil {
-		log.Fatal(err)
-	}
 	for _, sql := range in {
-		var tmpl *template.Template
+		var (
+			tmpl *template.Template
+			out  bytes.Buffer
+		)
+
 		if tmpl, err = sqlTmpl.Parse(sql); err != nil {
 			return
 		}
 		if err = tmpl.Execute(io.Writer(&out), nil); err != nil {
 			return
 		}
-		fmt.Println(`OUT`, out.String())
 		item, err = fizz.AString(out.String(), pgt)
 		if err != nil {
 			return
@@ -113,8 +119,17 @@ func sqlConvert(in []string) (ret string, err error) {
 }
 
 // GetEcosystemScript returns script to create ecosystem
-func GetEcosystemScript() string {
-	scripts := []string{
+func GetEcosystemScript(id int, wallet int64, name string, founder,
+	appID int64) (ret string, err error) {
+	data := SqlData{
+		Ecosystem: id,
+		Wallet:    wallet,
+		Name:      name,
+		Founder:   founder,
+		AppID:     appID,
+		Account:   converter.AddressToString(wallet),
+	}
+	for _, item := range []string{
 		contractsDataSQL,
 		menuDataSQL,
 		pagesDataSQL,
@@ -122,9 +137,21 @@ func GetEcosystemScript() string {
 		membersDataSQL,
 		sectionsDataSQL,
 		keysDataSQL,
+	} {
+		var (
+			out  bytes.Buffer
+			tmpl *template.Template
+		)
+		tmpl, err = template.New("sql").Parse(item)
+		if err != nil {
+			return
+		}
+		if err = tmpl.Execute(io.Writer(&out), data); err != nil {
+			return
+		}
+		ret += out.String() + "\r\n"
 	}
-
-	return strings.Join(scripts, "\r\n")
+	return
 }
 
 // GetFirstEcosystemScript returns script to update with additional data for first ecosystem

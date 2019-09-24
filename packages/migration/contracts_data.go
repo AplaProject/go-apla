@@ -30,7 +30,7 @@ contract AdminCondition {
         }      
     }
 }
-', 'ContractConditions("MainCondition")', '%[5]d', '%[1]d'),
+', 'ContractConditions("MainCondition")', '{{.AppID}}', '{{.Ecosystem}}'),
 	(next_id('1_contracts'), 'DeveloperCondition', '// This contract is used to set "developer" rights.
 // Usually the "developer" role is used for this.
 // The role ID is written to the ecosystem parameter and can be changed.
@@ -56,7 +56,7 @@ contract DeveloperCondition {
         }      
 	}
 }
-', 'ContractConditions("MainCondition")', '%[5]d', '%[1]d'),
+', 'ContractConditions("MainCondition")', '{{.AppID}}', '{{.Ecosystem}}'),
 	(next_id('1_contracts'), 'MainCondition', 'contract MainCondition {
 	conditions {
 		if EcosysParam("founder_account")!=$key_id
@@ -65,5 +65,5 @@ contract DeveloperCondition {
 		}
 	}
 }
-', 'ContractConditions("MainCondition")', '%[5]d', '%[1]d');
+', 'ContractConditions("MainCondition")', '{{.AppID}}', '{{.Ecosystem}}');
 `

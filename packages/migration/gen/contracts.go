@@ -39,7 +39,7 @@ var (
 		{
 			[]string{"./contracts/ecosystem"},
 			"./contracts_data.go",
-			"contractsDataSQL", "%[1]d", "%[2]d",
+			"contractsDataSQL", "{{.Ecosystem}}", "{{.Owner}}",
 		},
 		{
 			[]string{"./contracts/common", "./contracts/first_ecosystem"},
