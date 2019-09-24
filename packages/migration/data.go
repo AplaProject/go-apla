@@ -35,64 +35,40 @@ var (
 		t.Column("wallet_id", "bigint", {"default": "0"})
 		t.Column("block_id", "int", {"default": "0"})
 		t.Column("error", "string", {"default": "", "size":255})
-	{{footer}}
-	sql("ALTER TABLE ONLY transactions_status ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);")
+	{{footer "primary(hash)"}}
+
+	{{head "confirmations"}}
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("good", "int", {"default": "0"})
+		t.Column("bad", "int", {"default": "0"})
+		t.Column("time", "int", {"default": "0"})
+	{{footer "primary(block_id)"}}
+
+	{{head "block_chain"}}
+		t.Column("id", "int", {"default": "0"})
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("rollbacks_hash", "bytea", {"default": ""})
+		t.Column("data", "bytea", {"default": ""})
+		t.Column("ecosystem_id", "int", {"default": "0"})
+		t.Column("key_id", "bigint", {"default": "0"})
+		t.Column("node_position", "bigint", {"default": "0"})
+		t.Column("time", "int", {"default": "0"})
+		t.Column("tx", "int", {"default": "0"})
+	{{footer "primary"}}
+
+	{{head "log_transactions"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("block", "int", {"default": "0"})
+	{{footer "primary(hash)"}}
+
+	{{head "queue_tx"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("data", "bytea", {"default": ""})
+		t.Column("from_gate", "int", {"default": "0"})
+	{{footer "primary(hash)"}}
 	`
 
 	migrationInitialSchema = `
-		
-		DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
-		"block_id" bigint  NOT NULL DEFAULT '0',
-		"good" int  NOT NULL DEFAULT '0',
-		"bad" int  NOT NULL DEFAULT '0',
-		"time" int  NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (block_id);
-		
-		DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
-		"id" int NOT NULL DEFAULT '0',
-		"hash" bytea  NOT NULL DEFAULT '',
-		"rollbacks_hash" bytea NOT NULL DEFAULT '',
-		"data" bytea NOT NULL DEFAULT '',
-		"ecosystem_id" int  NOT NULL DEFAULT '0',
-		"key_id" bigint  NOT NULL DEFAULT '0',
-		"node_position" bigint  NOT NULL DEFAULT '0',
-		"time" int NOT NULL DEFAULT '0',
-		"tx" int NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "block_chain" ADD CONSTRAINT block_chain_pkey PRIMARY KEY (id);
-		
-		DROP TABLE IF EXISTS "log_transactions"; CREATE TABLE "log_transactions" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"block" int NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "log_transactions" ADD CONSTRAINT log_transactions_pkey PRIMARY KEY (hash);
-
-		DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"data" bytea NOT NULL DEFAULT '',
-		"from_gate" int NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
-		
-		CREATE TABLE "system_contracts" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"value" text  NOT NULL DEFAULT '',
-		"wallet_id" bigint NOT NULL DEFAULT '0',
-		"token_id" bigint NOT NULL DEFAULT '0',
-		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
-		
-		
-		CREATE TABLE "system_tables" (
-		"name" varchar(100)  NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
 		
 		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
 		"hash" bytea  NOT NULL DEFAULT '',

@@ -72,7 +72,11 @@ func sqlEnd(options ...string) (ret string) {
 			continue
 		}
 		if strings.HasPrefix(opt, sqlPrimary) {
-			opt = strings.Replace(opt, sqlPrimary, `PRIMARY KEY (id)`, 1)
+			if opt == sqlPrimary {
+				opt = `PRIMARY KEY (id)`
+			} else {
+				opt = strings.Replace(opt, sqlPrimary, `PRIMARY KEY `, 1)
+			}
 			cname = "pkey"
 		}
 		if strings.HasPrefix(opt, sqlUnique) {
