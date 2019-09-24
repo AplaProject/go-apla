@@ -42,9 +42,9 @@ var (
 			"contractsDataSQL", "{{.Ecosystem}}", "{{.Owner}}",
 		},
 		{
-			[]string{"./contracts/common", "./contracts/first_ecosystem"},
+			[]string{"./contracts/first_ecosystem"},
 			"./first_ecosys_contracts_data.go",
-			"firstEcosystemContractsSQL", "1", "%[1]d",
+			"firstEcosystemContractsSQL", "1", "{{.Owner}}",
 		},
 		{
 			[]string{"./contracts/common", "./contracts/first_ecosystem", "./contracts/obs"},

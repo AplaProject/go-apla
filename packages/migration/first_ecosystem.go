@@ -17,78 +17,64 @@
 package migration
 
 // SchemaFirstEcosystem contains SQL queries for creating first ecosystem
-var firstEcosystemSchema = `
-DROP TABLE IF EXISTS "1_ecosystems";
-CREATE TABLE "1_ecosystems" (
-		"id" bigint NOT NULL DEFAULT '0',
-		"name"	varchar(255) NOT NULL DEFAULT '',
-		"info" jsonb,
-		"is_valued" bigint NOT NULL DEFAULT '0',
-		"emission_amount" jsonb,
-		"token_title" varchar(255),
-		"type_emission" bigint NOT NULL DEFAULT '0',
-		"type_withdraw" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
+var sqlFirstEcosystemSchema = `
+	{{head "1_ecosystems"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("info", "jsonb", {"null": true})
+		t.Column("is_valued", "bigint", {"default": "0"})
+		t.Column("emission_amount", "jsonb", {"null": true})
+		t.Column("token_title", "string", {"null": true, "size":255})
+		t.Column("type_emission", "bigint", {"default": "0"})
+		t.Column("type_withdraw", "bigint", {"default": "0"})
+	{{footer "primary"}}
 
+	{{head "1_system_parameters"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+	{{footer "primary" "index(name)"}}
 
-DROP TABLE IF EXISTS "1_system_parameters";
-	CREATE TABLE "1_system_parameters" (
-	"id" bigint NOT NULL DEFAULT '0',
-	"name" varchar(255)  NOT NULL DEFAULT '',
-	"value" text NOT NULL DEFAULT '',
-	"conditions" text  NOT NULL DEFAULT ''
-	);
-	ALTER TABLE ONLY "1_system_parameters" ADD CONSTRAINT "1_system_parameters_pkey" PRIMARY KEY (id);
-	CREATE INDEX "1_system_parameters_index_name" ON "1_system_parameters" (name);
-	
-	
-	DROP TABLE IF EXISTS "1_delayed_contracts";
-	CREATE TABLE "1_delayed_contracts" (
-		"id" int NOT NULL default 0,
-		"contract" varchar(255) NOT NULL DEFAULT '',
-		"key_id" bigint NOT NULL DEFAULT '0',
-		"block_id" bigint NOT NULL DEFAULT '0',
-		"every_block" bigint NOT NULL DEFAULT '0',
-		"counter" bigint NOT NULL DEFAULT '0',
-		"limit" bigint NOT NULL DEFAULT '0',
-		"deleted" bigint NOT NULL DEFAULT '0',
-		"conditions" text NOT NULL DEFAULT ''
-	);
-	ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
-	CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
+	{{head "1_delayed_contracts"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("contract", "string", {"default": "", "size":255})
+		t.Column("key_id", "bigint", {"default": "0"})
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("every_block", "bigint", {"default": "0"})
+		t.Column("counter", "bigint", {"default": "0"})
+		t.Column("limit", "bigint", {"default": "0"})
+		t.Column("deleted", "bigint", {"default": "0"})
+		t.Column("conditions", "text", {"default": ""})
+	{{footer "primary" "index(block_id)"}}
 
-	DROP TABLE IF EXISTS "1_metrics";
-	CREATE TABLE "1_metrics" (
-		"id" int NOT NULL default 0,
-		"time" bigint NOT NULL DEFAULT '0',
-		"metric" varchar(255) NOT NULL,
-		"key" varchar(255) NOT NULL,
-		"value" bigint NOT NULL
-	);
-	ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
-	CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
+	{{head "1_metrics"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("time", "bigint", {"default": "0"})
+		t.Column("metric", "string", {"default": "", "size":255})
+		t.Column("key", "string", {"default": "", "size":255})
+		t.Column("value", "bigint", {"default": "0"})
+	{{footer "primary" "index(metric, time, key)"}}
 
-	DROP TABLE IF EXISTS "1_bad_blocks"; CREATE TABLE "1_bad_blocks" (
-		"id" bigint NOT NULL DEFAULT '0',
-		"producer_node_id" bigint NOT NULL,
-		"block_id" bigint NOT NULL,
-		"consumer_node_id" bigint NOT NULL,
-		"block_time" timestamp NOT NULL,
-		"reason" TEXT NOT NULL DEFAULT '',
-		"deleted" bigint NOT NULL DEFAULT '0'
-	);
-	ALTER TABLE ONLY "1_bad_blocks" ADD CONSTRAINT "1_bad_blocks_pkey" PRIMARY KEY ("id");
+	{{head "1_bad_blocks"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("producer_node_id", "bigint", {"default": "0"})
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("consumer_node_id", "bigint", {"default": "0"})
+		t.Column("block_time", "timestamp", {})
+		t.Column("reason", "text", {"default": ""})
+		t.Column("deleted", "bigint", {"default": "0"})
+	{{footer "primary" }}
 
-	DROP TABLE IF EXISTS "1_node_ban_logs"; CREATE TABLE "1_node_ban_logs" (
-		"id" bigint NOT NULL DEFAULT '0',
-		"node_id" bigint NOT NULL,
-		"banned_at" timestamp NOT NULL,
-		"ban_time" bigint NOT NULL,
-		"reason" TEXT NOT NULL DEFAULT ''
-	);
-	ALTER TABLE ONLY "1_node_ban_logs" ADD CONSTRAINT "1_node_ban_logs_pkey" PRIMARY KEY ("id");
+	{{head "1_node_ban_logs"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("node_id", "bigint", {"default": "0"})
+		t.Column("banned_at", "timestamp", {})
+		t.Column("ban_time", "bigint", {"default": "0"})
+		t.Column("reason", "text", {"default": ""})
+	{{footer "primary" }}
 `
+
 var sqlFirstEcosystemCommon = `
 	{{head "1_keys"}}
 		t.Column("id", "bigint", {"default": "0"})

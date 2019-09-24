@@ -118,26 +118,8 @@ func sqlConvert(in []string) (ret string, err error) {
 	return
 }
 
-// GetEcosystemScript returns script to create ecosystem
-func GetEcosystemScript(id int, wallet int64, name string, founder,
-	appID int64) (ret string, err error) {
-	data := SqlData{
-		Ecosystem: id,
-		Wallet:    wallet,
-		Name:      name,
-		Founder:   founder,
-		AppID:     appID,
-		Account:   converter.AddressToString(wallet),
-	}
-	for _, item := range []string{
-		contractsDataSQL,
-		menuDataSQL,
-		pagesDataSQL,
-		parametersDataSQL,
-		membersDataSQL,
-		sectionsDataSQL,
-		keysDataSQL,
-	} {
+func sqlTemplate(input []string, data interface{}) (ret string, err error) {
+	for _, item := range input {
 		var (
 			out  bytes.Buffer
 			tmpl *template.Template
@@ -154,11 +136,41 @@ func GetEcosystemScript(id int, wallet int64, name string, founder,
 	return
 }
 
+// GetEcosystemScript returns script to create ecosystem
+func GetEcosystemScript(id int, wallet int64, name string, founder,
+	appID int64) (string, error) {
+	data := SqlData{
+		Ecosystem: id,
+		Wallet:    wallet,
+		Name:      name,
+		Founder:   founder,
+		AppID:     appID,
+		Account:   converter.AddressToString(wallet),
+	}
+	return sqlTemplate([]string{
+		contractsDataSQL,
+		menuDataSQL,
+		pagesDataSQL,
+		parametersDataSQL,
+		membersDataSQL,
+		sectionsDataSQL,
+		keysDataSQL,
+	}, data)
+}
+
 // GetFirstEcosystemScript returns script to update with additional data for first ecosystem
-func GetFirstEcosystemScript() string {
+func GetFirstEcosystemScript(wallet int64) (ret string, err error) {
+	ret, err = sqlConvert([]string{
+		sqlFirstEcosystemSchema,
+	})
+	if err != nil {
+		return
+	}
+	var out string
+	out, err = sqlTemplate([]string{firstDelayedContractsDataSQL}, SqlData{Wallet: wallet})
+	ret += out
+
 	scripts := []string{
-		firstEcosystemSchema,
-		firstDelayedContractsDataSQL,
 		firstEcosystemContractsSQL,
 		firstEcosystemPagesDataSQL,
 		firstEcosystemBlocksDataSQL,
@@ -166,8 +178,8 @@ func GetFirstEcosystemScript() string {
 		firstSystemParametersDataSQL,
 		firstTablesDataSQL,
 	}
-
-	return strings.Join(scripts, "\r\n")
+	ret += strings.Join(scripts, "\r\n")
+	return
 }
 
 // GetFirstTableScript returns script to update _tables for first ecosystem
