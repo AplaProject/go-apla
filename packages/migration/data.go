@@ -20,27 +20,26 @@ package migration
 
 var (
 	migrationInitial = `
-		DROP SEQUENCE IF EXISTS migration_history_id_seq CASCADE;
-		CREATE SEQUENCE migration_history_id_seq START WITH 1;
-		DROP TABLE IF EXISTS "migration_history";
-		CREATE TABLE "migration_history" (
-			"id" int NOT NULL default nextval('migration_history_id_seq'),
-			"version" varchar(255) NOT NULL,
-			"date_applied" int NOT NULL
-		);
-		ALTER SEQUENCE migration_history_id_seq owned by migration_history.id;
-		ALTER TABLE ONLY "migration_history" ADD CONSTRAINT migration_history_pkey PRIMARY KEY (id);`
+	{{headseq "migration_history"}}
+		t.Column("id", "int", {"default_raw": "nextval('migration_history_id_seq')"})
+		t.Column("version", "string", {"default": "", "size":255})
+		t.Column("date_applied", "int", {})
+	{{footer "seq" "primary"}}
+`
+	migrationInitialTables = `
+	{{head "transactions_status"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("time", "int", {"default": "0"})
+		t.Column("type", "int", {"default": "0"})
+		t.Column("ecosystem", "int", {"default": "1"})
+		t.Column("wallet_id", "bigint", {"default": "0"})
+		t.Column("block_id", "int", {"default": "0"})
+		t.Column("error", "string", {"default": "", "size":255})
+	{{footer}}
+	sql("ALTER TABLE ONLY transactions_status ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);")
+	`
 
-	migrationInitialSchema = `DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"time" int NOT NULL DEFAULT '0',
-		"type" int NOT NULL DEFAULT '0',
-		"ecosystem" int NOT NULL DEFAULT '1',
-		"wallet_id" bigint NOT NULL DEFAULT '0',
-		"block_id" int NOT NULL DEFAULT '0',
-		"error" varchar(255) NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "transactions_status" ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);
+	migrationInitialSchema = `
 		
 		DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
 		"block_id" bigint  NOT NULL DEFAULT '0',

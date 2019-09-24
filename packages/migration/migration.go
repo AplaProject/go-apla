@@ -32,22 +32,24 @@ const (
 
 var migrations = []*migration{
 	// Inital migration
-	&migration{"0.0.1", migrationInitial},
+	&migration{"0.0.1", migrationInitial, true},
 
 	// Initial schema
-	&migration{"0.1.6", migrationInitialSchema},
-	&migration{"0.1.7", updates.M017},
+	&migration{"0.1.5", migrationInitialTables, true},
+	&migration{"0.1.6", migrationInitialSchema, false},
+	&migration{"0.1.7", updates.M017, false},
 }
 
 var updateMigrations = []*migration{
-	&migration{"2.1.0", updates.M210},
-	&migration{"2.2.0", updates.M220},
-	&migration{"3.1.0", updates.M310},
+	&migration{"2.1.0", updates.M210, false},
+	&migration{"2.2.0", updates.M220, false},
+	&migration{"3.1.0", updates.M310, false},
 }
 
 type migration struct {
-	version string
-	data    string
+	version  string
+	data     string
+	template bool
 }
 
 type database interface {
@@ -105,7 +107,14 @@ func migrate(db database, appVer string, migrations []*migration) error {
 		} else if cmp >= 0 {
 			continue
 		}
-
+		if m.template {
+			fmt.Println(`1`, m.data)
+			m.data, err = sqlConvert([]string{m.data})
+			fmt.Println(`QQ`, err, m.data)
+			if err != nil {
+				return err
+			}
+		}
 		err = db.ApplyMigration(m.version, m.data)
 		if err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "err": err, "version": m.version}).Errorf("apply migration")

@@ -45,7 +45,15 @@ const (
 	sqlPrimary = "primary"
 	sqlUnique  = "unique"
 	sqlIndex   = "index"
+	sqlSeq     = "seq"
 )
+
+func sqlHeadSequence(name string) string {
+	ret := fmt.Sprintf(`sql("DROP SEQUENCE IF EXISTS %[1]s_id_seq CASCADE;")
+sql("CREATE SEQUENCE %[1]s_id_seq START WITH 1;")`, name)
+
+	return ret + "\r\n" + sqlHead(name)
+}
 
 func sqlHead(name string) string {
 	tblName = name
@@ -58,6 +66,11 @@ func sqlEnd(options ...string) (ret string) {
 	}`
 	for _, opt := range options {
 		var cname string
+		if strings.HasPrefix(opt, sqlSeq) {
+			ret += fmt.Sprintf(`
+		sql("ALTER SEQUENCE %[1]s_id_seq owned by %[1]s.id;")`, tblName)
+			continue
+		}
 		if strings.HasPrefix(opt, sqlPrimary) {
 			opt = strings.Replace(opt, sqlPrimary, `PRIMARY KEY (id)`, 1)
 			cname = "pkey"
@@ -93,8 +106,9 @@ func sqlEnd(options ...string) (ret string) {
 func sqlConvert(in []string) (ret string, err error) {
 	var item string
 	funcs := template.FuncMap{
-		"head":   sqlHead,
-		"footer": sqlEnd,
+		"head":    sqlHead,
+		"footer":  sqlEnd,
+		"headseq": sqlHeadSequence,
 	}
 	sqlTmpl := template.New("sql").Funcs(funcs)
 	for _, sql := range in {
