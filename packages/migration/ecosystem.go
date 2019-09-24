@@ -50,12 +50,12 @@ func sqlEnd(options ...string) (ret string) {
 	for _, opt := range options {
 		var cname string
 		if strings.HasPrefix(opt, sqlPrimary) {
-			opt = strings.ReplaceAll(opt, sqlPrimary, `PRIMARY KEY (id)`)
+			opt = strings.Replace(opt, sqlPrimary, `PRIMARY KEY (id)`, 1)
 			cname = "pkey"
 		}
 		if strings.HasPrefix(opt, sqlUnique) {
 			pars := strings.Split(strings.Trim(opt[len(sqlUnique):], `() `), `,`)
-			opt = strings.ReplaceAll(opt, sqlUnique, `UNIQUE `)
+			opt = strings.Replace(opt, sqlUnique, `UNIQUE `, 1)
 			for i, val := range pars {
 				pars[i] = strings.TrimSpace(val)
 			}
