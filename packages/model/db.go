@@ -219,7 +219,10 @@ func ExecSchemaEcosystem(db *DbTransaction, id int, wallet int64, name string, f
 		if err := GetDB(db).Exec(q).Error; err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first ecosystem schema")
 		}
-		q = fmt.Sprintf(migration.GetFirstTableScript(), id)
+		q, err = migration.GetFirstTableScript(id)
+		if err != nil {
+			return err
+		}
 		if err := GetDB(db).Exec(q).Error; err != nil {
 			log.WithFields(log.Fields{"type": consts.DBError, "error": err}).Error("executing first tables schema")
 		}

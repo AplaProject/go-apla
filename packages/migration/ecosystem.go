@@ -183,11 +183,8 @@ func GetFirstEcosystemScript(wallet int64) (ret string, err error) {
 }
 
 // GetFirstTableScript returns script to update _tables for first ecosystem
-func GetFirstTableScript() string {
-	scripts := []string{
-		tablesDataSQL,
-	}
-	return strings.Join(scripts, "\r\n")
+func GetFirstTableScript(ecosystem int) (string, error) {
+	return sqlTemplate([]string{tablesDataSQL}, SqlData{Ecosystem: ecosystem})
 }
 
 // GetCommonEcosystemScript returns script with common tables
