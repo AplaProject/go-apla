@@ -108,9 +108,7 @@ func migrate(db database, appVer string, migrations []*migration) error {
 			continue
 		}
 		if m.template {
-			fmt.Println(`1`, m.data)
 			m.data, err = sqlConvert([]string{m.data})
-			fmt.Println(`QQ`, err, m.data)
 			if err != nil {
 				return err
 			}
