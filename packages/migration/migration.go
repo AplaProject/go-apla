@@ -37,12 +37,12 @@ var migrations = []*migration{
 	// Initial schema
 	&migration{"0.1.5", migrationInitialTables, true},
 	&migration{"0.1.6", migrationInitialSchema, false},
-	&migration{"0.1.7", updates.M017, false},
+	&migration{"0.1.7", updates.M017, true},
 }
 
 var updateMigrations = []*migration{
-	&migration{"2.1.0", updates.M210, false},
-	&migration{"2.2.0", updates.M220, false},
+	&migration{"2.1.0", updates.M210, true},
+	&migration{"2.2.0", updates.M220, true},
 	&migration{"3.1.0", updates.M310, false},
 }
 

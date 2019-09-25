@@ -17,13 +17,11 @@
 package updates
 
 var M017 = `
-	ALTER TABLE "transactions"
-	DROP COLUMN "attempt",
-	DROP COLUMN "counter";
-	
-    DROP TABLE IF EXISTS "transactions_attempts"; CREATE TABLE "transactions_attempts" (
-	"hash" bytea  NOT NULL DEFAULT '',
-	"attempt" smallint NOT NULL DEFAULT '0'
-	);
-	ALTER TABLE ONLY "transactions_attempts" ADD CONSTRAINT transactions_attempts_pkey PRIMARY KEY (hash);
+    drop_column("transactions", "attempt")
+    drop_column("transactions", "counter")
+
+	{{head "transactions_attempts"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("attempt", "smallint", {"default": "0"})
+	{{footer "primary(hash)"}}
 `
