@@ -24,16 +24,19 @@ import (
 
 // Key is model
 type Key struct {
-	ecosystem    int64
-	accountKeyID int64 `gorm:"-"`
+	ecosystem    int64 `json:"ecosystem"`
+	accountKeyID int64 `gorm:"-" json:"-"`
 
-	ID        int64  `gorm:"primary_key;not null"`
-	AccountID string `gorm:"column:account;not null"`
-	PublicKey []byte `gorm:"column:pub;not null"`
-	Amount    string `gorm:"not null"`
-	Maxpay    string `gorm:"not null"`
-	Deleted   int64  `gorm:"not null"`
-	Blocked   int64  `gorm:"not null"`
+	ID        int64  `gorm:"primary_key;not null" json:"id"`
+	Ecosystem int64  `gorm:"column:ecosystem;not null" json:"ecosystem"`
+	AccountID string `gorm:"column:account;not null" json:"account"`
+	PublicKey []byte `gorm:"column:pub;not null" json:"pub"`
+	Amount    string `gorm:"not null" json:"amount"`
+	Deposit   string `gorm:"not null" json:"deposit"`
+	Maxpay    string `gorm:"not null" json:"maxpay"`
+	Multi     int64  `gorm:"not null" json:"multi"`
+	Deleted   int64  `gorm:"not null" json:"deleted"`
+	Blocked   int64  `gorm:"not null" json:"blocked"`
 }
 
 // SetTablePrefix is setting table prefix
@@ -73,4 +76,23 @@ func GetKeysCount() (int64, error) {
 	row := DBConn.Raw(`SELECT count(*) key_count FROM "1_keys" WHERE ecosystem = 1`).Select("key_count").Row()
 	err := row.Scan(&cnt)
 	return cnt, err
+}
+
+// GetKeys returns a list of keys records
+func GetKeys(prefix int64, order string, limit int64, offset int64) ([]Key) {
+	if prefix == 0 {
+		prefix = 1
+	}
+	if order == "" {
+	    order = "id ASC"
+	}
+	if limit == 0 {
+	    limit = -1
+	}
+	if offset == 0 {
+	    offset = -1
+	}
+	var keys []Key
+	DBConn.Table(KeyTableName(prefix)).Order(order).Limit(limit).Offset(offset).Find(&keys)
+	return keys
 }

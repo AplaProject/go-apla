@@ -18,12 +18,16 @@ package api
 
 import (
 	"net/http"
+	"fmt"
+	"regexp"
+	"errors"
 
 	"github.com/AplaProject/go-apla/packages/conf"
 	"github.com/AplaProject/go-apla/packages/consts"
 	"github.com/AplaProject/go-apla/packages/model"
 	"github.com/AplaProject/go-apla/packages/smart"
 	"github.com/AplaProject/go-apla/packages/utils/tx"
+	"github.com/AplaProject/go-apla/packages/converter"
 
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
@@ -32,6 +36,26 @@ import (
 type listResult struct {
 	Count string              `json:"count"`
 	List  []map[string]string `json:"list"`
+}
+
+type modelListResult struct {
+	Count string	   `json:"count"`
+	List  interface{}  `json:"list"`
+}
+
+type TableName struct {
+	prefix int64
+	suffix string
+}
+
+func ToTableName(full string) (tableName TableName, err error) {
+	pat := fmt.Sprintf(`^(([0-9]+)_)?(.*)$`)
+	re := regexp.MustCompile(pat)
+	m := re.FindStringSubmatch(full)
+	if m == nil {
+		return tableName, errors.New(fmt.Sprintf("Full table name '%s' doesn't match to pattern '%s'", full, pat))
+	}
+	return TableName{prefix: converter.StrToInt64(m[2]), suffix: m[3]}, nil
 }
 
 type listForm struct {
@@ -88,26 +112,40 @@ func getListHandler(w http.ResponseWriter, r *http.Request) {
 		q = q.Select("id," + form.Columns)
 	}
 
-	result := new(listResult)
-	err = q.Count(&result.Count).Error
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
-		errorResponse(w, errTableNotFound.Errorf(table))
-		return
-	}
-
-	rows, err := q.Order("id ASC").Offset(form.Offset).Limit(form.Limit).Rows()
-	if err != nil {
-		logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
-		errorResponse(w, err)
-		return
-	}
-
-	result.List, err = model.GetResult(rows)
+	tableName, err := ToTableName(params["name"])
 	if err != nil {
 		errorResponse(w, err)
-		return
 	}
+	order := "id ASC"
+	switch tableName.suffix {
+	case "keys":
+		list := model.GetKeys(tableName.prefix, order, form.Limit, form.Offset)
+		cnt, err := model.GetKeysCount()
+		if err != nil {
+		    errorResponse(w, err)
+		}
+		result := modelListResult{Count: converter.Int64ToStr(cnt), List: list}
+		jsonResponse(w, result)
+	default:
+		result := new(listResult)
+		err = q.Count(&result.Count).Error
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting table records count")
+			errorResponse(w, errTableNotFound.Errorf(table))
+			return
+		}
 
-	jsonResponse(w, result)
+		rows, err := q.Order(order).Offset(form.Offset).Limit(form.Limit).Rows()
+		if err != nil {
+			logger.WithFields(log.Fields{"type": consts.DBError, "error": err, "table": table}).Error("Getting rows from table")
+			errorResponse(w, err)
+			return
+		}
+		result.List, err = model.GetResult(rows)
+		if err != nil {
+			errorResponse(w, err)
+			return
+		}
+		jsonResponse(w, result)
+	}
 }
