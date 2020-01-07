@@ -36,7 +36,7 @@ type FullNodeJSON struct {
 }
 
 type NetworkResult struct {
-	NetworkID     string         `json:"network_ud"`
+	NetworkID     string         `json:"network_id"`
 	CentrifugoURL string         `json:"centrifugo_url"`
 	Test          bool           `json:"test"`
 	FullNodes     []FullNodeJSON `json:"full_nodes"`
