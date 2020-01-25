@@ -18,7 +18,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -87,12 +86,6 @@ func getDbFindHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Unmarshall where clause if there is any
 	var formWhere map[string]interface{}
-	cols, err := table.GetColumns(nil, tableName, "")
-	fmt.Printf("%+v %+v\n", cols, err)
-
-	cols, err = table.GetColumns(nil, tableName, form.Columns)
-	fmt.Printf("%+v %+v\n", cols, err)
-
 	if whereValue := r.FormValue("where"); 0 < len(whereValue) {
 		if err := json.Unmarshal([]byte(r.FormValue("where")), &formWhere); err != nil {
 			errorResponse(w, err, http.StatusBadRequest)
