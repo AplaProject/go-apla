@@ -85,13 +85,6 @@ func getDbFindHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check columns existence and access permissions
-	if _, _, _, err := sc.CheckAccess(tableName, form.Columns, client.EcosystemID); err != nil {
-		// if _, err := smart.GetColumns(form.Columns); err != nil {
-		errorResponse(w, errBannded.Errorf(err))
-		return
-	}
-
 	// Unmarshall where clause if there is any
 	var formWhere map[string]interface{}
 	cols, err := table.GetColumns(nil, tableName, "")
