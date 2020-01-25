@@ -17,14 +17,13 @@
 package updates
 
 var M220 = `
-	ALTER TABLE "external_blockchain" 
-	DROP COLUMN "netname",
-	ADD COLUMN "url" varchar(255)  NOT NULL DEFAULT '',
-	ADD COLUMN "external_contract" varchar(255)  NOT NULL DEFAULT '',
-	ADD COLUMN "result_contract" varchar(255)  NOT NULL DEFAULT '',
-	ADD COLUMN "uid" varchar(255) NOT NULL DEFAULT '',
-	ADD COLUMN "tx_time" int  NOT NULL DEFAULT '0',
-	ADD COLUMN "sent" int  NOT NULL DEFAULT '0',
-	ADD COLUMN "hash" bytea NOT NULL DEFAULT '',
-	ADD COLUMN "attempts" int  NOT NULL DEFAULT '0';
+	drop_column("external_blockchain", "netname")
+	add_column("external_blockchain", "url", "string", {"default":"", "size":255})
+	add_column("external_blockchain", "external_contract", "string", {"default":"", "size":255})
+	add_column("external_blockchain", "result_contract", "string", {"default":"", "size":255})
+	add_column("external_blockchain", "uid", "string", {"default":"", "size":255})
+	add_column("external_blockchain", "tx_time", "int", {"default":"0"})
+	add_column("external_blockchain", "sent", "int", {"default":"0"})
+	add_column("external_blockchain", "hash", "bytea", {"default":""})
+	add_column("external_blockchain", "attempts", "int", {"default":"0"})
 `

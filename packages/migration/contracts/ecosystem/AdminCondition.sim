@@ -1,4 +1,4 @@
-// +prop AppID = '%[5]d'
+// +prop AppID = '{{.AppID}}'
 // +prop Conditions = 'ContractConditions("MainCondition")'
 // This contract is used to set "admin" rights.
 // Usually the "admin" role is used for this.

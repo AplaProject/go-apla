@@ -17,388 +17,265 @@
 package migration
 
 // SchemaFirstEcosystem contains SQL queries for creating first ecosystem
-var firstEcosystemSchema = `
-DROP TABLE IF EXISTS "1_ecosystems";
-CREATE TABLE "1_ecosystems" (
-		"id" bigint NOT NULL DEFAULT '0',
-		"name"	varchar(255) NOT NULL DEFAULT '',
-		"info" jsonb,
-		"is_valued" bigint NOT NULL DEFAULT '0',
-		"emission_amount" jsonb,
-		"token_title" varchar(255),
-		"type_emission" bigint NOT NULL DEFAULT '0',
-		"type_withdraw" bigint NOT NULL DEFAULT '0'
-);
-ALTER TABLE ONLY "1_ecosystems" ADD CONSTRAINT "1_ecosystems_pkey" PRIMARY KEY ("id");
+var sqlFirstEcosystemSchema = `
+	{{head "1_ecosystems"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("info", "jsonb", {"null": true})
+		t.Column("is_valued", "bigint", {"default": "0"})
+		t.Column("emission_amount", "jsonb", {"null": true})
+		t.Column("token_title", "string", {"null": true, "size":255})
+		t.Column("type_emission", "bigint", {"default": "0"})
+		t.Column("type_withdraw", "bigint", {"default": "0"})
+	{{footer "primary"}}
 
+	{{head "1_system_parameters"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+	{{footer "primary" "index(name)"}}
 
-DROP TABLE IF EXISTS "1_system_parameters";
-	CREATE TABLE "1_system_parameters" (
-	"id" bigint NOT NULL DEFAULT '0',
-	"name" varchar(255)  NOT NULL DEFAULT '',
-	"value" text NOT NULL DEFAULT '',
-	"conditions" text  NOT NULL DEFAULT ''
-	);
-	ALTER TABLE ONLY "1_system_parameters" ADD CONSTRAINT "1_system_parameters_pkey" PRIMARY KEY (id);
-	CREATE INDEX "1_system_parameters_index_name" ON "1_system_parameters" (name);
-	
-	
-	DROP TABLE IF EXISTS "1_delayed_contracts";
-	CREATE TABLE "1_delayed_contracts" (
-		"id" int NOT NULL default 0,
-		"contract" varchar(255) NOT NULL DEFAULT '',
-		"key_id" bigint NOT NULL DEFAULT '0',
-		"block_id" bigint NOT NULL DEFAULT '0',
-		"every_block" bigint NOT NULL DEFAULT '0',
-		"counter" bigint NOT NULL DEFAULT '0',
-		"limit" bigint NOT NULL DEFAULT '0',
-		"deleted" bigint NOT NULL DEFAULT '0',
-		"conditions" text NOT NULL DEFAULT ''
-	);
-	ALTER TABLE ONLY "1_delayed_contracts" ADD CONSTRAINT "1_delayed_contracts_pkey" PRIMARY KEY ("id");
-	CREATE INDEX "1_delayed_contracts_index_block_id" ON "1_delayed_contracts" ("block_id");
+	{{head "1_delayed_contracts"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("contract", "string", {"default": "", "size":255})
+		t.Column("key_id", "bigint", {"default": "0"})
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("every_block", "bigint", {"default": "0"})
+		t.Column("counter", "bigint", {"default": "0"})
+		t.Column("limit", "bigint", {"default": "0"})
+		t.Column("deleted", "bigint", {"default": "0"})
+		t.Column("conditions", "text", {"default": ""})
+	{{footer "primary" "index(block_id)"}}
 
-	DROP TABLE IF EXISTS "1_metrics";
-	CREATE TABLE "1_metrics" (
-		"id" int NOT NULL default 0,
-		"time" bigint NOT NULL DEFAULT '0',
-		"metric" varchar(255) NOT NULL,
-		"key" varchar(255) NOT NULL,
-		"value" bigint NOT NULL
-	);
-	ALTER TABLE ONLY "1_metrics" ADD CONSTRAINT "1_metrics_pkey" PRIMARY KEY (id);
-	CREATE INDEX "1_metrics_unique_index" ON "1_metrics" (metric, time, "key");
+	{{head "1_metrics"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("time", "bigint", {"default": "0"})
+		t.Column("metric", "string", {"default": "", "size":255})
+		t.Column("key", "string", {"default": "", "size":255})
+		t.Column("value", "bigint", {"default": "0"})
+	{{footer "primary" "index(metric, time, key)"}}
 
-	DROP TABLE IF EXISTS "1_bad_blocks"; CREATE TABLE "1_bad_blocks" (
-		"id" bigint NOT NULL DEFAULT '0',
-		"producer_node_id" bigint NOT NULL,
-		"block_id" bigint NOT NULL,
-		"consumer_node_id" bigint NOT NULL,
-		"block_time" timestamp NOT NULL,
-		"reason" TEXT NOT NULL DEFAULT '',
-		"deleted" bigint NOT NULL DEFAULT '0'
-	);
-	ALTER TABLE ONLY "1_bad_blocks" ADD CONSTRAINT "1_bad_blocks_pkey" PRIMARY KEY ("id");
+	{{head "1_bad_blocks"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("producer_node_id", "bigint", {"default": "0"})
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("consumer_node_id", "bigint", {"default": "0"})
+		t.Column("block_time", "timestamp", {})
+		t.Column("reason", "text", {"default": ""})
+		t.Column("deleted", "bigint", {"default": "0"})
+	{{footer "primary" }}
 
-	DROP TABLE IF EXISTS "1_node_ban_logs"; CREATE TABLE "1_node_ban_logs" (
-		"id" bigint NOT NULL DEFAULT '0',
-		"node_id" bigint NOT NULL,
-		"banned_at" timestamp NOT NULL,
-		"ban_time" bigint NOT NULL,
-		"reason" TEXT NOT NULL DEFAULT ''
-	);
-	ALTER TABLE ONLY "1_node_ban_logs" ADD CONSTRAINT "1_node_ban_logs_pkey" PRIMARY KEY ("id");
+	{{head "1_node_ban_logs"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("node_id", "bigint", {"default": "0"})
+		t.Column("banned_at", "timestamp", {})
+		t.Column("ban_time", "bigint", {"default": "0"})
+		t.Column("reason", "text", {"default": ""})
+	{{footer "primary" }}
 `
-var firstEcosystemCommon = `DROP TABLE IF EXISTS "1_keys"; CREATE TABLE "1_keys" (
-	"id" bigint  NOT NULL DEFAULT '0',
-	"pub" bytea  NOT NULL DEFAULT '',
-	"amount" decimal(30) NOT NULL DEFAULT '0' CHECK (amount >= 0),
-	"maxpay" decimal(30) NOT NULL DEFAULT '0' CHECK (maxpay >= 0),
-	"deposit" decimal(30) NOT NULL DEFAULT '0' CHECK (deposit >= 0),
-	"multi" bigint NOT NULL DEFAULT '0',
-	"deleted" bigint NOT NULL DEFAULT '0',
-	"blocked" bigint NOT NULL DEFAULT '0',
-	"ecosystem" bigint NOT NULL DEFAULT '1',
-	"account" char(24) NOT NULL
-	);
-	ALTER TABLE ONLY "1_keys" ADD CONSTRAINT "1_keys_pkey" PRIMARY KEY (ecosystem,id);
 
-	DROP TABLE IF EXISTS "1_menu";
-	CREATE TABLE "1_menu" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"name" character varying(255) NOT NULL DEFAULT '',
-		"title" character varying(255) NOT NULL DEFAULT '',
-		"value" text NOT NULL DEFAULT '',
-		"conditions" text NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"ecosystem" bigint NOT NULL DEFAULT '1',
-		UNIQUE (ecosystem, name)
-	);
-	ALTER TABLE ONLY "1_menu" ADD CONSTRAINT "1_menu_pkey" PRIMARY KEY (id);
-	CREATE INDEX "1_menu_index_name" ON "1_menu" (ecosystem,name);
+var sqlFirstEcosystemCommon = `
+	{{head "1_keys"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("pub", "bytea", {"default": ""})
+		t.Column("amount", "decimal(30)", {"default_raw": "'0' CHECK (amount >= 0)"})
+		t.Column("maxpay", "decimal(30)", {"default_raw": "'0' CHECK (maxpay >= 0)"})
+		t.Column("deposit", "decimal(30)", {"default_raw": "'0' CHECK (deposit >= 0)"})
+		t.Column("multi", "bigint", {"default": "0"})
+		t.Column("deleted", "bigint", {"default": "0"})
+		t.Column("blocked", "bigint", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+		t.Column("account", "char(24)", {})
+		t.PrimaryKey("ecosystem", "id")
+	{{footer}}
 
-	DROP TABLE IF EXISTS "1_pages"; 
-	CREATE TABLE "1_pages" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"name" character varying(255) NOT NULL DEFAULT '',
-		"value" text NOT NULL DEFAULT '',
-		"menu" character varying(255) NOT NULL DEFAULT '',
-		"validate_count" bigint NOT NULL DEFAULT '1',
-		"conditions" text NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"app_id" bigint NOT NULL DEFAULT '1',
-		"validate_mode" character(1) NOT NULL DEFAULT '0',
-		"ecosystem" bigint NOT NULL DEFAULT '1',
-		UNIQUE (ecosystem, name)
-	);
-	ALTER TABLE ONLY "1_pages" ADD CONSTRAINT "1_pages_pkey" PRIMARY KEY (id);
-	CREATE INDEX "1_pages_index_name" ON "1_pages" (ecosystem,name);
+	{{head "1_menu"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("title", "string", {"default": "", "size":255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "unique(ecosystem, name)" "index(ecosystem, name)"}}
 
-		
-	DROP TABLE IF EXISTS "1_blocks"; CREATE TABLE "1_blocks" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"name" character varying(255) NOT NULL DEFAULT '',
-		"value" text NOT NULL DEFAULT '',
-		"conditions" text NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"app_id" bigint NOT NULL DEFAULT '1',
-		"ecosystem" bigint NOT NULL DEFAULT '1',
-		UNIQUE (ecosystem, name)
-	);
-	ALTER TABLE ONLY "1_blocks" ADD CONSTRAINT "1_blocks_pkey" PRIMARY KEY (id);
-	CREATE INDEX "1_blocks_index_name" ON "1_blocks" (ecosystem,name);
+	{{head "1_pages"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("menu", "string", {"default": "", "size":255})
+		t.Column("validate_count", "bigint", {"default": "1"})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("app_id", "bigint", {"default": "1"})
+		t.Column("validate_mode", "character(1)", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "unique(ecosystem, name)" "index(ecosystem, name)"}}
 
-	DROP TABLE IF EXISTS "1_languages"; CREATE TABLE "1_languages" (
-		"id" bigint  NOT NULL DEFAULT '0',
-		"name" character varying(100) NOT NULL DEFAULT '',
-		"res" text NOT NULL DEFAULT '',
-		"conditions" text NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"ecosystem" bigint NOT NULL DEFAULT '1'
-	  );
-	  ALTER TABLE ONLY "1_languages" ADD CONSTRAINT "1_languages_pkey" PRIMARY KEY (id);
-	  CREATE INDEX "1_languages_index_name" ON "1_languages" (ecosystem, name);
+	{{head "1_blocks"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("app_id", "bigint", {"default": "1"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "unique(ecosystem, name)" "index(ecosystem, name)"}}
 
-	  CREATE TABLE "1_contracts" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"name" text NOT NULL DEFAULT '',
-		"value" text  NOT NULL DEFAULT '',
-		"wallet_id" bigint NOT NULL DEFAULT '0',
-		"token_id" bigint NOT NULL DEFAULT '1',
-		"conditions" text  NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"app_id" bigint NOT NULL DEFAULT '1',
-		"ecosystem" bigint NOT NULL DEFAULT '1',
-		UNIQUE(ecosystem,name)
-		);
-		ALTER TABLE ONLY "1_contracts" ADD CONSTRAINT "1_contracts_pkey" PRIMARY KEY (id);
-		CREATE INDEX "1_contracts_index_ecosystem" ON "1_contracts" (ecosystem);
+	{{head "1_languages"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size":100})
+		t.Column("res", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "index(ecosystem, name)"}}
 
-	DROP TABLE IF EXISTS "1_tables";
-	CREATE TABLE "1_tables" (
-	"id" bigint NOT NULL  DEFAULT '0',
-	"name" varchar(100) NOT NULL DEFAULT '',
-	"permissions" jsonb,
-	"columns" jsonb,
-	"conditions" text  NOT NULL DEFAULT '',
-	"app_id" bigint NOT NULL DEFAULT '1',
-	"ecosystem" bigint NOT NULL DEFAULT '1',
-	UNIQUE(ecosystem,name)
-    );
-	ALTER TABLE ONLY "1_tables" ADD CONSTRAINT "1_tables_pkey" PRIMARY KEY ("id");
-	CREATE INDEX "1_tables_index_name" ON "1_tables" (ecosystem, name);
+	{{head "1_contracts"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "text", {"default": ""})
+		t.Column("value", "text", {"default": ""})
+		t.Column("wallet_id", "bigint", {"default": "0"})
+		t.Column("token_id", "bigint", {"default": "1"})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("app_id", "bigint", {"default": "1"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "unique(ecosystem, name)" "index(ecosystem)"}}
 
-	DROP TABLE IF EXISTS "1_parameters";
-	CREATE TABLE "1_parameters" (
-	"id" bigint NOT NULL  DEFAULT '0',
-	"name" varchar(255) NOT NULL DEFAULT '',
-	"value" text NOT NULL DEFAULT '',
-	"conditions" text  NOT NULL DEFAULT '',
-	"permissions" jsonb,
-	"ecosystem" bigint NOT NULL DEFAULT '1',
-	UNIQUE(ecosystem,name)
-	);
-	ALTER TABLE ONLY "1_parameters" ADD CONSTRAINT "1_parameters_pkey" PRIMARY KEY ("id");
-	CREATE INDEX "1_parameters_index_name" ON "1_parameters" (ecosystem,name);
+	{{head "1_tables"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size": 100})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("columns", "jsonb", {"null": true})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("app_id", "bigint", {"default": "1"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "unique(ecosystem, name)" "index(ecosystem, name)"}}
 
-	DROP TABLE IF EXISTS "1_history"; CREATE TABLE "1_history" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"sender_id" bigint NOT NULL DEFAULT '0',
-		"recipient_id" bigint NOT NULL DEFAULT '0',
-		"amount" decimal(30) NOT NULL DEFAULT '0',
-		"comment" text NOT NULL DEFAULT '',
-		"block_id" bigint  NOT NULL DEFAULT '0',
-		"txhash" bytea  NOT NULL DEFAULT '',
-		"created_at" bigint NOT NULL DEFAULT '0',
-		"ecosystem" bigint NOT NULL DEFAULT '1',
-		"type" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_history" ADD CONSTRAINT "1_history_pkey" PRIMARY KEY (id);
-		CREATE INDEX "1_history_index_sender" ON "1_history" (ecosystem, sender_id);
-		CREATE INDEX "1_history_index_recipient" ON "1_history" (ecosystem, recipient_id);
-		CREATE INDEX "1_history_index_block" ON "1_history" (block_id, txhash);
-		
-	DROP TABLE IF EXISTS "1_sections"; CREATE TABLE "1_sections" (
-			"id" bigint  NOT NULL DEFAULT '0',
-			"title" varchar(255)  NOT NULL DEFAULT '',
-			"urlname" varchar(255) NOT NULL DEFAULT '',
-			"page" varchar(255) NOT NULL DEFAULT '',
-			"roles_access" jsonb,
-			"status" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-			);
-		  ALTER TABLE ONLY "1_sections" ADD CONSTRAINT "1_sections_pkey" PRIMARY KEY (id);
-		  CREATE INDEX "1_sections_index_ecosystem" ON "1_sections" (ecosystem);
-	
+	{{head "1_parameters"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size": 255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "unique(ecosystem, name)" "index(ecosystem, name)"}}
 
-	DROP TABLE IF EXISTS "1_members";
-		CREATE TABLE "1_members" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"member_name"	varchar(255) NOT NULL DEFAULT '',
-			"image_id"	bigint NOT NULL DEFAULT '0',
-			"member_info"   jsonb,
-			"ecosystem" bigint NOT NULL DEFAULT '1',
-			"account" char(24) NOT NULL
-		);
-		ALTER TABLE ONLY "1_members" ADD CONSTRAINT "1_members_pkey" PRIMARY KEY (id);
-		CREATE INDEX "1_members_index_ecosystem" ON "1_sections" (ecosystem);
-		CREATE UNIQUE INDEX "1_members_uindex_ecosystem_account" ON "1_members" (account, ecosystem);
+	{{head "1_history"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("sender_id", "bigint", {"default": "0"})
+		t.Column("recipient_id", "bigint", {"default": "0"})
+		t.Column("amount", "decimal(30)", {"default": "0"})
+		t.Column("comment", "text", {"default": ""})
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("txhash", "bytea", {"default": ""})
+		t.Column("created_at", "bigint", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+		t.Column("type", "bigint", {"default": "1"})
+	{{footer "primary" "index(ecosystem, sender_id)"}}
+	add_index("1_history", ["ecosystem", "recipient_id"], {})
+	add_index("1_history", ["block_id", "txhash"], {})
 
-	DROP TABLE IF EXISTS "1_roles";
-		CREATE TABLE "1_roles" (
-			"id" 	bigint NOT NULL DEFAULT '0',
-			"default_page"	varchar(255) NOT NULL DEFAULT '',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"deleted"    bigint NOT NULL DEFAULT '0',
-			"role_type" bigint NOT NULL DEFAULT '0',
-			"creator" jsonb NOT NULL DEFAULT '{}',
-			"date_created" timestamp,
-			"date_deleted" timestamp,
-			"company_id" bigint NOT NULL DEFAULT '0',
-			"roles_access" jsonb, 
-			"image_id" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_roles" ADD CONSTRAINT "1_roles_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_roles_index_deleted" ON "1_roles" (ecosystem, deleted);
-		CREATE INDEX "1_roles_index_type" ON "1_roles" (ecosystem, role_type);
+	{{head "1_sections"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("title", "string", {"default": "", "size": 255})
+		t.Column("urlname", "string", {"default": "", "size": 255})
+		t.Column("page", "string", {"default": "", "size": 255})
+		t.Column("roles_access", "jsonb", {"null": true})
+		t.Column("status", "bigint", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "index(ecosystem)"}}
 
+	{{head "1_members"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("member_name", "string", {"default": "", "size": 255})
+		t.Column("image_id", "bigint", {"default": "0"})
+		t.Column("member_info", "jsonb", {"null": true})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+		t.Column("account", "char(24)", {})
+	{{footer "primary" "index(ecosystem)"}}
+	add_index("1_members", ["account", "ecosystem"], {"unique": true})
 
-		DROP TABLE IF EXISTS "1_roles_participants";
-		CREATE TABLE "1_roles_participants" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"role" jsonb,
-			"member" jsonb,
-			"appointed" jsonb,
-			"date_created" timestamp,
-			"date_deleted" timestamp,
-			"deleted" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_roles_participants" ADD CONSTRAINT "1_roles_participants_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_roles_participants_ecosystem" ON "1_roles_participants" (ecosystem);
+	{{head "1_roles"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("default_page", "string", {"default": "", "size": 255})
+		t.Column("role_name", "string", {"default": "", "size": 255})
+		t.Column("deleted", "bigint", {"default": "0"})
+		t.Column("role_type", "bigint", {"default": "0"})
+		t.Column("creator", "jsonb", {"default": "{}"})
+		t.Column("date_created", "bigint", {"default": "0"})
+		t.Column("date_deleted", "bigint", {"default": "0"})
+		t.Column("company_id", "bigint", {"default": "0"})
+		t.Column("roles_access", "jsonb", {"null": true})
+		t.Column("image_id", "bigint", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "index(ecosystem, deleted)"}}
+	add_index("1_roles", ["ecosystem", "role_type"], {})
 
-		DROP TABLE IF EXISTS "1_notifications";
-		CREATE TABLE "1_notifications" (
-			"id"    bigint NOT NULL DEFAULT '0',
-			"recipient" jsonb,
-			"sender" jsonb,
-			"notification" jsonb,
-			"page_params"	jsonb,
-			"processing_info" jsonb,
-			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_created"	bigint NOT NULL DEFAULT '0',
-			"date_start_processing" bigint NOT NULL DEFAULT '0',
-			"date_closed" bigint NOT NULL DEFAULT '0',
-			"closed" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_notifications" ADD CONSTRAINT "1_notifications_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_notifications_ecosystem" ON "1_notifications" (ecosystem);
+	{{head "1_roles_participants"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("role", "jsonb", {"null": true})
+		t.Column("member", "jsonb", {"null": true})
+		t.Column("appointed", "jsonb", {"null": true})
+		t.Column("date_created", "bigint", {"default": "0"})
+		t.Column("date_deleted", "bigint", {"default": "0"})
+		t.Column("deleted", "bigint", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "index(ecosystem)"}}
 
-		DROP TABLE IF EXISTS "1_applications";
-		CREATE TABLE "1_applications" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"name" varchar(255) NOT NULL DEFAULT '',
-			"uuid" uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
-			"conditions" text NOT NULL DEFAULT '',
-			"deleted" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_applications" ADD CONSTRAINT "1_application_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_applications_ecosystem" ON "1_applications" (ecosystem);
+	{{head "1_notifications"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("recipient", "jsonb", {"null": true})
+		t.Column("sender", "jsonb", {"null": true})
+		t.Column("notification", "jsonb", {"null": true})
+		t.Column("page_params", "jsonb", {"null": true})
+		t.Column("processing_info", "jsonb", {"null": true})
+		t.Column("page_name", "string", {"default": "", "size": 255})
+		t.Column("date_created", "bigint", {"default": "0"})
+		t.Column("date_start_processing", "bigint", {"default": "0"})
+		t.Column("date_closed", "bigint", {"default": "0"})
+		t.Column("closed", "bigint", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "index(ecosystem)"}}
 
-		DROP TABLE IF EXISTS "1_binaries";
-		CREATE TABLE "1_binaries" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"app_id" bigint NOT NULL DEFAULT '1',
-			"name" varchar(255) NOT NULL DEFAULT '',
-			"data" bytea NOT NULL DEFAULT '',
-			"hash" varchar(64) NOT NULL DEFAULT '',
-			"mime_type" varchar(255) NOT NULL DEFAULT '',
-			"ecosystem" bigint NOT NULL DEFAULT '1',
-			"account" char(24) NOT NULL
-		);
-		ALTER TABLE ONLY "1_binaries" ADD CONSTRAINT "1_binaries_pkey" PRIMARY KEY (id);
-		CREATE UNIQUE INDEX "1_binaries_uindex" ON "1_binaries" (account, ecosystem, app_id, name);
-				
-		DROP TABLE IF EXISTS "1_app_params";
-		CREATE TABLE "1_app_params" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"app_id" bigint NOT NULL  DEFAULT '0',
-		"name" varchar(255) NOT NULL DEFAULT '',
-		"value" text NOT NULL DEFAULT '',
-		"conditions" text  NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"ecosystem" bigint NOT NULL DEFAULT '1',
-		CONSTRAINT "1_app_params_ecosys_app_name_key" UNIQUE (ecosystem, app_id, name)
-		);
-		ALTER TABLE ONLY "1_app_params" ADD CONSTRAINT "1_app_params_pkey" PRIMARY KEY ("id");
-		CREATE INDEX ON "1_app_params" (ecosystem,app_id,name);
-		
-		DROP TABLE IF EXISTS "1_buffer_data";
-		CREATE TABLE "1_buffer_data" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"key" varchar(255) NOT NULL DEFAULT '',
-			"value" jsonb,
-			"ecosystem" bigint NOT NULL DEFAULT '1',
-			"account" char(24) NOT NULL
-		);
-		ALTER TABLE ONLY "1_buffer_data" ADD CONSTRAINT "1_buffer_data_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_buffer_data_ecosystem" ON "1_buffer_data" (ecosystem);
+	{{head "1_applications"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size": 255})
+		t.Column("uuid", "uuid", {"default": "00000000-0000-0000-0000-000000000000"})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("deleted", "bigint", {"default": "0"})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "index(ecosystem)"}}
 
+	{{head "1_binaries"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("app_id", "bigint", {"default": "1"})
+		t.Column("name", "string", {"default": "", "size": 255})
+		t.Column("data", "bytea", {"default": ""})
+		t.Column("hash", "string", {"default": "", "size": 64})
+		t.Column("mime_type", "string", {"default": "", "size": 255})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+		t.Column("account", "char(24)", {})
+	{{footer "primary"}}
+	add_index("1_binaries", ["account", "ecosystem", "app_id", "name"], {"unique": true})
 
-	DROP TABLE IF EXISTS "1_roles";
-		CREATE TABLE "1_roles" (
-			"id" 	bigint NOT NULL DEFAULT '0',
-			"default_page"	varchar(255) NOT NULL DEFAULT '',
-			"role_name"	varchar(255) NOT NULL DEFAULT '',
-			"deleted"    bigint NOT NULL DEFAULT '0',
-			"role_type" bigint NOT NULL DEFAULT '0',
-			"creator" jsonb NOT NULL DEFAULT '{}',
-			"date_created" bigint NOT NULL DEFAULT '0',
-			"date_deleted" bigint NOT NULL DEFAULT '0',
-			"company_id" bigint NOT NULL DEFAULT '0',
-			"roles_access" jsonb, 
-			"image_id" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_roles" ADD CONSTRAINT "1_roles_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_roles_index_deleted" ON "1_roles" (ecosystem, deleted);
-		CREATE INDEX "1_roles_index_type" ON "1_roles" (ecosystem, role_type);
+	{{head "1_app_params"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("app_id", "bigint", {"default": "0"})
+		t.Column("name", "string", {"default": "", "size": 255})
+		t.Column("value", "text", {"default": ""})
+		t.Column("conditions", "text", {"default": ""})
+		t.Column("permissions", "jsonb", {"null": true})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+	{{footer "primary" "unique(ecosystem, app_id, name)" "index(ecosystem,app_id,name)"}}
 
-
-		DROP TABLE IF EXISTS "1_roles_participants";
-		CREATE TABLE "1_roles_participants" (
-			"id" bigint NOT NULL DEFAULT '0',
-			"role" jsonb,
-			"member" jsonb,
-			"appointed" jsonb,
-			"date_created" bigint NOT NULL DEFAULT '0',
-			"date_deleted" bigint NOT NULL DEFAULT '0',
-			"deleted" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_roles_participants" ADD CONSTRAINT "1_roles_participants_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_roles_participants_ecosystem" ON "1_roles_participants" (ecosystem);
-
-		DROP TABLE IF EXISTS "1_notifications";
-		CREATE TABLE "1_notifications" (
-			"id"    bigint NOT NULL DEFAULT '0',
-			"recipient" jsonb,
-			"sender" jsonb,
-			"notification" jsonb,
-			"page_params"	jsonb,
-			"processing_info" jsonb,
-			"page_name"	varchar(255) NOT NULL DEFAULT '',
-			"date_created"	bigint default '0'::bigint not null,
-			"date_start_processing" bigint default '0'::bigint not null,
-			"date_closed" bigint default '0'::bigint not null,
-			"closed" bigint NOT NULL DEFAULT '0',
-			"ecosystem" bigint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "1_notifications" ADD CONSTRAINT "1_notifications_pkey" PRIMARY KEY ("id");
-		CREATE INDEX "1_notifications_ecosystem" ON "1_notifications" (ecosystem);
-
-
+	{{head "1_buffer_data"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("key", "string", {"default": "", "size": 255})
+		t.Column("value", "jsonb", {"null": true})
+		t.Column("ecosystem", "bigint", {"default": "1"})
+		t.Column("account", "char(24)", {})
+	{{footer "primary" "index(ecosystem)"}}
 `

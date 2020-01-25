@@ -20,155 +20,117 @@ package migration
 
 var (
 	migrationInitial = `
-		DROP SEQUENCE IF EXISTS migration_history_id_seq CASCADE;
-		CREATE SEQUENCE migration_history_id_seq START WITH 1;
-		DROP TABLE IF EXISTS "migration_history";
-		CREATE TABLE "migration_history" (
-			"id" int NOT NULL default nextval('migration_history_id_seq'),
-			"version" varchar(255) NOT NULL,
-			"date_applied" int NOT NULL
-		);
-		ALTER SEQUENCE migration_history_id_seq owned by migration_history.id;
-		ALTER TABLE ONLY "migration_history" ADD CONSTRAINT migration_history_pkey PRIMARY KEY (id);`
+	{{headseq "migration_history"}}
+		t.Column("id", "int", {"default_raw": "nextval('migration_history_id_seq')"})
+		t.Column("version", "string", {"default": "", "size":255})
+		t.Column("date_applied", "int", {})
+	{{footer "seq" "primary"}}
+`
+	migrationInitialTables = `
+	{{head "transactions_status"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("time", "int", {"default": "0"})
+		t.Column("type", "int", {"default": "0"})
+		t.Column("ecosystem", "int", {"default": "1"})
+		t.Column("wallet_id", "bigint", {"default": "0"})
+		t.Column("block_id", "int", {"default": "0"})
+		t.Column("error", "string", {"default": "", "size":255})
+	{{footer "primary(hash)"}}
 
-	migrationInitialSchema = `DROP TABLE IF EXISTS "transactions_status"; CREATE TABLE "transactions_status" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"time" int NOT NULL DEFAULT '0',
-		"type" int NOT NULL DEFAULT '0',
-		"ecosystem" int NOT NULL DEFAULT '1',
-		"wallet_id" bigint NOT NULL DEFAULT '0',
-		"block_id" int NOT NULL DEFAULT '0',
-		"error" varchar(255) NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "transactions_status" ADD CONSTRAINT transactions_status_pkey PRIMARY KEY (hash);
-		
-		DROP TABLE IF EXISTS "confirmations"; CREATE TABLE "confirmations" (
-		"block_id" bigint  NOT NULL DEFAULT '0',
-		"good" int  NOT NULL DEFAULT '0',
-		"bad" int  NOT NULL DEFAULT '0',
-		"time" int  NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "confirmations" ADD CONSTRAINT confirmations_pkey PRIMARY KEY (block_id);
-		
-		DROP TABLE IF EXISTS "block_chain"; CREATE TABLE "block_chain" (
-		"id" int NOT NULL DEFAULT '0',
-		"hash" bytea  NOT NULL DEFAULT '',
-		"rollbacks_hash" bytea NOT NULL DEFAULT '',
-		"data" bytea NOT NULL DEFAULT '',
-		"ecosystem_id" int  NOT NULL DEFAULT '0',
-		"key_id" bigint  NOT NULL DEFAULT '0',
-		"node_position" bigint  NOT NULL DEFAULT '0',
-		"time" int NOT NULL DEFAULT '0',
-		"tx" int NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "block_chain" ADD CONSTRAINT block_chain_pkey PRIMARY KEY (id);
-		
-		DROP TABLE IF EXISTS "log_transactions"; CREATE TABLE "log_transactions" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"block" int NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "log_transactions" ADD CONSTRAINT log_transactions_pkey PRIMARY KEY (hash);
+	{{head "confirmations"}}
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("good", "int", {"default": "0"})
+		t.Column("bad", "int", {"default": "0"})
+		t.Column("time", "int", {"default": "0"})
+	{{footer "primary(block_id)"}}
 
-		DROP TABLE IF EXISTS "queue_tx"; CREATE TABLE "queue_tx" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"data" bytea NOT NULL DEFAULT '',
-		"from_gate" int NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "queue_tx" ADD CONSTRAINT queue_tx_pkey PRIMARY KEY (hash);
-		
-		CREATE TABLE "system_contracts" (
-		"id" bigint NOT NULL  DEFAULT '0',
-		"value" text  NOT NULL DEFAULT '',
-		"wallet_id" bigint NOT NULL DEFAULT '0',
-		"token_id" bigint NOT NULL DEFAULT '0',
-		"active" character(1) NOT NULL DEFAULT '0',
-		"conditions" text  NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "system_contracts" ADD CONSTRAINT system_contracts_pkey PRIMARY KEY (id);
-		
-		
-		CREATE TABLE "system_tables" (
-		"name" varchar(100)  NOT NULL DEFAULT '',
-		"permissions" jsonb,
-		"columns" jsonb,
-		"conditions" text  NOT NULL DEFAULT ''
-		);
-		ALTER TABLE ONLY "system_tables" ADD CONSTRAINT system_tables_pkey PRIMARY KEY (name);
-		
-		DROP TABLE IF EXISTS "info_block"; CREATE TABLE "info_block" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"rollbacks_hash" bytea NOT NULL DEFAULT '',
-		"block_id" int NOT NULL DEFAULT '0',
-		"node_position" int  NOT NULL DEFAULT '0',
-		"ecosystem_id" bigint NOT NULL DEFAULT '0',
-		"key_id" bigint NOT NULL DEFAULT '0',
-		"time" int  NOT NULL DEFAULT '0',
-		"current_version" varchar(50) NOT NULL DEFAULT '0.0.1',
-		"sent" smallint NOT NULL DEFAULT '0'
-		);
+	{{head "block_chain"}}
+		t.Column("id", "int", {"default": "0"})
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("rollbacks_hash", "bytea", {"default": ""})
+		t.Column("data", "bytea", {"default": ""})
+		t.Column("ecosystem_id", "int", {"default": "0"})
+		t.Column("key_id", "bigint", {"default": "0"})
+		t.Column("node_position", "bigint", {"default": "0"})
+		t.Column("time", "int", {"default": "0"})
+		t.Column("tx", "int", {"default": "0"})
+	{{footer "primary"}}
 
-		DROP TABLE IF EXISTS "queue_blocks"; CREATE TABLE "queue_blocks" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"full_node_id" bigint NOT NULL DEFAULT '0',
-		"block_id" int NOT NULL DEFAULT '0'
-		);
-		ALTER TABLE ONLY "queue_blocks" ADD CONSTRAINT queue_blocks_pkey PRIMARY KEY (hash);
-		
-		DROP TABLE IF EXISTS "transactions"; CREATE TABLE "transactions" (
-		"hash" bytea  NOT NULL DEFAULT '',
-		"data" bytea NOT NULL DEFAULT '',
-		"used" smallint NOT NULL DEFAULT '0',
-		"high_rate" smallint NOT NULL DEFAULT '0',
-		"type" smallint NOT NULL DEFAULT '0',
-		"key_id" bigint NOT NULL DEFAULT '0',
-		"counter" smallint NOT NULL DEFAULT '0',
-		"sent" smallint NOT NULL DEFAULT '0',
-		"attempt" smallint NOT NULL DEFAULT '0',
-		"verified" smallint NOT NULL DEFAULT '1'
-		);
-		ALTER TABLE ONLY "transactions" ADD CONSTRAINT transactions_pkey PRIMARY KEY (hash);
-		
-		DROP SEQUENCE IF EXISTS rollback_tx_id_seq CASCADE;
-		CREATE SEQUENCE rollback_tx_id_seq START WITH 1;
-		DROP TABLE IF EXISTS "rollback_tx"; CREATE TABLE "rollback_tx" (
-		"id" bigint NOT NULL  default nextval('rollback_tx_id_seq'),
-		"block_id" bigint NOT NULL DEFAULT '0',
-		"tx_hash" bytea  NOT NULL DEFAULT '',
-		"table_name" varchar(255) NOT NULL DEFAULT '',
-		"table_id" varchar(255) NOT NULL DEFAULT '',
-		"data" TEXT NOT NULL DEFAULT ''
-		);
-		ALTER SEQUENCE rollback_tx_id_seq owned by rollback_tx.id;
-		ALTER TABLE ONLY "rollback_tx" ADD CONSTRAINT rollback_tx_pkey PRIMARY KEY (id);
-		CREATE INDEX "rollback_tx_table" ON "rollback_tx" (table_name, table_id);
+	{{head "log_transactions"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("block", "int", {"default": "0"})
+	{{footer "primary(hash)"}}
 
+	{{head "queue_tx"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("data", "bytea", {"default": ""})
+		t.Column("from_gate", "int", {"default": "0"})
+	{{footer "primary(hash)"}}
 
-		DROP TABLE IF EXISTS "install"; CREATE TABLE "install" (
-		"progress" varchar(10) NOT NULL DEFAULT ''
-		);
-		
-		
-		DROP TYPE IF EXISTS "my_node_keys_enum_status" CASCADE;
-		CREATE TYPE "my_node_keys_enum_status" AS ENUM ('my_pending','approved');
-		DROP SEQUENCE IF EXISTS my_node_keys_id_seq CASCADE;
-		CREATE SEQUENCE my_node_keys_id_seq START WITH 1;
-		DROP TABLE IF EXISTS "my_node_keys"; CREATE TABLE "my_node_keys" (
-		"id" int NOT NULL  default nextval('my_node_keys_id_seq'),
-		"add_time" int NOT NULL DEFAULT '0',
-		"public_key" bytea  NOT NULL DEFAULT '',
-		"private_key" varchar(3096) NOT NULL DEFAULT '',
-		"status" my_node_keys_enum_status  NOT NULL DEFAULT 'my_pending',
-		"my_time" int NOT NULL DEFAULT '0',
-		"time" bigint NOT NULL DEFAULT '0',
-		"block_id" int NOT NULL DEFAULT '0'
-		);
-		ALTER SEQUENCE my_node_keys_id_seq owned by my_node_keys.id;
-		ALTER TABLE ONLY "my_node_keys" ADD CONSTRAINT my_node_keys_pkey PRIMARY KEY (id);
-		
-		DROP TABLE IF EXISTS "stop_daemons"; CREATE TABLE "stop_daemons" (
-		"stop_time" int NOT NULL DEFAULT '0'
-		);
-		
+	{{head "info_block"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("rollbacks_hash", "bytea", {"default": ""})
+		t.Column("block_id", "int", {"default": "0"})
+		t.Column("node_position", "int", {"default": "0"})
+		t.Column("ecosystem_id", "bigint", {"default": "0"})
+		t.Column("key_id", "bigint", {"default": "0"})
+		t.Column("time", "int", {"default": "0"})
+		t.Column("current_version", "string", {"default": "0.0.1", "size": 50})
+		t.Column("sent", "smallint", {"default": "0"})
+	{{footer}}
+
+	{{head "queue_blocks"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("full_node_id", "bigint", {"default": "0"})
+		t.Column("block_id", "int", {"default": "0"})
+	{{footer "primary(hash)"}}
+
+	{{head "transactions"}}
+		t.Column("hash", "bytea", {"default": ""})
+		t.Column("data", "bytea", {"default": ""})
+		t.Column("used", "smallint", {"default": "0"})
+		t.Column("high_rate", "smallint", {"default": "0"})
+		t.Column("type", "smallint", {"default": "0"})
+		t.Column("key_id", "bigint", {"default": "0"})
+		t.Column("counter", "smallint", {"default": "0"})
+		t.Column("sent", "smallint", {"default": "0"})
+		t.Column("attempt", "smallint", {"default": "0"})
+		t.Column("verified", "smallint", {"default": "1"})
+	{{footer "primary(hash)"}}
+
+	{{headseq "rollback_tx"}}
+		t.Column("id", "bigint", {"default_raw": "nextval('rollback_tx_id_seq')"})
+		t.Column("block_id", "bigint", {"default": "0"})
+		t.Column("tx_hash", "bytea", {"default": ""})
+		t.Column("table_name", "string", {"default": "", "size":255})
+		t.Column("table_id", "string", {"default": "", "size":255})
+		t.Column("data", "text", {"default": ""})
+	{{footer "seq" "primary" "index(table_name, table_id)"}}
+
+	{{head "install"}}
+		t.Column("progress", "string", {"default": "", "size":10})
+	{{footer}}
+
+	sql("DROP TYPE IF EXISTS \"my_node_keys_enum_status\" CASCADE;")
+	sql("CREATE TYPE \"my_node_keys_enum_status\" AS ENUM ('my_pending','approved');")
+
+	{{headseq "my_node_keys"}}
+		t.Column("id", "int", {"default_raw": "nextval('my_node_keys_id_seq')"})
+		t.Column("add_time", "int", {"default": "0"})
+		t.Column("public_key", "bytea", {"default": ""})
+		t.Column("private_key", "string", {"default": "", "size":3096})
+		t.Column("status", "my_node_keys_enum_status", {"default": "my_pending"})
+		t.Column("my_time", "int", {"default": "0"})
+		t.Column("time", "bigint", {"default": "0"})
+		t.Column("block_id", "int", {"default": "0"})
+	{{footer "seq" "primary"}}
+
+	{{head "stop_daemons"}}
+		t.Column("stop_time", "int", {"default": "0"})
+	{{footer}}
+`
+
+	migrationInitialSchema = `
 		CREATE OR REPLACE FUNCTION next_id(table_name TEXT, OUT result INT) AS
 		$$
 		BEGIN

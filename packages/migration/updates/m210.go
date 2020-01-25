@@ -17,16 +17,12 @@
 package updates
 
 var M210 = `
-    insert into "1_system_parameters" (id, name, value, conditions) values
- (next_id('1_system_parameters'), 'external_blockchain', '', 'ContractAccess("@1UpdateSysParam")');
+	sql("insert into \"1_system_parameters\" (id, name, value, conditions) values
+(next_id('1_system_parameters'), 'external_blockchain', '', 'ContractAccess(\"@1UpdateSysParam\")');")
 
-    DROP TABLE IF EXISTS "external_blockchain";
-	CREATE TABLE "external_blockchain" (
-	"id" bigint NOT NULL DEFAULT '0',
-	"netname" varchar(255)  NOT NULL DEFAULT '',
-	"value" text NOT NULL DEFAULT ''
-	);
-	ALTER TABLE ONLY "external_blockchain" ADD CONSTRAINT "external_blockchain_pkey" PRIMARY KEY (id);
-	CREATE INDEX "external_blockchain_index_name" ON "external_blockchain" (netname);
-	
+	{{head "external_blockchain"}}
+		t.Column("id", "bigint", {"default": "0"})
+		t.Column("netname", "string", {"default": "", "size":255})
+		t.Column("value", "text", {"default": ""})
+	{{footer "primary"}}
 `
