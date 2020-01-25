@@ -69,6 +69,7 @@ func (m Mode) SetCommonRoutes(r Router) {
 	api.HandleFunc("/interface/block/{name}", authRequire(getBlockInterfaceRowHandler)).Methods("GET")
 	api.HandleFunc("/table/{name}", authRequire(getTableHandler)).Methods("GET")
 	api.HandleFunc("/tables", authRequire(getTablesHandler)).Methods("GET")
+	api.HandleFunc("/dbfind/{table}", authRequire(getDbFindHandler)).Methods("POST")
 	api.HandleFunc("/test/{name}", getTestHandler).Methods("GET", "POST")
 	api.HandleFunc("/version", getVersionHandler).Methods("GET")
 	api.HandleFunc("/config/{option}", getConfigOptionHandler).Methods("GET")
