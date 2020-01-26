@@ -31,7 +31,7 @@ import (
 )
 
 type dbFindResult struct {
-	List []interface{}
+	List []interface{} `json:"list"`
 }
 
 type dbfindForm struct {
